@@ -148,14 +148,26 @@ type
     property Model: TPressMVPItemsModel read GetModel;
   end;
 
-  TPressMVPAddItemCommand = class(TPressMVPItemsCommand)
+  TPressMVPCustomAddItemsCommand = class(TPressMVPItemsCommand)
+  protected
+    function InternalCreateObject: TPressObject; virtual;
+    procedure InternalExecute; override;
+  end;
+
+  TPressMVPAddItemsCommand = class(TPressMVPCustomAddItemsCommand)
+  protected
+    function GetCaption: string; override;
+    function GetShortCut: TShortCut; override;
+  end;
+
+  TPressMVPAddReferencesCommand = class(TPressMVPItemsCommand)
   protected
     function GetCaption: string; override;
     function GetShortCut: TShortCut; override;
     procedure InternalExecute; override;
   end;
 
-  TPressMVPRemoveItemCommand = class(TPressMVPItemsCommand)
+  TPressMVPRemoveItemsCommand = class(TPressMVPItemsCommand)
   protected
     function GetCaption: string; override;
     function GetShortCut: TShortCut; override;
@@ -178,11 +190,22 @@ type
     function InternalIsEnabled: Boolean; override;
   end;
 
-  TPressMVPCancelObjectCommand = class(TPressMVPObjectCommand)
+  TPressMVPFinishObjectCommand = class(TPressMVPObjectCommand)
+  protected
+    procedure CloseForm;
+  end;
+
+  TPressMVPCancelObjectCommand = class(TPressMVPFinishObjectCommand)
   protected
     function GetCaption: string; override;
     procedure InternalExecute; override;
     function InternalIsEnabled: Boolean; override;
+  end;
+
+  TPressMVPCloseObjectCommand = class(TPressMVPFinishObjectCommand)
+  protected
+    function GetCaption: string; override;
+    procedure InternalExecute; override;
   end;
 
   TPressMVPQueryCommand = class(TPressMVPCommand)
@@ -199,9 +222,18 @@ type
     procedure InternalExecute; override;
   end;
 
+  TPressMVPAssignSelectionCommand = class(TPressMVPQueryCommand)
+  protected
+    function GetCaption: string; override;
+    procedure InitNotifier; override;
+    procedure InternalExecute; override;
+    function InternalIsEnabled: Boolean; override;
+  end;
+
   TPressMVPCloseApplicationCommand = class(TPressMVPCommand)
   protected
     procedure InternalExecute; override;
+    function InternalIsEnabled: Boolean; override;
   end;
 
 implementation
@@ -421,7 +453,7 @@ end;
 
 procedure TPressMVPEditItemCommand.InternalExecute;
 begin
-  TPressMVPModelCreateFormEvent.Create(Model).Notify;
+  TPressMVPModelCreatePresentFormEvent.Create(Model).Notify;
 end;
 
 function TPressMVPEditItemCommand.InternalIsEnabled: Boolean;
@@ -455,7 +487,7 @@ begin
   VObject := Model.Subject.ObjectClass.Create;
   Model.Subject.Value := VObject;
   VObject.Release;
-  TPressMVPModelCreateFormEvent.Create(Model, True).Notify;
+  TPressMVPModelCreateIncludeFormEvent.Create(Model).Notify;
 end;
 
 { TPressMVPItemsCommand }
@@ -465,41 +497,70 @@ begin
   Result := inherited Model as TPressMVPItemsModel;
 end;
 
-{ TPressMVPAddItemCommand }
+{ TPressMVPCustomAddItemsCommand }
 
-function TPressMVPAddItemCommand.GetCaption: string;
+function TPressMVPCustomAddItemsCommand.InternalCreateObject: TPressObject;
+begin
+  Result := Model.Subject.ObjectClass.Create;
+end;
+
+procedure TPressMVPCustomAddItemsCommand.InternalExecute;
+var
+  VObject: TPressObject;
+begin
+  VObject := InternalCreateObject;
+  try
+    Model.Subject.Add(VObject, False);
+  except
+    VObject.Free;
+    raise;
+  end;
+  Model.Selection.SelectObject(VObject);
+  TPressMVPModelCreateIncludeFormEvent.Create(Model).Notify;
+end;
+
+{ TPressMVPAddItemsCommand }
+
+function TPressMVPAddItemsCommand.GetCaption: string;
 begin
   Result := SPressAddItemCommand;
 end;
 
-function TPressMVPAddItemCommand.GetShortCut: TShortCut;
+function TPressMVPAddItemsCommand.GetShortCut: TShortCut;
 begin
   Result := VK_F2;
 end;
 
-procedure TPressMVPAddItemCommand.InternalExecute;
-var
-  VObject: TPressObject;
+{ TPressMVPAddReferencesCommand }
+
+function TPressMVPAddReferencesCommand.GetCaption: string;
 begin
-  VObject := Model.Subject.ObjectClass.Create;
-  Model.Subject.Add(VObject, False);
-  Model.Selection.SelectObject(VObject);
-  TPressMVPModelCreateFormEvent.Create(Model, True).Notify;
+  Result := SPressSelectItemCommand;
 end;
 
-{ TPressMVPRemoveItemCommand }
+function TPressMVPAddReferencesCommand.GetShortCut: TShortCut;
+begin
+  Result := Menus.ShortCut(VK_F2, [ssShift]);
+end;
 
-function TPressMVPRemoveItemCommand.GetCaption: string;
+procedure TPressMVPAddReferencesCommand.InternalExecute;
+begin
+  TPressMVPModelCreateSearchFormEvent.Create(Model).Notify;
+end;
+
+{ TPressMVPRemoveItemsCommand }
+
+function TPressMVPRemoveItemsCommand.GetCaption: string;
 begin
   Result := SPressRemoveItemCommand;
 end;
 
-function TPressMVPRemoveItemCommand.GetShortCut: TShortCut;
+function TPressMVPRemoveItemsCommand.GetShortCut: TShortCut;
 begin
   Result := Menus.ShortCut(VK_F8, [ssCtrl]);
 end;
 
-procedure TPressMVPRemoveItemCommand.InternalExecute;
+procedure TPressMVPRemoveItemsCommand.InternalExecute;
 begin
   if (Model.Selection.Count > 0) and
    PressDialog.ConfirmRemove(Model.Selection.Count) then
@@ -513,7 +574,7 @@ begin
     end;
 end;
 
-function TPressMVPRemoveItemCommand.InternalIsEnabled: Boolean;
+function TPressMVPRemoveItemsCommand.InternalIsEnabled: Boolean;
 begin
   Result := Model.Selection.Count > 0;
 end;
@@ -554,6 +615,15 @@ begin
   Result := Model.HasSubject and Model.Subject.IsValid;
 end;
 
+{ TPressMVPFinishObjectCommand }
+
+procedure TPressMVPFinishObjectCommand.CloseForm;
+begin
+  TPressMVPModelCloseFormEvent.Create(Model).Notify;
+  if Model.IsIncluding and Assigned(Model.HookedSubject) then
+    Model.HookedSubject.UnassignObject(Model.Subject);
+end;
+
 { TPressMVPCancelObjectCommand }
 
 function TPressMVPCancelObjectCommand.GetCaption: string;
@@ -570,14 +640,24 @@ begin
       Exit;
     Model.RevertChanges;
   end;
-  TPressMVPModelCloseFormEvent.Create(Model).Notify;
-  if Model.IsIncluding and Assigned(Model.HookedSubject) then
-    Model.HookedSubject.UnassignObject(Model.Subject);
+  CloseForm;
 end;
 
 function TPressMVPCancelObjectCommand.InternalIsEnabled: Boolean;
 begin
   Result := Model.HasSubject;
+end;
+
+{ TPressMVPCloseObjectCommand }
+
+function TPressMVPCloseObjectCommand.GetCaption: string;
+begin
+  Result := SPressCloseFormCommand;
+end;
+
+procedure TPressMVPCloseObjectCommand.InternalExecute;
+begin
+  CloseForm;
 end;
 
 { TPressMVPQueryCommand }
@@ -605,11 +685,55 @@ begin
   Model.Execute;
 end;
 
+{ TPressMVPAssignSelectionCommand }
+
+function TPressMVPAssignSelectionCommand.GetCaption: string;
+begin
+  Result := SPressAssignSelectionQueryCommand;
+end;
+
+procedure TPressMVPAssignSelectionCommand.InitNotifier;
+begin
+  inherited;
+  Notifier.AddNotificationItem(
+   Model.ItemsSelection, [TPressMVPSelectionChangedEvent]);
+end;
+
+procedure TPressMVPAssignSelectionCommand.InternalExecute;
+begin
+  if Model.ItemsSelection.Count > 0 then
+  begin
+    if Model.HookedSubject is TPressItem then
+      Model.HookedSubject.AssignObject(Model.ItemsSelection[0])
+    else if Model.HookedSubject is TPressItems then
+      with Model.ItemsSelection.CreateIterator do
+      try
+        BeforeFirstItem;
+        while NextItem do
+          Model.HookedSubject.AssignObject(CurrentItem);
+      finally
+        Free;
+      end;
+  end;
+  TPressMVPModelCloseFormEvent.Create(Model).Notify;
+end;
+
+function TPressMVPAssignSelectionCommand.InternalIsEnabled: Boolean;
+begin
+  Result := Model.HasHookedSubject and (Model.ItemsSelection.Count > 0);
+end;
+
 { TPressMVPCloseApplicationCommand }
 
 procedure TPressMVPCloseApplicationCommand.InternalExecute;
 begin
-  Application.Terminate;
+  { TODO : Fix AVs }
+  TPressMVPModelCloseFormEvent.Create(Model).Notify;
+end;
+
+function TPressMVPCloseApplicationCommand.InternalIsEnabled: Boolean;
+begin
+  Result := False;
 end;
 
 end.

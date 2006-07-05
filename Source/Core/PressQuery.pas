@@ -54,6 +54,8 @@ type
     property OrderFieldName: string read FOrderFieldName write FOrderFieldName;
   end;
 
+  TPressQueryClass = class of TPressQuery;
+
   TPressQueryIterator = TPressProxyIterator;
 
   TPressQuery = class(TPressObject)
@@ -71,6 +73,7 @@ type
     function Add(AObject: TPressObject): Integer;
     procedure Clear;
     function Count: Integer;
+    class function ClassMetadata: TPressQueryMetadata;
     function CreateIterator: TPressQueryIterator;
     function Remove(AObject: TPressObject): Integer;
     procedure UpdateReferenceList;
@@ -121,6 +124,11 @@ begin
     else
       Result := AAttribute.AsString;
   end;
+end;
+
+class function TPressQuery.ClassMetadata: TPressQueryMetadata;
+begin
+  Result := inherited ClassMetadata as TPressQueryMetadata;
 end;
 
 procedure TPressQuery.Clear;
@@ -234,7 +242,12 @@ end;
 
 procedure TPressQuery.UpdateReferenceList;
 begin
-  _QueryItems.AssignProxyList(PressPersistenceBroker.RetrieveProxyList(Self));
+  _QueryItems.DisableChanges;
+  try
+    _QueryItems.AssignProxyList(PressPersistenceBroker.RetrieveProxyList(Self));
+  finally
+    _QueryItems.EnableChanges;
+  end;
 end;
 
 procedure RegisterClasses;

@@ -128,6 +128,7 @@ type
   protected
     function GetCaption: string; virtual;
     function GetShortCut: TShortCut; virtual;
+    procedure InitNotifier; virtual;
     procedure InternalExecute; virtual; abstract;
     function InternalIsEnabled: Boolean; virtual;
     property ComponentList: TPressMVPCommandComponentList read GetComponentList;
@@ -249,6 +250,15 @@ type
     property EventsDisabled: Boolean read GetEventsDisabled;
   end;
 
+  TPressMVPSelectionChangedEvent = class(TPressEvent)
+  end;
+
+  TPressMVPSelection = class(TObject)
+  end;
+
+  TPressMVPNullSelection = class(TPressMVPSelection)
+  end;
+
   TPressMVPModelEvent = class(TPressEvent)
   protected
     {$IFNDEF PressLogModelEvents}
@@ -265,23 +275,30 @@ type
     FCommands: TPressMVPCommands;
     FNotifier: TPressNotifier;
     FOnChange: TPressMVPModelNotifyEvent;
+    FSelection: TPressMVPSelection;
     FSubject: TPressSubject;
     function GetCommands: TPressMVPCommands;
     function GetHasSubject: Boolean;
     function GetNotifier: TPressNotifier;
+    function GetSelection: TPressMVPSelection;
   protected
     procedure InitCommands; virtual;
+    function InternalCreateSelection: TPressMVPSelection; virtual;
     procedure Notify(AEvent: TPressEvent); virtual;
     property Commands: TPressMVPCommands read GetCommands;
     property Notifier: TPressNotifier read GetNotifier;
+    property Selection: TPressMVPSelection read GetSelection;
   public
     constructor Create(ASubject: TPressSubject); virtual;
     destructor Destroy; override;
+    function AddCommand(ACommandClass: TPressMVPCommandClass): Integer;
+    procedure AddCommands(ACommandClasses: array of TPressMVPCommandClass);
     class function Apply: TPressSubjectClass; virtual; abstract;
     procedure Changed;
     { TODO : Remove this factory method }
     class function CreateFromSubject(ASubject: TPressSubject): TPressMVPModel;
     function FindCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
+    function HasCommands: Boolean;
     class procedure RegisterModel;
     property HasSubject: Boolean read GetHasSubject;
     property Subject: TPressSubject read FSubject;
@@ -385,8 +402,11 @@ type
     procedure SetView(Value: TPressMVPView);
   protected
     procedure AfterInitInteractors; virtual;
-    function CreateCommandMenu: TPressMVPCommandMenu; virtual;
     procedure InitPresenter; virtual;
+    function InternalCreateCommandMenu: TPressMVPCommandMenu; virtual;
+    function InternalCreateModel(ASubject: TPressSubject): TPressMVPModel; virtual;
+    function InternalCreateSubPresenter(AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter; virtual;
+    function InternalCreateView(AControl: TControl): TPressMVPView; virtual;
     procedure InternalUpdateModel; virtual; abstract;
     procedure InternalUpdateView; virtual; abstract;
     property CommandMenu: TPressMVPCommandMenu read FCommandMenu write SetCommandMenu;
@@ -399,6 +419,7 @@ type
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; virtual; abstract;
     { TODO : Remove these factory method }
     class function CreateFromControllers(AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
+    procedure Refresh;
     class procedure RegisterPresenter;
     function SubPresenterCount: Integer;
     procedure UpdateModel;
@@ -699,9 +720,7 @@ begin
   FModel := AModel;
   FEnabled := InternalIsEnabled;
   FNotifier := TPressNotifier.Create(Notify);
-  if FModel.HasSubject then
-    FNotifier.AddNotificationItem(
-     FModel.Subject, [TPressAttributeChangedEvent]);
+  InitNotifier;
 end;
 
 destructor TPressMVPCommand.Destroy;
@@ -718,7 +737,10 @@ end;
 
 function TPressMVPCommand.GetCaption: string;
 begin
-  Result := FCaption;
+  if FCaption = '' then
+    Result := Format('<%s>', [ClassName])
+  else
+    Result := FCaption;
 end;
 
 function TPressMVPCommand.GetComponentList: TPressMVPCommandComponentList;
@@ -731,6 +753,14 @@ end;
 function TPressMVPCommand.GetShortCut: TShortCut;
 begin
   Result := FShortCut;
+end;
+
+procedure TPressMVPCommand.InitNotifier;
+begin
+  Notifier.AddNotificationItem(
+   Model.Selection, [TPressMVPSelectionChangedEvent]);
+  if Model.Subject is TPressObject then
+    Notifier.AddNotificationItem(Model.Subject, [TPressObjectChangedEvent]);
 end;
 
 function TPressMVPCommand.InternalIsEnabled: Boolean;
@@ -975,6 +1005,33 @@ end;
 
 { TPressMVPModel }
 
+function TPressMVPModel.AddCommand(
+  ACommandClass: TPressMVPCommandClass): Integer;
+var
+  VCommand: TPressMVPCommand;
+begin
+  if Assigned(ACommandClass) then
+  begin
+    VCommand := ACommandClass.Create(Self);
+    try
+      Result := Commands.Add(VCommand);
+    except
+      VCommand.Free;
+      raise;
+    end;
+  end else
+    Result := Commands.Add(nil);
+end;
+
+procedure TPressMVPModel.AddCommands(
+  ACommandClasses: array of TPressMVPCommandClass);
+var
+  I: Integer;
+begin
+  for I := Low(ACommandClasses) to High(ACommandClasses) do
+    AddCommand(ACommandClasses[I]);
+end;
+
 procedure TPressMVPModel.Changed;
 begin
   if not EventsDisabled and Assigned(FOnChange) then
@@ -1005,13 +1062,17 @@ begin
   FNotifier.Free;
   FCommands.Free;
   FSubject.Free;
+  FSelection.Free;
   inherited;
 end;
 
 function TPressMVPModel.FindCommand(
   ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
 begin
-  Result := FCommands.FindCommand(ACommandClass);
+  if Assigned(FCommands) then
+    Result := FCommands.FindCommand(ACommandClass)
+  else
+    Result := nil;
 end;
 
 function TPressMVPModel.GetCommands: TPressMVPCommands;
@@ -1033,8 +1094,25 @@ begin
   Result := FNotifier;
 end;
 
+function TPressMVPModel.GetSelection: TPressMVPSelection;
+begin
+  if not Assigned(FSelection) then
+    FSelection := InternalCreateSelection;
+  Result := FSelection;
+end;
+
+function TPressMVPModel.HasCommands: Boolean;
+begin
+  Result := Assigned(FCommands) and (FCommands.Count > 0);
+end;
+
 procedure TPressMVPModel.InitCommands;
 begin
+end;
+
+function TPressMVPModel.InternalCreateSelection: TPressMVPSelection;
+begin
+  Result := TPressMVPNullSelection.Create;
 end;
 
 procedure TPressMVPModel.Notify(AEvent: TPressEvent);
@@ -1264,14 +1342,10 @@ begin
   SetModel(AModel);
   SetView(AView);
   View.FPresenter := Self;  // friend class
-  CommandMenu := CreateCommandMenu;
+  if Model.HasCommands then
+    CommandMenu := InternalCreateCommandMenu;
   DoInitInteractors;
   DoInitPresenter;
-end;
-
-function TPressMVPPresenter.CreateCommandMenu: TPressMVPCommandMenu;
-begin
-  Result := TPressMVPPopupCommandMenu.Create;
 end;
 
 class function TPressMVPPresenter.CreateFromControllers(
@@ -1363,6 +1437,40 @@ procedure TPressMVPPresenter.InitPresenter;
 begin
 end;
 
+function TPressMVPPresenter.InternalCreateCommandMenu: TPressMVPCommandMenu;
+begin
+  Result := TPressMVPPopupCommandMenu.Create;
+end;
+
+function TPressMVPPresenter.InternalCreateModel(ASubject: TPressSubject): TPressMVPModel;
+begin
+  Result := TPressMVPModel.CreateFromSubject(ASubject);
+end;
+
+function TPressMVPPresenter.InternalCreateSubPresenter(
+  AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
+begin
+  Result := TPressMVPPresenter.CreateFromControllers(AModel, AView);
+end;
+
+function TPressMVPPresenter.InternalCreateView(AControl: TControl): TPressMVPView;
+begin
+  Result := TPressMVPView.CreateFromControl(AControl);
+end;
+
+procedure TPressMVPPresenter.Refresh;
+begin
+  UpdateView;
+  with SubPresenters.CreateIterator do
+  try
+    BeforeFirstItem;
+    while NextItem do
+      CurrentItem.UpdateView;
+  finally
+    Free;
+  end;
+end;
+
 class procedure TPressMVPPresenter.RegisterPresenter;
 begin
   PressRegisteredPresenters.Add(Self);
@@ -1424,14 +1532,6 @@ procedure TPressMVPPresenter.UpdateView;
 begin
   {$IFDEF PressLogMVP}PressLogMsg(Self, 'Updating View ', [View.Control]);{$ENDIF}
   InternalUpdateView;
-  with SubPresenters.CreateIterator do
-  try
-    BeforeFirstItem;
-    while NextItem do
-      CurrentItem.UpdateView;
-  finally
-    Free;
-  end;
 end;
 
 { TPressMVPPresenterList }

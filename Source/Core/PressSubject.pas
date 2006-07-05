@@ -452,6 +452,7 @@ type
     property Mementos: TPressObjectMementoList read GetMementos;
   protected
     procedure Finit; override;
+    procedure Init;
   protected
     procedure AfterCreateAttributes; virtual;
     procedure BeforeCreateAttributes; virtual;
@@ -460,19 +461,20 @@ type
     function InternalIsValid: Boolean; virtual;
   public
     constructor Create(AMetadata: TPressObjectMetadata = nil);
+    constructor Retrieve(const AId: string; AMetadata: TPressObjectMetadata = nil);
     function AttributeAddress(const AAttributeName: string): PPressAttribute;
     function AttributeByName(const AAttributeName: string): TPressAttribute;
     function AttributeByPath(const APath: string): TPressAttribute;
     function AttributeCount: Integer;
     procedure Changed(AAttribute: TPressAttribute);
     procedure Changing(AAttribute: TPressAttribute);
+    class function ClassMetadata: TPressObjectMetadata;
     function ClassType: TPressObjectClass;
     function CreateAttributeIterator: TPressAttributeIterator;
     function CreateMemento: TPressObjectMemento;
     procedure DisableChanges;
     procedure EnableChanges;
     function FindAttribute(const AAttributeName: string): TPressAttribute;
-    class function FindMetadata: TPressObjectMetadata;
     function FindPathAttribute(const APath: string): TPressAttribute;
     class procedure RegisterClass;
     procedure Unchanged;
@@ -1076,9 +1078,10 @@ type
     procedure BeforeChangeItem(AItem: TPressObject); virtual;
     procedure BeforeChangeReference(Sender: TPressProxy; const AClassName, AId: string); virtual;
     procedure BeforeRetrieveInstance(Sender: TPressProxy); virtual;
-    procedure BindProxy(AProxy: TPressProxy);
     procedure BindInstance(AInstance: TPressObject); virtual;
+    procedure BindProxy(AProxy: TPressProxy);
     procedure Finit; override;
+    procedure InternalAssignObject(AObject: TPressObject); virtual; abstract;
     procedure InternalUnassignObject(AObject: TPressObject); virtual; abstract;
     procedure NotifyReferenceChange;
     procedure ReleaseInstance(AInstance: TPressObject); virtual;
@@ -1088,6 +1091,7 @@ type
     procedure ValidateProxy(AProxy: TPressProxy);
   public
     constructor Create(AOwner: TPressObject; AMetadata: TPressAttributeMetadata); override;
+    procedure AssignObject(AObject: TPressObject);
     procedure UnassignObject(AObject: TPressObject);
     property ObjectClass: TPressObjectClass read GetObjectClass;
   end;
@@ -1105,6 +1109,7 @@ type
     procedure Finit; override;
     function GetIsEmpty: Boolean; override;
     function GetSignature: string; override;
+    procedure InternalAssignObject(AObject: TPressObject); override;
     function InternalCreateMemento: TPressAttributeMemento; override;
     procedure InternalUnassignObject(AObject: TPressObject); override;
     property Proxy: TPressProxy read GetProxy;
@@ -1140,7 +1145,7 @@ type
   end;
 
   TPressItemsEventType =
-   (ietAdd, ietInsert, ietModify, ietRemove, ietRebuild, ietClear);
+   (ietAdd, ietInsert, ietModify, ietNotify, ietRemove, ietRebuild, ietClear);
 
   TPressItemsChangedEvent = class(TPressAttributeChangedEvent)
   private
@@ -1173,6 +1178,7 @@ type
     procedure ChangedList(Sender: TPressProxyList; Item: TPressProxy; Action: TListNotification);
     procedure Finit; override;
     function GetIsEmpty: Boolean; override;
+    procedure InternalAssignObject(AObject: TPressObject); override;
     function InternalCreateMemento: TPressAttributeMemento; override;
     function InternalCreateProxyList: TPressProxyList; virtual; abstract;
     procedure InternalUnassignObject(AObject: TPressObject); override;
@@ -1343,7 +1349,7 @@ begin
   for I := 0 to Pred(PressRegisteredClasses.Count) do
   begin
     Result := TPressObjectClass(PressRegisteredClasses[I]);
-    if Result.FindMetadata.PersistentName = APersistentName then
+    if Result.ClassMetadata.PersistentName = APersistentName then
       Exit;
   end;
   raise EPressError.CreateFmt(SPersistentClassNotFound, [APersistentName]);
@@ -1510,7 +1516,7 @@ begin
   if ObjectClass = TPressObject then
     Result := nil
   else
-    Result := TPressObjectClass(ObjectClass.ClassParent).FindMetadata;
+    Result := TPressObjectClass(ObjectClass.ClassParent).ClassMetadata;
 end;
 
 { TPressObjectMetadataList }
@@ -1889,9 +1895,8 @@ procedure TPressItemMemento.Restore;
   procedure RestoreModified;
   begin
     {$IFDEF PressLogSubjectMemento}PressLogMsg(Self, 'Restoring modified ' + Owner.Signature);{$ENDIF}
-    { TODO : Workaround - the assignment is clearing the object }
-//    if Assigned(FProxyClone) then
-//      FProxy.Assign(FProxyClone);
+    if Assigned(FProxyClone) then
+      FProxy.Assign(FProxyClone);
     if Assigned(FSubjectMemento) then
       FSubjectMemento.Restore;
   end;
@@ -2276,6 +2281,19 @@ begin
   NotifyMementos(AAttribute);
 end;
 
+class function TPressObject.ClassMetadata: TPressObjectMetadata;
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(PressObjectMetadatas.Count) do
+  begin
+    Result := TPressObjectMetadata(PressObjectMetadatas[I]);
+    if Result.ObjectClass = Self then
+      Exit;
+  end;
+  raise EPressError.CreateFmt(SMetadataNotFound, [ClassName]);
+end;
+
 function TPressObject.ClassType: TPressObjectClass;
 begin
   Result := TPressObjectClass(inherited ClassType);
@@ -2290,15 +2308,7 @@ constructor TPressObject.Create(AMetadata: TPressObjectMetadata);
 begin
   inherited Create;
   FMetadata := AMetadata;
-  FAttributes := TPressAttributeList.Create(True);
-  DisableChanges;
-  try
-    CreateAttributes;
-    PressObjectStore.AddObject(Self);
-    Initialize;
-  finally
-    EnableChanges;
-  end;
+  Init;
 end;
 
 function TPressObject.CreateAttributeIterator: TPressAttributeIterator;
@@ -2379,19 +2389,6 @@ begin
     Result := VAttribute^
   else
     Result := nil;
-end;
-
-class function TPressObject.FindMetadata: TPressObjectMetadata;
-var
-  I: Integer;
-begin
-  for I := 0 to Pred(PressObjectMetadatas.Count) do
-  begin
-    Result := TPressObjectMetadata(PressObjectMetadatas[I]);
-    if Result.ObjectClass = Self then
-      Exit;
-  end;
-  raise EPressError.CreateFmt(SMetadataNotFound, [ClassName]);
 end;
 
 function TPressObject.FindPathAttribute(const APath: string): TPressAttribute;
@@ -2476,13 +2473,26 @@ end;
 function TPressObject.GetMetadata: TPressObjectMetadata;
 begin
   if not Assigned(FMetadata) then
-    FMetadata := FindMetadata;
+    FMetadata := ClassMetadata;
   Result := FMetadata;
 end;
 
 function TPressObject.GetPersistentName: string;
 begin
   Result := Metadata.PersistentName;
+end;
+
+procedure TPressObject.Init;
+begin
+  FAttributes := TPressAttributeList.Create(True);
+  DisableChanges;
+  try
+    CreateAttributes;
+    PressObjectStore.AddObject(Self);
+    Initialize;
+  finally
+    EnableChanges;
+  end;
 end;
 
 procedure TPressObject.Initialize;
@@ -2497,14 +2507,12 @@ end;
 procedure TPressObject.NotifyChange;
 begin
   {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s changed', [Signature]));{$ENDIF}
-//  TPressObjectChangedEvent.Create(Self).QueueNotification;
   TPressObjectChangedEvent.Create(Self).Notify;
 end;
 
 procedure TPressObject.NotifyInvalidate;
 begin
   {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s invalidated', [Signature]));{$ENDIF}
-//  TPressObjectChangedEvent.Create(Self, False).QueueNotification;
   TPressObjectChangedEvent.Create(Self, False).Notify;
 end;
 
@@ -2524,13 +2532,31 @@ end;
 procedure TPressObject.NotifyUnchange;
 begin
   {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s unchanged', [Signature]));{$ENDIF}
-//  TPressObjectUnchangedEvent.Create(Self).QueueNotification;
   TPressObjectUnchangedEvent.Create(Self).Notify;
 end;
 
 class procedure TPressObject.RegisterClass;
 begin
   PressRegisteredClasses.Add(Self);
+end;
+
+constructor TPressObject.Retrieve(
+  const AId: string; AMetadata: TPressObjectMetadata);
+var
+  VInstance: TPressObject;
+begin
+  inherited Create;
+  VInstance := PressPersistenceBroker.Retrieve(ClassName, AId);
+  if Assigned(VInstance) then
+  begin
+    inherited FreeInstance;
+    Self := VInstance;
+  end else
+  begin
+    FMetadata := AMetadata;
+    Init;
+    _Id.FValue := AId;  // friend class
+  end;
 end;
 
 procedure TPressObject.SetId(const Value: string);
@@ -2666,9 +2692,9 @@ begin
   begin
     if Source.FInstance <> FInstance then
     begin
-      FInstance.Free;
-      FInstance := Source.FInstance;
-      FInstance.AddRef;
+      Instance := Source.FInstance;
+      if ProxyType = ptOwned then
+        FInstance.AddRef;
     end;
   end else if Source.HasReference then
     AssignReference(Source.FRefClass, Source.FRefID)
@@ -2738,6 +2764,7 @@ begin
   if HasReference then
   begin
     VInstance := PressPersistenceBroker.Retrieve(FRefClass, FRefID);
+    { TODO : Raise exception if not found? }
     if Assigned(FBeforeChangeInstance) then
       FBeforeChangeInstance(Self, VInstance, pctDereferencing);
     FInstance.Free;
@@ -3240,7 +3267,7 @@ end;
 function TPressAttribute.InvalidClassError(const AClassName: string): EPressError;
 begin
   Result := EPressError.CreateFmt(
-   SInvalidClass, [ClassName, Name, AClassName]);
+   SInvalidAttributeClass, [ClassName, Name, AClassName]);
 end;
 
 function TPressAttribute.InvalidValueError(AValue: Variant;
@@ -3253,7 +3280,6 @@ end;
 procedure TPressAttribute.NotifyChange;
 begin
   {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Attribute %s changed', [Signature]));{$ENDIF}
-//  TPressAttributeChangedEvent.Create(Self).QueueNotification;
   TPressAttributeChangedEvent.Create(Self).Notify;
 end;
 
@@ -4894,6 +4920,11 @@ begin
   Changed;
 end;
 
+procedure TPressStructure.AssignObject(AObject: TPressObject);
+begin
+  InternalAssignObject(AObject);
+end;
+
 procedure TPressStructure.BeforeChangeInstance(
   Sender: TPressProxy; Instance: TPressObject;
   ChangeType: TPressProxyChangeType);
@@ -4922,6 +4953,12 @@ procedure TPressStructure.BeforeRetrieveInstance(Sender: TPressProxy);
 begin
 end;
 
+procedure TPressStructure.BindInstance(AInstance: TPressObject);
+begin
+  if Assigned(AInstance) then
+    FNotifier.AddNotificationItem(AInstance, [TPressObjectChangedEvent]);
+end;
+
 procedure TPressStructure.BindProxy(AProxy: TPressProxy);
 begin
   AProxy.AfterChangeInstance := AfterChangeInstance;
@@ -4931,12 +4968,6 @@ begin
   AProxy.BeforeRetrieveInstance := BeforeRetrieveInstance;
   if AProxy.HasInstance then
     BindInstance(AProxy.Instance);
-end;
-
-procedure TPressStructure.BindInstance(AInstance: TPressObject);
-begin
-  if Assigned(AInstance) then
-    FNotifier.AddNotificationItem(AInstance, [TPressObjectChangedEvent]);
 end;
 
 constructor TPressStructure.Create(
@@ -5076,6 +5107,11 @@ begin
   Result := Proxy.HasInstance;
 end;
 
+procedure TPressItem.InternalAssignObject(AObject: TPressObject);
+begin
+  Value := AObject;
+end;
+
 function TPressItem.InternalCreateMemento: TPressAttributeMemento;
 begin
   Result := TPressItemMemento.Create(Self, Proxy);
@@ -5110,8 +5146,9 @@ begin
   Result := 'Part';
 end;
 
-procedure TPressPart.BeforeChangeInstance(Sender: TPressProxy;
-  Instance: TPressObject; ChangeType: TPressProxyChangeType);
+procedure TPressPart.BeforeChangeInstance(
+  Sender: TPressProxy; Instance: TPressObject;
+  ChangeType: TPressProxyChangeType);
 begin
   inherited;
 
@@ -5207,9 +5244,8 @@ procedure TPressItems.AfterChangeInstance(
   Sender: TPressProxy; Instance: TPressObject;
   ChangeType: TPressProxyChangeType);
 begin
-  { TODO : Workaround due to duplicated event }
   inherited;
-  ChangedItem(Instance);
+  ChangedItem(Instance, ChangeType = pctAssigning);
 end;
 
 procedure TPressItems.AssignProxyList(AProxyList: TPressProxyList);
@@ -5239,13 +5275,20 @@ procedure TPressItems.ChangedItem(
   AItem: TPressObject; ASubjectChanged: Boolean);
 var
   VIndex: Integer;
+  VEventType: TPressItemsEventType;
 begin
   if ChangesDisabled then
     Exit;
   VIndex := ProxyList.IndexOfInstance(AItem);
   if VIndex >= 0 then
+  begin
+    if ASubjectChanged then
+      VEventType := ietModify
+    else
+      VEventType := ietNotify;
     TPressItemsChangedEvent.Create(
-     Self, ProxyList[VIndex], VIndex, ietModify).Notify;
+     Self, ProxyList[VIndex], VIndex, VEventType).Notify;
+  end;
   if ASubjectChanged then
     Changed;
 end;
@@ -5422,6 +5465,11 @@ begin
     AObject.Release;
 end;
 
+procedure TPressItems.InternalAssignObject(AObject: TPressObject);
+begin
+  Add(AObject);
+end;
+
 function TPressItems.InternalCreateMemento: TPressAttributeMemento;
 begin
   Result := TPressItemsMemento.Create(Self);
@@ -5454,7 +5502,6 @@ end;
 
 procedure TPressItems.NotifyRebuild;
 begin
-//  TPressItemsChangedEvent.Create(Self, nil, -1, ietRebuild).QueueNotification;
   TPressItemsChangedEvent.Create(Self, nil, -1, ietRebuild).Notify;
 end;
 

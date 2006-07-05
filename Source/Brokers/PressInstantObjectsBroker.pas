@@ -166,19 +166,23 @@ var
   VInstantObject: TInstantObject;
 begin
   VPressObjectClass := PressObjectClassByName(AClass);
-  Result := VPressObjectClass.Create;
-  try
-    VInstantObject := InstantFindClass(
-     VPressObjectClass.FindMetadata.PersistentName).Retrieve(AId, True);
+  VInstantObject := InstantFindClass(
+   VPressObjectClass.ClassMetadata.PersistentName).Retrieve(AId, False);
+  if Assigned(VInstantObject) then
+  begin
     try
-      ReadInstantObject(VInstantObject, Result);
+      Result := VPressObjectClass.Create;
+      try
+        ReadInstantObject(VInstantObject, Result);
+      except
+        Result.Free;
+        raise;
+      end;
     finally
       VInstantObject.Free;
     end;
-  except
-    Result.Free;
-    raise;
-  end;
+  end else
+    Result := nil;
 end;
 
 function TPressInstantObjectsPersistence.InternalRetrieveProxyList(

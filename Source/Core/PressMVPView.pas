@@ -34,6 +34,7 @@ uses
   Grids,
   Forms,
   PressCompatibility,
+  PressClasses,
   PressSubject,
   PressMVP,
   PressMVPModel;
@@ -85,7 +86,26 @@ type
   TPressMVPViewDropDownEvent = class(TPressMVPViewEvent)
   end;
 
+  TPressMVPListBoxView = class;
+  TPressMVPGridView = class;
+
   {$IFDEF PressViewNotification}
+  TPressMVPViewDrawItemEvent = class(TPressMVPViewEvent)
+  private
+    FCanvas: TCanvas;
+    FItemIndex: Integer;
+    FState: TOwnerDrawState;
+    FRect: TRect;
+    function GetOwner: TPressMVPListBoxView;
+  public
+    constructor Create(AOwner: TPressMVPListBoxView; ACanvas: TCanvas; AItemIndex: Integer; ARect: TRect; State: TOwnerDrawState);
+    property Owner: TPressMVPListBoxView read GetOwner;
+    property Canvas: TCanvas read FCanvas;
+    property ItemIndex: Integer read FItemIndex;
+    property Rect: TRect read FRect;
+    property State: TOwnerDrawState read FState;
+  end;
+
   TPressMVPViewDrawCellEvent = class(TPressMVPViewEvent)
   private
     FCanvas: TCanvas;
@@ -93,25 +113,15 @@ type
     FRect: TRect;
     FRow: Integer;
     FState: TGridDrawState;
+    function GetOwner: TPressMVPGridView;
   public
-    constructor Create(AOwner: TObject; ACanvas: TCanvas; ACol, ARow: Integer; ARect: TRect; State: TGridDrawState);
+    constructor Create(AOwner: TPressMVPGridView; ACanvas: TCanvas; ACol, ARow: Integer; ARect: TRect; State: TGridDrawState);
+    property Owner: TPressMVPGridView read GetOwner;
     property Canvas: TCanvas read FCanvas;
     property Col: Integer read FCol;
     property Rect: TRect read FRect;
     property Row: Integer read FRow;
     property State: TGridDrawState read FState;
-  end;
-
-  TPressMVPViewDrawItemEvent = class(TPressMVPViewEvent)
-  private
-    FItemIndex: Integer;
-    FState: TOwnerDrawState;
-    FRect: TRect;
-  public
-    constructor Create(AOwner: TObject; AItemIndex: Integer; ARect: TRect; State: TOwnerDrawState);
-    property ItemIndex: Integer read FItemIndex;
-    property Rect: TRect read FRect;
-    property State: TOwnerDrawState read FState;
   end;
 
   TPressMVPViewSelectCellEvent = class(TPressMVPViewEvent)
@@ -243,6 +253,7 @@ type
     procedure InternalUpdateView(AAttribute: TPressAttribute); override;
   public
     class function Apply(AControl: TControl): Boolean; override;
+    procedure SelectAll;
     procedure ShowReferences;
     property Changed: Boolean read FChanged;
     property Control: TCustomComboBox read GetControl;
@@ -267,10 +278,8 @@ type
     procedure SetRowCount(ARowCount: Integer);
   end;
 
-  TPressMVPListBoxView = class;
-
   TPressDrawItemEvent = procedure(Sender: TPressMVPListBoxView;
-   AIndex: Integer; ARect: TRect; State: TOwnerDrawState);
+   ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState) of object;
 
   TPressMVPListBoxView = class(TPressMVPItemsView)
   private
@@ -292,8 +301,6 @@ type
     property OnDrawItem: TPressDrawItemEvent read FOnDrawItem write FOnDrawItem;
     {$ENDIF}
   end;
-
-  TPressMVPGridView = class;
 
   TPressDrawCellEvent = procedure(Sender: TPressMVPGridView; ACanvas: TCanvas;
    ACol, ARow: Longint; ARect: TRect; State: TGridDrawState) of object;
@@ -438,10 +445,28 @@ end;
 
 {$IFDEF PressViewNotification}
 
+{ TPressMVPViewDrawItemEvent }
+
+constructor TPressMVPViewDrawItemEvent.Create(
+  AOwner: TPressMVPListBoxView; ACanvas: TCanvas;
+  AItemIndex: Integer; ARect: TRect; State: TOwnerDrawState);
+begin
+  inherited Create(AOwner);
+  FCanvas := ACanvas;
+  FItemIndex := AItemIndex;
+  FRect := ARect;
+  FState := State;
+end;
+
+function TPressMVPViewDrawItemEvent.GetOwner: TPressMVPListBoxView;
+begin
+  Result := inherited Owner as TPressMVPListBoxView;
+end;
+
 { TPressMVPViewDrawCellEvent }
 
 constructor TPressMVPViewDrawCellEvent.Create(
-  AOwner: TObject; ACanvas: TCanvas; ACol, ARow: Integer; ARect: TRect;
+  AOwner: TPressMVPGridView; ACanvas: TCanvas; ACol, ARow: Integer; ARect: TRect;
   State: TGridDrawState);
 begin
   inherited Create(AOwner);
@@ -452,15 +477,9 @@ begin
   FState := State;
 end;
 
-{ TPressMVPViewDrawItemEvent }
-
-constructor TPressMVPViewDrawItemEvent.Create(AOwner: TObject;
-  AItemIndex: Integer; ARect: TRect; State: TOwnerDrawState);
+function TPressMVPViewDrawCellEvent.GetOwner: TPressMVPGridView;
 begin
-  inherited Create(AOwner);
-  FItemIndex := AItemIndex;
-  FRect := ARect;
-  FState := State;
+  Result := inherited Owner as TPressMVPGridView;
 end;
 
 { TPressMVPViewSelectCellEvent }
@@ -823,6 +842,11 @@ begin
     TPressMVPViewCustomComboBoxFriend(Control).Text := '';
 end;
 
+procedure TPressMVPComboBoxView.SelectAll;
+begin
+  Control.SelectAll;
+end;
+
 procedure TPressMVPComboBoxView.ShowReferences;
 begin
   DisableEvents;
@@ -929,6 +953,9 @@ begin
   begin
     FViewDrawItemEvent := OnDrawItem;
     OnDrawItem := ViewDrawItemEvent;
+    Style := lbOwnerDrawFixed;
+    { TODO : Implement multi selection }
+    //MultiSelect := True;
   end;
 end;
 
@@ -964,11 +991,12 @@ begin
   if EventsDisabled then
     Exit;
   {$IFDEF PressViewNotification}
-  TPressMVPViewDrawItemEvent.Create(Self, AIndex, ARect, State).Notify;
+  TPressMVPViewDrawItemEvent.Create(
+   Self, Control.Canvas, AIndex, ARect, State).Notify;
   {$ENDIF}
   {$IFDEF PressViewDirectEvent}
   if Assigned(FOnDrawItem) then
-    FOnDrawItem(Self, AIndex, ARect, State);
+    FOnDrawItem(Self, Control.Canvas, AIndex, ARect, State);
   {$ENDIF}
   if Assigned(FViewDrawItemEvent) then
     FViewDrawItemEvent(Control, AIndex, ARect, State);
@@ -995,7 +1023,7 @@ begin
     FViewSelectCellEvent := OnSelectCell;
     OnDrawCell := ViewDrawCellEvent;
     OnSelectCell := ViewSelectCellEvent;
-
+    { TODO : Implement multi selection }
     Options := Options + [goColSizing, goRowSelect] - [goHorzLine, goRangeSelect];
     FixedCols := 1;
     FixedRows := 1;

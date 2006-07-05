@@ -52,9 +52,9 @@ resourcestring
   SDialogClassIsAssigned = 'Classe do objeto de diálogo já está associado';
   SDisplayNameMissing = 'Falta DisplayName para o controle %s(''%s'')';
   SDisplayNameNotSupported = 'DisplayName não é suportado para o atributo %s(''%s.%s'')';
-  SInvalidAttributeValue = 'Valor ''%s'' inválido para %s(''%s'')';
+  SInvalidAttributeClass = 'O atributo %s(''%s'') requer objetos da classe %s';
   SInvalidAttributeType = 'Tipo inválido para o atributo %s (%s)';
-  SInvalidClass = 'O atributo %s(''%s'') requer objetos da classe %s';
+  SInvalidAttributeValue = 'Valor ''%s'' inválido para %s(''%s'')';
   SMainFormNotAssigned = 'Formulário principal não associado';
   SMainPresenterClassIsAssigned = 'Classe do presenter principal já está associada';
   SMainPresenterIsInitialized = 'Presenter principal já está inicializado';
@@ -70,10 +70,11 @@ resourcestring
   SSubjectNotAssigned = 'Subject não foi associado';
   STokenExpected = '''%s'' esperado, mas ''%s'' foi encontrado';
   SUnassignedCandidateClasses = 'Classes candidata não estão associadas';
-  SUnassignedQuerySubPresenter = 'O SubPresenter da Query não foi associado no Presenter %s';
   SUnassignedTargetClass = 'Classe alvo não está associada';
   SUnassignedConnector = 'Conector não está associado';
+  SUnassignedItemsModel = 'ItemsModel não está associado';
   SUnassignedPersistenceBrokerClass = 'Classe do broker de persistência não foi associado';
+  SUndefinedSelection = 'Selection não definido';
   SUnexpectedEof = 'Fim de arquivo inesperado';
   SUnexpectedMVPClassParam = 'Classe MVP %s inicializada com parâmetros inesperados';
   SUnsupportedAttributeType = 'O tipo de atributo %s não é suportado';
@@ -85,11 +86,14 @@ resourcestring
   SPressRemovePictureCommand = 'Remover figura';
   SPressIncludeObjectCommand = 'Cadastrar novo item';
   SPressAddItemCommand = 'Adicionar item';
+  SPressSelectItemCommand = 'Selecionar itens';
   SPressEditItemCommand = 'Alterar item';
   SPressRemoveItemCommand = 'Remover item';
   SPressSaveFormCommand = 'Salvar';
   SPressCancelFormCommand = 'Cancelar';
+  SPressCloseFormCommand = 'Fechar';
   SPressExecuteQueryCommand = 'Executar';
+  SPressAssignSelectionQueryCommand = 'Selecionar';
 
   SPressCancelChangesDialog = 'Cancelar alterações?';
   SPressConfirmRemoveOneItemDialog = 'Um item selecionado. Confirma remoção?';
