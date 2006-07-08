@@ -550,9 +550,9 @@ var
 begin
   for I := 0 to Pred(Count) do
     with Items[I] do
-      if not Assigned(AObservedObject) or
-       (ObservedObject = AObservedObject) then
-        Notifiers.Remove(ANotifier);
+      if not Assigned(AObservedObject) or (ObservedObject = AObservedObject) then
+        while Notifiers.Remove(ANotifier) >= 0 do
+          ;
 end;
 
 { TPressNotificationIterator }
