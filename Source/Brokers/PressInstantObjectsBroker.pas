@@ -339,7 +339,7 @@ begin
       case VPressAttr.AttributeBaseType of
         attString, attMemo, attPicture:
           VPressAttr.AsString := VInstantAttr.AsString;
-        attInteger:
+        attInteger, attEnum:
           VPressAttr.AsInteger := VInstantAttr.AsInteger;
         attFloat:
           VPressAttr.AsFloat := VInstantAttr.AsFloat;
@@ -464,7 +464,7 @@ begin
     case VPressAttr.AttributeBaseType of
       attString, attMemo, attPicture:
         VInstantAttr.AsString := VPressAttr.AsString;
-      attInteger:
+      attInteger, attEnum:
         VInstantAttr.AsInteger := VPressAttr.AsInteger;
       attFloat:
         VInstantAttr.AsFloat := VPressAttr.AsFloat;

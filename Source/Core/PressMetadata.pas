@@ -122,6 +122,13 @@ type
     procedure InternalRead(Reader: TPressCodeReader); override;
   end;
 
+  TPressCodeEnumTypeMetadata = class(TPressCodeAttributeTypeMetadata)
+  protected
+    class function InternalApply(Reader: TPressCodeReader): Boolean; override;
+    class function IsEnumType(const AAttributeName: string): Boolean; virtual;
+    procedure InternalRead(Reader: TPressCodeReader); override;
+  end;
+
   TPressCodeOtherTypeMetadata = class(TPressCodeAttributeTypeMetadata)
   protected
     class function InternalApply(Reader: TPressCodeReader): Boolean; override;
@@ -360,7 +367,8 @@ begin
     Reader.ReadMatch(':');
 
     VRuleClass := FindRule(Reader, [TPressCodeStructureTypeMetadata,
-     TPressCodeSizeableTypeMetadata, TPressCodeOtherTypeMetadata]);
+     TPressCodeSizeableTypeMetadata, TPressCodeEnumTypeMetadata,
+     TPressCodeOtherTypeMetadata]);
     if Assigned(VRuleClass) then
       VRuleClass.Create(Self).Read(Reader)
     else
@@ -496,6 +504,37 @@ begin
   end;
 end;
 
+{ TPressCodeEnumTypeMetadata }
+
+class function TPressCodeEnumTypeMetadata.InternalApply(
+  Reader: TPressCodeReader): Boolean;
+begin
+  Result := IsEnumType(Reader.ReadToken);
+end;
+
+procedure TPressCodeEnumTypeMetadata.InternalRead(
+  Reader: TPressCodeReader);
+var
+  Token: string;
+begin
+  inherited;
+  Owner.Metadata.AttributeName := Reader.ReadToken;
+  Token := Reader.ReadToken;
+  if Token = '(' then
+  begin
+    Owner.Metadata.EnumMetadata :=
+     PressEnumMetadataByName(Reader.ReadIdentifier);
+    Reader.ReadMatch(')');
+  end else
+    Reader.UnreadToken;
+end;
+
+class function TPressCodeEnumTypeMetadata.IsEnumType(
+  const AAttributeName: string): Boolean;
+begin
+  Result := SameText(AAttributeName, 'Enum');
+end;
+
 { TPressCodeOtherTypeMetadata }
 
 class function TPressCodeOtherTypeMetadata.InternalApply(
@@ -516,9 +555,9 @@ class function TPressCodeOtherTypeMetadata.IsOtherType(
 begin
   Result :=
    not TPressCodeStructureTypeMetadata.IsStructureType(AAttributeName) and
-   not TPressCodeSizeableTypeMetadata.IsSizeableType(AAttributeName);
-  if Result then
-    Result := PressFindAttributeClass(AAttributeName) <> nil;
+   not TPressCodeSizeableTypeMetadata.IsSizeableType(AAttributeName) and
+   not TPressCodeEnumTypeMetadata.IsEnumType(AAttributeName) and
+   (PressFindAttributeClass(AAttributeName) <> nil);
 end;
 
 end.

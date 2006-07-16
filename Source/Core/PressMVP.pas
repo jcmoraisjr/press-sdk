@@ -137,6 +137,7 @@ type
     constructor Create(AModel: TPressMVPModel); virtual;
     destructor Destroy; override;
     procedure AddComponent(AComponent: TComponent);
+    class function Apply(AModel: TPressMVPModel): Boolean; virtual;
     procedure Execute;
     property Caption: string read GetCaption;
     property Enabled: Boolean read FEnabled;
@@ -154,6 +155,7 @@ type
   public
     function Add(AObject: TPressMVPCommand): Integer;
     function CreateIterator: TPressMVPCommandIterator;
+    function FindCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     function IndexOf(AObject: TPressMVPCommand): Integer;
     procedure Insert(Index: Integer; AObject: TPressMVPCommand);
     function Remove(AObject: TPressMVPCommand): Integer;
@@ -275,11 +277,15 @@ type
     FCommands: TPressMVPCommands;
     FNotifier: TPressNotifier;
     FOnChange: TPressMVPModelNotifyEvent;
+    FOwnedCommands: TPressMVPCommandList;
+    FParent: TPressMVPModel;
     FSelection: TPressMVPSelection;
     FSubject: TPressSubject;
     function GetCommands: TPressMVPCommands;
+    function GetHasParent: Boolean;
     function GetHasSubject: Boolean;
     function GetNotifier: TPressNotifier;
+    function GetOwnedCommands: TPressMVPCommandList;
     function GetSelection: TPressMVPSelection;
   protected
     procedure InitCommands; virtual;
@@ -287,20 +293,24 @@ type
     procedure Notify(AEvent: TPressEvent); virtual;
     property Commands: TPressMVPCommands read GetCommands;
     property Notifier: TPressNotifier read GetNotifier;
+    property OwnedCommands: TPressMVPCommandList read GetOwnedCommands;
     property Selection: TPressMVPSelection read GetSelection;
   public
-    constructor Create(ASubject: TPressSubject); virtual;
+    constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); virtual;
     destructor Destroy; override;
     function AddCommand(ACommandClass: TPressMVPCommandClass): Integer;
     procedure AddCommands(ACommandClasses: array of TPressMVPCommandClass);
     class function Apply: TPressSubjectClass; virtual; abstract;
     procedure Changed;
     { TODO : Remove this factory method }
-    class function CreateFromSubject(ASubject: TPressSubject): TPressMVPModel;
+    class function CreateFromSubject(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
     function FindCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     function HasCommands: Boolean;
+    function RegisterCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     class procedure RegisterModel;
+    property HasParent: Boolean read GetHasParent;
     property HasSubject: Boolean read GetHasSubject;
+    property Parent: TPressMVPModel read FParent;
     property Subject: TPressSubject read FSubject;
   end;
 
@@ -402,23 +412,27 @@ type
     procedure SetView(Value: TPressMVPView);
   protected
     procedure AfterInitInteractors; virtual;
+    procedure BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString);
+    function ComponentByName(const AComponentName: ShortString): TComponent;
+    function ControlByName(const AControlName: ShortString): TControl;
     procedure InitPresenter; virtual;
     function InternalCreateCommandMenu: TPressMVPCommandMenu; virtual;
     function InternalCreateModel(ASubject: TPressSubject): TPressMVPModel; virtual;
     function InternalCreateSubPresenter(AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter; virtual;
     function InternalCreateView(AControl: TControl): TPressMVPView; virtual;
+    function InternalFindComponent(const AComponentName: string): TComponent; virtual;
     procedure InternalUpdateModel; virtual; abstract;
     procedure InternalUpdateView; virtual; abstract;
     property CommandMenu: TPressMVPCommandMenu read FCommandMenu write SetCommandMenu;
     property Interactors: TPressMVPInteractorList read GetInteractors;
     property SubPresenters: TPressMVPPresenterList read GetSubPresenters;
   public
-    constructor Create(AModel: TPressMVPModel; AView: TPressMVPView); virtual;
+    constructor Create(AOwner: TPressMVPPresenter; AModel: TPressMVPModel; AView: TPressMVPView); virtual;
     destructor Destroy; override;
     procedure AddSubPresenter(APresenter: TPressMVPPresenter);
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; virtual; abstract;
-    { TODO : Remove these factory method }
-    class function CreateFromControllers(AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
+    { TODO : Remove this factory method }
+    class function CreateFromControllers(AOwner: TPressMVPPresenter; AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
     procedure Refresh;
     class procedure RegisterPresenter;
     function SubPresenterCount: Integer;
@@ -467,9 +481,9 @@ type
   private
     function ChooseConcreteClass(ATargetClass, ACandidateClass1, ACandidateClass2: TClass): Integer;
   public
-    function MVPModelFactory(ASubject: TPressSubject): TPressMVPModel;
+    function MVPModelFactory(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
     function MVPViewFactory(AControl: TControl; AOwnsControl: Boolean = False): TPressMVPView;
-    function MVPPresenterFactory(AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter; overload;
+    function MVPPresenterFactory(AOwner: TPressMVPPresenter; AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter; overload;
   end;
 
   TPressMVPControlFriend = class(TControl);
@@ -714,8 +728,18 @@ begin
   ComponentList.Add(VCommandComponent);
 end;
 
+class function TPressMVPCommand.Apply(AModel: TPressMVPModel): Boolean;
+begin
+  Result := True;
+end;
+
 constructor TPressMVPCommand.Create(AModel: TPressMVPModel);
 begin
+  if not Assigned(AModel) then
+    raise EPressMVPError.Create(SUnassignedModel);
+  if not Apply(AModel) then
+    raise EPressMVPError.CreateFmt(SUnsupportedModel,
+     [AModel.ClassName, ClassName]);
   inherited Create;
   FModel := AModel;
   FEnabled := InternalIsEnabled;
@@ -790,6 +814,20 @@ begin
   Result := TPressMVPCommandIterator.Create(Self);
 end;
 
+function TPressMVPCommandList.FindCommand(
+  ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(Count) do
+  begin
+    Result := Items[I];
+    if Assigned(Result) and (Result.ClassType = ACommandClass) then
+      Exit;
+  end;
+  Result := nil;
+end;
+
 function TPressMVPCommandList.GetItems(AIndex: Integer): TPressMVPCommand;
 begin
   Result := inherited Items[AIndex] as TPressMVPCommand;
@@ -843,7 +881,7 @@ begin
   for I := 0 to Pred(Count) do
   begin
     Result := Items[I];
-    if Result.ClassType = ACommandClass then
+    if Assigned(Result) and (Result.ClassType = ACommandClass) then
       Exit;
   end;
   Result := nil;
@@ -1038,10 +1076,12 @@ begin
     FOnChange(Self);
 end;
 
-constructor TPressMVPModel.Create(ASubject: TPressSubject);
+constructor TPressMVPModel.Create(
+  AParent: TPressMVPModel; ASubject: TPressSubject);
 begin
   CheckClass(not Assigned(ASubject) or (ASubject.InheritsFrom(Apply)));
   inherited Create;
+  FParent := AParent;
   FSubject := ASubject;
   if HasSubject then
   begin
@@ -1052,9 +1092,9 @@ begin
 end;
 
 class function TPressMVPModel.CreateFromSubject(
-  ASubject: TPressSubject): TPressMVPModel;
+  AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
 begin
-  Result := TPressMVPFactory.Instance.MVPModelFactory(ASubject);
+  Result := TPressMVPFactory.Instance.MVPModelFactory(AParent, ASubject);
 end;
 
 destructor TPressMVPModel.Destroy;
@@ -1063,6 +1103,7 @@ begin
   FCommands.Free;
   FSubject.Free;
   FSelection.Free;
+  FOwnedCommands.Free;
   inherited;
 end;
 
@@ -1073,6 +1114,8 @@ begin
     Result := FCommands.FindCommand(ACommandClass)
   else
     Result := nil;
+  if not Assigned(Result) then
+    Result := OwnedCommands.FindCommand(ACommandClass);
 end;
 
 function TPressMVPModel.GetCommands: TPressMVPCommands;
@@ -1080,6 +1123,11 @@ begin
   if not Assigned(FCommands) then
     FCommands := TPressMVPCommands.Create;
   Result := FCommands;
+end;
+
+function TPressMVPModel.GetHasParent: Boolean;
+begin
+  Result := Assigned(FParent);
 end;
 
 function TPressMVPModel.GetHasSubject: Boolean;
@@ -1092,6 +1140,13 @@ begin
   if not Assigned(FNotifier) then
     FNotifier := TPressNotifier.Create(Notify);
   Result := FNotifier;
+end;
+
+function TPressMVPModel.GetOwnedCommands: TPressMVPCommandList;
+begin
+  if not Assigned(FOwnedCommands) then
+    FOwnedCommands := TPressMVPCommandList.Create(True);
+  Result := FOwnedCommands;
 end;
 
 function TPressMVPModel.GetSelection: TPressMVPSelection;
@@ -1119,6 +1174,17 @@ procedure TPressMVPModel.Notify(AEvent: TPressEvent);
 begin
   if AEvent is TPressSubjectChangedEvent then
     Changed;
+end;
+
+function TPressMVPModel.RegisterCommand(
+  ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
+begin
+  Result := FindCommand(ACommandClass);
+  if not Assigned(Result) then
+  begin
+    Result := ACommandClass.Create(Self);
+    OwnedCommands.Add(Result);
+  end;
 end;
 
 class procedure TPressMVPModel.RegisterModel;
@@ -1334,24 +1400,60 @@ begin
   end;
 end;
 
+procedure TPressMVPPresenter.BindCommand(
+  ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString);
+var
+  VComponent: TComponent;
+begin
+  VComponent := ComponentByName(AComponentName);
+  if not Assigned(ACommandClass) then
+    ACommandClass := TPressMVPNullCommand;
+  Model.RegisterCommand(ACommandClass).AddComponent(VComponent);
+end;
+
+function TPressMVPPresenter.ComponentByName(
+  const AComponentName: ShortString): TComponent;
+begin
+  Result := InternalFindComponent(AComponentName);
+  if not Assigned(Result) then
+    raise EPressMVPError.CreateFmt(SComponentNotFound,
+     [View.Control.ClassName, AComponentName]);
+end;
+
+function TPressMVPPresenter.ControlByName(
+  const AControlName: ShortString): TControl;
+var
+  VComponent: TComponent;
+begin
+  VComponent := ComponentByName(AControlName);
+  if not (VComponent is TControl) then
+    raise EPressMVPError.CreateFmt(SComponentIsNotAControl,
+     [View.Control.ClassName, AControlName]);
+  Result := TControl(VComponent);
+end;
+
 constructor TPressMVPPresenter.Create(
-  AModel: TPressMVPModel; AView: TPressMVPView);
+  AOwner: TPressMVPPresenter; AModel: TPressMVPModel; AView: TPressMVPView);
 begin
   CheckClass(Apply(AModel, AView));
   inherited Create;
+  if Assigned(AOwner) then
+    AOwner.AddSubPresenter(Self);
   SetModel(AModel);
   SetView(AView);
   View.FPresenter := Self;  // friend class
   if Model.HasCommands then
     CommandMenu := InternalCreateCommandMenu;
-  DoInitInteractors;
   DoInitPresenter;
+  DoInitInteractors;
 end;
 
 class function TPressMVPPresenter.CreateFromControllers(
+  AOwner: TPressMVPPresenter;
   AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
 begin
-  Result := TPressMVPFactory.Instance.MVPPresenterFactory(AModel, AView);
+  Result :=
+   TPressMVPFactory.Instance.MVPPresenterFactory(AOwner, AModel, AView);
 end;
 
 destructor TPressMVPPresenter.Destroy;
@@ -1444,18 +1546,27 @@ end;
 
 function TPressMVPPresenter.InternalCreateModel(ASubject: TPressSubject): TPressMVPModel;
 begin
-  Result := TPressMVPModel.CreateFromSubject(ASubject);
+  Result := TPressMVPModel.CreateFromSubject(Model, ASubject);
 end;
 
 function TPressMVPPresenter.InternalCreateSubPresenter(
   AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
 begin
-  Result := TPressMVPPresenter.CreateFromControllers(AModel, AView);
+  Result := TPressMVPPresenter.CreateFromControllers(Self, AModel, AView);
 end;
 
 function TPressMVPPresenter.InternalCreateView(AControl: TControl): TPressMVPView;
 begin
   Result := TPressMVPView.CreateFromControl(AControl);
+end;
+
+function TPressMVPPresenter.InternalFindComponent(
+  const AComponentName: string): TComponent;
+begin
+  if Assigned(FParent) then
+    Result := FParent.InternalFindComponent(AComponentName)
+  else
+    Result := nil;
 end;
 
 procedure TPressMVPPresenter.Refresh;
@@ -1626,7 +1737,7 @@ begin
   end;
 end;
 
-function TPressMVPFactory.MVPModelFactory(ASubject: TPressSubject): TPressMVPModel;
+function TPressMVPFactory.MVPModelFactory(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
 var
   VModelClass, VCandidateClass: TPressMVPModelClass;
   I: Integer;
@@ -1647,10 +1758,11 @@ begin
        [TPressMVPModel.ClassName, ASubject.ClassName]);
   end else
     raise EPressMVPError.Create(SSubjectNotAssigned);
-  Result := VCandidateClass.Create(ASubject);
+  Result := VCandidateClass.Create(AParent, ASubject);
 end;
 
 function TPressMVPFactory.MVPPresenterFactory(
+  AOwner: TPressMVPPresenter;
   AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
 var
   VPresenterClass, VCandidateClass: TPressMVPPresenterClass;
@@ -1672,7 +1784,7 @@ begin
   if not Assigned(VCandidateClass) then
     raise EPressMVPError.CreateFmt(SObjectNotSupported,
      [TPressMVPPresenter.ClassName, AModel.ClassName + ', ' + AView.ClassName]);
-  Result := VCandidateClass.Create(AModel, AView);
+  Result := VCandidateClass.Create(AOwner, AModel, AView);
 end;
 
 function TPressMVPFactory.MVPViewFactory(AControl: TControl;

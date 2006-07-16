@@ -138,7 +138,7 @@ type
     procedure Notify(AEvent: TPressEvent); override;
     property Metadata: TPressQueryMetadata read GetMetadata;
   public
-    constructor Create(ASubject: TPressSubject); override;
+    constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
     destructor Destroy; override;
     class function Apply: TPressSubjectClass; override;
     function CreateQueryIterator: TPressQueryIterator;
@@ -231,7 +231,7 @@ type
     procedure Notify(AEvent: TPressEvent); override;
     property ObjectList: TPressMVPObjectList read GetObjectList;
   public
-    constructor Create(ASubject: TPressSubject); override;
+    constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
     destructor Destroy; override;
     function Count: Integer;
     function DisplayText(ACol, ARow: Integer): string;
@@ -251,9 +251,12 @@ type
   TPressMVPReferencesModel = class(TPressMVPItemsModel)
   protected
     procedure InitCommands; override;
+    procedure InternalCreateAddReferencesCommands; virtual;
   public
     class function Apply: TPressSubjectClass; override;
   end;
+
+  TPressMVPObjectModelClass = class of TPressMVPObjectModel;
 
   TPressMVPObjectModel = class(TPressMVPModel)
   private
@@ -273,7 +276,7 @@ type
     procedure Notify(AEvent: TPressEvent); override;
     property SubModels: TPressMVPModelList read GetSubModels;
   public
-    constructor Create(ASubject: TPressSubject); override;
+    constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
     destructor Destroy; override;
     class function Apply: TPressSubjectClass; override;
     function HasHookedSubject: Boolean;
@@ -288,17 +291,13 @@ type
 
   TPressMVPQueryModel = class(TPressMVPObjectModel)
   private
-    FItemsModel: TPressMVPItemsModel;
-    function GetItemsSelection: TPressMVPObjectSelection;
     function GetSubject: TPressQuery;
   protected
     procedure InitCommands; override;
   public
     class function Apply: TPressSubjectClass; override;
-    procedure AssignItemsModel(AItemsModel: TPressMVPItemsModel);
     procedure Clear;
     procedure Execute;
-    property ItemsSelection: TPressMVPObjectSelection read GetItemsSelection;
     property Subject: TPressQuery read GetSubject;
   end;
 
@@ -462,23 +461,25 @@ end;
 procedure TPressMVPObjectSelection.SelectObject(AObject: TPressObject);
 begin
   with TPressMVPSelectionChangedEvent.Create(Self) do
-  try
-    if Assigned(AObject) then
-      AObject.AddRef;
+  begin
     try
-      if Assigned(FObjectList) then
-        FObjectList.Clear;
       if Assigned(AObject) then
-        ObjectList.Add(AObject);
+        AObject.AddRef;
+      try
+        if Assigned(FObjectList) then
+          FObjectList.Clear;
+        if Assigned(AObject) then
+          ObjectList.Add(AObject);
+      except
+        if Assigned(AObject) then
+          AObject.Release;
+        raise;
+      end;
     except
-      if Assigned(AObject) then
-        AObject.Release;
+      Release;
       raise;
     end;
     Notify;
-  except
-    Release;
-    raise;
   end;
 end;
 
@@ -506,9 +507,10 @@ begin
   Result := TPressReference;
 end;
 
-constructor TPressMVPReferenceModel.Create(ASubject: TPressSubject);
+constructor TPressMVPReferenceModel.Create(
+  AParent: TPressMVPModel; ASubject: TPressSubject);
 begin
-  inherited Create(ASubject);
+  inherited Create(AParent, ASubject);
   if HasSubject then
     Selection.SelectObject(Subject.Value);
 end;
@@ -820,9 +822,10 @@ begin
     Result := 0;
 end;
 
-constructor TPressMVPItemsModel.Create(ASubject: TPressSubject);
+constructor TPressMVPItemsModel.Create(
+  AParent: TPressMVPModel; ASubject: TPressSubject);
 begin
-  inherited Create(ASubject);
+  inherited Create(AParent, ASubject);
   RebuildObjectList;
 end;
 
@@ -930,7 +933,7 @@ begin
       AddItem;
     ietInsert:
       InsertItem;
-    ietModify:
+    ietModify, ietNotify:
       ModifyItem;
     ietRemove:
       RemoveItem;
@@ -996,11 +999,14 @@ end;
 
 procedure TPressMVPReferencesModel.InitCommands;
 begin
-  if HasSubject and not (Subject.Owner is TPressQuery) then
-  begin
-    AddCommands([TPressMVPAddReferencesCommand, nil]);
-  end;
+  InternalCreateAddReferencesCommands;
   inherited;
+end;
+
+procedure TPressMVPReferencesModel.InternalCreateAddReferencesCommands;
+begin
+  if HasSubject and not (Subject.Owner is TPressQuery) then
+    AddCommand(TPressMVPAddReferencesCommand);
 end;
 
 { TPressMVPObjectModel }
@@ -1029,9 +1035,10 @@ begin
   end;
 end;
 
-constructor TPressMVPObjectModel.Create(ASubject: TPressSubject);
+constructor TPressMVPObjectModel.Create(
+  AParent: TPressMVPModel; ASubject: TPressSubject);
 begin
-  inherited Create(ASubject);
+  inherited Create(AParent, ASubject);
   if Assigned(ASubject) then
     FObjectMemento := (ASubject as TPressObject).CreateMemento;
 end;
@@ -1113,12 +1120,6 @@ begin
   Result := TPressQuery;
 end;
 
-procedure TPressMVPQueryModel.AssignItemsModel(
-  AItemsModel: TPressMVPItemsModel);
-begin
-  FItemsModel := AItemsModel;
-end;
-
 procedure TPressMVPQueryModel.Clear;
 begin
   Subject.Clear;
@@ -1127,14 +1128,6 @@ end;
 procedure TPressMVPQueryModel.Execute;
 begin
   Subject.UpdateReferenceList;
-end;
-
-function TPressMVPQueryModel.GetItemsSelection: TPressMVPObjectSelection;
-begin
-  if Assigned(FItemsModel) then
-    Result := FItemsModel.Selection
-  else
-    raise EPressMVPError.Create(SUnassignedItemsModel);
 end;
 
 function TPressMVPQueryModel.GetSubject: TPressQuery;

@@ -79,6 +79,7 @@ type
   private
     function GetSubject: TPressValue;
   public
+    class function Apply(AModel: TPressMVPModel): Boolean; override;
     property Subject: TPressValue read GetSubject;
   end;
 
@@ -93,6 +94,7 @@ type
   private
     function GetSubject: TPressPicture;
   public
+    class function Apply(AModel: TPressMVPModel): Boolean; override;
     property Subject: TPressPicture read GetSubject;
   end;
 
@@ -115,7 +117,7 @@ type
   private
     function GetModel: TPressMVPStructureModel;
   public
-    constructor Create(AModel: TPressMVPModel); override;
+    class function Apply(AModel: TPressMVPModel): Boolean; override;
     property Model: TPressMVPStructureModel read GetModel;
   end;
 
@@ -131,6 +133,7 @@ type
   private
     function GetModel: TPressMVPReferenceModel;
   public
+    class function Apply(AModel: TPressMVPModel): Boolean; override;
     property Model: TPressMVPReferenceModel read GetModel;
   end;
 
@@ -145,7 +148,15 @@ type
   private
     function GetModel: TPressMVPItemsModel;
   public
+    class function Apply(AModel: TPressMVPModel): Boolean; override;
     property Model: TPressMVPItemsModel read GetModel;
+  end;
+
+  TPressMVPAssignSelectionCommand = class(TPressMVPItemsCommand)
+  protected
+    function GetCaption: string; override;
+    procedure InternalExecute; override;
+    function InternalIsEnabled: Boolean; override;
   end;
 
   TPressMVPCustomAddItemsCommand = class(TPressMVPItemsCommand)
@@ -179,6 +190,7 @@ type
   private
     function GetModel: TPressMVPObjectModel;
   public
+    class function Apply(AModel: TPressMVPModel): Boolean; override;
     property Model: TPressMVPObjectModel read GetModel;
   end;
 
@@ -212,6 +224,7 @@ type
   private
     function GetModel: TPressMVPQueryModel;
   public
+    class function Apply(AModel: TPressMVPModel): Boolean; override;
     property Model: TPressMVPQueryModel read GetModel;
   end;
 
@@ -220,14 +233,6 @@ type
     function GetCaption: string; override;
     function GetShortCut: TShortCut; override;
     procedure InternalExecute; override;
-  end;
-
-  TPressMVPAssignSelectionCommand = class(TPressMVPQueryCommand)
-  protected
-    function GetCaption: string; override;
-    procedure InitNotifier; override;
-    procedure InternalExecute; override;
-    function InternalIsEnabled: Boolean; override;
   end;
 
   TPressMVPCloseApplicationCommand = class(TPressMVPCommand)
@@ -352,6 +357,11 @@ end;
 
 { TPressMVPDateCommand }
 
+class function TPressMVPDateCommand.Apply(AModel: TPressMVPModel): Boolean;
+begin
+  Result := AModel is TPressMVPDateModel;
+end;
+
 function TPressMVPDateCommand.GetSubject: TPressValue;
 begin
   Result := Model.Subject as TPressValue;
@@ -375,6 +385,12 @@ begin
 end;
 
 { TPressMVPPictureCommand }
+
+class function TPressMVPPictureCommand.Apply(
+  AModel: TPressMVPModel): Boolean;
+begin
+  Result := AModel is TPressMVPPictureModel;
+end;
 
 function TPressMVPPictureCommand.GetSubject: TPressPicture;
 begin
@@ -428,10 +444,10 @@ end;
 
 { TPressMVPStructureCommand }
 
-constructor TPressMVPStructureCommand.Create(AModel: TPressMVPModel);
+class function TPressMVPStructureCommand.Apply(
+  AModel: TPressMVPModel): Boolean;
 begin
-  inherited Create(AModel);
-  Notifier.AddNotificationItem(Model.Selection, [TPressMVPSelectionChangedEvent]);
+  Result := AModel is TPressMVPStructureModel;
 end;
 
 function TPressMVPStructureCommand.GetModel: TPressMVPStructureModel;
@@ -463,6 +479,12 @@ end;
 
 { TPressMVPReferenceCommand }
 
+class function TPressMVPReferenceCommand.Apply(
+  AModel: TPressMVPModel): Boolean;
+begin
+  Result := AModel is TPressMVPReferenceModel;
+end;
+
 function TPressMVPReferenceCommand.GetModel: TPressMVPReferenceModel;
 begin
   Result := inherited Model as TPressMVPReferenceModel;
@@ -492,9 +514,52 @@ end;
 
 { TPressMVPItemsCommand }
 
+class function TPressMVPItemsCommand.Apply(
+  AModel: TPressMVPModel): Boolean;
+begin
+  Result := AModel is TPressMVPItemsModel;
+end;
+
 function TPressMVPItemsCommand.GetModel: TPressMVPItemsModel;
 begin
   Result := inherited Model as TPressMVPItemsModel;
+end;
+
+{ TPressMVPAssignSelectionCommand }
+
+function TPressMVPAssignSelectionCommand.GetCaption: string;
+begin
+  Result := SPressAssignSelectionQueryCommand;
+end;
+
+procedure TPressMVPAssignSelectionCommand.InternalExecute;
+var
+  VHookedSubject: TPressStructure;
+begin
+  if Model.HasParent and (Model.Parent is TPressMVPObjectModel) and
+   (Model.Selection.Count > 0) then
+  begin
+    VHookedSubject := TPressMVPObjectModel(Model.Parent).HookedSubject;
+    if VHookedSubject is TPressItem then
+      VHookedSubject.AssignObject(Model.Selection[0])
+    else if VHookedSubject is TPressItems then
+      with Model.Selection.CreateIterator do
+      try
+        BeforeFirstItem;
+        while NextItem do
+          VHookedSubject.AssignObject(CurrentItem);
+      finally
+        Free;
+      end;
+    TPressMVPModelCloseFormEvent.Create(Model.Parent).Notify;
+  end;
+end;
+
+function TPressMVPAssignSelectionCommand.InternalIsEnabled: Boolean;
+begin
+  Result := Model.HasParent and (Model.Parent is TPressMVPObjectModel) and
+   TPressMVPObjectModel(Model.Parent).HasHookedSubject and
+   (Model.Selection.Count > 0);
 end;
 
 { TPressMVPCustomAddItemsCommand }
@@ -581,6 +646,12 @@ end;
 
 { TPressMVPObjectCommand }
 
+class function TPressMVPObjectCommand.Apply(
+  AModel: TPressMVPModel): Boolean;
+begin
+  Result := AModel is TPressMVPObjectModel;
+end;
+
 function TPressMVPObjectCommand.GetModel: TPressMVPObjectModel;
 begin
   Result := inherited Model as TPressMVPObjectModel;
@@ -662,6 +733,12 @@ end;
 
 { TPressMVPQueryCommand }
 
+class function TPressMVPQueryCommand.Apply(
+  AModel: TPressMVPModel): Boolean;
+begin
+  Result := AModel is TPressMVPQueryModel;
+end;
+
 function TPressMVPQueryCommand.GetModel: TPressMVPQueryModel;
 begin
   Result := inherited Model as TPressMVPQueryModel;
@@ -683,44 +760,6 @@ procedure TPressMVPExecuteQueryCommand.InternalExecute;
 begin
   Model.UpdateData;
   Model.Execute;
-end;
-
-{ TPressMVPAssignSelectionCommand }
-
-function TPressMVPAssignSelectionCommand.GetCaption: string;
-begin
-  Result := SPressAssignSelectionQueryCommand;
-end;
-
-procedure TPressMVPAssignSelectionCommand.InitNotifier;
-begin
-  inherited;
-  Notifier.AddNotificationItem(
-   Model.ItemsSelection, [TPressMVPSelectionChangedEvent]);
-end;
-
-procedure TPressMVPAssignSelectionCommand.InternalExecute;
-begin
-  if Model.ItemsSelection.Count > 0 then
-  begin
-    if Model.HookedSubject is TPressItem then
-      Model.HookedSubject.AssignObject(Model.ItemsSelection[0])
-    else if Model.HookedSubject is TPressItems then
-      with Model.ItemsSelection.CreateIterator do
-      try
-        BeforeFirstItem;
-        while NextItem do
-          Model.HookedSubject.AssignObject(CurrentItem);
-      finally
-        Free;
-      end;
-  end;
-  TPressMVPModelCloseFormEvent.Create(Model).Notify;
-end;
-
-function TPressMVPAssignSelectionCommand.InternalIsEnabled: Boolean;
-begin
-  Result := Model.HasHookedSubject and (Model.ItemsSelection.Count > 0);
 end;
 
 { TPressMVPCloseApplicationCommand }

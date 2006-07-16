@@ -107,6 +107,8 @@ type
   end;
 
   TPressMVPDblClickSelectableInteractor = class(TPressMVPInteractor)
+  private
+    FCommand: TPressMVPCommand;
   protected
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
@@ -271,6 +273,7 @@ type
     function GetModel: TPressMVPValueModel;
     function GetView: TPressMVPAttributeView;
   protected
+    procedure InitPresenter; override;
     procedure InternalUpdateModel; override;
     procedure InternalUpdateView; override;
   public
@@ -329,23 +332,19 @@ type
   TPressMVPFormPresenter = class(TPressMVPPresenter)
   private
     FAutoDestroy: Boolean;
-    FOwnedCommandList: TPressMVPCommandList;
-    function ComponentByName(const AComponentName: ShortString): TComponent;
-    function ControlByName(const AControlName: ShortString): TControl;
     function GetModel: TPressMVPObjectModel;
-    function GetOwnedCommandList: TPressMVPCommandList;
     function GetView: TPressMVPFormView;
   protected
     function AttributeByName(const AAttributeName: ShortString): TPressAttribute;
-    procedure BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString);
     function CreateSubPresenter(const AAttributeName, AControlName: ShortString; AModelClass: TPressMVPModelClass = nil; AViewClass: TPressMVPViewClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter; overload;
     function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string; AModelClass: TPressMVPModelClass = nil; AViewClass: TPressMVPViewClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter; overload;
     procedure InitPresenter; override;
+    function InternalFindComponent(const AComponentName: string): TComponent; override;
+    class function InternalModelClass: TPressMVPObjectModelClass; virtual;
+    class function InternalViewClass: TPressMVPCustomFormViewClass; virtual;
     procedure InternalUpdateModel; override;
     procedure InternalUpdateView; override;
-    property OwnedCommandList: TPressMVPCommandList read GetOwnedCommandList;
   public
-    destructor Destroy; override;
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
     class procedure RegisterFormPresenter(AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterType: TPressMVPFormPresenterType = fpIncludePresent);
     class function Run(AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
@@ -357,12 +356,12 @@ type
 
   TPressMVPQueryPresenter = class(TPressMVPFormPresenter)
   private
-    FQueryItemsPresenter: TPressMVPItemsPresenter;
     function GetModel: TPressMVPQueryModel;
   protected
-    function CreateQueryPresenter(const AControlName: ShortString): TPressMVPPresenter;
+    function CreateQueryItemsPresenter(const AControlName: ShortString; ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; AViewClass: TPressMVPViewClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
     function InternalQueryItemsDisplayNames: string; virtual;
     function InternalQueryItemsModelClass: TPressMVPModelClass; virtual;
+    function InternalQueryItemsPresenterClass: TPressMVPPresenterClass; virtual;
     function InternalQueryItemsViewClass: TPressMVPViewClass; virtual;
   public
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
@@ -670,13 +669,16 @@ end;
 procedure TPressMVPDblClickSelectableInteractor.InitInteractor;
 begin
   inherited;
+  FCommand := Owner.Model.FindCommand(TPressMVPAssignSelectionCommand);
+  if not Assigned(FCommand) then
+    FCommand := Owner.Model.RegisterCommand(TPressMVPEditItemCommand);
   Notifier.AddNotificationItem(Owner.View, [TPressMVPViewDblClickEvent]);
 end;
 
 procedure TPressMVPDblClickSelectableInteractor.Notify(AEvent: TPressEvent);
 begin
   inherited;
-  TPressMVPModelCreatePresentFormEvent.Create(Owner.Model).Notify;
+  FCommand.Execute;
 end;
 
 { TPressMVPEditableInteractor }
@@ -1164,6 +1166,18 @@ begin
   Result := inherited View as TPressMVPAttributeView;
 end;
 
+procedure TPressMVPValuePresenter.InitPresenter;
+begin
+  inherited;
+  { TODO : Just a work around -- need to fix this approach }
+  if (Model.Subject is TPressEnum) and (View is TPressMVPComboBoxView) then
+  begin
+    TPressMVPComboBoxView(View).ComboStyle := csDropDownList;
+    TPressMVPComboBoxView(View).Control.Items.Assign(
+     Model.Subject.Metadata.EnumMetadata.Items);
+  end;
+end;
+
 procedure TPressMVPValuePresenter.InternalUpdateModel;
 begin
   View.UpdateModel(Model.Subject);
@@ -1410,46 +1424,6 @@ begin
      [Model.Subject.ClassName, AAttributeName]);
 end;
 
-procedure TPressMVPFormPresenter.BindCommand(
-  ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString);
-var
-  VCommand: TPressMVPCommand;
-begin
-  if not Assigned(ACommandClass) then
-    ACommandClass := TPressMVPNullCommand;
-  VCommand := Model.FindCommand(ACommandClass);
-  if not Assigned(VCommand) then
-  begin
-    VCommand := ACommandClass.Create(Model);
-    OwnedCommandList.Add(VCommand);
-  end;
-  VCommand.AddComponent(ComponentByName(AComponentName));
-end;
-
-function TPressMVPFormPresenter.ComponentByName(
-  const AComponentName: ShortString): TComponent;
-var
-  VComponent: PComponent;
-begin
-  VComponent := View.Control.FieldAddress(AComponentName);
-  if not Assigned(VComponent) or not Assigned(VComponent^) then
-    raise EPressMVPError.CreateFmt(SComponentNotFound,
-     [View.Control.ClassName, AComponentName]);
-  Result := VComponent^;
-end;
-
-function TPressMVPFormPresenter.ControlByName(
-  const AControlName: ShortString): TControl;
-var
-  VComponent: TComponent;
-begin
-  VComponent := ComponentByName(AControlName);
-  if not (VComponent is TControl) then
-    raise EPressMVPError.CreateFmt(SComponentIsNotAControl,
-     [View.Control.ClassName, AControlName]);
-  Result := TControl(VComponent);
-end;
-
 function TPressMVPFormPresenter.CreateSubPresenter(
   const AAttributeName, AControlName: ShortString;
   AModelClass: TPressMVPModelClass;
@@ -1464,7 +1438,7 @@ begin
   VAttribute := AttributeByName(AAttributeName);
   VControl := ControlByName(AControlName);
   if Assigned(AModelClass) then
-    VModel := AModelClass.Create(VAttribute)
+    VModel := AModelClass.Create(Model, VAttribute)
   else
     VModel := InternalCreateModel(VAttribute);
   if Assigned(AViewClass) then
@@ -1472,13 +1446,12 @@ begin
   else
     VView := InternalCreateView(VControl);
   if Assigned(APresenterClass) then
-    Result := APresenterClass.Create(VModel, VView)
+    Result := APresenterClass.Create(Self, VModel, VView)
   else
     Result := InternalCreateSubPresenter(VModel, VView);
   { TODO : Fix leakages when exception raises. }
   { Note - if FModel and FView fields of the presenter was assigned,
     the compiler will destroy these instances }
-  AddSubPresenter(Result);
 end;
 
 function TPressMVPFormPresenter.CreateSubPresenter(
@@ -1504,22 +1477,9 @@ begin
   end;
 end;
 
-destructor TPressMVPFormPresenter.Destroy;
-begin
-  FOwnedCommandList.Free;
-  inherited;
-end;
-
 function TPressMVPFormPresenter.GetModel: TPressMVPObjectModel;
 begin
   Result := inherited Model as TPressMVPObjectModel;
-end;
-
-function TPressMVPFormPresenter.GetOwnedCommandList: TPressMVPCommandList;
-begin
-  if not Assigned(FOwnedCommandList) then
-    FOwnedCommandList := TPressMVPCommandList.Create(True);
-  Result := FOwnedCommandList;
 end;
 
 function TPressMVPFormPresenter.GetView: TPressMVPFormView;
@@ -1533,6 +1493,23 @@ begin
   FAutoDestroy := True;
 end;
 
+function TPressMVPFormPresenter.InternalFindComponent(
+  const AComponentName: string): TComponent;
+var
+  VComponent: PComponent;
+begin
+  VComponent := View.Control.FieldAddress(AComponentName);
+  if Assigned(VComponent) then
+    Result := VComponent^
+  else
+    Result := nil;
+end;
+
+class function TPressMVPFormPresenter.InternalModelClass: TPressMVPObjectModelClass;
+begin
+  Result := nil;
+end;
+
 procedure TPressMVPFormPresenter.InternalUpdateModel;
 begin
 end;
@@ -1541,12 +1518,18 @@ procedure TPressMVPFormPresenter.InternalUpdateView;
 begin
 end;
 
+class function TPressMVPFormPresenter.InternalViewClass: TPressMVPCustomFormViewClass;
+begin
+  Result := nil;
+end;
+
 class procedure TPressMVPFormPresenter.RegisterFormPresenter(
   AObjectClass: TPressObjectClass; AFormClass: TFormClass;
   AFormPresenterType: TPressMVPFormPresenterType);
 begin
-  PressMVPRegisteredForms.Add(TPressMVPRegisteredForm.
-   Create(Self, AObjectClass, AFormClass, AFormPresenterType));
+  PressMVPRegisteredForms.Add(
+   TPressMVPRegisteredForm.Create(
+   Self, AObjectClass, AFormClass, AFormPresenterType));
 end;
 
 class function TPressMVPFormPresenter.Run(
@@ -1560,8 +1543,10 @@ class function TPressMVPFormPresenter.Run(
   AOwner: TPressMVPPresenter; AObject: TPressObject; AIncluding: Boolean;
   AAutoDestroy: Boolean): TPressMVPFormPresenter;
 var
+  VModelClass: TPressMVPObjectModelClass;
   VModel: TPressMVPObjectModel;
-  VView: TPressMVPView;
+  VViewClass: TPressMVPCustomFormViewClass;
+  VView: TPressMVPCustomFormView;
   VFormClass: TFormClass;
   VObjectClass: TPressObjectClass;
   VIndex: Integer;
@@ -1580,17 +1565,28 @@ begin
     AObject := VObjectClass.Create;
     AIncluding := True;
   end;
+
   { TODO : Catch memory leakage when an exception is raised }
-  VModel := TPressMVPModel.CreateFromSubject(AObject) as TPressMVPObjectModel;
+  VModelClass := InternalModelClass;
+  if Assigned(VModelClass) then
+    VModel := VModelClass.Create(AOwner.Model, AObject)
+  else
+    VModel := TPressMVPModel.CreateFromSubject(
+     AOwner.Model, AObject) as TPressMVPObjectModel;
   VModel.IsIncluding := AIncluding;
   if VObjectIsMissing then
     AObject.Release;
-  VView := TPressMVPView.CreateFromControl(VFormClass.Create(nil), True);
-  Result := Create(VModel, VView);
-  if Assigned(AOwner) then
-    AOwner.AddSubPresenter(Result)
+
+  VViewClass := InternalViewClass;
+  if Assigned(VViewClass) then
+    VView := VViewClass.Create(VFormClass.Create(nil), True)
   else
-    PressMainPresenter.AddSubPresenter(Result);
+    VView := TPressMVPView.CreateFromControl(
+     VFormClass.Create(nil), True) as TPressMVPCustomFormView;
+
+  if not Assigned(AOwner) then
+    AOwner := PressMainPresenter;
+  Result := Create(AOwner, VModel, VView);
   Result.FAutoDestroy := AAutoDestroy;
   Result.Refresh;
   Result.View.Control.Show;
@@ -1604,14 +1600,23 @@ begin
   Result := (AModel is TPressMVPQueryModel) and (AView is TPressMVPFormView);
 end;
 
-function TPressMVPQueryPresenter.CreateQueryPresenter(
-  const AControlName: ShortString): TPressMVPPresenter;
+function TPressMVPQueryPresenter.CreateQueryItemsPresenter(
+  const AControlName: ShortString; ADisplayNames: string;
+  AModelClass: TPressMVPModelClass;
+  AViewClass: TPressMVPViewClass;
+  APresenterClass: TPressMVPPresenterClass): TPressMVPPresenter;
 begin
+  if ADisplayNames = '' then
+    ADisplayNames := InternalQueryItemsDisplayNames;
+  if not Assigned(AModelClass) then
+    AModelClass := InternalQueryItemsModelClass;
+  if not Assigned(AViewClass) then
+    AViewClass := InternalQueryItemsViewClass;
+  if not Assigned(APresenterClass) then
+    APresenterClass := InternalQueryItemsPresenterClass;
   Result := CreateSubPresenter(
-   SPressQueryItemsString, AControlName, InternalQueryItemsDisplayNames,
-   InternalQueryItemsModelClass, InternalQueryItemsViewClass);
-  FQueryItemsPresenter := Result as TPressMVPItemsPresenter;
-  Model.AssignItemsModel(FQueryItemsPresenter.Model);
+   SPressQueryItemsString, AControlName, ADisplayNames,
+   AModelClass, AViewClass, APresenterClass);
 end;
 
 function TPressMVPQueryPresenter.GetModel: TPressMVPQueryModel;
@@ -1629,6 +1634,11 @@ begin
   Result := nil;
 end;
 
+function TPressMVPQueryPresenter.InternalQueryItemsPresenterClass: TPressMVPPresenterClass;
+begin
+  Result := nil;
+end;
+
 function TPressMVPQueryPresenter.InternalQueryItemsViewClass: TPressMVPViewClass;
 begin
   Result := nil;
@@ -1641,7 +1651,7 @@ begin
   if not Assigned(Application) or not Assigned(Application.MainForm) then
     raise EPressError.Create(SMainFormNotAssigned);
   inherited Create(
-   InternalCreateModel(nil), InternalCreateView(Application.MainForm));
+   nil, InternalCreateModel(nil), InternalCreateView(Application.MainForm));
 end;
 
 procedure TPressMVPMainFormPresenter.Idle(
@@ -1663,7 +1673,7 @@ end;
 function TPressMVPMainFormPresenter.InternalCreateModel(
   ASubject: TPressSubject): TPressMVPModel;
 begin
-  Result := TPressMVPObjectModel.Create(nil);
+  Result := TPressMVPObjectModel.Create(nil, nil);
 end;
 
 procedure TPressMVPMainFormPresenter.ShutDown;

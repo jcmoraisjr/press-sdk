@@ -232,12 +232,15 @@ type
   end;
 
   TPressMVPComboBoxView = class(TPressMVPItemView)
+  { TODO : This view shouldn't be so smart }
   private
     FChanged: Boolean;
     FViewChangeEvent: TNotifyEvent;
     FViewDropDownEvent: TNotifyEvent;
+    function GetComboStyle: TComboBoxStyle;
     function GetControl: TCustomComboBox;
     function GetDroppedDown: Boolean;
+    procedure SetComboStyle(Value: TComboBoxStyle);
   protected
     procedure ViewChangeEvent(Sender: TObject); virtual;
     procedure ViewDropDownEvent(Sender: TObject); virtual;
@@ -256,6 +259,7 @@ type
     procedure SelectAll;
     procedure ShowReferences;
     property Changed: Boolean read FChanged;
+    property ComboStyle: TComboBoxStyle read GetComboStyle write SetComboStyle;
     property Control: TCustomComboBox read GetControl;
     property DroppedDown: Boolean read GetDroppedDown;
   end;
@@ -355,6 +359,8 @@ type
     class function Apply(AControl: TControl): Boolean; override;
     property Control: TImage read GetControl;
   end;
+
+  TPressMVPCustomFormViewClass = class of TPressMVPCustomFormView;
 
   TPressMVPCustomFormView = class(TPressMVPView)
   end;
@@ -767,6 +773,11 @@ begin
   Result := TPressMVPViewCustomComboBoxFriend(Control).Text;
 end;
 
+function TPressMVPComboBoxView.GetComboStyle: TComboBoxStyle;
+begin
+  Result := TPressMVPViewCustomComboBoxFriend(Control).Style;
+end;
+
 function TPressMVPComboBoxView.GetControl: TCustomComboBox;
 begin
   Result := inherited Control as TCustomComboBox;
@@ -786,6 +797,7 @@ begin
     FViewDropDownEvent := OnDropDown;
     OnChange := ViewChangeEvent;
     OnDropDown := ViewDropDownEvent;
+    Style := csDropDown;
   end;
 end;
 
@@ -827,24 +839,43 @@ begin
     else
       VObject := nil;
     TPressReference(AAttribute).Value := VObject;
-  end;
+  end else if (AAttribute is TPressEnum) then
+    if Control.ItemIndex = -1 then
+      AAttribute.Clear
+    else
+      AAttribute.AsInteger := Control.ItemIndex;
 end;
 
 procedure TPressMVPComboBoxView.InternalUpdateView(AAttribute: TPressAttribute);
 begin
-  Control.Items.Clear;
-  if Assigned(AAttribute) then
+  { TODO : Wrong aproach -- fix }
+  if AAttribute is TPressEnum then
   begin
-    TPressMVPViewCustomComboBoxFriend(Control).Text := AAttribute.DisplayText;
-    Control.Items.AddObject(AAttribute.DisplayText, AAttribute.Owner);
-    Control.ItemIndex := 0;
+    if AAttribute.IsNull then
+      Control.ItemIndex := -1
+    else
+      Control.ItemIndex := AAttribute.AsInteger;
   end else
-    TPressMVPViewCustomComboBoxFriend(Control).Text := '';
+  begin
+    Control.Items.Clear;
+    if Assigned(AAttribute) then
+    begin
+      TPressMVPViewCustomComboBoxFriend(Control).Text := AAttribute.DisplayText;
+      Control.Items.AddObject(AAttribute.DisplayText, AAttribute.Owner);
+      Control.ItemIndex := 0;
+    end else
+      TPressMVPViewCustomComboBoxFriend(Control).Text := '';
+  end;
 end;
 
 procedure TPressMVPComboBoxView.SelectAll;
 begin
   Control.SelectAll;
+end;
+
+procedure TPressMVPComboBoxView.SetComboStyle(Value: TComboBoxStyle);
+begin
+  TPressMVPViewCustomComboBoxFriend(Control).Style := Value;
 end;
 
 procedure TPressMVPComboBoxView.ShowReferences;
@@ -864,7 +895,7 @@ begin
   if EventsDisabled then
     Exit;
   FChanged := True;
-  if not EventsDisabled and Assigned(FViewChangeEvent) then
+  if Assigned(FViewChangeEvent) then
     FViewChangeEvent(Sender);
 end;
 

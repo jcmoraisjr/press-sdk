@@ -52,6 +52,7 @@ resourcestring
   SDialogClassIsAssigned = 'Classe do objeto de diálogo já está associado';
   SDisplayNameMissing = 'Falta DisplayName para o controle %s(''%s'')';
   SDisplayNameNotSupported = 'DisplayName não é suportado para o atributo %s(''%s.%s'')';
+  SEnumMetadataNotFound = 'Enumeration metadata %s não encontrado';
   SInvalidAttributeClass = 'O atributo %s(''%s'') requer objetos da classe %s';
   SInvalidAttributeType = 'Tipo inválido para o atributo %s (%s)';
   SInvalidAttributeValue = 'Valor ''%s'' inválido para %s(''%s'')';
@@ -72,12 +73,13 @@ resourcestring
   SUnassignedCandidateClasses = 'Classes candidata não estão associadas';
   SUnassignedTargetClass = 'Classe alvo não está associada';
   SUnassignedConnector = 'Conector não está associado';
-  SUnassignedItemsModel = 'ItemsModel não está associado';
+  SUnassignedModel = 'Model não está associado';
   SUnassignedPersistenceBrokerClass = 'Classe do broker de persistência não foi associado';
   SUndefinedSelection = 'Selection não definido';
   SUnexpectedEof = 'Fim de arquivo inesperado';
   SUnexpectedMVPClassParam = 'Classe MVP %s inicializada com parâmetros inesperados';
   SUnsupportedAttributeType = 'O tipo de atributo %s não é suportado';
+  SUnsupportedModel = 'Model %s não é suportado por %s';
 
   SConnectionManagerCaption = 'Conector';
 
