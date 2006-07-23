@@ -417,9 +417,9 @@ type
     function ControlByName(const AControlName: ShortString): TControl;
     procedure InitPresenter; virtual;
     function InternalCreateCommandMenu: TPressMVPCommandMenu; virtual;
-    function InternalCreateModel(ASubject: TPressSubject): TPressMVPModel; virtual;
+    function InternalCreateSubModel(ASubject: TPressSubject): TPressMVPModel; virtual;
     function InternalCreateSubPresenter(AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter; virtual;
-    function InternalCreateView(AControl: TControl): TPressMVPView; virtual;
+    function InternalCreateSubView(AControl: TControl): TPressMVPView; virtual;
     function InternalFindComponent(const AComponentName: string): TComponent; virtual;
     procedure InternalUpdateModel; virtual; abstract;
     procedure InternalUpdateView; virtual; abstract;
@@ -1544,7 +1544,7 @@ begin
   Result := TPressMVPPopupCommandMenu.Create;
 end;
 
-function TPressMVPPresenter.InternalCreateModel(ASubject: TPressSubject): TPressMVPModel;
+function TPressMVPPresenter.InternalCreateSubModel(ASubject: TPressSubject): TPressMVPModel;
 begin
   Result := TPressMVPModel.CreateFromSubject(Model, ASubject);
 end;
@@ -1555,7 +1555,7 @@ begin
   Result := TPressMVPPresenter.CreateFromControllers(Self, AModel, AView);
 end;
 
-function TPressMVPPresenter.InternalCreateView(AControl: TControl): TPressMVPView;
+function TPressMVPPresenter.InternalCreateSubView(AControl: TControl): TPressMVPView;
 begin
   Result := TPressMVPView.CreateFromControl(AControl);
 end;

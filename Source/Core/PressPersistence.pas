@@ -150,6 +150,7 @@ begin
   begin
     {$IFDEF PressLogOPF}PressLogMsg(Self,
      Format('Retrieving %s(%s)', [AClass, AId]));{$ENDIF}
+    { TODO : Ensure the class type of the retrieved object }
     Result := InternalRetrieve(AClass, AId);
   end;
 end;

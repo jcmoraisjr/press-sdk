@@ -53,10 +53,10 @@ resourcestring
   SDisplayNameMissing = 'Falta DisplayName para o controle %s(''%s'')';
   SDisplayNameNotSupported = 'DisplayName não é suportado para o atributo %s(''%s.%s'')';
   SEnumMetadataNotFound = 'Enumeration metadata %s não encontrado';
+  SInstanceNotFound = 'Instance not found: %s(%s)';
   SInvalidAttributeClass = 'O atributo %s(''%s'') requer objetos da classe %s';
   SInvalidAttributeType = 'Tipo inválido para o atributo %s (%s)';
   SInvalidAttributeValue = 'Valor ''%s'' inválido para %s(''%s'')';
-  SMainFormNotAssigned = 'Formulário principal não associado';
   SMainPresenterClassIsAssigned = 'Classe do presenter principal já está associada';
   SMainPresenterIsInitialized = 'Presenter principal já está inicializado';
   SMetadataNotFound = 'Metadata da classe %s não foi encontrada';
@@ -73,8 +73,10 @@ resourcestring
   SUnassignedCandidateClasses = 'Classes candidata não estão associadas';
   SUnassignedTargetClass = 'Classe alvo não está associada';
   SUnassignedConnector = 'Conector não está associado';
+  SUnassignedMainForm = 'Formulário principal não está associado';
   SUnassignedModel = 'Model não está associado';
   SUnassignedPersistenceBrokerClass = 'Classe do broker de persistência não foi associado';
+  SUnassignedPersistenceConnector = 'Conector de persistência não foi associado';
   SUndefinedSelection = 'Selection não definido';
   SUnexpectedEof = 'Fim de arquivo inesperado';
   SUnexpectedMVPClassParam = 'Classe MVP %s inicializada com parâmetros inesperados';

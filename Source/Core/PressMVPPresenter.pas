@@ -370,13 +370,12 @@ type
 
   TPressMVPMainFormPresenterClass = class of TPressMVPMainFormPresenter;
 
-  TPressMVPMainFormPresenter = class(TPressMVPFormPresenter)
+  TPressMVPMainFormPresenter = class(TPressMVPQueryPresenter)
   private
     FOnIdle: TIdleEvent;
   protected
     procedure Idle(Sender: TObject; var Done: Boolean);
     procedure InitPresenter; override;
-    function InternalCreateModel(ASubject: TPressSubject): TPressMVPModel; override;
   public
     constructor Create; reintroduce; virtual;
     procedure ShutDown;
@@ -1440,11 +1439,11 @@ begin
   if Assigned(AModelClass) then
     VModel := AModelClass.Create(Model, VAttribute)
   else
-    VModel := InternalCreateModel(VAttribute);
+    VModel := InternalCreateSubModel(VAttribute);
   if Assigned(AViewClass) then
     VView := AViewClass.Create(VControl)
   else
-    VView := InternalCreateView(VControl);
+    VView := InternalCreateSubView(VControl);
   if Assigned(APresenterClass) then
     Result := APresenterClass.Create(Self, VModel, VView)
   else
@@ -1647,11 +1646,29 @@ end;
 { TPressMVPMainFormPresenter }
 
 constructor TPressMVPMainFormPresenter.Create;
+var
+  VModelClass: TPressMVPModelClass;
+  VModel: TPressMVPModel;
+  VView: TPressMVPView;
+  VSubject: TPressObject;
+  VIndex: Integer;
 begin
   if not Assigned(Application) or not Assigned(Application.MainForm) then
-    raise EPressError.Create(SMainFormNotAssigned);
-  inherited Create(
-   nil, InternalCreateModel(nil), InternalCreateView(Application.MainForm));
+    raise EPressError.Create(SUnassignedMainForm);
+  VModelClass := InternalModelClass;
+  if not Assigned(VModelClass) then
+    VModelClass := TPressMVPQueryModel;
+  VIndex := PressMVPRegisteredForms.IndexOfPresenterClass(
+   TPressMVPFormPresenterClass(ClassType));
+  if VIndex >= 0 then
+    VSubject := PressMVPRegisteredForms[VIndex].ObjectClass.Create
+  else
+    VSubject := nil;
+  VModel := VModelClass.Create(nil, VSubject);
+  if Assigned(VSubject) then
+    VSubject.Release;
+  VView := TPressMVPView.CreateFromControl(Application.MainForm);
+  inherited Create(nil, VModel, VView);
 end;
 
 procedure TPressMVPMainFormPresenter.Idle(
@@ -1670,14 +1687,9 @@ begin
   Application.OnIdle := Idle;
 end;
 
-function TPressMVPMainFormPresenter.InternalCreateModel(
-  ASubject: TPressSubject): TPressMVPModel;
-begin
-  Result := TPressMVPObjectModel.Create(nil, nil);
-end;
-
 procedure TPressMVPMainFormPresenter.ShutDown;
 begin
+  { TODO : Finalize instances }
   Application.Terminate;
 end;
 

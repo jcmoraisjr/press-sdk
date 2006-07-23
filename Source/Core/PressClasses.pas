@@ -114,6 +114,7 @@ type
   public
     constructor Create(AOwnsObjects: Boolean);
     { TODO : Include the Extract method into *all* TPressCustomList decendants }
+    { TODO : Change Index to AIndex into *all* TPressCustomList decendants }
     function Extract(AObject: TObject): TObject;
     function Remove(AObject: TObject): Integer;
     property OwnsObjects: Boolean read FOwnsObjects write FOwnsObjects;
