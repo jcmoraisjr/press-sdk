@@ -3002,7 +3002,9 @@ begin
   if HasReference then
   begin
     VInstance := PressPersistenceBroker.Retrieve(FRefClass, FRefID);
-    { TODO : Raise exception if not found? }
+    { TODO : Implement IsBroken support }
+    if not Assigned(VInstance) then
+      raise EPressError.CreateFmt(SInstanceNotFound, [FRefClass, FRefID]);
     if Assigned(FBeforeChangeInstance) then
       FBeforeChangeInstance(Self, VInstance, pctDereferencing);
     FInstance.Free;
