@@ -68,7 +68,14 @@ type
   TPressInstantSQLQueryFriend = class(TInstantSQLQuery);
   TPressInstantReferencesFriend = class(TInstantReferences);
 
-{ TPressInstantConnector }
+function DefaultConnector: TInstantConnector;
+begin
+  Result := InstantDefaultConnector;
+  if not Assigned(Result) then
+    raise EPressError.Create(SUnassignedPersistenceConnector);
+end;
+
+{ TPressInstantObjectsPersistence }
 
 procedure TPressInstantObjectsPersistence.ConnectionManagerConnect(Sender: TObject;
   var ConnectionDef: TInstantConnectionDef; var Result: Boolean);
@@ -107,7 +114,7 @@ function TPressInstantObjectsPersistence.GetIdentifierQuotes: string;
 var
   VInstantBroker: TInstantBroker;
 begin
-  VInstantBroker := InstantDefaultConnector.Broker;
+  VInstantBroker := DefaultConnector.Broker;
   if VInstantBroker is TInstantCustomRelationalBroker then
     Result := TInstantCustomRelationalBroker(VInstantBroker).SQLDelimiters
   else
@@ -118,7 +125,7 @@ function TPressInstantObjectsPersistence.GetStrQuote: Char;
 var
   VInstantBroker: TInstantBroker;
 begin
-  VInstantBroker := InstantDefaultConnector.Broker;
+  VInstantBroker := DefaultConnector.Broker;
   if VInstantBroker is TInstantCustomRelationalBroker then
     Result := TInstantCustomRelationalBroker(VInstantBroker).SQLQuote
   else
@@ -194,7 +201,7 @@ var
   OrderByClause: string;
   I: Integer;
 begin
-  VInstantQuery := InstantDefaultConnector.CreateQuery;
+  VInstantQuery := DefaultConnector.CreateQuery;
   try
     Result := TPressProxyList.Create(True, ptShared);
     try
