@@ -4295,7 +4295,7 @@ begin
   if IsNull then
     Result := ''
   else
-    Result := IntToStr(Value);
+    Result := Metadata.EnumMetadata.Items[Value];
 end;
 
 function TPressEnum.GetAsTime: TTime;
@@ -4354,7 +4354,7 @@ begin
     if AValue = '' then
       Clear
     else
-      Value := StrToInt(AValue);
+      Value := Metadata.EnumMetadata.Items.IndexOf(AValue);
   except
     on E: EConvertError do
       raise ConversionError(E);
