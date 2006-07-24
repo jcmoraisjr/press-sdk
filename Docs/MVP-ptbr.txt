@@ -1,0 +1,133 @@
+== Criando um Presenter
+=======================
+
+Todo formulário precisa de um Presenter que o associe a objetos de
+negócio. Para criá-lo, utilize a classe base TPressMVPFormPresenter ou
+uma classe decendente.
+
+Há duas tarefas mínimas necessárias para gerar um Presenter, uma é
+relacionar nomes de atributos e de componentes, outra é fazer o registro
+da classe.
+
+Para relacionar nomes de atributos e componentes, sobrescreva o método
+InitPresenter e, dentro dele, execute para cada um dos
+Atributos x Componentes:
+CreateSubPresenter(<AttributeNameString>, <ComponentNameString> [, <DisplayValues>]);
+
+AttributeNameString = nome do atributo da classe de negócio. Pode ser
+utilizado Nome.Nome, indicando um atributo dentro de outro objeto de
+negócio
+
+ComponentNameString = nome do componente visual que deverá ser
+relacionado com tal atributo
+
+DisplayValues = '<AttributeName>[(<ColumnSize>)][;<AttributeName>[(<ColumnSize>)]...]'
+
+é exigido para Parts e Reference(s), relaciona os atributos do objeto
+apontado que devem ser apresentados.
+
+AttributeName = nome do atributo. Pode utilizar Nome.Nome para indicar
+um atributo dentro de um objeto de negócio.
+
+ColumnSize = largura da coluna, em pixels
+
+Para registrar a classe Presenter, inclua o seguinte método na cláusula
+Initialization da unit:
+
+<PresenterClass>.RegisterFormPresenter(<ObjectClass>, <FormClass> [, <FormPresenterType>]);
+
+PresenterClass = nome da classe decendente de TPressMVPFormPresenter que
+está sendo registrada
+
+ObjectClass = classe do objeto de negócio
+
+FormClass = classe do formulário
+
+FormPresenterType = fpInclude | fpPresent | fpIncludePresent
+
+fpInclude = indica que é um formulário de cadastro
+
+fpPresent = indica que é um formulário de consulta, visualização ou
+alteração
+
+fpIncludePresent = default, indica que é um formulário misto, usado
+tanto para cadastro quanto para consulta e alteração
+
+Para executar o formulário de um Presenter, chame o método de classe Run
+daquele Presenter:
+<PresenterClass>.Run[(<BusinessObject>)];
+
+BusinessObject = indica o objeto de negócio que deverá ser apresentado
+no formulário. Se nenhum objeto de negócio for passado como parâmetro,
+um novo objeto será criado.
+
+Para criar o Presenter do formulário principal, basta incluir uma chamada
+a PressAssignMainPresenterClass(<MainPresenterClass>); logo após o
+registro da classe, na área initialization da unit.
+
+== Criando um Model
+===================
+
+Models para formulários são especialmente úteis para registrar novos
+Commands em um menu de contexto. Para criá-lo, utilize uma classe base
+que seja condizente com seu Subject. Pode ser: TPressMVPDateModel,
+TPressMVPPictureModel, TPressMVPReferenceModel, TPressMVPPartsModel,
+TPressMVPReferencesModel, TPressMVPObjectModel, TPressMVPQueryModel ou
+uma classe decendente de algum destes.
+
+Para alterar a lista de Commands, sobrescreva o método InitCommands, ou
+para TPressMVPPartsModel ou TPressMVPReferencesModel, ainda um dos
+seguintes métodos: InternalCreateAddCommands, InternalCreateEditCommands
+ou InternalCreateRemoveCommands. Para incluir um Command, utilize o
+método AddCommand(<CommandClass>); para incluir uma lista de Commands,
+utilize o método AddCommands([<CommandClassList>]);
+
+Para registrar um model para o formulário, sobrescreva o método de
+classe InternalModelClass e retorne a classe do Model a ser utilizada.
+
+Para registrar um model para um atributo, inclua, no método
+CreateSubPresenter, a classe do Model a ser utilizada.
+
+Para registrar um model para vários Presenters, registre-o através de
+seu método de classe RegisterModel.
+
+== Criando uma View
+===================
+
+Pode ser necessário criar uma View caso o componente visual não seja
+suportado pelo framework, ou caso o comportamento padrão não seja o
+esperado. Para criá-la, consulte a unit PressMVPView e utilize a classe
+base mais próxima do comportamento que seu novo componente possua. Para
+registrar uma view, basta chamar seu método de classe RegisterView.
+
+== Criando um Command
+=====================
+
+Commands são amplamente utilizados para criar novas funcionalidades para
+seus formulários. Para criá-los, utilize a classe base TPressMVPCommand
+ou uma classe decendente, sobrescrevendo os seguintes métodos:
+
+InternalExecute = método abstrato, sua implementação é obrigatória.
+Coloque aqui o código que o Command deverá executar quando for chamado.
+
+InternalIsEnabled = sobrescreva e retorne verdadeiro se este Command
+está habilitado.
+
+GetCaption = a implementação é recomendada caso o Command seja utilizado
+em um menu de contexto do Model. Sobrescreva e retorne o texto que deve
+ser apresentado no Menu.
+
+GetShortCut = Retorne o código da tecla de atalho para o Command, usado
+no menu de contexto do Model.
+
+Para associar um command a um item de menu ou um componente visual,
+utilize o método do Presenter:
+BindCommand(<CommandClass>, <ComponentNameString>);
+
+== Criando um Interactor
+========================
+
+Um Interactor precisa ser criado apenas quando o comportamento de algum
+presenter precisar ser modificado. Para criá-lo, utilize a classe base
+TPressMVPInteractor ou uma classe decendente. Para registrá-lo, utilize
+seu método de classe RegisterInteractor.
