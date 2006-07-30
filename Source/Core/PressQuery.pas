@@ -255,14 +255,7 @@ begin
   TPressQuery.RegisterClass;
 end;
 
-procedure InitMetadatas;
-begin
-  PressRegisterMetadata(
-   'TPressQuery;;');
-end;
-
 initialization
   RegisterClasses;
-  InitMetadatas;
 
 end.

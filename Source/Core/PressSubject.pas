@@ -2517,13 +2517,22 @@ end;
 
 class function TPressObject.ClassMetadata: TPressObjectMetadata;
 var
+  VTargetClass: TPressObjectClass;
   I: Integer;
 begin
-  for I := 0 to Pred(PressObjectMetadatas.Count) do
+  VTargetClass := Self;
+  while Assigned(VTargetClass) do
   begin
-    Result := TPressObjectMetadata(PressObjectMetadatas[I]);
-    if Result.ObjectClass = Self then
-      Exit;
+    for I := 0 to Pred(PressObjectMetadatas.Count) do
+    begin
+      Result := TPressObjectMetadata(PressObjectMetadatas[I]);
+      if Result.ObjectClass = VTargetClass then
+        Exit;
+    end;
+    if VTargetClass <> TPressObject then
+      VTargetClass := TPressObjectClass(VTargetClass.ClassParent)
+    else
+      VTargetClass := nil;
   end;
   raise EPressError.CreateFmt(SMetadataNotFound, [ClassName]);
 end;
