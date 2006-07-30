@@ -66,7 +66,6 @@ resourcestring
   SObjectClassNotSupported = 'A classe %s não é suportada';
   SObjectNotSupported = 'Nenhuma classe %s suporta objetos %s';
   SObjectStoreNotAssigned = 'ObjectStore não associado';
-  SPersistenceBrokerClassIsAssigned = 'Classe do broker de persistência já foi associado';
   SPersistentClassNotFound = 'Classe persistente %s não encontrada';
   SSubjectNotAssigned = 'Subject não foi associado';
   STokenExpected = '''%s'' esperado, mas ''%s'' foi encontrado';
@@ -75,7 +74,7 @@ resourcestring
   SUnassignedConnector = 'Conector não está associado';
   SUnassignedMainForm = 'Formulário principal não está associado';
   SUnassignedModel = 'Model não está associado';
-  SUnassignedPersistenceBrokerClass = 'Classe do broker de persistência não foi associado';
+  SUnassignedPersistenceBroker = 'Broker de persistência não foi associado';
   SUnassignedPersistenceConnector = 'Conector de persistência não foi associado';
   SUndefinedSelection = 'Selection não definido';
   SUnexpectedEof = 'Fim de arquivo inesperado';

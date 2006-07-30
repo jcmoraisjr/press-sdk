@@ -38,8 +38,11 @@ type
   private
     FConnectionManager: TInstantConnectionManager;
     FConnector: TInstantConnector;
+    FOIDGenerator: TPressOIDGenerator;
     procedure ConnectionManagerConnect(Sender: TObject; var ConnectionDef: TInstantConnectionDef; var Result: Boolean);
     function CreateInstantObject(AObject: TPressObject): TInstantObject;
+    procedure GenerateOID(Sender: TObject; const AObject: TInstantObject; var Id: string);
+    function GetOIDGenerator: TPressOIDGenerator;
     { TODO : Use streaming to copy an InstantObject to a PressObject and vice-versa }
     procedure ReadInstantObject(AInstantObject: TInstantObject; APressObject: TPressObject);
     procedure ReadPressObject(APressObject: TPressObject; AInstantObject: TInstantObject);
@@ -47,10 +50,12 @@ type
     function GetIdentifierQuotes: string; override;
     function GetStrQuote: Char; override;
     procedure InitPersistenceBroker; override;
+    procedure InternalConnect; override;
     procedure InternalDispose(AObject: TPressObject); override;
     function InternalRetrieve(const AClass, AId: string): TPressObject; override;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
     procedure InternalStore(AObject: TPressObject); override;
+    property OIDGenerator: TPressOIDGenerator read GetOIDGenerator;
   public
     destructor Destroy; override;
   end;
@@ -82,6 +87,7 @@ procedure TPressInstantObjectsPersistence.ConnectionManagerConnect(Sender: TObje
 begin
   FConnector.Free;
   FConnector := ConnectionDef.CreateConnector(nil);
+  FConnector.OnGenerateId := GenerateOID;
   FConnector.IsDefault := True;
   Result := True;
 end;
@@ -105,9 +111,22 @@ end;
 
 destructor TPressInstantObjectsPersistence.Destroy;
 begin
+  FOIDGenerator.Free;
   FConnectionManager.Free;
   FConnector.Free;
   inherited;
+end;
+
+procedure TPressInstantObjectsPersistence.GenerateOID(
+  Sender: TObject; const AObject: TInstantObject; var Id: string);
+var
+  VObjectClass: TPressObjectClass;
+begin
+  if Assigned(AObject) then
+    VObjectClass := PressObjectClassByPersistentName(AObject.ClassName)
+  else
+    VObjectClass := nil;
+  Id := OIDGenerator.GenerateOID(VObjectClass);
 end;
 
 function TPressInstantObjectsPersistence.GetIdentifierQuotes: string;
@@ -119,6 +138,13 @@ begin
     Result := TInstantCustomRelationalBroker(VInstantBroker).SQLDelimiters
   else
     Result := '';
+end;
+
+function TPressInstantObjectsPersistence.GetOIDGenerator: TPressOIDGenerator;
+begin
+  if not Assigned(FOIDGenerator) then
+    FOIDGenerator := InternalOIDGeneratorClass.Create;
+  Result := FOIDGenerator;
 end;
 
 function TPressInstantObjectsPersistence.GetStrQuote: Char;
@@ -150,6 +176,12 @@ begin
     else
       Execute;
   end;
+end;
+
+procedure TPressInstantObjectsPersistence.InternalConnect;
+begin
+  if Assigned(FConnectionManager) then
+    FConnectionManager.Execute;
 end;
 
 procedure TPressInstantObjectsPersistence.InternalDispose(AObject: TPressObject);
@@ -497,6 +529,6 @@ begin
 end;
 
 initialization
-  PressAssignPersistenceBrokerClass(TPressInstantObjectsPersistence);
+  TPressInstantObjectsPersistence.RegisterPersistence;
 
 end.

@@ -30,70 +30,145 @@ uses
   PressQuery;
 
 type
+  TPressOIDGeneratorClass = class of TPressOIDGenerator;
+
+  TPressOIDGenerator = class(TPressObject)
+  protected
+    function InternalGenerateOID(AObjectClass: TPressObjectClass): string; virtual; abstract;
+    procedure InternalReleaseOID(const AOID: string); virtual;
+  public
+    function GenerateOID(AObjectClass: TPressObjectClass): string;
+    procedure ReleaseOID(const AOID: string);
+  end;
+
+  TPressPersistenceOIDGenerator = class(TPressOIDGenerator)
+  protected
+    function InternalGenerateOID(AObjectClass: TPressObjectClass): string; override;
+  end;
+
   TPressPersistenceBrokerClass = class of TPressPersistenceBroker;
 
   TPressPersistenceBroker = class(TObject)
+  private
+    function GetIsDefault: Boolean;
+    procedure SetIsDefault(Value: Boolean);
   protected
     function GetIdentifierQuotes: string; virtual;
     function GetStrQuote: Char; virtual;
     procedure InitPersistenceBroker; virtual;
     procedure InternalDispose(AObject: TPressObject); virtual; abstract;
+    procedure InternalConnect; virtual;
+    function InternalOIDGeneratorClass: TPressOIDGeneratorClass; virtual;
     function InternalRetrieve(const AClass, AId: string): TPressObject; virtual; abstract;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; virtual; abstract;
     procedure InternalStore(AObject: TPressObject); virtual; abstract;
   public
-    constructor Create; virtual;
+    constructor Create;
+    destructor Destroy; override;
+    procedure Connect;
     procedure Dispose(const AClass, AId: string); overload;
     procedure Dispose(AObject: TPressObject); overload;
     procedure Dispose(AProxy: TPressProxy); overload;
+    class procedure RegisterPersistence;
     function Retrieve(const AClass, AId: string): TPressObject;
     function RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
     procedure Store(AObject: TPressObject);
     property IdentifierQuotes: string read GetIdentifierQuotes;
+    property IsDefault: Boolean read GetIsDefault write SetIsDefault;
     property StrQuote: Char read GetStrQuote;
   end;
 
-procedure PressAssignPersistenceBrokerClass(APersistenceBrokerClass: TPressPersistenceBrokerClass);
 function PressPersistenceBroker: TPressPersistenceBroker;
 
 implementation
 
 uses
   SysUtils,
+  Contnrs,
+  ActiveX,
+  ComObj,
   PressClasses,
   PressConsts
   {$IFDEF PressLog},PressLog{$ENDIF};
 
 var
-  _PressPersistenceBrokerClass: TPressPersistenceBrokerClass;
-  _PressPersistenceBroker: TPressPersistenceBroker;
+  _PressRegisteredPersistenceBrokers: TClassList;
+  _PressDefaultPersistenceBroker: TPressPersistenceBroker;
 
-procedure PressAssignPersistenceBrokerClass(
-  APersistenceBrokerClass: TPressPersistenceBrokerClass);
+function PressRegisteredPersistenceBrokers: TClassList;
 begin
-  if Assigned(_PressPersistenceBrokerClass) then
-    raise EPressError.Create(SPersistenceBrokerClassIsAssigned);
-  _PressPersistenceBrokerClass := APersistenceBrokerClass;
+  if not Assigned(_PressRegisteredPersistenceBrokers) then
+  begin
+    _PressRegisteredPersistenceBrokers := TClassList.Create;
+    PressRegisterSingleObject(_PressRegisteredPersistenceBrokers);
+  end;
+  Result := _PressRegisteredPersistenceBrokers;
 end;
+
+{ Global routines }
 
 function PressPersistenceBroker: TPressPersistenceBroker;
 begin
-  if not Assigned(_PressPersistenceBroker) then
+  if not Assigned(_PressDefaultPersistenceBroker) then
   begin
-    if not Assigned(_PressPersistenceBrokerClass) then
-      raise EPressError.Create(SUnassignedPersistenceBrokerClass);
-    _PressPersistenceBroker := _PressPersistenceBrokerClass.Create;
-    PressRegisterSingleObject(_PressPersistenceBroker);
+    if not Assigned(_PressRegisteredPersistenceBrokers) or
+     (_PressRegisteredPersistenceBrokers.Count < 1) then
+      raise EPressError.Create(SUnassignedPersistenceBroker);
+    PressRegisterSingleObject(TPressPersistenceBrokerClass(_PressRegisteredPersistenceBrokers[_PressRegisteredPersistenceBrokers.Count-1]).Create);
   end;
-  Result := _PressPersistenceBroker;
+  Result := _PressDefaultPersistenceBroker;
+end;
+
+{ TPressOIDGenerator }
+
+function TPressOIDGenerator.GenerateOID(
+  AObjectClass: TPressObjectClass): string;
+begin
+  Result := InternalGenerateOID(AObjectClass);
+end;
+
+procedure TPressOIDGenerator.InternalReleaseOID(const AOID: string);
+begin
+end;
+
+procedure TPressOIDGenerator.ReleaseOID(const AOID: string);
+begin
+  InternalReleaseOID(AOID);
+end;
+
+{ TPressPersistenceOIDGenerator }
+
+function TPressPersistenceOIDGenerator.InternalGenerateOID(
+  AObjectClass: TPressObjectClass): string;
+var
+  VId: array[0..15] of Byte;
+  I: Integer;
+begin
+  OleCheck(CoCreateGUID(TGUID(VId)));
+  SetLength(Result, 32);
+  for I := 0 to 15 do
+    Move(IntToHex(VId[I], 2)[1], Result[2*I+1], 2);
 end;
 
 { TPressPersistenceBroker }
 
+procedure TPressPersistenceBroker.Connect;
+begin
+  InternalConnect;
+end;
+
 constructor TPressPersistenceBroker.Create;
 begin
   inherited Create;
+  if not Assigned(_PressDefaultPersistenceBroker) then
+    IsDefault := True;
   InitPersistenceBroker;
+end;
+
+destructor TPressPersistenceBroker.Destroy;
+begin
+  IsDefault := False;
+  inherited;
 end;
 
 procedure TPressPersistenceBroker.Dispose(AProxy: TPressProxy);
@@ -132,6 +207,11 @@ begin
   Result := '"';
 end;
 
+function TPressPersistenceBroker.GetIsDefault: Boolean;
+begin
+  Result := _PressDefaultPersistenceBroker = Self;
+end;
+
 function TPressPersistenceBroker.GetStrQuote: Char;
 begin
   Result := '''';
@@ -139,6 +219,20 @@ end;
 
 procedure TPressPersistenceBroker.InitPersistenceBroker;
 begin
+end;
+
+procedure TPressPersistenceBroker.InternalConnect;
+begin
+end;
+
+function TPressPersistenceBroker.InternalOIDGeneratorClass: TPressOIDGeneratorClass;
+begin
+  Result := TPressPersistenceOIDGenerator;
+end;
+
+class procedure TPressPersistenceBroker.RegisterPersistence;
+begin
+  PressRegisteredPersistenceBrokers.Add(Self);
 end;
 
 function TPressPersistenceBroker.Retrieve(const AClass, AId: string): TPressObject;
@@ -159,6 +253,15 @@ function TPressPersistenceBroker.RetrieveProxyList(
   AQuery: TPressQuery): TPressProxyList;
 begin
   Result := InternalRetrieveProxyList(AQuery);
+end;
+
+procedure TPressPersistenceBroker.SetIsDefault(Value: Boolean);
+begin
+  if Value xor IsDefault then
+    if Value then
+      _PressDefaultPersistenceBroker := Self
+    else
+      _PressDefaultPersistenceBroker := nil;
 end;
 
 procedure TPressPersistenceBroker.Store(AObject: TPressObject);
