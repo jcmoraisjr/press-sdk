@@ -102,6 +102,15 @@ utilizado para recuperar objetos da base de dados.
 
 Vide Metadata-ptbr.txt para maiores informações.
 
+== Registrando classes de negócio
+=================================
+
+Para ser utilizada, toda classe de negócio deve ser registrada antes de
+registrar seu metadados. Para registrar uma classe de negócio, inclua o
+seguinte método na área initialization da unit:
+
+TNomeClasse.RegisterClass;
+
 == Registrando Enumerations
 ===========================
 
