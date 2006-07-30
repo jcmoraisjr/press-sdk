@@ -1445,12 +1445,14 @@ function PressObjectClassByPersistentName(
 var
   I: Integer;
 begin
-  for I := 0 to Pred(PressRegisteredClasses.Count) do
-  begin
-    Result := TPressObjectClass(PressRegisteredClasses[I]);
-    if Result.ClassMetadata.PersistentName = APersistentName then
-      Exit;
-  end;
+  if Assigned(_PressObjectMetadatas) then
+    for I := 0 to Pred(_PressObjectMetadatas.Count) do
+      with _PressObjectMetadatas[I] do
+        if PersistentName = APersistentName then
+        begin
+          Result := ObjectClass;
+          Exit;
+        end;
   raise EPressError.CreateFmt(SPersistentClassNotFound, [APersistentName]);
 end;
 
@@ -6119,7 +6121,7 @@ procedure InitMetadatas;
 begin
   PressRegisterMetadata(
    TPressObject.ClassName + ';' +
-   SPressIdString+': String;');
+   SPressIdString+': String(32);');
 end;
 
 initialization
