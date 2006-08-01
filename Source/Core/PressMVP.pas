@@ -723,7 +723,7 @@ begin
   else if AComponent is TControl then
     VCommandComponent := TPressMVPCommandControl.Create(Self, TControl(AComponent))
   else
-    raise EPressMVPError.CreateFmt(SComponentNotSupported,
+    raise EPressMVPError.CreateFmt(SUnsupportedComponent,
      [AComponent.ClassName]);
   ComponentList.Add(VCommandComponent);
 end;
@@ -1754,10 +1754,10 @@ begin
         VCandidateClass := VModelClass;
     end;
     if not Assigned(VCandidateClass) then
-      raise EPressMVPError.CreateFmt(SObjectNotSupported,
+      raise EPressMVPError.CreateFmt(SUnsupportedObject,
        [TPressMVPModel.ClassName, ASubject.ClassName]);
   end else
-    raise EPressMVPError.Create(SSubjectNotAssigned);
+    raise EPressMVPError.Create(SUnassignedSubject);
   Result := VCandidateClass.Create(AParent, ASubject);
 end;
 
@@ -1782,7 +1782,7 @@ begin
     end;
   end;
   if not Assigned(VCandidateClass) then
-    raise EPressMVPError.CreateFmt(SObjectNotSupported,
+    raise EPressMVPError.CreateFmt(SUnsupportedObject,
      [TPressMVPPresenter.ClassName, AModel.ClassName + ', ' + AView.ClassName]);
   Result := VCandidateClass.Create(AOwner, AModel, AView);
 end;
@@ -1807,7 +1807,7 @@ begin
     end;
   end;
   if not Assigned(VCandidateClass) then
-    raise EPressMVPError.CreateFmt(SControlNotSupported,
+    raise EPressMVPError.CreateFmt(SUnsupportedControl,
      [AControl.ClassName, AControl.Name]);
   Result := VCandidateClass.Create(AControl, AOwnsControl);
 end;

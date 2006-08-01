@@ -43,15 +43,11 @@ resourcestring
   SAttributeAccessError = 'Não é possível acessar o atributo %s(''%s'') como %s';
   SAttributeConversionError = 'Erro ao converter valor para o atributo %s(''%s''):' + #10 + '%s';
   SAttributeNotFound = 'O atributo %s(''%s'') não foi encontrado';
-  SAttributeNotSupported = 'O atributo %s(''%s'') não é suportado';
   SClassNotFound = 'Classe %s não encontrada';
   SComponentIsNotAControl = 'O componente %s(''%s'') não é um controle';
   SComponentNotFound = 'O componente %s(''%s'') não foi encontrado';
-  SComponentNotSupported = 'O componente %s não é suportado';
-  SControlNotSupported = 'O controle %s(''%s'') não é suportado';
   SDialogClassIsAssigned = 'Classe do objeto de diálogo já está associado';
   SDisplayNameMissing = 'Falta DisplayName para o controle %s(''%s'')';
-  SDisplayNameNotSupported = 'DisplayName não é suportado para o atributo %s(''%s.%s'')';
   SEnumMetadataNotFound = 'Enumeration metadata %s não encontrado';
   SInstanceNotFound = 'Instance not found: %s(%s)';
   SInvalidAttributeClass = 'O atributo %s(''%s'') requer objetos da classe %s';
@@ -63,25 +59,25 @@ resourcestring
   SMetadataParseError = 'Erro ao interpretar metadata: "(%d,%d) %s"' + SPressLineBreak + '"%s"';
   SNonRelatedClasses = 'Classes %s e %s não são relacionadas';
   SNoReference = 'Não existe referência';
-  SObjectClassNotSupported = 'A classe %s não é suportada';
-  SObjectNotSupported = 'Nenhuma classe %s suporta objetos %s';
-  SObjectStoreNotAssigned = 'ObjectStore não associado';
   SPersistentClassNotFound = 'Classe persistente %s não encontrada';
   SStringOverflow = 'String overflow: %s(%s)';
-  SSubjectNotAssigned = 'Subject não foi associado';
   STokenExpected = '''%s'' esperado, mas ''%s'' foi encontrado';
   SUnassignedCandidateClasses = 'Classes candidata não estão associadas';
   SUnassignedTargetClass = 'Classe alvo não está associada';
-  SUnassignedConnector = 'Conector não está associado';
   SUnassignedMainForm = 'Formulário principal não está associado';
   SUnassignedModel = 'Model não está associado';
   SUnassignedPersistenceBroker = 'Broker de persistência não foi associado';
   SUnassignedPersistenceConnector = 'Conector de persistência não foi associado';
-  SUndefinedSelection = 'Selection não definido';
+  SUnassignedSubject = 'Subject não foi associado';
   SUnexpectedEof = 'Fim de arquivo inesperado';
   SUnexpectedMVPClassParam = 'Classe MVP %s inicializada com parâmetros inesperados';
+  SUnsupportedAttribute = 'O atributo %s(''%s'') não é suportado';
   SUnsupportedAttributeType = 'O tipo de atributo %s não é suportado';
+  SUnsupportedComponent = 'O componente %s não é suportado';
+  SUnsupportedControl = 'O controle %s(''%s'') não é suportado';
+  SUnsupportedDisplayName = 'DisplayName não é suportado para o atributo %s(''%s.%s'')';
   SUnsupportedModel = 'Model %s não é suportado por %s';
+  SUnsupportedObject = 'Nenhuma classe %s suporta objetos %s';
 
   SConnectionManagerCaption = 'Conector';
 

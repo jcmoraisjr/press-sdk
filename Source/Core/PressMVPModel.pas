@@ -1055,7 +1055,7 @@ function TPressMVPObjectModel.GetSubject: TPressObject;
 begin
   Result := inherited Subject as TPressObject;
   if not Assigned(Result) then
-    raise EPressMVPError.Create(SSubjectNotAssigned);
+    raise EPressMVPError.Create(SUnassignedSubject);
 end;
 
 function TPressMVPObjectModel.GetSubModels: TPressMVPModelList;
@@ -1135,7 +1135,7 @@ function TPressMVPQueryModel.GetSubject: TPressQuery;
 begin
   Result := inherited Subject as TPressQuery;
   if not Assigned(Result) then
-    raise EPressMVPError.Create(SSubjectNotAssigned);
+    raise EPressMVPError.Create(SUnassignedSubject);
 end;
 
 procedure TPressMVPQueryModel.InitCommands;

@@ -397,7 +397,7 @@ begin
         attReferences:
           ReadInstantReferences(TInstantReferences(VInstantAttr), TPressReferences(VPressAttr));
         else
-          raise EPressError.CreateFmt(SAttributeNotSupported,
+          raise EPressError.CreateFmt(SUnsupportedAttribute,
            [APressObject.ClassName, VPressAttr.Name]);
       end;
     end;
@@ -522,7 +522,7 @@ begin
       attReferences:
         ReadPressReferences(TPressReferences(VPressAttr), TInstantReferences(VInstantAttr));
       else
-        raise EPressError.CreateFmt(SAttributeNotSupported,
+        raise EPressError.CreateFmt(SUnsupportedAttribute,
          [APressObject.ClassName, VPressAttr.Name]);
     end;
   end;

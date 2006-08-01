@@ -1471,7 +1471,7 @@ begin
   else if ADisplayNames <> '' then
   begin
     VAttribute := Result.Model.Subject as TPressAttribute;
-    raise EPressMVPError.CreateFmt(SDisplayNameNotSupported,
+    raise EPressMVPError.CreateFmt(SUnsupportedDisplayName,
      [VAttribute.ClassName, VAttribute.Owner.ClassName, VAttribute.Name]);
   end;
 end;
