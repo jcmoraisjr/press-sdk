@@ -1109,6 +1109,7 @@ end;
 
 procedure TPressMVPObjectModel.UpdateData;
 begin
+  { TODO : raising exception whenever the control has an invalid value }
   if Assigned(FSelectedModel) then
     TPressMVPModelUpdateDataEvent.Create(FSelectedModel).Notify;
 end;

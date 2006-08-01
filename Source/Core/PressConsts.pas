@@ -67,6 +67,7 @@ resourcestring
   SObjectNotSupported = 'Nenhuma classe %s suporta objetos %s';
   SObjectStoreNotAssigned = 'ObjectStore não associado';
   SPersistentClassNotFound = 'Classe persistente %s não encontrada';
+  SStringOverflow = 'String overflow: %s(%s)';
   SSubjectNotAssigned = 'Subject não foi associado';
   STokenExpected = '''%s'' esperado, mas ''%s'' foi encontrado';
   SUnassignedCandidateClasses = 'Classes candidata não estão associadas';

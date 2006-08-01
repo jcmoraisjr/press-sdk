@@ -3857,11 +3857,26 @@ begin
 end;
 
 procedure TPressString.SetValue(const AValue: string);
+var
+  VMaxSize: Integer;
+  VOwnerName: string;
 begin
   { TODO : removed IsNull check in order to avoid some unwished
     Changed events }
   if {IsNull or} (FValue <> AValue) then
   begin
+    if Assigned(Metadata) then
+      VMaxSize := Metadata.Size
+    else
+      VMaxSize := 0;
+    if (VMaxSize > 0) and (Length(AValue) > VMaxSize) then
+    begin
+      if Assigned(Owner) then
+        VOwnerName := Owner.ClassName
+      else
+        VOwnerName := ClassName;
+      raise EPressError.CreateFmt(SStringOverflow, [VOwnerName, Name]);
+    end;
     Changing;
     FValue := AValue;
     Changed;
