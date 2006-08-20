@@ -104,6 +104,8 @@ type
   TPressCodeAttributeTypeMetadata = class(TPressCodeObject)
   private
     function GetOwner: TPressCodeAttributeMetadata;
+  protected
+    class function AttributeInheritsFrom(const AAttributeName: string; AAttributeClassList: array of TPressAttributeClass): Boolean;
   public
     property Owner: TPressCodeAttributeMetadata read GetOwner;
   end;
@@ -111,28 +113,24 @@ type
   TPressCodeStructureTypeMetadata = class(TPressCodeAttributeTypeMetadata)
   protected
     class function InternalApply(Reader: TPressCodeReader): Boolean; override;
-    class function IsStructureType(const AAttributeName: string): Boolean; virtual;
     procedure InternalRead(Reader: TPressCodeReader); override;
   end;
 
   TPressCodeSizeableTypeMetadata = class(TPressCodeAttributeTypeMetadata)
   protected
     class function InternalApply(Reader: TPressCodeReader): Boolean; override;
-    class function IsSizeableType(const AAttributeName: string): Boolean; virtual;
     procedure InternalRead(Reader: TPressCodeReader); override;
   end;
 
   TPressCodeEnumTypeMetadata = class(TPressCodeAttributeTypeMetadata)
   protected
     class function InternalApply(Reader: TPressCodeReader): Boolean; override;
-    class function IsEnumType(const AAttributeName: string): Boolean; virtual;
     procedure InternalRead(Reader: TPressCodeReader); override;
   end;
 
   TPressCodeOtherTypeMetadata = class(TPressCodeAttributeTypeMetadata)
   protected
     class function InternalApply(Reader: TPressCodeReader): Boolean; override;
-    class function IsOtherType(const AAttributeName: string): Boolean; virtual;
     procedure InternalRead(Reader: TPressCodeReader); override;
   end;
 
@@ -150,7 +148,7 @@ const
   CQueryPropertyName = 'Propriedade da query';
   CAttributePropertyName = 'Propriedade de atributo';
   CQueryAttributePropertyName = 'Propriedade de atributo da query';
-  CAttributeTypeName = 'Nome de atributo';
+  CAttributeTypeName = 'Tipo de atributo';
   CCategoryQueryAttributeName = 'Nome de categoria de atributo da query';
 
   CPersistentClassObjectProperty = 'PersistentName';
@@ -160,6 +158,7 @@ const
   CPersistentNameAttributeProperty = 'PersistentName';
   CEditMaskAttributeProperty = 'EditMask';
   CSizeAttributeProperty = 'Size';
+  CDefaultValueAttributeProperty = 'DefaultValue';
   CCategoryQueryAttributeProperty = 'Category';
   CMatchCategoryName = 'Match';
   CStartingCategoryName = 'Starting';
@@ -301,23 +300,25 @@ begin
     Reader.ErrorExpected(CClassName, Token);
 
   if VObjClass.InheritsFrom(TPressQuery) then
-    FMetadata := TPressQueryMetadata.Create(VObjClass)
-  else
-    FMetadata := TPressObjectMetadata.Create(VObjClass);
-  { TODO : Improve this approach }
-  if VObjClass.ClassParent = TPressQuery then
   begin
-    Reader.ReadMatch('(');
-    Token := Reader.ReadIdentifier;
-    TPressQueryMetadata(FMetadata).ItemObjectClassName := Token;
-    Reader.ReadMatch(')');
-    with TPressAttributeMetadata.Create(FMetadata) do
+    FMetadata := TPressQueryMetadata.Create(VObjClass);
+    Token := Reader.ReadToken;
+    if Token = '(' then
     begin
-      Name := SPressQueryItemsString;
-      AttributeName := TPressReferences.AttributeName;
-      ObjectClassName := Token;
-    end;
-  end;
+      Token := Reader.ReadIdentifier;
+      TPressQueryMetadata(FMetadata).ItemObjectClassName := Token;
+      { TODO : Check duplicated attribute registration }
+      with TPressAttributeMetadata.Create(FMetadata) do
+      begin
+        Name := SPressQueryItemsString;
+        AttributeName := TPressReferences.AttributeName;
+        ObjectClassName := Token;
+      end;
+      Reader.ReadMatch(')');
+    end else
+      Reader.UnreadToken;
+  end else
+    FMetadata := TPressObjectMetadata.Create(VObjClass);
 
   Token := Reader.ReadToken;
   while Token <> ';' do
@@ -386,6 +387,8 @@ begin
         FMetadata.PersistentName := Reader.ReadToken
       else if SameText(CSizeAttributeProperty, Token) then
         FMetadata.Size := Reader.ReadInteger
+      else if SameText(CDefaultValueAttributeProperty, Token) then
+        FMetadata.DefaultValue := Reader.ReadToken
       else if FMetadata is TPressQueryAttributeMetadata then
       begin
         if SameText(CCategoryQueryAttributeProperty, Token) then
@@ -423,6 +426,22 @@ end;
 
 { TPressCodeAttributeTypeMetadata }
 
+class function TPressCodeAttributeTypeMetadata.AttributeInheritsFrom(
+  const AAttributeName: string;
+  AAttributeClassList: array of TPressAttributeClass): Boolean;
+var
+  I: Integer;
+  VAttributeClassItem: TPressAttributeClass;
+begin
+  Result := True;
+  VAttributeClassItem := PressFindAttributeClass(AAttributeName);
+  if Assigned(VAttributeClassItem) then
+    for I := Low(AAttributeClassList) to High(AAttributeClassList) do
+      if VAttributeClassItem.InheritsFrom(AAttributeClassList[I]) then
+        Exit;
+  Result := False;
+end;
+
 function TPressCodeAttributeTypeMetadata.GetOwner: TPressCodeAttributeMetadata;
 begin
   Result := inherited Owner as TPressCodeAttributeMetadata;
@@ -433,7 +452,8 @@ end;
 class function TPressCodeStructureTypeMetadata.InternalApply(
   Reader: TPressCodeReader): Boolean;
 begin
-  Result := IsStructureType(Reader.ReadToken);
+  Result := AttributeInheritsFrom(Reader.ReadToken,
+   [TPressPart, TPressReference, TPressParts, TPressReferences]);
 end;
 
 procedure TPressCodeStructureTypeMetadata.InternalRead(
@@ -446,29 +466,12 @@ begin
   Reader.ReadMatch(')');
 end;
 
-class function TPressCodeStructureTypeMetadata.IsStructureType(
-  const AAttributeName: string): Boolean;
-const
-  CStructureTypeCount = 4;
-  CStructureTypes: array[0..CStructureTypeCount-1] of string =
-   ('Part', 'Reference', 'Parts', 'References');
-var
-  I: Integer;
-begin
-  for I := 0 to Pred(CStructureTypeCount) do
-  begin
-    Result := SameText(AAttributeName, CStructureTypes[I]);
-    if Result then
-      Exit;
-  end;
-end;
-
 { TPressCodeSizeableTypeMetadata }
 
 class function TPressCodeSizeableTypeMetadata.InternalApply(
   Reader: TPressCodeReader): Boolean;
 begin
-  Result := IsSizeableType(Reader.ReadToken);
+  Result := AttributeInheritsFrom(Reader.ReadToken, [TPressString]);
 end;
 
 procedure TPressCodeSizeableTypeMetadata.InternalRead(
@@ -487,29 +490,12 @@ begin
     Reader.UnreadToken;
 end;
 
-class function TPressCodeSizeableTypeMetadata.IsSizeableType(
-  const AAttributeName: string): Boolean;
-const
-  CSizeableTypeCount = 1;
-  CSizeableTypes: array[0..CSizeableTypeCount-1] of string =
-   ('String');
-var
-  I: Integer;
-begin
-  for I := 0 to Pred(CSizeableTypeCount) do
-  begin
-    Result := SameText(AAttributeName, CSizeableTypes[I]);
-    if Result then
-      Exit;
-  end;
-end;
-
 { TPressCodeEnumTypeMetadata }
 
 class function TPressCodeEnumTypeMetadata.InternalApply(
   Reader: TPressCodeReader): Boolean;
 begin
-  Result := IsEnumType(Reader.ReadToken);
+  Result := AttributeInheritsFrom(Reader.ReadToken, [TPressEnum]);
 end;
 
 procedure TPressCodeEnumTypeMetadata.InternalRead(
@@ -529,18 +515,12 @@ begin
     Reader.UnreadToken;
 end;
 
-class function TPressCodeEnumTypeMetadata.IsEnumType(
-  const AAttributeName: string): Boolean;
-begin
-  Result := SameText(AAttributeName, 'Enum');
-end;
-
 { TPressCodeOtherTypeMetadata }
 
 class function TPressCodeOtherTypeMetadata.InternalApply(
   Reader: TPressCodeReader): Boolean;
 begin
-  Result := IsOtherType(Reader.ReadToken);
+  Result := PressFindAttributeClass(Reader.ReadToken) <> nil;
 end;
 
 procedure TPressCodeOtherTypeMetadata.InternalRead(
@@ -548,16 +528,6 @@ procedure TPressCodeOtherTypeMetadata.InternalRead(
 begin
   inherited;
   Owner.Metadata.AttributeName := Reader.ReadToken;
-end;
-
-class function TPressCodeOtherTypeMetadata.IsOtherType(
-  const AAttributeName: string): Boolean;
-begin
-  Result :=
-   not TPressCodeStructureTypeMetadata.IsStructureType(AAttributeName) and
-   not TPressCodeSizeableTypeMetadata.IsSizeableType(AAttributeName) and
-   not TPressCodeEnumTypeMetadata.IsEnumType(AAttributeName) and
-   (PressFindAttributeClass(AAttributeName) <> nil);
 end;
 
 end.
