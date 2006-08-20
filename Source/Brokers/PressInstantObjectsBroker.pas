@@ -72,6 +72,7 @@ uses
 
 type
   TPressInstantSQLQueryFriend = class(TInstantSQLQuery);
+  TPressInstantPartsFriend = class(TInstantParts);
   TPressInstantReferencesFriend = class(TInstantReferences);
 
 function DefaultConnector: TInstantConnector;
@@ -319,19 +320,29 @@ procedure TPressInstantObjectsPersistence.ReadInstantObject(
   procedure ReadInstantParts(AInstantParts: TInstantParts; APressParts: TPressParts);
   var
     VObject: TPressObject;
+    VReference: TInstantObjectReference;
     I: Integer;
   begin
     APressParts.Clear;
     for I := 0 to Pred(AInstantParts.Count) do
     begin
-      VObject :=
-       PressObjectClassByPersistentName(AInstantParts[I].ClassName).Create;
-      ReadInstantObject(AInstantParts[I], VObject);
-      try
-        APressParts.Add(VObject);
-      except
-        VObject.Free;
-        raise;
+      VReference :=
+       TPressInstantPartsFriend(AInstantParts).ObjectReferences[I];
+      if (VReference.ObjectClassName <> '') and (VReference.ObjectId <> '') then
+      begin
+        APressParts.AddReference(
+         VReference.ObjectClassName, VReference.ObjectId);
+      end else
+      begin
+        VObject :=
+         PressObjectClassByPersistentName(AInstantParts[I].ClassName).Create;
+        ReadInstantObject(AInstantParts[I], VObject);
+        try
+          APressParts.Add(VObject);
+        except
+          VObject.Free;
+          raise;
+        end;
       end;
     end;
   end;
@@ -504,7 +515,8 @@ begin
   for I := 0 to Pred(APressObject.AttributeCount) do
   begin
     VPressAttr := APressObject.Attributes[I];
-    if VPressAttr.Name = SPressIdString then
+    if (VPressAttr.Name = SPressIdString) or
+     (not APressObject.IsOwned and not VPressAttr.IsChanged) then
       Continue;
     VInstantAttr := AInstantObject.AttributeByName(VPressAttr.PersistentName);
     case VPressAttr.AttributeBaseType of
