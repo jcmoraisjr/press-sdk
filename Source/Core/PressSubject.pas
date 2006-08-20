@@ -501,7 +501,9 @@ type
     procedure BeforeCreateAttributes; virtual;
     procedure Finalize; virtual;
     procedure Initialize; virtual;
+    procedure InternalDispose; virtual;
     function InternalIsValid: Boolean; virtual;
+    procedure InternalSave; virtual;
   public
     constructor Create(AMetadata: TPressObjectMetadata = nil);
     constructor Retrieve(const AId: string; AMetadata: TPressObjectMetadata = nil);
@@ -518,10 +520,12 @@ type
     function CreateAttributeIterator: TPressAttributeIterator;
     function CreateMemento: TPressObjectMemento;
     procedure DisableChanges;
+    procedure Dispose;
     procedure EnableChanges;
     function FindAttribute(const AAttributeName: string): TPressAttribute;
     function FindPathAttribute(const APath: string): TPressAttribute;
     class procedure RegisterClass;
+    procedure Save;
     procedure Unchanged;
     property Attributes[AIndex: Integer]: TPressAttribute read GetAttributes;
     property ChangesDisabled: Boolean read GetChangesDisabled;
@@ -2648,6 +2652,11 @@ begin
   Inc(FDisableChangesCount);
 end;
 
+procedure TPressObject.Dispose;
+begin
+  InternalDispose;
+end;
+
 procedure TPressObject.EnableChanges;
 begin
   if FDisableChangesCount > 0 then
@@ -2778,9 +2787,19 @@ procedure TPressObject.Initialize;
 begin
 end;
 
+procedure TPressObject.InternalDispose;
+begin
+  PressPersistenceBroker.Dispose(Self);
+end;
+
 function TPressObject.InternalIsValid: Boolean;
 begin
   Result := True;
+end;
+
+procedure TPressObject.InternalSave;
+begin
+  PressPersistenceBroker.Store(Self);
 end;
 
 procedure TPressObject.NotifyChange;
@@ -2836,6 +2855,11 @@ begin
     Init;
     _Id.FValue := AId;  // friend class
   end;
+end;
+
+procedure TPressObject.Save;
+begin
+  InternalSave;
 end;
 
 procedure TPressObject.SetId(const Value: string);
