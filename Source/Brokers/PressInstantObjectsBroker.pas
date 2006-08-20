@@ -217,16 +217,13 @@ begin
    VPressObjectClass.ClassMetadata.PersistentName).Retrieve(AId, False);
   if Assigned(VInstantObject) then
   begin
+    Result := VPressObjectClass.Create;
     try
-      Result := VPressObjectClass.Create;
-      try
-        ReadInstantObject(VInstantObject, Result);
-      except
-        Result.Free;
-        raise;
-      end;
-    finally
-      VInstantObject.Free;
+      Result.PersistentObject := VInstantObject;
+      ReadInstantObject(VInstantObject, Result);
+    except
+      Result.Free;
+      raise;
     end;
   end else
     Result := nil;
@@ -280,13 +277,17 @@ procedure TPressInstantObjectsPersistence.InternalStore(AObject: TPressObject);
 var
   VInstantObject: TInstantObject;
 begin
-  VInstantObject := CreateInstantObject(AObject);
-  try
-    VInstantObject.Store;
-    PressAssignPersistentId(AObject, VInstantObject.PersistentId);
-  finally
-    VInstantObject.Free;
+  if AObject.PersistentObject is TInstantObject then
+  begin
+    VInstantObject := TInstantObject(AObject.PersistentObject);
+    ReadPressObject(AObject, VInstantObject);
+  end else
+  begin
+    VInstantObject := CreateInstantObject(AObject);
+    AObject.PersistentObject := VInstantObject;
   end;
+  VInstantObject.Store;
+  PressAssignPersistentId(AObject, VInstantObject.PersistentId);
 end;
 
 procedure TPressInstantObjectsPersistence.ReadInstantObject(

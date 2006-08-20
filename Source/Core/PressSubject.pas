@@ -471,6 +471,7 @@ type
     FMetadata: TPressObjectMetadata;
     FOwnerAttribute: TPressStructure;
     FPersistentId: string;
+    FPersistentObject: TObject;
     procedure ClearOwnerContext;
     procedure CreateAttributes;
     function GetAttributes(AIndex: Integer): TPressAttribute;
@@ -488,6 +489,7 @@ type
     procedure NotifyMementos(AAttribute: TPressAttribute);
     procedure NotifyUnchange;
     procedure SetId(const Value: string);
+    procedure SetPersistentObject(Value: TObject);
     procedure SetOwnerContext(AOwner: TPressStructure);
     procedure UnchangeAttributes;
     property Mementos: TPressObjectMementoList read GetMementos;
@@ -532,6 +534,7 @@ type
     property OwnerAttribute: TPressStructure read FOwnerAttribute;
     property PersistentId: string read FPersistentId;
     property PersistentName: string read GetPersistentName;
+    property PersistentObject: TObject read FPersistentObject write SetPersistentObject;
   published
     property Id: string read GetId write SetId;
   end;
@@ -2665,6 +2668,7 @@ end;
 
 procedure TPressObject.Finit;
 begin
+  FPersistentObject.Free;
   DisableChanges;
   try
     Finalize;
@@ -2816,6 +2820,12 @@ end;
 procedure TPressObject.SetOwnerContext(AOwner: TPressStructure);
 begin
   FOwnerAttribute := AOwner;
+end;
+
+procedure TPressObject.SetPersistentObject(Value: TObject);
+begin
+  FPersistentObject.Free;
+  FPersistentObject := Value;
 end;
 
 procedure TPressObject.UnchangeAttributes;
