@@ -33,12 +33,13 @@ type
 
   TPressDialogs = class(TPressSingleton)
   protected
-    function ConfirmationDlg(const AMsg: string): Boolean; virtual;
     function InternalCancelChanges: Boolean; virtual;
+    function InternalConfirmDlg(const AMsg: string): Boolean; virtual;
     function InternalConfirmRemove(ACount: Integer): Boolean; virtual;
     function InternalSaveChanges: Boolean; virtual;
   public
     function CancelChanges: Boolean;
+    function ConfirmDlg(const AMsg: string): Boolean;
     function ConfirmRemove(ACount: Integer): Boolean;
     function SaveChanges: Boolean;
   end;
@@ -78,9 +79,9 @@ begin
   Result := InternalCancelChanges;
 end;
 
-function TPressDialogs.ConfirmationDlg(const AMsg: string): Boolean;
+function TPressDialogs.ConfirmDlg(const AMsg: string): Boolean;
 begin
-  Result := MessageDlg(AMsg, mtConfirmation, [mbYes, mbNo], 0) = mrYes;
+  Result := InternalConfirmDlg(AMsg);
 end;
 
 function TPressDialogs.ConfirmRemove(ACount: Integer): Boolean;
@@ -90,21 +91,26 @@ end;
 
 function TPressDialogs.InternalCancelChanges: Boolean;
 begin
-  Result := ConfirmationDlg(SPressCancelChangesDialog);
+  Result := ConfirmDlg(SPressCancelChangesDialog);
+end;
+
+function TPressDialogs.InternalConfirmDlg(const AMsg: string): Boolean;
+begin
+  Result := MessageDlg(AMsg, mtConfirmation, [mbYes, mbNo], 0) = mrYes;
 end;
 
 function TPressDialogs.InternalConfirmRemove(ACount: Integer): Boolean;
 begin
   if ACount = 1 then
-    Result := ConfirmationDlg(SPressConfirmRemoveOneItemDialog)
+    Result := ConfirmDlg(SPressConfirmRemoveOneItemDialog)
   else
-    Result := ConfirmationDlg(Format(
+    Result := ConfirmDlg(Format(
      SPressConfirmRemoveItemsDialog, [ACount]));
 end;
 
 function TPressDialogs.InternalSaveChanges: Boolean;
 begin
-  Result := ConfirmationDlg(SPressSaveChangesDialog);
+  Result := ConfirmDlg(SPressSaveChangesDialog);
 end;
 
 function TPressDialogs.SaveChanges: Boolean;
