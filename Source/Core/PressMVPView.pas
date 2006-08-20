@@ -1074,29 +1074,18 @@ var
 begin
   VControl := Control;
   VColCount := VControl.ColCount;
-  if VColCount <= 1 then
+  if VColCount < 2 then
     Exit;
-
   VClientWidth := VControl.ClientWidth;
-  if VControl.BorderStyle = bsSingle then
-    if VControl.Ctl3D then
-      Dec(VClientWidth, 4)
-    else
-      Dec(VClientWidth, 2);
-
   VTotalWidth := 0;
   for I := 0 to Pred(VColCount) do
     VTotalWidth := VTotalWidth + VControl.ColWidths[I];
-
-  VDiff := VClientWidth - VTotalWidth;
-  if VDiff >= 0 then
-    Exit;
-
+  VDiff := VTotalWidth + VColCount - VClientWidth;
   I := 1;
-  while VDiff <> 0 do
+  while VDiff > 0 do
   begin
     VDelta := VDiff div (VColCount - I);
-    VControl.ColWidths[I] := VControl.ColWidths[I] + VDelta;
+    VControl.ColWidths[I] := VControl.ColWidths[I] - VDelta;
     VDiff := VDiff - VDelta;
     Inc(I);
   end;
