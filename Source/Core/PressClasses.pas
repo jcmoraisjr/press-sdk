@@ -57,6 +57,8 @@ type
   PBoolean = ^Boolean;
   PComponent = ^TComponent;
 
+  TChars = set of Char;
+
   TPressReader = class(TReader)
   end;
 

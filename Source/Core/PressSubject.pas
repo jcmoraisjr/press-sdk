@@ -758,6 +758,7 @@ type
     procedure SetAsString(const AValue: string); virtual;
     procedure SetAsTime(AValue: TTime); virtual;
     procedure SetAsVariant(AValue: Variant); virtual;
+    function ValidateChars(const AStr: string; const AChars: TChars): Boolean;
   public
     constructor Create(AOwner: TPressObject; AMetadata: TPressAttributeMetadata); virtual;
     class function AttributeBaseType: TPressAttributeBaseType; virtual; abstract;
@@ -1007,6 +1008,7 @@ type
     function GetAsVariant: Variant; override;
     function GetDisplayText: string; override;
     function GetValue: TDate; virtual;
+    procedure Initialize; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
     procedure SetAsFloat(AValue: Double); override;
@@ -1034,6 +1036,7 @@ type
     function GetAsVariant: Variant; override;
     function GetDisplayText: string; override;
     function GetValue: TTime; virtual;
+    procedure Initialize; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
     procedure SetAsFloat(AValue: Double); override;
@@ -1061,6 +1064,7 @@ type
     function GetAsVariant: Variant; override;
     function GetDisplayText: string; override;
     function GetValue: TDateTime; virtual;
+    procedure Initialize; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
     procedure SetAsFloat(AValue: Double); override;
@@ -3694,6 +3698,20 @@ begin
     NotifyUnchange;
 end;
 
+function TPressAttribute.ValidateChars(
+  const AStr: string; const AChars: TChars): Boolean;
+var
+  I: Integer;
+  VStrLen: Integer;
+begin
+  Result := False;
+  VStrLen := Length(AStr);
+  for I := 1 to VStrLen do
+    if not (AStr[I] in AChars) then
+      Exit;
+  Result := True;
+end;
+
 { TPressAttributeList }
 
 function TPressAttributeList.Add(AObject: TPressAttribute): Integer;
@@ -4699,6 +4717,14 @@ begin
   Result := FValue;
 end;
 
+procedure TPressDate.Initialize;
+begin
+  if SameText(DefaultValue, 'now') then
+    FValue := Date
+  else
+    inherited;
+end;
+
 procedure TPressDate.Reset;
 begin
   FValue := 0;
@@ -4835,6 +4861,14 @@ begin
   Result := FValue;
 end;
 
+procedure TPressTime.Initialize;
+begin
+  if SameText(DefaultValue, 'now') then
+    FValue := Time
+  else
+    inherited;
+end;
+
 procedure TPressTime.Reset;
 begin
   FValue := 0;
@@ -4966,6 +5000,14 @@ end;
 function TPressDateTime.GetValue: TDateTime;
 begin
   Result := FValue;
+end;
+
+procedure TPressDateTime.Initialize;
+begin
+  if SameText(DefaultValue, 'now') then
+    FValue := Now
+  else
+    inherited;
 end;
 
 procedure TPressDateTime.Reset;
