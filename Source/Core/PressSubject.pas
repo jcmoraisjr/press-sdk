@@ -563,6 +563,14 @@ type
     property CurrentItem: TPressObject read GetCurrentItem;
   end;
 
+  TPressSingletonObject = class(TPressObject)
+  protected
+    class function SingletonOID: string; virtual;
+  public
+    constructor Instance;
+    class procedure RegisterOID(AOID: string);
+  end;
+
   TPressObjectStore = class(TObject)
   private
     { TODO : Create and maintain a binary tree used to search stored objects }
@@ -1344,6 +1352,7 @@ uses
 var
   _PressRegisteredObjectClasses: TClassList;
   _PressRegisteredAttributes: TClassList;
+  _PressSingletonIDs: TStrings;
   _PressObjectMetadatas: TPressObjectMetadataList;
   _PressEnumMetadatas: TPressEnumMetadataList;
   _PressObjectStore: TPressObjectStore;
@@ -1366,6 +1375,16 @@ begin
     PressRegisterSingleObject(_PressRegisteredAttributes);
   end;
   Result := _PressRegisteredAttributes;
+end;
+
+function PressSingletonIDs: TStrings;
+begin
+  if not Assigned(_PressSingletonIDs) then
+  begin
+    _PressSingletonIDs := TStringList.Create;
+    PressRegisterSingleObject(_PressSingletonIDs);
+  end;
+  Result := _PressSingletonIDs;
 end;
 
 function PressObjectMetadatas: TPressObjectMetadataList;
@@ -1403,6 +1422,7 @@ end;
 procedure PressAssignPersistentId(AObject: TPressObject; const AId: string);
 begin
   AObject.FPersistentId := AId;  // friend class
+  AObject._Id.FValue := AId;  // friend class
 end;
 
 function PressFindAttributeClass(const AAttributeName: string): TPressAttributeClass;
@@ -1427,13 +1447,18 @@ function PressFindObjectClass(const AClassName: string): TPressObjectClass;
 var
   I: Integer;
 begin
-  for I := 0 to Pred(PressRegisteredClasses.Count) do
+  if AClassName = TPressObject.ClassName then
+    Result := TPressObject
+  else
   begin
-    Result := TPressObjectClass(PressRegisteredClasses[I]);
-    if Result.ClassName = AClassName then
-      Exit;
+    for I := 0 to Pred(PressRegisteredClasses.Count) do
+    begin
+      Result := TPressObjectClass(PressRegisteredClasses[I]);
+      if Result.ClassName = AClassName then
+        Exit;
+    end;
+    Result := nil;
   end;
-  Result := nil;
 end;
 
 function PressObjectClassByName(const AClassName: string): TPressObjectClass;
@@ -1494,12 +1519,13 @@ procedure PressUnregisterMetadata(AMetadata: TPressObjectMetadata);
 var
   I: Integer;
 begin
-  for I := Pred(PressObjectMetadatas.Count) downto 0 do
-    if PressObjectMetadatas[I] = AMetadata then
-    begin
-      PressObjectMetadatas.Delete(I);
-      Exit;
-    end;
+  if Assigned(AMetadata) then
+    for I := Pred(PressObjectMetadatas.Count) downto 0 do
+      if PressObjectMetadatas[I] = AMetadata then
+      begin
+        PressObjectMetadatas.Delete(I);
+        Exit;
+      end;
 end;
 
 function PressRegisterEnumMetadata(
@@ -2896,6 +2922,25 @@ end;
 function TPressObjectIterator.GetCurrentItem: TPressObject;
 begin
   Result := inherited CurrentItem as TPressObject;
+end;
+
+{ TPressSingletonObject }
+
+constructor TPressSingletonObject.Instance;
+begin
+  Self := Retrieve(SingletonOID);
+end;
+
+class procedure TPressSingletonObject.RegisterOID(AOID: string);
+begin
+  PressSingletonIDs.Values[ClassName] := AOID;
+end;
+
+class function TPressSingletonObject.SingletonOID: string;
+begin
+  Result := PressSingletonIDs.Values[ClassName];
+  if Result = '' then
+    raise EPressError.CreateFmt(SSingletonClassNotFound, [ClassName]);
 end;
 
 { TPressObjectStore }

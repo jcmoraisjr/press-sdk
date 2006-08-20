@@ -60,6 +60,7 @@ resourcestring
   SNonRelatedClasses = 'Classes %s e %s não são relacionadas';
   SNoReference = 'Não existe referência';
   SPersistentClassNotFound = 'Classe persistente %s não encontrada';
+  SSingletonClassNotFound = 'Classe Singleton %s não encontrada';
   SStringOverflow = 'String overflow: %s(%s)';
   STokenExpected = '''%s'' esperado, mas ''%s'' foi encontrado';
   SUnassignedCandidateClasses = 'Classes candidata não estão associadas';
