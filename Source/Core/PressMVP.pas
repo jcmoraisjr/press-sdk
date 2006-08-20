@@ -256,6 +256,24 @@ type
   end;
 
   TPressMVPSelection = class(TObject)
+  private
+    FObjectList: TPressList;
+    function GetObjectList: TPressList;
+    function GetObjects(Index: Integer): TObject;
+  protected
+    procedure InternalAssignObject(AObject: TObject); virtual;
+    function InternalCreateIterator: TPressIterator; virtual;
+    function InternalOwnsObjects: Boolean; virtual;
+    property ObjectList: TPressList read GetObjectList;
+  public
+    destructor Destroy; override;
+    procedure AddObject(AObject: TObject);
+    procedure Clear;
+    function Count: Integer;
+    function CreateIterator: TPressIterator;
+    procedure RemoveObject(AObject: TObject);
+    procedure SelectObject(AObject: TObject);
+    property Objects[Index: Integer]: TObject read GetObjects; default;
   end;
 
   TPressMVPNullSelection = class(TPressMVPSelection)
@@ -294,7 +312,6 @@ type
     property Commands: TPressMVPCommands read GetCommands;
     property Notifier: TPressNotifier read GetNotifier;
     property OwnedCommands: TPressMVPCommandList read GetOwnedCommands;
-    property Selection: TPressMVPSelection read GetSelection;
   public
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); virtual;
     destructor Destroy; override;
@@ -311,6 +328,7 @@ type
     property HasParent: Boolean read GetHasParent;
     property HasSubject: Boolean read GetHasSubject;
     property Parent: TPressMVPModel read FParent;
+    property Selection: TPressMVPSelection read GetSelection;
     property Subject: TPressSubject read FSubject;
   end;
 
@@ -1030,6 +1048,113 @@ end;
 function TPressMVPObject.GetEventsDisabled: Boolean;
 begin
   Result := FDisableCount > 0;
+end;
+
+{ TPressMVPSelection }
+
+procedure TPressMVPSelection.AddObject(AObject: TObject);
+begin
+  if Assigned(AObject) then
+    with TPressMVPSelectionChangedEvent.Create(Self) do
+    try
+      ObjectList.Add(AObject);
+      InternalAssignObject(AObject);
+    finally
+      Notify;
+    end;
+end;
+
+procedure TPressMVPSelection.Clear;
+begin
+  if Assigned(FObjectList) then
+    with TPressMVPSelectionChangedEvent.Create(Self) do
+    try
+      FObjectList.Clear;
+    finally
+      Notify;
+    end;
+end;
+
+function TPressMVPSelection.Count: Integer;
+begin
+  if Assigned(FObjectList) then
+    Result := FObjectList.Count
+  else
+    Result := 0;
+end;
+
+function TPressMVPSelection.CreateIterator: TPressIterator;
+begin
+  Result := InternalCreateIterator;
+end;
+
+destructor TPressMVPSelection.Destroy;
+begin
+  FObjectList.Free;
+  inherited;
+end;
+
+function TPressMVPSelection.GetObjectList: TPressList;
+begin
+  if not Assigned(FObjectList) then
+    FObjectList := TPressObjectList.Create(InternalOwnsObjects);
+  Result := FObjectList;
+end;
+
+function TPressMVPSelection.GetObjects(Index: Integer): TObject;
+begin
+  Result := ObjectList[Index];
+end;
+
+procedure TPressMVPSelection.InternalAssignObject(AObject: TObject);
+begin
+end;
+
+function TPressMVPSelection.InternalCreateIterator: TPressIterator;
+begin
+  Result := TPressIterator.Create(FObjectList);
+end;
+
+function TPressMVPSelection.InternalOwnsObjects: Boolean;
+begin
+  Result := False;
+end;
+
+procedure TPressMVPSelection.RemoveObject(AObject: TObject);
+var
+  VIndex: Integer;
+begin
+  if Assigned(FObjectList) then
+  begin
+    VIndex := 0;
+    with TPressMVPSelectionChangedEvent.Create(Self) do
+    try
+      VIndex := FObjectList.Remove(AObject);
+    finally
+      if VIndex >= 0 then
+        Notify
+      else
+        Release;
+    end;
+  end;
+end;
+
+procedure TPressMVPSelection.SelectObject(AObject: TObject);
+var
+  VObject: TObject;
+begin
+  if Assigned(AObject) then
+    with TPressMVPSelectionChangedEvent.Create(Self) do
+    begin
+      VObject := ObjectList.Extract(AObject);
+      ObjectList.Clear;
+      ObjectList.Add(AObject);
+      if not Assigned(VObject) then
+        InternalAssignObject(AObject);
+      Notify;
+    end
+  else
+    Clear;
 end;
 
 { TPressMVPModelEvent }

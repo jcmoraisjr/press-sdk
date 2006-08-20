@@ -582,22 +582,33 @@ end;
 procedure TPressMVPChangeModelInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewEnterEvent]);
+  Notifier.AddNotificationItem(Owner.View,
+   [TPressMVPViewEnterEvent, TPressMVPViewExitEvent]);
 end;
 
 procedure TPressMVPChangeModelInteractor.Notify(AEvent: TPressEvent);
 var
   VPresenter: TPressMVPPresenter;
+  VObjectModel: TPressMVPObjectModel;
 begin
   inherited;
-  VPresenter := Owner;
-  while Assigned(VPresenter) and not (VPresenter is TPressMVPFormPresenter) do
-    VPresenter := VPresenter.Parent;
-  { TODO : "ParentForm: TPressMVPFormPresenter" property }
-  if VPresenter is TPressMVPFormPresenter then
+  if (AEvent is TPressMVPViewEnterEvent) or
+   (AEvent is TPressMVPViewExitEvent) then
   begin
-    TPressMVPFormPresenter(VPresenter).Model.SelectModel(Owner.Model);
-    Owner.UpdateView;
+    VPresenter := Owner;
+    while Assigned(VPresenter) and not (VPresenter is TPressMVPFormPresenter) do
+      VPresenter := VPresenter.Parent;
+    { TODO : "ParentForm: TPressMVPFormPresenter" property }
+    if VPresenter is TPressMVPFormPresenter then
+    begin
+      VObjectModel := TPressMVPFormPresenter(VPresenter).Model;
+      if AEvent is TPressMVPViewEnterEvent then
+      begin
+        VObjectModel.Selection.SelectObject(Owner.Model);
+        Owner.UpdateView;
+      end else
+        VObjectModel.Selection.SelectObject(nil);
+    end;
   end;
 end;
 
@@ -621,7 +632,13 @@ procedure TPressMVPExitUpdatableInteractor.Notify(AEvent: TPressEvent);
 begin
   inherited;
   try
-    Owner.UpdateModel;
+    try
+      Owner.UpdateModel;
+    except
+      on E: Exception do
+        if (AEvent is TPressMVPViewExitEvent) or not (E is EPressError) then
+          raise;
+    end;
     Owner.UpdateView;
   except
     if Owner.View is TPressMVPWinView then

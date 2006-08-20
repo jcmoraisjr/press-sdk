@@ -51,6 +51,9 @@ type
   TPressMVPModelCreateSearchFormEvent = class(TPressMVPModelCreateFormEvent)
   end;
 
+  TPressMVPModelUpdateSelectionEvent = class(TPressMVPModelEvent)
+  end;
+
   TPressMVPModelCloseFormEvent = class(TPressMVPModelEvent)
   end;
 
@@ -84,19 +87,13 @@ type
 
   TPressMVPObjectSelection = class(TPressMVPSelection)
   private
-    FObjectList: TPressObjectList;
-    function GetObjectList: TPressObjectList;
     function GetObjects(Index: Integer): TPressObject;
   protected
-    property ObjectList: TPressObjectList read GetObjectList;
+    procedure InternalAssignObject(AObject: TObject); override;
+    function InternalCreateIterator: TPressIterator; override;
+    function InternalOwnsObjects: Boolean; override;
   public
-    destructor Destroy; override;
-    procedure AddObject(AObject: TPressObject);
-    procedure Clear;
-    function Count: Integer;
     function CreateIterator: TPressObjectIterator;
-    procedure RemoveObject(AObject: TPressObject);
-    procedure SelectObject(AObject: TPressObject);
     property Objects[Index: Integer]: TPressObject read GetObjects; default;
   end;
 
@@ -256,6 +253,9 @@ type
     class function Apply: TPressSubjectClass; override;
   end;
 
+  TPressMVPModelSelection = class(TPressMVPSelection)
+  end;
+
   TPressMVPObjectModelClass = class of TPressMVPObjectModel;
 
   TPressMVPObjectModel = class(TPressMVPModel)
@@ -264,15 +264,16 @@ type
     FIsChanged: Boolean;
     FIsIncluding: Boolean;
     FObjectMemento: TPressObjectMemento;
-    FSelectedModel: TPressMVPModel;
     FSubModels: TPressMVPModelList;
     procedure AfterChangeHookedSubject;
     procedure BeforeChangeHookedSubject;
+    function GetSelection: TPressMVPModelSelection;
     function GetSubject: TPressObject;
     function GetSubModels: TPressMVPModelList;
     procedure SetHookedSubject(Value: TPressStructure);
   protected
     procedure InitCommands; override;
+    function InternalCreateSelection: TPressMVPSelection; override;
     procedure Notify(AEvent: TPressEvent); override;
     property SubModels: TPressMVPModelList read GetSubModels;
   public
@@ -281,11 +282,11 @@ type
     class function Apply: TPressSubjectClass; override;
     function HasHookedSubject: Boolean;
     procedure RevertChanges;
-    procedure SelectModel(AModel: TPressMVPModel);
     procedure UpdateData;
     property HookedSubject: TPressStructure read FHookedSubject write SetHookedSubject;
     property IsChanged: Boolean read FIsChanged;
     property IsIncluding: Boolean read FIsIncluding write FIsIncluding;
+    property Selection: TPressMVPModelSelection read GetSelection;
     property Subject: TPressObject read GetSubject;
   end;
 
@@ -383,104 +384,30 @@ end;
 
 { TPressMVPObjectSelection }
 
-procedure TPressMVPObjectSelection.AddObject(AObject: TPressObject);
-begin
-  if Assigned(AObject) then
-    with TPressMVPSelectionChangedEvent.Create(Self) do
-    try
-      ObjectList.Add(AObject);
-      AObject.AddRef;
-    finally
-      Notify;
-    end;
-end;
-
-procedure TPressMVPObjectSelection.Clear;
-begin
-  if Assigned(FObjectList) then
-  begin
-    with TPressMVPSelectionChangedEvent.Create(Self) do
-    try
-      FObjectList.Clear;
-    finally
-      Notify;
-    end;
-  end;
-end;
-
-function TPressMVPObjectSelection.Count: Integer;
-begin
-  if Assigned(FObjectList) then
-    Result := FObjectList.Count
-  else
-    Result := 0;
-end;
-
 function TPressMVPObjectSelection.CreateIterator: TPressObjectIterator;
 begin
-  Result := ObjectList.CreateIterator;
-end;
-
-destructor TPressMVPObjectSelection.Destroy;
-begin
-  FObjectList.Free;
-  inherited;
-end;
-
-function TPressMVPObjectSelection.GetObjectList: TPressObjectList;
-begin
-  if not Assigned(FObjectList) then
-    FObjectList := TPressObjectList.Create(True);
-  Result := FObjectList;
+  Result := TPressObjectIterator.Create(ObjectList);
 end;
 
 function TPressMVPObjectSelection.GetObjects(Index: Integer): TPressObject;
 begin
-  Result := ObjectList[Index];
+  Result := inherited Objects[Index] as TPressObject;
 end;
 
-procedure TPressMVPObjectSelection.RemoveObject(AObject: TPressObject);
-var
-  VIndex: Integer;
+procedure TPressMVPObjectSelection.InternalAssignObject(AObject: TObject);
 begin
-  if Assigned(FObjectList) then
-  begin
-    VIndex := 0;
-    with TPressMVPSelectionChangedEvent.Create(Self) do
-    try
-      VIndex := FObjectList.Remove(AObject);
-    finally
-      if VIndex >= 0 then
-        Notify
-      else
-        Release;
-    end;
-  end;
+  if AObject is TPressObject then
+    TPressObject(AObject).AddRef;
 end;
 
-procedure TPressMVPObjectSelection.SelectObject(AObject: TPressObject);
+function TPressMVPObjectSelection.InternalCreateIterator: TPressIterator;
 begin
-  with TPressMVPSelectionChangedEvent.Create(Self) do
-  begin
-    try
-      if Assigned(AObject) then
-        AObject.AddRef;
-      try
-        if Assigned(FObjectList) then
-          FObjectList.Clear;
-        if Assigned(AObject) then
-          ObjectList.Add(AObject);
-      except
-        if Assigned(AObject) then
-          AObject.Release;
-        raise;
-      end;
-    except
-      Release;
-      raise;
-    end;
-    Notify;
-  end;
+  Result := CreateIterator;
+end;
+
+function TPressMVPObjectSelection.InternalOwnsObjects: Boolean;
+begin
+  Result := True;
 end;
 
 { TPressMVPStructureModel }
@@ -1051,6 +978,11 @@ begin
   inherited;
 end;
 
+function TPressMVPObjectModel.GetSelection: TPressMVPModelSelection;
+begin
+  Result := inherited Selection as TPressMVPModelSelection;
+end;
+
 function TPressMVPObjectModel.GetSubject: TPressObject;
 begin
   Result := inherited Subject as TPressObject;
@@ -1076,6 +1008,11 @@ begin
   AddCommands([TPressMVPSaveObjectCommand, TPressMVPCancelObjectCommand]);
 end;
 
+function TPressMVPObjectModel.InternalCreateSelection: TPressMVPSelection;
+begin
+  Result := TPressMVPModelSelection.Create;
+end;
+
 procedure TPressMVPObjectModel.Notify(AEvent: TPressEvent);
 begin
   inherited;
@@ -1095,11 +1032,6 @@ begin
     FObjectMemento.Restore;
 end;
 
-procedure TPressMVPObjectModel.SelectModel(AModel: TPressMVPModel);
-begin
-  FSelectedModel := AModel;
-end;
-
 procedure TPressMVPObjectModel.SetHookedSubject(Value: TPressStructure);
 begin
   BeforeChangeHookedSubject;
@@ -1109,9 +1041,8 @@ end;
 
 procedure TPressMVPObjectModel.UpdateData;
 begin
-  { TODO : raising exception whenever the control has an invalid value }
-  if Assigned(FSelectedModel) then
-    TPressMVPModelUpdateDataEvent.Create(FSelectedModel).Notify;
+  if Selection.Count > 1 then
+    TPressMVPModelUpdateDataEvent.Create(Selection[0]).Notify;
 end;
 
 { TPressMVPQueryModel }
