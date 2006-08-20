@@ -42,6 +42,7 @@ type
     procedure ConnectionManagerConnect(Sender: TObject; var ConnectionDef: TInstantConnectionDef; var Result: Boolean);
     function CreateInstantObject(AObject: TPressObject): TInstantObject;
     procedure GenerateOID(Sender: TObject; const AObject: TInstantObject; var Id: string);
+    procedure InstantLog(const AString: string);
     function GetOIDGenerator: TPressOIDGenerator;
     { TODO : Use streaming to copy an InstantObject to a PressObject and vice-versa }
     procedure ReadInstantObject(AInstantObject: TInstantObject; APressObject: TPressObject);
@@ -161,6 +162,7 @@ end;
 procedure TPressInstantObjectsPersistence.InitPersistenceBroker;
 begin
   inherited;
+  InstantLogProc := InstantLog;
   FConnectionManager := TInstantConnectionManager.Create(nil);
   with FConnectionManager do
   begin
@@ -176,6 +178,11 @@ begin
     else
       Execute;
   end;
+end;
+
+procedure TPressInstantObjectsPersistence.InstantLog(const AString: string);
+begin
+  {$IFDEF PressLogOPFPersistence}PressLogMsg(Self, 'Instant: ' + AString);{$ENDIF}
 end;
 
 procedure TPressInstantObjectsPersistence.InternalConnect;

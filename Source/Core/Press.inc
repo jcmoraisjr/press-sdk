@@ -15,6 +15,7 @@
     {$DEFINE PressLogSubjectMemento}
   {.$DEFINE PressLogMVP}
   {$DEFINE PressLogOPF}
+    {.$DEFINE PressLogOPFPersistence}
 
 {.$DEFINE PressDebugBaseUnits}
 
@@ -93,6 +94,10 @@
 {$IFNDEF PressLogSubject}
   {$UNDEF PressLogSubjectChanges}
   {$UNDEF PressLogSubjectMemento}
+{$ENDIF}
+
+{$IFNDEF PressLogOPF}
+  {$UNDEF PressLogOPFPersistence}
 {$ENDIF}
 
 {$IFDEF VER130}
