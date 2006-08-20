@@ -40,6 +40,7 @@
 {$BOOLEVAL OFF}
 {$LONGSTRINGS ON}
 {$TYPEDADDRESS ON}
+{$WRITEABLECONST OFF}
 
 {$IFNDEF PressRelease}
   {$ASSERTIONS ON}
@@ -85,13 +86,13 @@
   {$UNDEF PressLogViewEvents}
 {$ENDIF}
 
+{$IFNDEF PressLogViewEvents}
+  {$UNDEF PressLogKeyboardEvents}
+{$ENDIF}
+
 {$IFNDEF PressLogSubject}
   {$UNDEF PressLogSubjectChanges}
   {$UNDEF PressLogSubjectMemento}
-{$ENDIF}
-
-{$IFNDEF PressLogViewEvents}
-  {$UNDEF PressLogKeyboardEvents}
 {$ENDIF}
 
 {$IFDEF VER130}
