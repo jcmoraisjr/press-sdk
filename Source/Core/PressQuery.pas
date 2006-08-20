@@ -184,7 +184,7 @@ function TPressQuery.InternalBuildWhereClause: string;
   begin
     if AResult <> '' then
       AResult := AResult + ' AND ';
-    AResult := Format(AFilterMask, AParams);
+    AResult := AResult + Format(AFilterMask, AParams);
   end;
 
   procedure ReadStringItem(
@@ -208,7 +208,8 @@ begin
   Result := '';
   with CreateAttributeIterator do
   try
-    BeforeFirstItem;
+    First;
+    Next;  // skip Id and QueryItems attributes
     while NextItem do
       if not CurrentItem.IsEmpty and
        (CurrentItem.Metadata is TPressQueryAttributeMetadata) then
