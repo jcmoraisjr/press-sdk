@@ -1323,18 +1323,21 @@ begin
     Look for the persistent name into the metadata }
   Model.UpdateQuery(VDisplayName, ASearchString);
   View.ClearReferences;
-  with Model.CreateQueryIterator do
-  try
-    while not IsDone do
-    begin
-      VObject := CurrentItem.Instance;
-      VCaption := VObject.AttributeByName(VDisplayName).DisplayText;
-      View.AddReference(VCaption, VObject);
-      Next;
-    end;
-  finally
-    Free;
-  end;
+  if Model.Query.Count > SPressMaxItemCount then
+    View.AddReference(Format(SItemCountOverflow, [Model.Query.Count]), nil)
+  else
+    with Model.CreateQueryIterator do
+      try
+        while not IsDone do
+        begin
+          VObject := CurrentItem.Instance;
+          VCaption := VObject.AttributeByName(VDisplayName).DisplayText;
+          View.AddReference(VCaption, VObject);
+          Next;
+        end;
+      finally
+        Free;
+      end;
 end;
 
 { TPressMVPItemsPresenter }

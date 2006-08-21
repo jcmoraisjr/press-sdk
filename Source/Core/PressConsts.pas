@@ -26,6 +26,7 @@ interface
 {$I Press.inc}
 
 const
+  SPressMaxItemCount = 100;
   SPressBrackets = '()';
   SPressAttributePrefix = '_';
   SPressAttributeSeparator = '.';
@@ -53,6 +54,7 @@ resourcestring
   SInvalidAttributeClass = 'O atributo %s(''%s'') requer objetos da classe %s';
   SInvalidAttributeType = 'Tipo inválido para o atributo %s (%s)';
   SInvalidAttributeValue = 'Valor ''%s'' inválido para %s(''%s'')';
+  SItemCountOverflow = '<%d itens>';
   SMainPresenterClassIsAssigned = 'Classe do presenter principal já está associada';
   SMainPresenterIsInitialized = 'Presenter principal já está inicializado';
   SMetadataNotFound = 'Metadata da classe %s não foi encontrada';
