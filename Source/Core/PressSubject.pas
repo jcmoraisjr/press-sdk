@@ -3403,7 +3403,7 @@ end;
 procedure TPressProxyList.Notify(
   Ptr: Pointer; Action: TListNotification);
 begin
-  if not NotificationDisabled and Assigned(FOnChangeList) then
+  if Assigned(FOnChangeList) and not NotificationDisabled then
     FOnChangeList(Self, TPressProxy(Ptr), Action);
   inherited;
 end;
@@ -3472,6 +3472,7 @@ procedure TPressAttribute.Clear;
 begin
   if not FIsNull then
   begin
+    Changing;
     FIsNull := True;
     Reset;
   end;
@@ -3503,7 +3504,6 @@ begin
   FMetadata := AMetadata;
   DisableChanges;
   try
-    Clear;
     Initialize;
   finally
     EnableChanges;
@@ -3628,7 +3628,9 @@ end;
 procedure TPressAttribute.Initialize;
 begin
   if DefaultValue <> '' then
-    AsString := DefaultValue;
+    AsString := DefaultValue
+  else
+    Clear;
 end;
 
 function TPressAttribute.InvalidClassError(const AClassName: string): EPressError;
@@ -3653,7 +3655,7 @@ end;
 procedure TPressAttribute.NotifyInvalidate;
 begin
   {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Attribute %s invalidated', [Signature]));{$ENDIF}
-  TPressAttributeChangedEvent.Create(Self).Notify;
+  TPressAttributeChangedEvent.Create(Self, False).Notify;
 end;
 
 procedure TPressAttribute.NotifyUnchange;
