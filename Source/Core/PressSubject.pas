@@ -466,6 +466,7 @@ type
   private
     FAttributes: TPressAttributeList;
     FDisableChangesCount: Integer;
+    FDisableUpdatesCount: Integer;
     FIsChanged: Boolean;
     FMementos: TPressObjectMementoList;
     FMetadata: TPressObjectMetadata;
@@ -484,6 +485,7 @@ type
     function GetMementos: TPressObjectMementoList;
     function GetMetadata: TPressObjectMetadata;
     function GetPersistentName: string;
+    function GetUpdatesDisabled: Boolean;
     procedure NotifyChange;
     procedure NotifyInvalidate;
     procedure NotifyMementos(AAttribute: TPressAttribute);
@@ -520,8 +522,10 @@ type
     function CreateAttributeIterator: TPressAttributeIterator;
     function CreateMemento: TPressObjectMemento;
     procedure DisableChanges;
+    procedure DisableUpdates;
     procedure Dispose;
     procedure EnableChanges;
+    procedure EnableUpdates;
     function FindAttribute(const AAttributeName: string): TPressAttribute;
     function FindPathAttribute(const APath: string): TPressAttribute;
     class procedure RegisterClass;
@@ -539,6 +543,7 @@ type
     property PersistentId: string read FPersistentId;
     property PersistentName: string read GetPersistentName;
     property PersistentObject: TObject read FPersistentObject write SetPersistentObject;
+    property UpdatesDisabled: Boolean read GetUpdatesDisabled;
   published
     property Id: string read GetId write SetId;
   end;
@@ -2656,6 +2661,14 @@ begin
   Inc(FDisableChangesCount);
 end;
 
+procedure TPressObject.DisableUpdates;
+begin
+  { TODO : Disable updates in structured attributes }
+  Inc(FDisableUpdatesCount);
+  if FDisableUpdatesCount = 1 then
+    NotifyInvalidate;
+end;
+
 procedure TPressObject.Dispose;
 begin
   InternalDispose;
@@ -2665,6 +2678,14 @@ procedure TPressObject.EnableChanges;
 begin
   if FDisableChangesCount > 0 then
     Dec(FDisableChangesCount);
+end;
+
+procedure TPressObject.EnableUpdates;
+begin
+  if FDisableUpdatesCount > 0 then
+    Dec(FDisableUpdatesCount);
+  if FDisableUpdatesCount = 0 then
+    NotifyInvalidate;
 end;
 
 procedure TPressObject.Finalize;
@@ -2767,6 +2788,11 @@ begin
   if not Assigned(FMetadata) then
     FMetadata := ClassMetadata;
   Result := FMetadata;
+end;
+
+function TPressObject.GetUpdatesDisabled: Boolean;
+begin
+  Result := FDisableUpdatesCount > 0;
 end;
 
 function TPressObject.GetPersistentName: string;

@@ -189,6 +189,8 @@ type
   TPressMVPObjectCommand = class(TPressMVPCommand)
   private
     function GetModel: TPressMVPObjectModel;
+  protected
+    function InternalIsEnabled: Boolean; override;
   public
     class function Apply(AModel: TPressMVPModel): Boolean; override;
     property Model: TPressMVPObjectModel read GetModel;
@@ -198,8 +200,14 @@ type
   protected
     function GetCaption: string; override;
     function GetShortCut: TShortCut; override;
+    function InternalConfirm: Boolean; virtual;
     procedure InternalExecute; override;
     function InternalIsEnabled: Boolean; override;
+  end;
+
+  TPressMVPSaveConfirmObjectCommand = class(TPressMVPSaveObjectCommand)
+  protected
+    function InternalConfirm: Boolean; override;
   end;
 
   TPressMVPFinishObjectCommand = class(TPressMVPObjectCommand)
@@ -210,8 +218,14 @@ type
   TPressMVPCancelObjectCommand = class(TPressMVPFinishObjectCommand)
   protected
     function GetCaption: string; override;
+    function InternalConfirm: Boolean; virtual;
     procedure InternalExecute; override;
     function InternalIsEnabled: Boolean; override;
+  end;
+
+  TPressMVPCancelConfirmObjectCommand = class(TPressMVPCancelObjectCommand)
+  protected
+    function InternalConfirm: Boolean; override;
   end;
 
   TPressMVPCloseObjectCommand = class(TPressMVPFinishObjectCommand)
@@ -657,6 +671,11 @@ begin
   Result := inherited Model as TPressMVPObjectModel;
 end;
 
+function TPressMVPObjectCommand.InternalIsEnabled: Boolean;
+begin
+  Result := not Model.Subject.UpdatesDisabled;
+end;
+
 { TPressMVPSaveObjectCommand }
 
 function TPressMVPSaveObjectCommand.GetCaption: string;
@@ -669,21 +688,39 @@ begin
   Result := VK_F12;
 end;
 
+function TPressMVPSaveObjectCommand.InternalConfirm: Boolean;
+begin
+  Result := True;
+end;
+
 procedure TPressMVPSaveObjectCommand.InternalExecute;
 begin
   Model.UpdateData;
   if not Model.Subject.IsUpdated then
   begin
-    if not PressDialog.SaveChanges then
+    if not InternalConfirm then
       Exit;
-    PressPersistenceBroker.Store(Model.Subject);
+    Model.Subject.DisableUpdates;
+    try
+      Model.Subject.Save;
+    finally
+      Model.Subject.EnableUpdates;
+    end;
   end;
   TPressMVPModelCloseFormEvent.Create(Model).Notify;
 end;
 
 function TPressMVPSaveObjectCommand.InternalIsEnabled: Boolean;
 begin
-  Result := Model.HasSubject and Model.Subject.IsValid;
+  Result := inherited InternalIsEnabled and
+   Model.HasSubject and Model.Subject.IsValid;
+end;
+
+{ TPressMVPSaveConfirmObjectCommand }
+
+function TPressMVPSaveConfirmObjectCommand.InternalConfirm: Boolean;
+begin
+  Result := PressDialog.SaveChanges;
 end;
 
 { TPressMVPFinishObjectCommand }
@@ -702,12 +739,17 @@ begin
   Result := SPressCancelFormCommand;
 end;
 
+function TPressMVPCancelObjectCommand.InternalConfirm: Boolean;
+begin
+  Result := True;
+end;
+
 procedure TPressMVPCancelObjectCommand.InternalExecute;
 begin
   Model.UpdateData;
   if Model.IsChanged then
   begin
-    if not PressDialog.CancelChanges then
+    if not InternalConfirm then
       Exit;
     Model.RevertChanges;
   end;
@@ -716,7 +758,14 @@ end;
 
 function TPressMVPCancelObjectCommand.InternalIsEnabled: Boolean;
 begin
-  Result := Model.HasSubject;
+  Result := inherited InternalIsEnabled and Model.HasSubject;
+end;
+
+{ TPressMVPCancelConfirmObjectCommand }
+
+function TPressMVPCancelConfirmObjectCommand.InternalConfirm: Boolean;
+begin
+  Result := PressDialog.CancelChanges;
 end;
 
 { TPressMVPCloseObjectCommand }
