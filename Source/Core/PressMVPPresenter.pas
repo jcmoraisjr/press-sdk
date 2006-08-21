@@ -431,6 +431,7 @@ implementation
 
 uses
   SysUtils,
+  Math,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressConsts,
   PressQuery,
@@ -915,6 +916,8 @@ begin
   inherited;
   Notifier.AddNotificationItem(Owner.Model.Selection,
    [TPressMVPSelectionChangedEvent]);
+  Notifier.AddNotificationItem(Owner.Model,
+   [TPressMVPModelUpdateSelectionEvent]);
 end;
 
 procedure TPressMVPSelectItemInteractor.Notify(AEvent: TPressEvent);
@@ -929,6 +932,8 @@ begin
         BeforeFirstItem;
         while NextItem do
           { TODO : SelectItem method clear the selection }
+          { TODO : The selection is updated before the View, so this
+            assignment might raise 'index out of bounds' exception }
           Owner.View.SelectItem(Owner.Model.IndexOf(CurrentItem));
       finally
         Free;
@@ -936,7 +941,8 @@ begin
     finally
       Notifier.EnableEvents;
     end
-  end;
+  end else if AEvent is TPressMVPModelUpdateSelectionEvent then
+    SelectItem(Min(Owner.View.CurrentItem, Owner.Model.Count-1));
 end;
 
 procedure TPressMVPSelectItemInteractor.SelectItem(AIndex: Integer);

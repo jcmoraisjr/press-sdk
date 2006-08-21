@@ -823,6 +823,8 @@ procedure TPressMVPItemsModel.ItemsChanged(
   procedure AddItem;
   begin
     ObjectList.AddProxy(AEvent.Proxy);
+    if AEvent.Proxy.HasInstance then
+      Selection.SelectObject(AEvent.Proxy.Instance);
   end;
 
   procedure InsertItem;
@@ -845,6 +847,8 @@ procedure TPressMVPItemsModel.ItemsChanged(
     ObjectList.RemoveProxy(AEvent.Proxy);
     if AEvent.Proxy.HasInstance then
       Selection.RemoveObject(AEvent.Proxy.Instance);
+    if Selection.Count = 0 then
+      TPressMVPModelUpdateSelectionEvent.Create(Self).Notify;
   end;
 
   procedure ClearItems;
