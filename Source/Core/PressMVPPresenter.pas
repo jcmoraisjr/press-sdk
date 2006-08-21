@@ -1205,6 +1205,9 @@ end;
 procedure TPressMVPValuePresenter.InitPresenter;
 begin
   inherited;
+  if Model.HasSubject then
+    View.Size := Model.Subject.Metadata.Size;
+
   { TODO : Just a work around -- need to fix this approach }
   if (Model.Subject is TPressEnum) and (View is TPressMVPComboBoxView) then
   begin
