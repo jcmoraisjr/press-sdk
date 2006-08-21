@@ -32,7 +32,7 @@ uses
 type
   TPressOIDGeneratorsClass = class of TPressOIDGenerators;
 
-  TPressOIDGenerators = class(TPressObject)
+  TPressOIDGenerators = class(TPressQuery)
   protected
     function InternalGenerateOID(AObjectClass: TPressObjectClass): string; virtual; abstract;
     procedure InternalReleaseOID(AObjectClass: TPressObjectClass; const AOID: string); virtual;
@@ -132,8 +132,8 @@ procedure TPressOIDGenerators.InternalReleaseOID(
 begin
 end;
 
-procedure TPressOIDGenerators.ReleaseOID(AObjectClass: TPressObjectClass;
-  const AOID: string);
+procedure TPressOIDGenerators.ReleaseOID(
+  AObjectClass: TPressObjectClass; const AOID: string);
 begin
   InternalReleaseOID(AObjectClass, AOID);
 end;

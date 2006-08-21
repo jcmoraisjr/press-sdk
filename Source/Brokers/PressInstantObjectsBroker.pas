@@ -42,8 +42,8 @@ type
     procedure ConnectionManagerConnect(Sender: TObject; var ConnectionDef: TInstantConnectionDef; var Result: Boolean);
     function CreateInstantObject(AObject: TPressObject): TInstantObject;
     procedure GenerateOID(Sender: TObject; const AObject: TInstantObject; var Id: string);
-    procedure InstantLog(const AString: string);
     function GetOIDGenerators: TPressOIDGenerators;
+    procedure InstantLog(const AString: string);
     { TODO : Use streaming to copy an InstantObject to a PressObject and vice-versa }
     procedure ReadInstantObject(AInstantObject: TInstantObject; APressObject: TPressObject);
     procedure ReadPressObject(APressObject: TPressObject; AInstantObject: TInstantObject);

@@ -491,8 +491,8 @@ type
     procedure NotifyMementos(AAttribute: TPressAttribute);
     procedure NotifyUnchange;
     procedure SetId(const Value: string);
-    procedure SetPersistentObject(Value: TObject);
     procedure SetOwnerContext(AOwner: TPressStructure);
+    procedure SetPersistentObject(Value: TObject);
     procedure UnchangeAttributes;
     property Mementos: TPressObjectMementoList read GetMementos;
   protected
@@ -2790,14 +2790,14 @@ begin
   Result := FMetadata;
 end;
 
-function TPressObject.GetUpdatesDisabled: Boolean;
-begin
-  Result := FDisableUpdatesCount > 0;
-end;
-
 function TPressObject.GetPersistentName: string;
 begin
   Result := Metadata.PersistentName;
+end;
+
+function TPressObject.GetUpdatesDisabled: Boolean;
+begin
+  Result := FDisableUpdatesCount > 0;
 end;
 
 procedure TPressObject.Init;
