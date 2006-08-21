@@ -30,18 +30,18 @@ uses
   PressQuery;
 
 type
-  TPressOIDGeneratorClass = class of TPressOIDGenerator;
+  TPressOIDGeneratorsClass = class of TPressOIDGenerators;
 
-  TPressOIDGenerator = class(TPressObject)
+  TPressOIDGenerators = class(TPressObject)
   protected
     function InternalGenerateOID(AObjectClass: TPressObjectClass): string; virtual; abstract;
-    procedure InternalReleaseOID(const AOID: string); virtual;
+    procedure InternalReleaseOID(AObjectClass: TPressObjectClass; const AOID: string); virtual;
   public
     function GenerateOID(AObjectClass: TPressObjectClass): string;
-    procedure ReleaseOID(const AOID: string);
+    procedure ReleaseOID(AObjectClass: TPressObjectClass; const AOID: string);
   end;
 
-  TPressPersistenceOIDGenerator = class(TPressOIDGenerator)
+  TPressSimpleOIDGenerators = class(TPressOIDGenerators)
   protected
     function InternalGenerateOID(AObjectClass: TPressObjectClass): string; override;
   end;
@@ -58,7 +58,7 @@ type
     procedure InitPersistenceBroker; virtual;
     procedure InternalDispose(AObject: TPressObject); virtual; abstract;
     procedure InternalConnect; virtual;
-    function InternalOIDGeneratorClass: TPressOIDGeneratorClass; virtual;
+    function InternalOIDGeneratorsClass: TPressOIDGeneratorsClass; virtual;
     function InternalRetrieve(const AClass, AId: string): TPressObject; virtual; abstract;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; virtual; abstract;
     procedure InternalStore(AObject: TPressObject); virtual; abstract;
@@ -119,26 +119,28 @@ begin
   Result := _PressDefaultPersistenceBroker;
 end;
 
-{ TPressOIDGenerator }
+{ TPressOIDGenerators }
 
-function TPressOIDGenerator.GenerateOID(
+function TPressOIDGenerators.GenerateOID(
   AObjectClass: TPressObjectClass): string;
 begin
   Result := InternalGenerateOID(AObjectClass);
 end;
 
-procedure TPressOIDGenerator.InternalReleaseOID(const AOID: string);
+procedure TPressOIDGenerators.InternalReleaseOID(
+  AObjectClass: TPressObjectClass; const AOID: string);
 begin
 end;
 
-procedure TPressOIDGenerator.ReleaseOID(const AOID: string);
+procedure TPressOIDGenerators.ReleaseOID(AObjectClass: TPressObjectClass;
+  const AOID: string);
 begin
-  InternalReleaseOID(AOID);
+  InternalReleaseOID(AObjectClass, AOID);
 end;
 
-{ TPressPersistenceOIDGenerator }
+{ TPressSimpleOIDGenerators }
 
-function TPressPersistenceOIDGenerator.InternalGenerateOID(
+function TPressSimpleOIDGenerators.InternalGenerateOID(
   AObjectClass: TPressObjectClass): string;
 var
   VId: array[0..15] of Byte;
@@ -225,9 +227,9 @@ procedure TPressPersistenceBroker.InternalConnect;
 begin
 end;
 
-function TPressPersistenceBroker.InternalOIDGeneratorClass: TPressOIDGeneratorClass;
+function TPressPersistenceBroker.InternalOIDGeneratorsClass: TPressOIDGeneratorsClass;
 begin
-  Result := TPressPersistenceOIDGenerator;
+  Result := TPressSimpleOIDGenerators;
 end;
 
 class procedure TPressPersistenceBroker.RegisterPersistence;

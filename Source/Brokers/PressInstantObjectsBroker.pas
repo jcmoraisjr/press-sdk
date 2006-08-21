@@ -38,12 +38,12 @@ type
   private
     FConnectionManager: TInstantConnectionManager;
     FConnector: TInstantConnector;
-    FOIDGenerator: TPressOIDGenerator;
+    FOIDGenerators: TPressOIDGenerators;
     procedure ConnectionManagerConnect(Sender: TObject; var ConnectionDef: TInstantConnectionDef; var Result: Boolean);
     function CreateInstantObject(AObject: TPressObject): TInstantObject;
     procedure GenerateOID(Sender: TObject; const AObject: TInstantObject; var Id: string);
     procedure InstantLog(const AString: string);
-    function GetOIDGenerator: TPressOIDGenerator;
+    function GetOIDGenerators: TPressOIDGenerators;
     { TODO : Use streaming to copy an InstantObject to a PressObject and vice-versa }
     procedure ReadInstantObject(AInstantObject: TInstantObject; APressObject: TPressObject);
     procedure ReadPressObject(APressObject: TPressObject; AInstantObject: TInstantObject);
@@ -56,7 +56,7 @@ type
     function InternalRetrieve(const AClass, AId: string): TPressObject; override;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
     procedure InternalStore(AObject: TPressObject); override;
-    property OIDGenerator: TPressOIDGenerator read GetOIDGenerator;
+    property OIDGenerators: TPressOIDGenerators read GetOIDGenerators;
   public
     destructor Destroy; override;
   end;
@@ -113,7 +113,7 @@ end;
 
 destructor TPressInstantObjectsPersistence.Destroy;
 begin
-  FOIDGenerator.Free;
+  FOIDGenerators.Free;
   FConnectionManager.Free;
   FConnector.Free;
   inherited;
@@ -128,7 +128,7 @@ begin
     VObjectClass := PressObjectClassByPersistentName(AObject.ClassName)
   else
     VObjectClass := nil;
-  Id := OIDGenerator.GenerateOID(VObjectClass);
+  Id := OIDGenerators.GenerateOID(VObjectClass);
 end;
 
 function TPressInstantObjectsPersistence.GetIdentifierQuotes: string;
@@ -142,11 +142,11 @@ begin
     Result := '';
 end;
 
-function TPressInstantObjectsPersistence.GetOIDGenerator: TPressOIDGenerator;
+function TPressInstantObjectsPersistence.GetOIDGenerators: TPressOIDGenerators;
 begin
-  if not Assigned(FOIDGenerator) then
-    FOIDGenerator := InternalOIDGeneratorClass.Create;
-  Result := FOIDGenerator;
+  if not Assigned(FOIDGenerators) then
+    FOIDGenerators := InternalOIDGeneratorsClass.Create;
+  Result := FOIDGenerators;
 end;
 
 function TPressInstantObjectsPersistence.GetStrQuote: Char;
