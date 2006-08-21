@@ -260,12 +260,12 @@ type
   TPressMVPObjectModel = class(TPressMVPModel)
   private
     FHookedSubject: TPressStructure;
-    FIsChanged: Boolean;
     FIsIncluding: Boolean;
     FObjectMemento: TPressObjectMemento;
     FSubModels: TPressMVPModelList;
     procedure AfterChangeHookedSubject;
     procedure BeforeChangeHookedSubject;
+    function GetIsChanged: Boolean;
     function GetSelection: TPressMVPModelSelection;
     function GetSubject: TPressObject;
     function GetSubModels: TPressMVPModelList;
@@ -283,7 +283,7 @@ type
     procedure RevertChanges;
     procedure UpdateData;
     property HookedSubject: TPressStructure read FHookedSubject write SetHookedSubject;
-    property IsChanged: Boolean read FIsChanged;
+    property IsChanged: Boolean read GetIsChanged;
     property IsIncluding: Boolean read FIsIncluding write FIsIncluding;
     property Selection: TPressMVPModelSelection read GetSelection;
     property Subject: TPressObject read GetSubject;
@@ -978,6 +978,11 @@ begin
   inherited;
 end;
 
+function TPressMVPObjectModel.GetIsChanged: Boolean;
+begin
+  Result := Assigned(FObjectMemento) and FObjectMemento.SubjectChanged;
+end;
+
 function TPressMVPObjectModel.GetSelection: TPressMVPModelSelection;
 begin
   Result := inherited Selection as TPressMVPModelSelection;
@@ -1016,12 +1021,7 @@ end;
 procedure TPressMVPObjectModel.Notify(AEvent: TPressEvent);
 begin
   inherited;
-  if not IsChanged and (AEvent is TPressObjectChangedEvent) and
-   (TPressObjectChangedEvent(AEvent).ContentChanged) then
-    FIsChanged := True
-  else if AEvent is TPressObjectUnchangedEvent then
-    FIsChanged := False
-  else if (AEvent is TPressStructureUnassignObjectEvent) and
+  if (AEvent is TPressStructureUnassignObjectEvent) and
    (TPressStructureUnassignObjectEvent(AEvent).UnassignedObject = Subject) then
     TPressMVPModelCloseFormEvent.Create(Self).Notify;
 end;

@@ -216,6 +216,7 @@ type
     FIsChanged: Boolean;
     FOwner: TPressObject;
     function GetAttributes: TPressAttributeMementoList;
+    function GetSubjectChanged: Boolean;
   protected
     procedure Notify(AAttribute: TPressAttribute);
     property Attributes: TPressAttributeMementoList read GetAttributes;
@@ -225,6 +226,7 @@ type
     constructor Create(AOwner: TPressObject);
     destructor Destroy; override;
     procedure Restore;
+    property SubjectChanged: Boolean read GetSubjectChanged;
   end;
 
   TPressObjectMementoIterator = class;
@@ -1849,7 +1851,7 @@ destructor TPressObjectMemento.Destroy;
 begin
   {$IFDEF PressLogSubjectMemento}PressLogMsg(Self, 'Destroying ' + Owner.Signature, []);{$ENDIF}
   FAttributes.Free;
-  FOwner.Mementos.Extract(Self);
+  FOwner.Mementos.Extract(Self);  // friend class
   FOwner.Free;
   inherited;
 end;
@@ -1859,6 +1861,11 @@ begin
   if not Assigned(FAttributes) then
     FAttributes := TPressAttributeMementoList.Create(True);
   Result := FAttributes;
+end;
+
+function TPressObjectMemento.GetSubjectChanged: Boolean;
+begin
+  Result := Assigned(FAttributes) and (FAttributes.Count > 0);
 end;
 
 procedure TPressObjectMemento.Notify(AAttribute: TPressAttribute);
