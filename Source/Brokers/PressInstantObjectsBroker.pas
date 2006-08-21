@@ -430,25 +430,15 @@ procedure TPressInstantObjectsPersistence.ReadPressObject(
 
   procedure ReadPressReference(APressReference: TPressReference;
     AInstantReference: TInstantReference);
-  var
-    VObject: TInstantObject;
   begin
-    if (APressReference.ObjectClassName <> '') and (APressReference.ObjectId <> '') then
-    begin
+    if APressReference.HasInstance and
+     not APressReference.Value.IsPersistent then
+      APressReference.Value.Save;
+    if (APressReference.ObjectClassName <> '') and
+     (APressReference.ObjectId <> '') then
       AInstantReference.ReferenceObject(
-       APressReference.ObjectClassName, APressReference.ObjectId);
-    end else if APressReference.HasInstance then
-    begin
-      VObject := InstantFindClass(APressReference.Value.PersistentName).Create;
-      try
-        AInstantReference.Value := VObject;
-      except
-        VObject.Free;
-        raise;
-      end;
-      VObject.Release;
-      ReadPressObject(APressReference.Value, VObject);
-    end else
+       APressReference.ObjectClassName, APressReference.ObjectId)
+    else
       AInstantReference.Value := nil;
   end;
 
@@ -475,7 +465,7 @@ procedure TPressInstantObjectsPersistence.ReadPressObject(
   procedure ReadPressReferences(APressReferences: TPressReferences;
     AInstantReferences: TInstantReferences);
   var
-    VObject: TInstantObject;
+    VObjectReference: TInstantObjectReference;
     VProxy: TPressProxy;
     I: Integer;
   begin
@@ -483,26 +473,14 @@ procedure TPressInstantObjectsPersistence.ReadPressObject(
     for I := 0 to Pred(APressReferences.Count) do
     begin
       VProxy := APressReferences.Proxies[I];
-      if (VProxy.ObjectClassName <> '') and
-       (VProxy.ObjectId <> '') then
+      if VProxy.HasInstance and not VProxy.Instance.IsPersistent then
+        VProxy.Instance.Save;
+      if (VProxy.ObjectClassName <> '') and (VProxy.ObjectId <> '') then
       begin
-
-        { TODO : use try / except to avoid orphaned references }
-        TPressInstantReferencesFriend(AInstantReferences).ObjectReferenceList.
-         Add.ReferenceObject(VProxy.ObjectClassName, VProxy.ObjectId);
-
-      end else if VProxy.HasInstance then
-      begin
-        { TODO : Test to avoid AV }
-        VObject := InstantFindClass(VProxy.Instance.PersistentName).Create;
-        try
-          AInstantReferences.Add(VObject);
-        except
-          VObject.Free;
-          raise;
-        end;
-        VObject.Release;
-        ReadPressObject(VProxy.Instance, VObject);
+        VObjectReference := TPressInstantReferencesFriend(AInstantReferences).
+         ObjectReferenceList.Add;
+        VObjectReference.
+         ReferenceObject(VProxy.ObjectClassName, VProxy.ObjectId);
       end;
     end;
   end;
