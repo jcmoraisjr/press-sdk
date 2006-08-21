@@ -46,7 +46,7 @@ type
   TPressMVPItemsPresenter = class;
   TPressMVPFormPresenter = class;
 
-  TPressMVPFormPresenterType = (fpInclude, fpPresent, fpIncludePresent);
+  TPressMVPFormPresenterType = (fpInclude, fpPresent, fpIncludePresent, fpRegister);
 
   { TPressMVPInteractors }
 
