@@ -1041,8 +1041,14 @@ end;
 
 procedure TPressMVPObjectModel.UpdateData;
 begin
-  if Selection.Count > 1 then
-    TPressMVPModelUpdateDataEvent.Create(Selection[0]).Notify;
+  with Selection.CreateIterator do
+  try
+    BeforeFirstItem;
+    while NextItem do
+      TPressMVPModelUpdateDataEvent.Create(CurrentItem).Notify;
+  finally
+    Free;
+  end;
 end;
 
 { TPressMVPQueryModel }
