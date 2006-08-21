@@ -1372,7 +1372,7 @@ end;
 
 procedure TPressMVPItemsPresenter.InternalUpdateView;
 begin
-  View.SetRowCount(Model.Count);
+  View.RowCount := Model.Count;
   View.UpdateView(Model.Subject);
 end;
 

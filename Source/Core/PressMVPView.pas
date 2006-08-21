@@ -265,9 +265,13 @@ type
   end;
 
   TPressMVPItemsView = class(TPressMVPWinView)
+  private
+    function GetRowCount: Integer;
+    procedure SetRowCount(ARowCount: Integer);
   protected
     procedure InternalAlignColumns; virtual;
     function InternalCurrentItem: Integer; virtual; abstract;
+    function InternalGetRowCount: Integer; virtual; abstract;
     procedure InternalSelectItem(AIndex: Integer); virtual; abstract;
     procedure InternalSetColumnCount(AColumnCount: Integer); virtual;
     procedure InternalSetColumnWidth(AColumn, AWidth: Integer); virtual;
@@ -279,7 +283,7 @@ type
     procedure SelectItem(AIndex: Integer);
     procedure SetColumnCount(AColumnCount: Integer);
     procedure SetColumnWidth(AColumn, AWidth: Integer);
-    procedure SetRowCount(ARowCount: Integer);
+    property RowCount: Integer read GetRowCount write SetRowCount;
   end;
 
   TPressDrawItemEvent = procedure(Sender: TPressMVPListBoxView;
@@ -296,6 +300,7 @@ type
   protected
     procedure InitView; override;
     function InternalCurrentItem: Integer; override;
+    function InternalGetRowCount: Integer; override;
     procedure InternalSelectItem(AIndex: Integer); override;
     procedure InternalSetRowCount(ARowCount: Integer); override;
   public
@@ -324,6 +329,7 @@ type
     procedure InitView; override;
     procedure InternalAlignColumns; override;
     function InternalCurrentItem: Integer; override;
+    function InternalGetRowCount: Integer; override;
     procedure InternalSelectItem(AIndex: Integer); override;
     procedure InternalSetColumnCount(AColumnCount: Integer); override;
     procedure InternalSetColumnWidth(AColumn, AWidth: Integer); override;
@@ -928,6 +934,11 @@ begin
   Result := InternalCurrentItem;
 end;
 
+function TPressMVPItemsView.GetRowCount: Integer;
+begin
+  Result := InternalGetRowCount;
+end;
+
 procedure TPressMVPItemsView.InternalAlignColumns;
 begin
 end;
@@ -946,7 +957,14 @@ begin
 end;
 
 procedure TPressMVPItemsView.SelectItem(AIndex: Integer);
+var
+  VRowCount: Integer;
 begin
+  { TODO : Improve, moving RowCount check to presenter }
+  VRowCount := RowCount;
+  if AIndex = VRowCount then
+    RowCount := VRowCount + 1;
+
   InternalSelectItem(AIndex);
 end;
 
@@ -993,6 +1011,11 @@ end;
 function TPressMVPListBoxView.InternalCurrentItem: Integer;
 begin
   Result := Control.ItemIndex;
+end;
+
+function TPressMVPListBoxView.InternalGetRowCount: Integer;
+begin
+  Result := Control.Items.Count;
 end;
 
 procedure TPressMVPListBoxView.InternalSelectItem(AIndex: Integer);
@@ -1094,6 +1117,11 @@ end;
 function TPressMVPGridView.InternalCurrentItem: Integer;
 begin
   Result := Control.Row - 1;
+end;
+
+function TPressMVPGridView.InternalGetRowCount: Integer;
+begin
+  Result := Control.RowCount - 1;
 end;
 
 procedure TPressMVPGridView.InternalSelectItem(AIndex: Integer);
