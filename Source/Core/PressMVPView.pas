@@ -154,11 +154,13 @@ type
     procedure InternalClear; virtual;
     procedure InternalUpdateModel(AAttribute: TPressAttribute); virtual;
     procedure InternalUpdateView(AAttribute: TPressAttribute); virtual;
+    procedure SetSize(Value: Integer); virtual;
   public
     procedure Clear;
     procedure UpdateModel(AAttribute: TPressAttribute);
     procedure UpdateView(AAttribute: TPressAttribute);
     property AsString: string read GetAsString;
+    property Size: Integer write SetSize;
   end;
 
   TPressMVPWinView = class(TPressMVPAttributeView)
@@ -189,6 +191,7 @@ type
     procedure InternalClear; override;
     procedure InternalUpdateModel(AAttribute: TPressAttribute); override;
     procedure InternalUpdateView(AAttribute: TPressAttribute); override;
+    procedure SetSize(Value: Integer); override;
   public
     class function Apply(AControl: TControl): Boolean; override;
     procedure SetFocus; override;
@@ -254,6 +257,7 @@ type
     function InternalCurrentItem: Integer; override;
     procedure InternalUpdateModel(AAttribute: TPressAttribute); override;
     procedure InternalUpdateView(AAttribute: TPressAttribute); override;
+    procedure SetSize(Value: Integer); override;
   public
     class function Apply(AControl: TControl): Boolean; override;
     procedure SelectAll;
@@ -541,6 +545,10 @@ procedure TPressMVPAttributeView.InternalUpdateView(AAttribute: TPressAttribute)
 begin
 end;
 
+procedure TPressMVPAttributeView.SetSize(Value: Integer);
+begin
+end;
+
 procedure TPressMVPAttributeView.UpdateModel(AAttribute: TPressAttribute);
 begin
   if Assigned(AAttribute) then
@@ -680,6 +688,11 @@ procedure TPressMVPEditView.SetFocus;
 begin
   inherited;
   Control.SelectAll;
+end;
+
+procedure TPressMVPEditView.SetSize(Value: Integer);
+begin
+  TPressMVPViewCustomEditFriend(Control).MaxLength := Value;
 end;
 
 { TPressMVPDateTimeView }
@@ -882,6 +895,11 @@ end;
 procedure TPressMVPComboBoxView.SetComboStyle(Value: TComboBoxStyle);
 begin
   TPressMVPViewCustomComboBoxFriend(Control).Style := Value;
+end;
+
+procedure TPressMVPComboBoxView.SetSize(Value: Integer);
+begin
+  TPressMVPViewCustomComboBoxFriend(Control).MaxLength := Value;
 end;
 
 procedure TPressMVPComboBoxView.ShowReferences;
