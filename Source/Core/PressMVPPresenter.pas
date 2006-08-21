@@ -489,9 +489,23 @@ begin
 end;
 
 procedure TPressMVPNextControlInteractor.DoPressEnter;
+var
+  VSelection: TPressMVPSelection;
 begin
   if Owner.View is TPressMVPWinView then
     TPressMVPWinView(Owner.View).SelectNext;
+
+  { TODO : Specific behavior implemented here in order to include into
+    all NextControlInteractor decendants, instead creating another
+    Keyboard interactor --listening and changing-- the same event and Key }
+  if Owner.Model.Parent is TPressMVPQueryModel then
+  begin
+    VSelection := Owner.Model.Parent.Selection;
+    if (VSelection.Count > 0) and (VSelection[0] is TPressMVPItemsModel) and
+     (TPressMVPItemsModel(VSelection[0]).Subject.Name = SPressQueryItemsString) then
+      TPressMVPQueryModel(Owner.Model.Parent).Execute;
+  end;
+
 end;
 
 procedure TPressMVPNextControlInteractor.InitInteractor;
