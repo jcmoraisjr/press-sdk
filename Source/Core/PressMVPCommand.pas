@@ -619,7 +619,7 @@ end;
 
 function TPressMVPAddReferencesCommand.GetShortCut: TShortCut;
 begin
-  Result := Menus.ShortCut(VK_F2, [ssShift]);
+  Result := VK_F2;
 end;
 
 procedure TPressMVPAddReferencesCommand.InternalExecute;
@@ -655,7 +655,10 @@ end;
 
 function TPressMVPRemoveItemsCommand.InternalIsEnabled: Boolean;
 begin
-  Result := Model.Selection.Count > 0;
+  { TODO : Implement removing from Query items }
+  Result := (not (Model.Parent is TPressMVPQueryModel)) and
+   (Model.Selection.Count > 0);
+  //Result := Model.Selection.Count > 0;
 end;
 
 { TPressMVPObjectCommand }

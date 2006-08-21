@@ -247,8 +247,7 @@ type
 
   TPressMVPReferencesModel = class(TPressMVPItemsModel)
   protected
-    procedure InitCommands; override;
-    procedure InternalCreateAddReferencesCommands; virtual;
+    procedure InternalCreateAddCommands; override;
   public
     class function Apply: TPressSubjectClass; override;
   end;
@@ -924,16 +923,13 @@ begin
   Result := TPressReferences;
 end;
 
-procedure TPressMVPReferencesModel.InitCommands;
+procedure TPressMVPReferencesModel.InternalCreateAddCommands;
 begin
-  InternalCreateAddReferencesCommands;
-  inherited;
-end;
-
-procedure TPressMVPReferencesModel.InternalCreateAddReferencesCommands;
-begin
-  if HasSubject and not (Subject.Owner is TPressQuery) then
-    AddCommand(TPressMVPAddReferencesCommand);
+  if HasSubject and (Subject.Owner is TPressQuery) and
+   (Subject.Name = SPressQueryItemsString) then
+    inherited
+   else
+    AddCommand(TPressMVPAddReferencesCommand)
 end;
 
 { TPressMVPObjectModel }
