@@ -113,11 +113,11 @@ begin
     attFloat, attCurrency:
       Result := StringReplace(AAttribute.AsString, ',', '.', [rfReplaceAll]);
     attDate:
-      Result := FormatDateTime('yyyy-mm-dd', AAttribute.AsDate);
+      Result := AnsiQuotedStr(FormatDateTime('yyyy-mm-dd', AAttribute.AsDate), PressPersistenceBroker.StrQuote);
     attTime:
-      Result := FormatDateTime('hh:nn:ss', AAttribute.AsTime);
+      Result := AnsiQuotedStr(FormatDateTime('hh:nn:ss', AAttribute.AsTime), PressPersistenceBroker.StrQuote);
     attDateTime:
-      Result := FormatDateTime('yyyy-mm-dd hh:nn:ss', AAttribute.AsDateTime);
+      Result := AnsiQuotedStr(FormatDateTime('yyyy-mm-dd hh:nn:ss', AAttribute.AsDateTime), PressPersistenceBroker.StrQuote);
     attReference:
       { TODO : Valid only to IDs stored in string format }
       Result := AnsiQuotedStr(TPressReference(AAttribute).Value.PersistentId, PressPersistenceBroker.StrQuote);
