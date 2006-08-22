@@ -2072,18 +2072,11 @@ end;
 
 procedure TPressValueMemento.Restore;
 begin
-  { TODO : Workaround, PressItems views doesn't listen attribute events }
-//  Owner.DisableChanges;
-//  try
-    if Assigned(FAttributeClone) then
-    begin
-      {$IFDEF PressLogSubjectMemento}PressLogMsg(Self, Format('Restoring %s (%s)', [Owner.Signature, FAttributeClone.Signature]));{$ENDIF}
-      Owner.Assign(FAttributeClone);
-//      Owner.NotifyChange;  // friend class
-    end;
-//  finally
-//    Owner.EnableChanges;
-//  end;
+  if Assigned(FAttributeClone) then
+  begin
+    {$IFDEF PressLogSubjectMemento}PressLogMsg(Self, Format('Restoring %s (%s)', [Owner.Signature, FAttributeClone.Signature]));{$ENDIF}
+    Owner.Assign(FAttributeClone);
+  end;
   Owner.FIsChanged := FIsChanged;  // friend class
 end;
 
@@ -2182,20 +2175,15 @@ procedure TPressItemMemento.Restore;
   end;
 
 begin
-  Owner.DisableChanges;
-  try
-    case State of
-      isUnmodified:
-        ;
-      isAdded:
-        RestoreAdded;
-      isModified:
-        RestoreModified;
-      isDeleted:
-        RestoreDeleted;
-    end;
-  finally
-    Owner.EnableChanges;
+  case State of
+    isUnmodified:
+      ;
+    isAdded:
+      RestoreAdded;
+    isModified:
+      RestoreModified;
+    isDeleted:
+      RestoreDeleted;
   end;
   if Owner is TPressItem then
     Owner.FIsChanged := FIsChanged;  // friend class
