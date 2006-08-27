@@ -69,6 +69,7 @@ type
   protected
     function InternalBuildOrderByClause: string; virtual;
     function InternalBuildWhereClause: string; virtual;
+    procedure InternalUpdateReferenceList; virtual;
   public
     function Add(AObject: TPressObject): Integer;
     procedure Clear;
@@ -236,12 +237,7 @@ begin
   end;
 end;
 
-function TPressQuery.Remove(AObject: TPressObject): Integer;
-begin
-  Result := _QueryItems.Remove(AObject);
-end;
-
-procedure TPressQuery.UpdateReferenceList;
+procedure TPressQuery.InternalUpdateReferenceList;
 begin
   _QueryItems.DisableChanges;
   try
@@ -249,6 +245,16 @@ begin
   finally
     _QueryItems.EnableChanges;
   end;
+end;
+
+function TPressQuery.Remove(AObject: TPressObject): Integer;
+begin
+  Result := _QueryItems.Remove(AObject);
+end;
+
+procedure TPressQuery.UpdateReferenceList;
+begin
+  InternalUpdateReferenceList;
 end;
 
 procedure RegisterClasses;
