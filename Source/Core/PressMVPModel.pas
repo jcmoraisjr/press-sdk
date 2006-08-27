@@ -115,6 +115,7 @@ type
     procedure SetName(const Value: string);
   protected
     function InternalBuildWhereClause: string; override;
+    class function InternalMetadataStr: string; override;
   published
     property Name: string read GetName write SetName;
   end;
@@ -374,6 +375,11 @@ begin
      [_Name.PersistentName, Name])
   else
     Result := '';
+end;
+
+class function TPressMVPReferenceQuery.InternalMetadataStr: string;
+begin
+  Result := 'TPressMVPReferenceQuery(TPressObject);;';
 end;
 
 procedure TPressMVPReferenceQuery.SetName(const Value: string);
@@ -1099,15 +1105,8 @@ begin
   TPressMVPReferenceQuery.RegisterClass;
 end;
 
-procedure RegisterMetadatas;
-begin
-  PressRegisterMetadata(
-   'TPressMVPReferenceQuery(TPressObject);;');
-end;
-
 initialization
   RegisterModels;
   RegisterClasses;
-  RegisterMetadatas;
 
 end.

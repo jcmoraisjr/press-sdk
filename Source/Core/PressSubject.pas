@@ -507,6 +507,7 @@ type
     procedure Initialize; virtual;
     procedure InternalDispose; virtual;
     function InternalIsValid: Boolean; virtual;
+    class function InternalMetadataStr: string; virtual;
     procedure InternalSave; virtual;
   public
     constructor Create(AMetadata: TPressObjectMetadata = nil);
@@ -1462,18 +1463,13 @@ function PressFindObjectClass(const AClassName: string): TPressObjectClass;
 var
   I: Integer;
 begin
-  if AClassName = TPressObject.ClassName then
-    Result := TPressObject
-  else
+  for I := 0 to Pred(PressRegisteredClasses.Count) do
   begin
-    for I := 0 to Pred(PressRegisteredClasses.Count) do
-    begin
-      Result := TPressObjectClass(PressRegisteredClasses[I]);
-      if Result.ClassName = AClassName then
-        Exit;
-    end;
-    Result := nil;
+    Result := TPressObjectClass(PressRegisteredClasses[I]);
+    if Result.ClassName = AClassName then
+      Exit;
   end;
+  Result := nil;
 end;
 
 function PressObjectClassByName(const AClassName: string): TPressObjectClass;
@@ -1569,14 +1565,14 @@ end;
 constructor TPressEnumMetadata.Create(ATypeAddress: Pointer);
 var
   I: Integer;
-  TypeData: PTypeData;
+  VTypeData: PTypeData;
 begin
   inherited Create;
   FTypeAddress := ATypeAddress;
-  TypeData := GetTypeData(FTypeAddress);
+  VTypeData := GetTypeData(FTypeAddress);
   FItems := TStringList.Create;
-  for I := TypeData.MinValue to TypeData.MaxValue do
-    FItems.Add(RemoveEnumItemPrefix(GetEnumName(ATypeAddress, I)));
+  for I := VTypeData.MinValue to VTypeData.MaxValue do
+    FItems.Add(RemoveEnumItemPrefix(GetEnumName(FTypeAddress, I)));
 end;
 
 destructor TPressEnumMetadata.Destroy;
@@ -2555,6 +2551,7 @@ end;
 class function TPressObject.ClassMetadata: TPressObjectMetadata;
 var
   VTargetClass: TPressObjectClass;
+  VMetadataStr: string;
   I: Integer;
 begin
   VTargetClass := Self;
@@ -2565,6 +2562,12 @@ begin
       Result := TPressObjectMetadata(PressObjectMetadatas[I]);
       if Result.ObjectClass = VTargetClass then
         Exit;
+    end;
+    VMetadataStr := VTargetClass.InternalMetadataStr;
+    if VMetadataStr <> '' then
+    begin
+      Result := PressRegisterMetadata(VMetadataStr);
+      Exit;
     end;
     if VTargetClass <> TPressObject then
       VTargetClass := TPressObjectClass(VTargetClass.ClassParent)
@@ -2820,6 +2823,13 @@ end;
 function TPressObject.InternalIsValid: Boolean;
 begin
   Result := True;
+end;
+
+class function TPressObject.InternalMetadataStr: string;
+begin
+  Result :=
+   TPressObject.ClassName + ';' +
+   SPressIdString+': String(32);';
 end;
 
 procedure TPressObject.InternalSave;
@@ -6285,17 +6295,9 @@ begin
   TPressObject.RegisterClass;
 end;
 
-procedure InitMetadatas;
-begin
-  PressRegisterMetadata(
-   TPressObject.ClassName + ';' +
-   SPressIdString+': String(32);');
-end;
-
 initialization
   RegisterAttributes;
   RegisterClasses;
-  InitMetadatas;
   { TODO : Forcing premature ObjectStore initialization to avoid AVs
     due to SingleObjects destruction order.
     An ApplicationContext instance holding and destroying SingleObjects
