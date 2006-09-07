@@ -1,10 +1,11 @@
 program PhoneBook;
 
 uses
+  FastMM4,
   Forms,
   PressMVPPresenter,
   PressInstantObjectsBroker,
-  // Insert at least one InstantObjects' unit broker here
+  InstantUIB,
   IOModel in 'IOModel.pas',
   ObjectModel in 'ObjectModel.pas',
   Main in 'Main.pas' {MainForm},
