@@ -556,6 +556,8 @@ end;
 
 function TPressMVPObjectItem.GetDisplayText(ACol: Integer): string;
 begin
+  { TODO : fix 'out of bounds' exception if DisplayName isn't assigned
+    to ListBox views }
   if Assigned(Attributes[ACol]) then
     Result := Attributes[ACol].DisplayText
   else

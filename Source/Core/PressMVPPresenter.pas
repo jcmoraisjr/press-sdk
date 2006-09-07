@@ -292,6 +292,7 @@ type
     function GetView: TPressMVPItemView;
     procedure SetDisplayNames(const Value: string);
   protected
+    procedure InitPresenter; override;
     procedure InternalUpdateModel; override;
     procedure InternalUpdateView; override;
     property DisplayNameList: TStrings read GetDisplayNameList;
@@ -1287,6 +1288,12 @@ begin
   Result := inherited View as TPressMVPItemView;
 end;
 
+procedure TPressMVPItemPresenter.InitPresenter;
+begin
+  inherited;
+  { TODO : Set View.Size }
+end;
+
 procedure TPressMVPItemPresenter.InternalUpdateModel;
 begin
   View.UpdateModel(Model.Subject);
@@ -1784,6 +1791,7 @@ begin
       if (ObjectClass = AObjectClass) and
        (FormPresenterType in [AFormPresenterType, fpIncludePresent]) then
         Exit;
+  { TODO : Notify ambiguous presenter class }
   Result := -1;
 end;
 

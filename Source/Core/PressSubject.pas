@@ -1544,6 +1544,7 @@ function PressRegisterEnumMetadata(
 begin
   Result := TPressEnumMetadata.Create(AEnumAddress);
   Result.Name := AEnumName;
+  { TODO : Store complete enum name as well as display name (user-defined) }
   PressEnumMetadatas.Add(Result);
 end;
 
