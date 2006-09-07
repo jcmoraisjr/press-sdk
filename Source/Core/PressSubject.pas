@@ -4633,6 +4633,7 @@ begin
     FValues[True] := Copy(VEditMask, 1, VPos - 1);
   end;
   inherited;
+  Value := False;
 end;
 
 procedure TPressBoolean.Reset;
