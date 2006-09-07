@@ -327,8 +327,14 @@ procedure TPressInstantObjectsPersistence.ReadInstantObject(
     APressParts.Clear;
     for I := 0 to Pred(AInstantParts.Count) do
     begin
+
+      // If you got a compilation error, move the InstantObjects'
+      // TInstantParts.ObjectReference property declaration (line 1070)
+      // to the protected area.
+
       VReference :=
        TPressInstantPartsFriend(AInstantParts).ObjectReferences[I];
+
       if (VReference.ObjectClassName <> '') and (VReference.ObjectId <> '') then
       begin
         APressParts.AddReference(
@@ -494,8 +500,8 @@ begin
   for I := 0 to Pred(APressObject.AttributeCount) do
   begin
     VPressAttr := APressObject.Attributes[I];
-    if (VPressAttr.Name = SPressIdString) or
-     (not APressObject.IsOwned and not VPressAttr.IsChanged) then
+    if (VPressAttr.Name = SPressIdString) or (APressObject.IsPersistent and
+     not APressObject.IsOwned and not VPressAttr.IsChanged) then
       Continue;
     VInstantAttr := AInstantObject.AttributeByName(VPressAttr.PersistentName);
     case VPressAttr.AttributeBaseType of
