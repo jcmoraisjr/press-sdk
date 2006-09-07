@@ -827,4 +827,8 @@ begin
   Result := False;
 end;
 
+initialization
+  TPressMVPObjectCommand.RegisterCommand.EnabledIfNoUser := True;
+  TPressMVPCloseApplicationCommand.RegisterCommand.EnabledIfNoUser := True;
+
 end.

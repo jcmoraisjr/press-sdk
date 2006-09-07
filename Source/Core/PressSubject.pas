@@ -502,6 +502,7 @@ type
     procedure Init;
   protected
     procedure AfterCreateAttributes; virtual;
+    procedure AfterRetrieve; virtual;
     procedure BeforeCreateAttributes; virtual;
     procedure Finalize; virtual;
     procedure Initialize; virtual;
@@ -2485,6 +2486,10 @@ end;
 { TPressObject }
 
 procedure TPressObject.AfterCreateAttributes;
+begin
+end;
+
+procedure TPressObject.AfterRetrieve;
 begin
 end;
 

@@ -49,14 +49,17 @@ type
     procedure BindComponent; virtual; abstract;
     procedure ComponentClick(Sender: TObject);
     function GetEnabled: Boolean; virtual; abstract;
+    function GetVisible: Boolean; virtual; abstract;
     procedure ReleaseComponent; virtual; abstract;
     procedure SetEnabled(Value: Boolean); virtual; abstract;
+    procedure SetVisible(Value: Boolean); virtual; abstract;
     property OnClickEvent: TNotifyEvent read FOnClickEvent write FOnClickEvent;
   public
     constructor Create(ACommand: TPressMVPCommand);
     destructor Destroy; override;
     property Command: TPressMVPCommand read FCommand;
     property Enabled: Boolean read GetEnabled write SetEnabled;
+    property Visible: Boolean read GetVisible write SetVisible;
   end;
 
   TPressMVPCommandMenuItem = class(TPressMVPCommandComponent)
@@ -65,8 +68,10 @@ type
   protected
     procedure BindComponent; override;
     function GetEnabled: Boolean; override;
+    function GetVisible: Boolean; override;
     procedure ReleaseComponent; override;
     procedure SetEnabled(Value: Boolean); override;
+    procedure SetVisible(Value: Boolean); override;
   public
     constructor Create(ACommand: TPressMVPCommand; AMenuItem: TMenuItem);
   end;
@@ -77,8 +82,10 @@ type
   protected
     procedure BindComponent; override;
     function GetEnabled: Boolean; override;
+    function GetVisible: Boolean; override;
     procedure ReleaseComponent; override;
     procedure SetEnabled(Value: Boolean); override;
+    procedure SetVisible(Value: Boolean); override;
   public
     constructor Create(ACommand: TPressMVPCommand; AControl: TControl);
   end;
@@ -90,6 +97,7 @@ type
     function GetItems(AIndex: Integer): TPressMVPCommandComponent;
     procedure SetEnabled(Value: Boolean);
     procedure SetItems(AIndex: Integer; Value: TPressMVPCommandComponent);
+    procedure SetVisible(Value: Boolean);
   protected
     function InternalCreateIterator: TPressCustomIterator; override;
   public
@@ -101,6 +109,7 @@ type
     function Remove(AObject: TPressMVPCommandComponent): Integer;
     property Enabled: Boolean write SetEnabled;
     property Items[AIndex: Integer]: TPressMVPCommandComponent read GetItems write SetItems; default;
+    property Visible: Boolean write SetVisible;
   end;
 
   TPressMVPCommandComponentIterator = class(TPressIterator)
@@ -115,16 +124,22 @@ type
 
   TPressMVPCommandClass = class of TPressMVPCommand;
 
+  TPressMVPRegisteredCommand = class;
+
   TPressMVPCommand = class(TObject)
   private
     FCaption: string;
     FComponentList: TPressMVPCommandComponentList;
     FEnabled: Boolean;
+    FExecutable: Boolean;
     FModel: TPressMVPModel;
     FNotifier: TPressNotifier;
     FShortCut: TShortCut;
+    FVisible: Boolean;
     function GetComponentList: TPressMVPCommandComponentList;
     procedure Notify(AEvent: TPressEvent);
+    procedure VerifyAccess;
+    function VerifyEnabled: Boolean;
   protected
     function GetCaption: string; virtual;
     function GetShortCut: TShortCut; virtual;
@@ -139,10 +154,12 @@ type
     procedure AddComponent(AComponent: TComponent);
     class function Apply(AModel: TPressMVPModel): Boolean; virtual;
     procedure Execute;
+    class function RegisterCommand: TPressMVPRegisteredCommand;
     property Caption: string read GetCaption;
     property Enabled: Boolean read FEnabled;
     property Model: TPressMVPModel read FModel;
     property ShortCut: TShortCut read GetShortCut;
+    property Visible: Boolean read FVisible;
   end;
 
   TPressMVPCommandIterator = class;
@@ -167,6 +184,46 @@ type
     function GetCurrentItem: TPressMVPCommand;
   public
     property CurrentItem: TPressMVPCommand read GetCurrentItem;
+  end;
+
+  TPressMVPRegisteredCommand = class(TObject)
+  private
+    FAccessID: Integer;
+    FAlwaysEnabled: Boolean;
+    FCommandClass: TPressMVPCommandClass;
+    FEnabledIfNoUser: Boolean;
+  public
+    constructor Create(ACommandClass: TPressMVPCommandClass);
+    property AccessID: Integer read FAccessID write FAccessID;
+    property AlwaysEnabled: Boolean read FAlwaysEnabled write FAlwaysEnabled;
+    property CommandClass: TPressMVPCommandClass read FCommandClass;
+    property EnabledIfNoUser: Boolean read FEnabledIfNoUser write FEnabledIfNoUser;
+  end;
+
+  TPressMVPRegisteredCommandIterator = class;
+
+  TPressMVPRegisteredCommandList = class(TPressList)
+  private
+    function GetItems(AIndex: Integer): TPressMVPRegisteredCommand;
+    procedure SetItems(AIndex: Integer; Value: TPressMVPRegisteredCommand);
+  protected
+    function InternalCreateIterator: TPressCustomIterator; override;
+  public
+    function Add(AObject: TPressMVPRegisteredCommand): Integer;
+    function CreateIterator: TPressMVPRegisteredCommandIterator;
+    function Extract(AObject: TPressMVPRegisteredCommand): TPressMVPRegisteredCommand;
+    function IndexOf(AObject: TPressMVPRegisteredCommand): Integer;
+    function IndexOfCommand(ACommandClass: TPressMVPCommandClass): Integer;
+    procedure Insert(AIndex: Integer; AObject: TPressMVPRegisteredCommand);
+    function Remove(AObject: TPressMVPRegisteredCommand): Integer;
+    property Items[AIndex: Integer]: TPressMVPRegisteredCommand read GetItems write SetItems; default;
+  end;
+
+  TPressMVPRegisteredCommandIterator = class(TPressIterator)
+  private
+    function GetCurrentItem: TPressMVPRegisteredCommand;
+  public
+    property CurrentItem: TPressMVPRegisteredCommand read GetCurrentItem;
   end;
 
   TPressMVPCommands = class(TObject)
@@ -492,6 +549,8 @@ uses
   Contnrs,
   PressConsts,
   {$IFDEF PressLog}PressLog,{$ENDIF}
+  PressUser,
+  PressPersistence,
   PressMVPCommand;
 
 type
@@ -510,6 +569,7 @@ var
   _PressRegisteredModels: TClassList;
   _PressRegisteredViews: TClassList;
   _PressRegisteredPresenters: TClassList;
+  _PressRegisteredCommands: TPressMVPRegisteredCommandList;
   _PressRegisteredInteractors: TClassList;
 
 function PressRegisteredModels: TClassList;
@@ -540,6 +600,16 @@ begin
     PressRegisterSingleObject(_PressRegisteredPresenters);
   end;
   Result := _PressRegisteredPresenters;
+end;
+
+function PressRegisteredCommands: TPressMVPRegisteredCommandList;
+begin
+  if not Assigned(_PressRegisteredCommands) then
+  begin
+    _PressRegisteredCommands := TPressMVPRegisteredCommandList.Create(True);
+    PressRegisterSingleObject(_PressRegisteredCommands);
+  end;
+  Result := _PressRegisteredCommands;
 end;
 
 function PressRegisteredInteractors: TClassList;
@@ -583,6 +653,7 @@ begin
     OnClickEvent := FMenuItem.OnClick;
     FMenuItem.OnClick := ComponentClick;
     FMenuItem.Enabled := Command.Enabled;
+    FMenuItem.Visible := Command.Visible;
   end;
 end;
 
@@ -597,6 +668,11 @@ end;
 function TPressMVPCommandMenuItem.GetEnabled: Boolean;
 begin
   Result := Assigned(FMenuItem) and FMenuItem.Enabled;
+end;
+
+function TPressMVPCommandMenuItem.GetVisible: Boolean;
+begin
+  Result := Assigned(FMenuItem) and FMenuItem.Visible;
 end;
 
 procedure TPressMVPCommandMenuItem.ReleaseComponent;
@@ -615,6 +691,12 @@ begin
     FMenuItem.Enabled := Value;
 end;
 
+procedure TPressMVPCommandMenuItem.SetVisible(Value: Boolean);
+begin
+  if Assigned(FMenuItem) then
+    FMenuItem.Visible := Value;
+end;
+
 { TPressMVPCommandControl }
 
 procedure TPressMVPCommandControl.BindComponent;
@@ -624,6 +706,7 @@ begin
     OnClickEvent := TPressMVPControlFriend(FControl).OnClick;
     TPressMVPControlFriend(FControl).OnClick := ComponentClick;
     FControl.Enabled := Command.Enabled;
+    FControl.Visible := Command.Visible;
   end;
 end;
 
@@ -640,6 +723,11 @@ begin
   Result := Assigned(FControl) and FControl.Enabled;
 end;
 
+function TPressMVPCommandControl.GetVisible: Boolean;
+begin
+  Result := Assigned(FControl) and FControl.Visible;
+end;
+
 procedure TPressMVPCommandControl.ReleaseComponent;
 begin
   if Assigned(FControl) then
@@ -654,6 +742,12 @@ procedure TPressMVPCommandControl.SetEnabled(Value: Boolean);
 begin
   if Assigned(FControl) then
     FControl.Enabled := Value;
+end;
+
+procedure TPressMVPCommandControl.SetVisible(Value: Boolean);
+begin
+  if Assigned(FControl) then
+    FControl.Visible := Value;
 end;
 
 { TPressMVPCommandComponentList }
@@ -722,6 +816,18 @@ begin
   inherited Items[AIndex] := Value;
 end;
 
+procedure TPressMVPCommandComponentList.SetVisible(Value: Boolean);
+begin
+  with CreateIterator do
+  try
+    BeforeFirstItem;
+    while NextItem do
+      CurrentItem.Visible := Value;
+  finally
+    Free;
+  end;
+end;
+
 { TPressMVPCommandComponentIterator }
 
 function TPressMVPCommandComponentIterator.GetCurrentItem: TPressMVPCommandComponent;
@@ -760,7 +866,8 @@ begin
      [AModel.ClassName, ClassName]);
   inherited Create;
   FModel := AModel;
-  FEnabled := InternalIsEnabled;
+  VerifyAccess;
+  FEnabled := VerifyEnabled;
   FNotifier := TPressNotifier.Create(Notify);
   InitNotifier;
 end;
@@ -803,6 +910,8 @@ begin
    Model.Selection, [TPressMVPSelectionChangedEvent]);
   if Model.Subject is TPressObject then
     Notifier.AddNotificationItem(Model.Subject, [TPressObjectChangedEvent]);
+  Notifier.AddNotificationItem(
+   PressPersistenceBroker, [TPressPersistenceEvent]);
 end;
 
 function TPressMVPCommand.InternalIsEnabled: Boolean;
@@ -811,13 +920,65 @@ begin
 end;
 
 procedure TPressMVPCommand.Notify(AEvent: TPressEvent);
+var
+  VOldVisible: Boolean;
 begin
-  if FEnabled <> InternalIsEnabled then
+  VOldVisible := FVisible;
+  if AEvent is TPressPersistenceEvent then
+    VerifyAccess;
+  if FEnabled <> VerifyEnabled then
   begin
     FEnabled := not FEnabled;
     ComponentList.Enabled := FEnabled;
     TPressMVPCommandChangedEvent.Create(Self).Notify;
   end;
+  if FVisible <> VOldVisible then
+    ComponentList.Visible := FVisible;
+end;
+
+class function TPressMVPCommand.RegisterCommand: TPressMVPRegisteredCommand;
+begin
+  Result := TPressMVPRegisteredCommand.Create(Self);
+  try
+    PressRegisteredCommands.Add(Result);
+  except
+    Result.Free;
+    raise;
+  end;
+end;
+
+procedure TPressMVPCommand.VerifyAccess;
+var
+  VAccessMode: TPressAccessMode;
+  VCommandReg: TPressMVPRegisteredCommand;
+  VIndex: Integer;
+begin
+  VIndex :=
+   PressRegisteredCommands.IndexOfCommand(TPressMVPCommandClass(ClassType));
+  if VIndex <> -1 then
+    VCommandReg := PressRegisteredCommands[VIndex]
+  else
+    VCommandReg := nil;
+  if PressPersistenceBroker.HasUser then
+  begin
+    if Assigned(VCommandReg) and not VCommandReg.AlwaysEnabled and
+     (VCommandReg.AccessID <> -1) then
+      VAccessMode :=
+       PressPersistenceBroker.CurrentUser.AccessMode(VCommandReg.AccessID)
+    else
+      VAccessMode := amWritable;
+  end else if Assigned(VCommandReg) and
+   (VCommandReg.AlwaysEnabled or VCommandReg.EnabledIfNoUser) then
+    VAccessMode := amWritable
+  else
+    VAccessMode := amVisible;
+  FVisible := VAccessMode <> amInvisible;
+  FExecutable := VAccessMode = amWritable;
+end;
+
+function TPressMVPCommand.VerifyEnabled: Boolean;
+begin
+  Result := FVisible and FExecutable and InternalIsEnabled;
 end;
 
 { TPressMVPCommandList }
@@ -876,6 +1037,86 @@ end;
 function TPressMVPCommandIterator.GetCurrentItem: TPressMVPCommand;
 begin
   Result := inherited CurrentItem as TPressMVPCommand;
+end;
+
+{ TPressMVPRegisteredCommand }
+
+constructor TPressMVPRegisteredCommand.Create(
+  ACommandClass: TPressMVPCommandClass);
+begin
+  inherited Create;
+  FCommandClass := ACommandClass;
+  FAccessID := -1;
+end;
+
+{ TPressMVPRegisteredCommandList }
+
+function TPressMVPRegisteredCommandList.Add(
+  AObject: TPressMVPRegisteredCommand): Integer;
+begin
+  Result := inherited Add(AObject);
+end;
+
+function TPressMVPRegisteredCommandList.CreateIterator: TPressMVPRegisteredCommandIterator;
+begin
+  Result := TPressMVPRegisteredCommandIterator.Create(Self);
+end;
+
+function TPressMVPRegisteredCommandList.Extract(
+  AObject: TPressMVPRegisteredCommand): TPressMVPRegisteredCommand;
+begin
+  Result := inherited Extract(AObject) as TPressMVPRegisteredCommand;
+end;
+
+function TPressMVPRegisteredCommandList.GetItems(
+  AIndex: Integer): TPressMVPRegisteredCommand;
+begin
+  Result := inherited Items[AIndex] as TPressMVPRegisteredCommand;
+end;
+
+function TPressMVPRegisteredCommandList.IndexOf(
+  AObject: TPressMVPRegisteredCommand): Integer;
+begin
+  Result := inherited IndexOf(AObject);
+end;
+
+function TPressMVPRegisteredCommandList.IndexOfCommand(
+  ACommandClass: TPressMVPCommandClass): Integer;
+begin
+  for Result := 0 to Pred(Count) do
+    if ACommandClass.InheritsFrom(Items[Result].CommandClass) then
+      Exit;
+  Result := -1;
+end;
+
+procedure TPressMVPRegisteredCommandList.Insert(
+  AIndex: Integer; AObject: TPressMVPRegisteredCommand);
+begin
+  inherited Insert(AIndex, AObject);
+end;
+
+function TPressMVPRegisteredCommandList.InternalCreateIterator: TPressCustomIterator;
+begin
+  Result := CreateIterator;
+end;
+
+function TPressMVPRegisteredCommandList.Remove(
+  AObject: TPressMVPRegisteredCommand): Integer;
+begin
+  Result := inherited Remove(AObject);
+end;
+
+procedure TPressMVPRegisteredCommandList.SetItems(
+  AIndex: Integer; Value: TPressMVPRegisteredCommand);
+begin
+  inherited Items[AIndex] := Value;
+end;
+
+{ TPressMVPRegisteredCommandIterator }
+
+function TPressMVPRegisteredCommandIterator.GetCurrentItem: TPressMVPRegisteredCommand;
+begin
+  Result := inherited CurrentItem as TPressMVPRegisteredCommand;
 end;
 
 { TPressMVPCommands }

@@ -61,6 +61,7 @@ resourcestring
   SMetadataNotFound = 'Metadata da classe %s não foi encontrada';
   SMetadataParseError = 'Erro ao interpretar metadata: "(%d,%d) %s"' + SPressLineBreak + '"%s"';
   SNonRelatedClasses = 'Classes %s e %s não são relacionadas';
+  SNoLoggedUser = 'Não existe usuário logado';
   SNoReference = 'Não existe referência';
   SPersistentClassNotFound = 'Classe persistente %s não encontrada';
   SSingletonClassNotFound = 'Classe Singleton %s não encontrada';

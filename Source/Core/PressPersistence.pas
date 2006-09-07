@@ -26,10 +26,21 @@ interface
 {$I Press.inc}
 
 uses
+  PressNotifier,
   PressSubject,
-  PressQuery;
+  PressQuery,
+  PressUser;
 
 type
+  TPressPersistenceEvent = class(TPressEvent)
+  end;
+
+  TPressPersistenceLogonEvent = class(TPressPersistenceEvent)
+  end;
+
+  TPressPersistenceLogoffEvent = class(TPressPersistenceEvent)
+  end;
+
   TPressOIDGeneratorsClass = class of TPressOIDGenerators;
 
   TPressOIDGenerators = class(TPressQuery)
@@ -50,7 +61,12 @@ type
 
   TPressPersistenceBroker = class(TObject)
   private
+    FCurrentUser: TPressUser;
+    FUsers: TPressUsers;
+    function GetCurrentUser: TPressUser;
+    function GetHasUser: Boolean;
     function GetIsDefault: Boolean;
+    function GetUsers: TPressUsers;
     procedure SetIsDefault(Value: Boolean);
   protected
     function GetIdentifierQuotes: string; virtual;
@@ -58,10 +74,13 @@ type
     procedure InitPersistenceBroker; virtual;
     procedure InternalDispose(AObject: TPressObject); virtual; abstract;
     procedure InternalConnect; virtual;
+    function InternalUsersClass: TPressUsersClass; virtual;
+    function InternalLogon(const AUserID, APassword: string): Boolean; virtual;
     function InternalOIDGeneratorsClass: TPressOIDGeneratorsClass; virtual;
     function InternalRetrieve(const AClass, AId: string): TPressObject; virtual; abstract;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; virtual; abstract;
     procedure InternalStore(AObject: TPressObject); virtual; abstract;
+    property Users: TPressUsers read GetUsers;
   public
     constructor Create;
     destructor Destroy; override;
@@ -69,10 +88,14 @@ type
     procedure Dispose(const AClass, AId: string); overload;
     procedure Dispose(AObject: TPressObject); overload;
     procedure Dispose(AProxy: TPressProxy); overload;
+    procedure Logoff;
+    function Logon(const AUserID, APassword: string): Boolean;
     class procedure RegisterPersistence;
     function Retrieve(const AClass, AId: string): TPressObject;
     function RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
     procedure Store(AObject: TPressObject);
+    property CurrentUser: TPressUser read GetCurrentUser;
+    property HasUser: Boolean read GetHasUser;
     property IdentifierQuotes: string read GetIdentifierQuotes;
     property IsDefault: Boolean read GetIsDefault write SetIsDefault;
     property StrQuote: Char read GetStrQuote;
@@ -90,6 +113,10 @@ uses
   PressClasses,
   PressConsts
   {$IFDEF PressLog},PressLog{$ENDIF};
+
+type
+  TPressUserFriend = class(TPressUser);
+  TPressObjectFriend = class(TPressObject);
 
 var
   _PressRegisteredPersistenceBrokers: TClassList;
@@ -169,6 +196,9 @@ end;
 
 destructor TPressPersistenceBroker.Destroy;
 begin
+  { TODO : Work around in order to avoid AV during application shutdown }
+  //Logoff;
+  FUsers.Free;
   IsDefault := False;
   inherited;
 end;
@@ -204,6 +234,18 @@ begin
   end;
 end;
 
+function TPressPersistenceBroker.GetCurrentUser: TPressUser;
+begin
+  if not Assigned(FCurrentUser) then
+    raise EPressError.Create(SNoLoggedUser);
+  Result := FCurrentUser;
+end;
+
+function TPressPersistenceBroker.GetHasUser: Boolean;
+begin
+  Result := Assigned(FCurrentUser);
+end;
+
 function TPressPersistenceBroker.GetIdentifierQuotes: string;
 begin
   Result := '"';
@@ -219,6 +261,13 @@ begin
   Result := '''';
 end;
 
+function TPressPersistenceBroker.GetUsers: TPressUsers;
+begin
+  if not Assigned(FUsers) then
+    FUsers := InternalUsersClass.Create;
+  Result := FUsers;
+end;
+
 procedure TPressPersistenceBroker.InitPersistenceBroker;
 begin
 end;
@@ -227,9 +276,56 @@ procedure TPressPersistenceBroker.InternalConnect;
 begin
 end;
 
+function TPressPersistenceBroker.InternalLogon(
+  const AUserID, APassword: string): Boolean;
+var
+  VNewUser: TPressUser;
+begin
+  { TODO : Implement DB Connection }
+  if AUserID = '' then
+    VNewUser := nil
+  else
+    VNewUser := Users.CheckLogon(AUserID, APassword);
+  Result := Assigned(VNewUser);
+  if Result then
+    try
+      Logoff;
+      FCurrentUser := VNewUser;
+    except
+      VNewUser.Free;
+      raise;
+    end;
+end;
+
 function TPressPersistenceBroker.InternalOIDGeneratorsClass: TPressOIDGeneratorsClass;
 begin
   Result := TPressSimpleOIDGenerators;
+end;
+
+function TPressPersistenceBroker.InternalUsersClass: TPressUsersClass;
+begin
+  Result := TPressDefaultUsers;
+end;
+
+procedure TPressPersistenceBroker.Logoff;
+begin
+  if Assigned(FCurrentUser) then
+  begin
+    TPressUserFriend(FCurrentUser).BeforeLogoff;  // friend class
+    TPressPersistenceLogoffEvent.Create(Self).Notify;
+    FreeAndNil(FCurrentUser);
+  end;
+end;
+
+function TPressPersistenceBroker.Logon(
+  const AUserID, APassword: string): Boolean;
+begin
+  Result := InternalLogon(AUserID, APassword);
+  if Result then
+  begin
+    TPressPersistenceLogonEvent.Create(Self).Notify;
+    TPressUserFriend(CurrentUser).AfterLogon;  // friend class
+  end;
 end;
 
 class procedure TPressPersistenceBroker.RegisterPersistence;
@@ -248,6 +344,7 @@ begin
      Format('Retrieving %s(%s)', [AClass, AId]));{$ENDIF}
     { TODO : Ensure the class type of the retrieved object }
     Result := InternalRetrieve(AClass, AId);
+    TPressObjectFriend(Result).AfterRetrieve;
   end;
 end;
 
