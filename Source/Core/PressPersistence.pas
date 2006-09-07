@@ -282,10 +282,7 @@ var
   VNewUser: TPressUser;
 begin
   { TODO : Implement DB Connection }
-  if AUserID = '' then
-    VNewUser := nil
-  else
-    VNewUser := Users.CheckLogon(AUserID, APassword);
+  VNewUser := Users.CheckLogon(AUserID, APassword);
   Result := Assigned(VNewUser);
   if Result then
     try
