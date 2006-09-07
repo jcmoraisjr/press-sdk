@@ -781,15 +781,24 @@ end;
 
 procedure TPressMVPCheckBoxView.InternalUpdateModel(AAttribute: TPressAttribute);
 begin
-  AAttribute.AsBoolean :=
-   TPressMVPViewCustomCheckBoxFriend(Control).State = cbChecked;
+  if TPressMVPViewCustomCheckBoxFriend(Control).State = cbGrayed then
+    AAttribute.Clear
+  else
+    AAttribute.AsBoolean :=
+     TPressMVPViewCustomCheckBoxFriend(Control).State = cbChecked;
 end;
 
 procedure TPressMVPCheckBoxView.InternalUpdateView(AAttribute: TPressAttribute);
 begin
-  if Assigned(AAttribute) and AAttribute.AsBoolean then
-    TPressMVPViewCustomCheckBoxFriend(Control).State := cbChecked
-  else
+  if Assigned(AAttribute) then
+  begin
+    if AAttribute.IsNull then
+      TPressMVPViewCustomCheckBoxFriend(Control).State := cbGrayed
+    else if AAttribute.AsBoolean then
+      TPressMVPViewCustomCheckBoxFriend(Control).State := cbChecked
+    else
+      TPressMVPViewCustomCheckBoxFriend(Control).State := cbUnchecked;
+  end else
     TPressMVPViewCustomCheckBoxFriend(Control).State := cbUnchecked;
 end;
 
