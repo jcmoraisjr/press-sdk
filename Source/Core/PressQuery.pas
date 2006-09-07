@@ -37,10 +37,12 @@ type
   TPressQueryAttributeMetadata = class(TPressAttributeMetadata)
   private
     FCategory: TPressQueryAttributeCategory;
+    FIncludeIfEmpty: Boolean;
   public
     constructor Create(AOwner: TPressQueryMetadata);
   published
     property Category: TPressQueryAttributeCategory read FCategory write FCategory;
+    property IncludeIfEmpty: Boolean read FIncludeIfEmpty write FIncludeIfEmpty;
   end;
 
   TPressQueryMetadata = class(TPressObjectMetadata)
@@ -212,8 +214,9 @@ begin
     First;
     Next;  // skip Id and QueryItems attributes
     while NextItem do
-      if not CurrentItem.IsEmpty and
-       (CurrentItem.Metadata is TPressQueryAttributeMetadata) then
+      if (CurrentItem.Metadata is TPressQueryAttributeMetadata) and
+       (TPressQueryAttributeMetadata(CurrentItem.Metadata).IncludeIfEmpty or
+       not CurrentItem.IsEmpty) then
         case TPressQueryAttributeMetadata(CurrentItem.Metadata).Category of
           acMatch:
             ReadValueItem('%s = %s', CurrentItem, Result);

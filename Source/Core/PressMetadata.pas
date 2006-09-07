@@ -168,6 +168,7 @@ const
   CGreaterEqualThanCategoryName = 'GreaterEqual';
   CLesserThanCategoryName = 'Lesser';
   CLesserEqualThanCategoryName = 'LesserEqual';
+  CIncludeIfEmptyQueryAttributeProperty = 'IncludeIfEmpty';
 
 { TPressCodeObject }
 
@@ -412,7 +413,9 @@ begin
             TPressQueryAttributeMetadata(FMetadata).Category := acLesserEqualThan
           else
             Reader.ErrorExpected(CCategoryQueryAttributeName, Token);
-        end else
+        end else if SameText(CIncludeIfEmptyQueryAttributeProperty, Token) then
+          TPressQueryAttributeMetadata(FMetadata).IncludeIfEmpty := True
+        else
           Reader.ErrorExpected(CQueryAttributePropertyName, Token);
       end else
         Reader.ErrorExpected(CAttributePropertyName, Token);
