@@ -49,6 +49,7 @@ resourcestring
   SComponentNotFound = 'O componente %s(''%s'') não foi encontrado';
   SDialogClassIsAssigned = 'Classe do objeto de diálogo já está associado';
   SDisplayNameMissing = 'Falta DisplayName para o controle %s(''%s'')';
+  SEnumItemNotFound = 'Enumeration ''%s'' não encontrado';
   SEnumMetadataNotFound = 'Enumeration metadata %s não encontrado';
   SInstanceNotFound = 'Instance not found: %s(%s)';
   SInvalidAttributeClass = 'O atributo %s(''%s'') requer objetos da classe %s';

@@ -4507,12 +4507,20 @@ begin
 end;
 
 procedure TPressEnum.SetAsString(const AValue: string);
+var
+  VIndex: Integer;
 begin
   try
     if AValue = '' then
       Clear
     else
-      Value := Metadata.EnumMetadata.Items.IndexOf(AValue);
+    begin
+      VIndex := Metadata.EnumMetadata.Items.IndexOf(AValue);
+      if VIndex <> -1 then
+        Value := VIndex
+      else
+        raise EPressError.CreateFmt(SEnumItemNotFound, [AValue]);
+    end;
   except
     on E: EConvertError do
       raise ConversionError(E);
