@@ -3992,9 +3992,7 @@ var
   VMaxSize: Integer;
   VOwnerName: string;
 begin
-  { TODO : removed IsNull check in order to avoid some unwished
-    Changed events }
-  if {IsNull or} (FValue <> AValue) then
+  if IsNull or (FValue <> AValue) then
   begin
     if Assigned(Metadata) then
       VMaxSize := Metadata.Size

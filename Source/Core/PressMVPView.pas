@@ -185,9 +185,15 @@ type
 
   TPressMVPEditView = class(TPressMVPWinView)
   private
+    FChanged: Boolean;
+    FViewChangeEvent: TNotifyEvent;
     function GetControl: TCustomEdit;
   protected
+    procedure ViewChangeEvent(Sender: TObject); virtual;
+    procedure ViewEnterEvent(Sender: TObject); override;
+  protected
     function GetAsString: string; override;
+    procedure InitView; override;
     procedure InternalClear; override;
     procedure InternalUpdateModel(AAttribute: TPressAttribute); override;
     procedure InternalUpdateView(AAttribute: TPressAttribute); override;
@@ -195,6 +201,7 @@ type
   public
     class function Apply(AControl: TControl): Boolean; override;
     procedure SetFocus; override;
+    property Changed: Boolean read FChanged;
     property Control: TCustomEdit read GetControl;
   end;
 
@@ -661,6 +668,16 @@ begin
   Result := inherited Control as TCustomEdit;
 end;
 
+procedure TPressMVPEditView.InitView;
+begin
+  inherited;
+  with TPressMVPViewCustomEditFriend(Control) do
+  begin
+    FViewChangeEvent := OnChange;
+    OnChange := ViewChangeEvent;
+  end;
+end;
+
 procedure TPressMVPEditView.InternalClear;
 begin
   TPressMVPViewCustomEditFriend(Control).Text := '';
@@ -668,7 +685,8 @@ end;
 
 procedure TPressMVPEditView.InternalUpdateModel(AAttribute: TPressAttribute);
 begin
-  AAttribute.AsString := TPressMVPViewCustomEditFriend(Control).Text;
+  if Changed then
+    AAttribute.AsString := TPressMVPViewCustomEditFriend(Control).Text;
 end;
 
 procedure TPressMVPEditView.InternalUpdateView(AAttribute: TPressAttribute);
@@ -693,6 +711,21 @@ end;
 procedure TPressMVPEditView.SetSize(Value: Integer);
 begin
   TPressMVPViewCustomEditFriend(Control).MaxLength := Value;
+end;
+
+procedure TPressMVPEditView.ViewChangeEvent(Sender: TObject);
+begin
+  if EventsDisabled then
+    Exit;
+  FChanged := True;
+  if Assigned(FViewChangeEvent) then
+    FViewChangeEvent(Sender);
+end;
+
+procedure TPressMVPEditView.ViewEnterEvent(Sender: TObject);
+begin
+  inherited;
+  FChanged := False;
 end;
 
 { TPressMVPDateTimeView }
