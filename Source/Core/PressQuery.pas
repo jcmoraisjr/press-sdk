@@ -48,11 +48,15 @@ type
   TPressQueryMetadata = class(TPressObjectMetadata)
   private
     FIncludeSubClasses: Boolean;
+    FItemObjectClass: TPressObjectClass;
     FItemObjectClassName: string;
     FOrderFieldName: string;
+    procedure SetItemObjectClassName(const Value: string);
+  public
+    property ItemObjectClass: TPressObjectClass read FItemObjectClass;
   published
-    property IncludeSubClasses: Boolean read FIncludeSubClasses write FIncludeSubClasses default True;
-    property ItemObjectClassName: string read FItemObjectClassName write FItemObjectClassName;
+    property IncludeSubClasses: Boolean read FIncludeSubClasses write FIncludeSubClasses default False;
+    property ItemObjectClassName: string read FItemObjectClassName write SetItemObjectClassName;
     property OrderFieldName: string read FOrderFieldName write FOrderFieldName;
   end;
 
@@ -99,6 +103,14 @@ constructor TPressQueryAttributeMetadata.Create(
 begin
   inherited Create(AOwner);
   FCategory := acMatch;
+end;
+
+{ TPressQueryMetadata }
+
+procedure TPressQueryMetadata.SetItemObjectClassName(const Value: string);
+begin
+  FItemObjectClass := PressObjectClassByName(Value);
+  FItemObjectClassName := Value;
 end;
 
 { TPressQuery }
