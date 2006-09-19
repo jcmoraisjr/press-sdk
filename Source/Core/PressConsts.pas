@@ -67,6 +67,7 @@ resourcestring
   SSingletonClassNotFound = 'Classe Singleton %s não encontrada';
   SStringOverflow = 'String overflow: %s(%s)';
   STokenExpected = '''%s'' esperado, mas ''%s'' foi encontrado';
+  SUnassignedAttributeType = 'Tipo de atributo não associado para %s(''%s'')';
   SUnassignedCandidateClasses = 'Classes candidata não estão associadas';
   SUnassignedTargetClass = 'Classe alvo não está associada';
   SUnassignedMainForm = 'Formulário principal não está associado';

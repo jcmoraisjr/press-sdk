@@ -125,14 +125,18 @@ type
     FOwner: TPressObjectMetadata;
     FPersistentName: string;
     FSize: Integer;
+    FAttributeClass: TPressAttributeClass;
+    procedure SetAttributeName(const Value: string);
     procedure SetName(const Value: string);
     procedure SetObjectClassName(const Value: string);
   public
     constructor Create(AOwner: TPressObjectMetadata);
     function CreateAttribute(AOwner: TPressObject): TPressAttribute;
+    property AttributeClass: TPressAttributeClass read FAttributeClass;
     property ObjectClass: TPressObjectClass read FObjectClass;
+    property Owner: TPressObjectMetadata read FOwner;
   published
-    property AttributeName: string read FAttributeName write FAttributeName;
+    property AttributeName: string read FAttributeName write SetAttributeName;
     property DefaultValue: string read FDefaultValue write FDefaultValue;
     property EditMask: string read FEditMask write FEditMask;
     property EnumMetadata: TPressEnumMetadata read FEnumMetadata write FEnumMetadata;
@@ -164,6 +168,17 @@ type
     function GetCurrentItem: TPressAttributeMetadata;
   public
     property CurrentItem: TPressAttributeMetadata read GetCurrentItem;
+  end;
+
+  TPressAttributeMapIterator = class(TPressAttributeMetadataIterator)
+  private
+    FAttributeMap: TPressAttributeMetadataList;
+    procedure ReadMetadatas(AObjectMetadata: TPressObjectMetadata);
+  protected
+    property AttributeMap: TPressAttributeMetadataList read FAttributeMap;
+  public
+    constructor Create(AObjectMetadata: TPressObjectMetadata);
+    destructor Destroy; override;
   end;
 
   TPressObjectMetadata = class(TPressStreamable)
@@ -524,6 +539,7 @@ type
     function ClassType: TPressObjectClass;
     function Clone: TPressObject;
     function CreateAttributeIterator: TPressAttributeIterator;
+    class function CreateAttributeMapIterator(AMetadata: TPressObjectMetadata = nil): TPressAttributeMapIterator;
     function CreateMemento: TPressObjectMemento;
     procedure DisableChanges;
     procedure DisableUpdates;
@@ -719,7 +735,8 @@ type
 
   TPressAttributeBaseType = (attUnknown, attString, attInteger, attFloat,
    attCurrency, attEnum, attBoolean, attDate, attTime, attDateTime, attVariant,
-   attMemo, attPicture, attPart, attReference, attParts, attReferences);
+   attMemo, attBinary, attPicture,
+   attPart, attReference, attParts, attReferences);
 
   TPressAttribute = class(TPressSubject)
   private
@@ -1122,6 +1139,7 @@ type
   TPressBlob = class(TPressValue)
   private
     FStream: TMemoryStream;
+    function GetSize: Integer;
     function GetStream: TMemoryStream;
     function GetValue: string;
     procedure SetValue(const AValue: string);
@@ -1139,10 +1157,17 @@ type
     procedure Reset; override;
     procedure SaveToStream(AStream: TStream);
     function WriteBuffer(const ABuffer; ACount: Integer): Boolean;
+    property Size: Integer read GetSize;
     property Value: string read GetValue write SetValue;
   end;
 
   TPressMemo = class(TPressBlob)
+  public
+    class function AttributeBaseType: TPressAttributeBaseType; override;
+    class function AttributeName: string; override;
+  end;
+
+  TPressBinary = class(TPressBlob)
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
@@ -1663,21 +1688,29 @@ end;
 constructor TPressAttributeMetadata.Create(AOwner: TPressObjectMetadata);
 begin
   inherited Create;
-  FObjectClass := TPressObject;
   FOwner := AOwner;
   FOwner.AttributeMetadatas.Add(Self);
 end;
 
 function TPressAttributeMetadata.CreateAttribute(
   AOwner: TPressObject): TPressAttribute;
+begin
+  if Assigned(FAttributeClass) then
+    Result := FAttributeClass.Create(AOwner, Self)
+  else
+    raise EPressError.CreateFmt(SUnassignedAttributeType,
+     [AOwner.ClassName, Name]);
+end;
+
+procedure TPressAttributeMetadata.SetAttributeName(const Value: string);
 var
   VAttributeClass: TPressAttributeClass;
 begin
-  VAttributeClass := PressFindAttributeClass(AttributeName);
-  if Assigned(VAttributeClass) then
-    Result := VAttributeClass.Create(AOwner, Self)
-  else
-    raise EPressError.CreateFmt(SUnsupportedAttributeType, [AttributeName]);
+  VAttributeClass := PressFindAttributeClass(Value);
+  if not Assigned(VAttributeClass) then
+    raise EPressError.CreateFmt(SUnsupportedAttributeType, [Value]);
+  FAttributeClass := VAttributeClass;
+  FAttributeName := Value;
 end;
 
 procedure TPressAttributeMetadata.SetName(const Value: string);
@@ -1746,6 +1779,41 @@ end;
 function TPressAttributeMetadataIterator.GetCurrentItem: TPressAttributeMetadata;
 begin
   Result := inherited CurrentItem as TPressAttributeMetadata;
+end;
+
+{ TPressAttributeMapIterator }
+
+constructor TPressAttributeMapIterator.Create(
+  AObjectMetadata: TPressObjectMetadata);
+var
+  VMap: TPressAttributeMetadataList;
+begin
+  VMap := TPressAttributeMetadataList.Create(False);
+  inherited Create(VMap);
+  FAttributeMap := VMap;
+  ReadMetadatas(AObjectMetadata);
+end;
+
+destructor TPressAttributeMapIterator.Destroy;
+begin
+  FAttributeMap.Free;
+  inherited;
+end;
+
+procedure TPressAttributeMapIterator.ReadMetadatas(
+  AObjectMetadata: TPressObjectMetadata);
+begin
+  if not Assigned(AObjectMetadata) then
+    Exit;
+  ReadMetadatas(AObjectMetadata.ParentMetadata);
+  with AObjectMetadata.AttributeMetadatas.CreateIterator do
+  try
+    BeforeFirstItem;
+    while NextItem do
+      AttributeMap.Add(CurrentItem);
+  finally
+    Free;
+  end;
 end;
 
 { TPressObjectMetadata }
@@ -2611,41 +2679,41 @@ begin
   Result := FAttributes.CreateIterator;
 end;
 
-procedure TPressObject.CreateAttributes;
-
-  procedure CreateMetadataAttributes(AMetadata: TPressObjectMetadata);
-  var
-    VAttribute: PPressAttribute;
-  begin
-    if not Assigned(AMetadata) then
-      Exit;
-    CreateMetadataAttributes(AMetadata.ParentMetadata);
-    with AMetadata.AttributeMetadatas.CreateIterator do
-    try
-      while not IsDone do
-      begin
-        VAttribute := AttributeAddress(CurrentItem.Name);
-        if Assigned(VAttribute) then
-        begin
-          if not Assigned(VAttribute^) then
-          begin
-            VAttribute^ := CurrentItem.CreateAttribute(Self);
-            FAttributes.Add(VAttribute^);
-          end;
-        end else
-          raise EPressError.CreateFmt(SAttributeNotFound,
-           [AMetadata.ObjectClass.ClassName, CurrentItem.Name]);
-        Next;
-      end;
-    finally
-      Free;
-    end;
-  end;
-
+class function TPressObject.CreateAttributeMapIterator(
+  AMetadata: TPressObjectMetadata): TPressAttributeMapIterator;
 begin
-  { TODO : Use a map to instantiate inherited attributes }
+  if not Assigned(AMetadata) then
+    AMetadata := ClassMetadata;
+  Result := TPressAttributeMapIterator.Create(AMetadata);
+end;
+
+procedure TPressObject.CreateAttributes;
+var
+  VAttribute: PPressAttribute;
+  VMetadata: TPressAttributeMetadata;
+begin
   BeforeCreateAttributes;
-  CreateMetadataAttributes(Metadata);
+  with CreateAttributeMapIterator(Metadata) do
+  try
+    BeforeFirstItem;
+    while NextItem do
+    begin
+      VMetadata := CurrentItem;
+      VAttribute := AttributeAddress(VMetadata.Name);
+      if Assigned(VAttribute) then
+      begin
+        if not Assigned(VAttribute^) then
+        begin
+          VAttribute^ := VMetadata.CreateAttribute(Self);
+          FAttributes.Add(VAttribute^);
+        end;
+      end else
+        raise EPressError.CreateFmt(SAttributeNotFound,
+         [VMetadata.Owner.ObjectClass.ClassName, VMetadata.Name]);
+    end;
+  finally
+    Free;
+  end;
   AfterCreateAttributes;
 end;
 
@@ -5338,6 +5406,14 @@ begin
   Result := Value;
 end;
 
+function TPressBlob.GetSize: Integer;
+begin
+  if Assigned(FStream) then
+    Result := FStream.Size
+  else
+    Result := 0;
+end;
+
 function TPressBlob.GetStream: TMemoryStream;
 begin
   if not Assigned(FStream) then
@@ -5451,6 +5527,18 @@ end;
 class function TPressMemo.AttributeName: string;
 begin
   Result := 'Memo';
+end;
+
+{ TPressBinary }
+
+class function TPressBinary.AttributeBaseType: TPressAttributeBaseType;
+begin
+  Result := attBinary;
+end;
+
+class function TPressBinary.AttributeName: string;
+begin
+  Result := 'Binary';
 end;
 
 { TPressPicture }
@@ -6163,6 +6251,8 @@ end;
 procedure TPressItems.NotifyRebuild;
 begin
   TPressItemsChangedEvent.Create(Self, nil, -1, ietRebuild).Notify;
+  if Assigned(Owner) then
+    Owner.NotifyInvalidate;
 end;
 
 function TPressItems.Remove(AObject: TPressObject): Integer;
@@ -6296,6 +6386,7 @@ begin
   TPressDateTime.RegisterAttribute;
   TPressVariant.RegisterAttribute;
   TPressMemo.RegisterAttribute;
+  TPressBinary.RegisterAttribute;
   TPressPicture.RegisterAttribute;
   TPressPart.RegisterAttribute;
   TPressReference.RegisterAttribute;

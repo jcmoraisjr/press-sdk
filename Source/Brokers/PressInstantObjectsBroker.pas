@@ -328,9 +328,13 @@ procedure TPressInstantObjectsPersistence.ReadInstantObject(
     for I := 0 to Pred(AInstantParts.Count) do
     begin
 
+      //     READ-ME!!
+      //
       // If you got a compilation error, move the InstantObjects'
-      // TInstantParts.ObjectReference property declaration (line 1070)
+      // TInstantParts.ObjectReference property declaration (line 1067)
       // to the protected area.
+      //
+      //     READ-ME!!
 
       VReference :=
        TPressInstantPartsFriend(AInstantParts).ObjectReferences[I];
@@ -401,7 +405,7 @@ begin
         Continue;
       VInstantAttr := AInstantObject.AttributeByName(VPressAttr.PersistentName);
       case VPressAttr.AttributeBaseType of
-        attString, attMemo, attPicture:
+        attString, attMemo, attBinary, attPicture:
           VPressAttr.AsString := VInstantAttr.AsString;
         attInteger, attEnum:
           VPressAttr.AsInteger := VInstantAttr.AsInteger;
@@ -505,7 +509,7 @@ begin
       Continue;
     VInstantAttr := AInstantObject.AttributeByName(VPressAttr.PersistentName);
     case VPressAttr.AttributeBaseType of
-      attString, attMemo, attPicture:
+      attString, attMemo, attBinary, attPicture:
         VInstantAttr.AsString := VPressAttr.AsString;
       attInteger, attEnum:
         VInstantAttr.AsInteger := VPressAttr.AsInteger;
