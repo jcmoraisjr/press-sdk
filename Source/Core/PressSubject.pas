@@ -2788,11 +2788,13 @@ begin
     Exit;
   end;
   P := Pos(SPressAttributeSeparator, APath);
+  { TODO : Provide different results if an attribute isn't found or
+    all attributes are found and some reference(s) is nil }
   if P = 0 then
-    Result := AttributeByName(APath)
+    Result := FindAttribute(APath)
   else
   begin
-    Result := AttributeByName(Copy(APath, 1, P-1));
+    Result := FindAttribute(Copy(APath, 1, P-1));
     if (Result is TPressItem) and Assigned(TPressItem(Result).Value) then
       Result := TPressItem(Result).Value.
        FindPathAttribute(Copy(APath, P+1, Length(APath)))
