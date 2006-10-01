@@ -118,7 +118,6 @@ type
     { TODO : Include the Extract method into *all* TPressCustomList decendants }
     { TODO : Change Index to AIndex into *all* TPressCustomList decendants }
     function Extract(AObject: TObject): TObject;
-    function Remove(AObject: TObject): Integer;
     property OwnsObjects: Boolean read FOwnsObjects write FOwnsObjects;
     property Items[AIndex: Integer]: TObject read GetItems write SetItems; default;
     // Reintroduce the following methods and the property into the decendants,
@@ -148,6 +147,7 @@ type
   TPressInterfaceIterator = class;
 
   TPressInterfaceList = class(TPressCustomList)
+  { TODO : Test, finish, improve }
   private
     function GetItems(AIndex: Integer): IInterface;
     procedure SetItems(AIndex: Integer; const Value: IInterface);
@@ -349,11 +349,6 @@ begin
   inherited;
   if (Action = lnDeleted) and FOwnsObjects then
     TObject(Ptr).Free;
-end;
-
-function TPressList.Remove(AObject: TObject): Integer;
-begin
-  Result := inherited Remove(AObject);
 end;
 
 procedure TPressList.SetItems(AIndex: Integer; Value: TObject);
