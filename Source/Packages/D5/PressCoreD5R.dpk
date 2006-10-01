@@ -1,0 +1,51 @@
+package PressCoreD5R;
+
+{$R *.RES}
+{$ALIGN ON}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS ON}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST ON}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DESCRIPTION 'PressObjects Core RunTime'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  vcl50;
+
+contains
+  PressClasses in '..\Core\PressClasses.pas',
+  PressConsts in '..\Core\PressConsts.pas',
+  PressCompatibility in '..\Core\PressCompatibility.pas',
+  PressNotifier in '..\Core\PressNotifier.pas',
+  PressDialogs in '..\Core\PressDialogs.pas',
+  PressLog in '..\Core\PressLog.pas',
+  PressSubject in '..\Core\PressSubject.pas',
+  PressQuery in '..\Core\PressQuery.pas',
+  PressMetadata in '..\Core\PressMetadata.pas',
+  PressPersistence in '..\Core\PressPersistence.pas',
+  PressUser in '..\Core\PressUser.pas',
+  PressMVP in '..\Core\PressMVP.pas',
+  PressMVPCommand in '..\Core\PressMVPCommand.pas',
+  PressMVPModel in '..\Core\PressMVPModel.pas',
+  PressMVPPresenter in '..\Core\PressMVPPresenter.pas',
+  PressMVPView in '..\Core\PressMVPView.pas',
+  PressReport in '..\Core\PressReport.pas';
+
+end.
