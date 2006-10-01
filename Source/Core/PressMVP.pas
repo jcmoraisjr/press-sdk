@@ -373,6 +373,7 @@ type
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); virtual;
     destructor Destroy; override;
     function AddCommand(ACommandClass: TPressMVPCommandClass): Integer;
+    function AddCommandInstance(ACommand: TPressMVPCommand): Integer;
     procedure AddCommands(ACommandClasses: array of TPressMVPCommandClass);
     class function Apply: TPressSubjectClass; virtual; abstract;
     procedure Changed;
@@ -1425,6 +1426,12 @@ begin
     end;
   end else
     Result := Commands.Add(nil);
+end;
+
+function TPressMVPModel.AddCommandInstance(
+  ACommand: TPressMVPCommand): Integer;
+begin
+  Result := Commands.Add(ACommand);
 end;
 
 procedure TPressMVPModel.AddCommands(
