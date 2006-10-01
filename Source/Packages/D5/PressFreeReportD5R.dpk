@@ -32,6 +32,6 @@ requires
   FREEREP5;
 
 contains
-  PressFastReportBroker in '..\Brokers\PressFastReportBroker.pas';
+  PressFastReportBroker in '..\..\Brokers\PressFastReportBroker.pas';
 
 end.

@@ -32,6 +32,6 @@ requires
   IOCore_D5;
 
 contains
-  PressInstantObjectsBroker in '..\Brokers\PressInstantObjectsBroker.pas';
+  PressInstantObjectsBroker in '..\..\Brokers\PressInstantObjectsBroker.pas';
 
 end.
