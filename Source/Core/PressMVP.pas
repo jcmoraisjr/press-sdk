@@ -1353,7 +1353,7 @@ end;
 
 function TPressMVPSelection.InternalCreateIterator: TPressIterator;
 begin
-  Result := TPressIterator.Create(FObjectList);
+  Result := TPressIterator.Create(ObjectList);
 end;
 
 function TPressMVPSelection.InternalOwnsObjects: Boolean;
