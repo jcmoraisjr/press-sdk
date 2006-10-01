@@ -501,6 +501,7 @@ type
     function GetIsValid: Boolean;
     function GetMementos: TPressObjectMementoList;
     function GetMetadata: TPressObjectMetadata;
+    function GetObjectOwner: TPressObject;
     function GetPersistentName: string;
     function GetUpdatesDisabled: Boolean;
     procedure NotifyChange;
@@ -520,6 +521,7 @@ type
     procedure AfterRetrieve; virtual;
     procedure BeforeCreateAttributes; virtual;
     procedure Finalize; virtual;
+    function GetOwner: TPersistent; override;
     procedure Initialize; virtual;
     procedure InternalDispose; virtual;
     function InternalIsValid: Boolean; virtual;
@@ -559,6 +561,7 @@ type
     property IsUpdated: Boolean read GetIsUpdated;
     property IsValid: Boolean read GetIsValid;
     property Metadata: TPressObjectMetadata read GetMetadata;
+    property Owner: TPressObject read GetObjectOwner;
     property OwnerAttribute: TPressStructure read FOwnerAttribute;
     property PersistentId: string read FPersistentId;
     property PersistentName: string read GetPersistentName;
@@ -2860,6 +2863,19 @@ begin
   if not Assigned(FMetadata) then
     FMetadata := ClassMetadata;
   Result := FMetadata;
+end;
+
+function TPressObject.GetObjectOwner: TPressObject;
+begin
+  if Assigned(FOwnerAttribute) then
+    Result := FOwnerAttribute.Owner
+  else
+    Result := nil;
+end;
+
+function TPressObject.GetOwner: TPersistent;
+begin
+  Result := Owner;
 end;
 
 function TPressObject.GetPersistentName: string;
