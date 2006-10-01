@@ -2492,7 +2492,7 @@ end;
 
 function TPressSubject.AddRef: Integer;
 begin
-  Inc(FRefCount);
+  ThreadSafeIncrement(FRefCount);
   Result := FRefCount;
 end;
 
@@ -2534,7 +2534,7 @@ end;
 
 function TPressSubject.Release: Integer;
 begin
-  Dec(FRefCount);
+  ThreadSafeDecrement(FRefCount);
   Result := FRefCount;
 end;
 

@@ -46,6 +46,8 @@ type
    {$IFDEF FPC}Calendar.TCustomCalendar{$ELSE}ComCtrls.TCommonCalendar{$ENDIF};
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
+procedure ThreadSafeIncrement(var AValue: Integer);
+procedure ThreadSafeDecrement(var AValue: Integer);
 
 implementation
 
@@ -57,6 +59,16 @@ begin
   Result :=
    {$IFDEF FPC}MaskEdit{$ELSE}{$IFDEF D6+}MaskUtils{$ELSE}Mask{$ENDIF}{$ENDIF}.
    FormatMaskText(EditMask, Value);
+end;
+
+procedure ThreadSafeIncrement(var AValue: Integer);
+begin
+  InterlockedIncrement(AValue);
+end;
+
+procedure ThreadSafeDecrement(var AValue: Integer);
+begin
+  InterlockedDecrement(AValue);
 end;
 
 end.
