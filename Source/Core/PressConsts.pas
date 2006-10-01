@@ -30,6 +30,8 @@ const
   SPressBrackets = '()';
   SPressAttributePrefix = '_';
   SPressAttributeSeparator = '.';
+  SPressIdentifierSeparator = '_';
+  SPressDataSeparator = ':';
   SPressFieldDelimiter = ';';
   SPressLineBreak = #10;
   SPressTrueString = 'True';
@@ -51,6 +53,8 @@ resourcestring
   SDisplayNameMissing = 'Falta DisplayName para o controle %s(''%s'')';
   SEnumItemNotFound = 'Enumeration ''%s'' não encontrado';
   SEnumMetadataNotFound = 'Enumeration metadata %s não encontrado';
+  SFieldAlreadyInitialized = 'Campo %s já foi inicializado com %s';
+  SFieldNotInitialized = 'Campo %s ainda não foi inicializado';
   SInstanceNotFound = 'Instance not found: %s(%s)';
   SInvalidAttributeClass = 'O atributo %s(''%s'') requer objetos da classe %s';
   SInvalidAttributeType = 'Tipo inválido para o atributo %s (%s)';
@@ -63,6 +67,7 @@ resourcestring
   SNonRelatedClasses = 'Classes %s e %s não são relacionadas';
   SNoLoggedUser = 'Não existe usuário logado';
   SNoReference = 'Não existe referência';
+  SNoRegisteredReport = 'Nenhum relatório foi registrado';
   SPersistentClassNotFound = 'Classe persistente %s não encontrada';
   SSingletonClassNotFound = 'Classe Singleton %s não encontrada';
   SStringOverflow = 'String overflow: %s(%s)';
@@ -100,6 +105,7 @@ resourcestring
   SPressCloseFormCommand = 'Fechar';
   SPressExecuteQueryCommand = 'Executar';
   SPressAssignSelectionQueryCommand = 'Selecionar';
+  SPressReportErrorString = ' ##Erro## ';
 
   SPressCancelChangesDialog = 'Cancelar alterações?';
   SPressConfirmRemoveOneItemDialog = 'Um item selecionado. Confirma remoção?';
