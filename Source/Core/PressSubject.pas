@@ -115,17 +115,18 @@ type
 
   TPressAttributeMetadata = class(TPressStreamable)
   private
+    FAttributeClass: TPressAttributeClass;
     FAttributeName: string;
     FDefaultValue: string;
     FEditMask: string;
     FEnumMetadata: TPressEnumMetadata;
+    FIsPersistent: Boolean;
     FName: string;
     FObjectClass: TPressObjectClass;
     FObjectClassName: string;
     FOwner: TPressObjectMetadata;
     FPersistentName: string;
     FSize: Integer;
-    FAttributeClass: TPressAttributeClass;
     procedure SetAttributeName(const Value: string);
     procedure SetName(const Value: string);
     procedure SetObjectClassName(const Value: string);
@@ -140,6 +141,7 @@ type
     property DefaultValue: string read FDefaultValue write FDefaultValue;
     property EditMask: string read FEditMask write FEditMask;
     property EnumMetadata: TPressEnumMetadata read FEnumMetadata write FEnumMetadata;
+    property IsPersistent: Boolean read FIsPersistent write FIsPersistent default True;
     property Name: string read FName write SetName;
     property ObjectClassName: string read FObjectClassName write SetObjectClassName;
     property PersistentName: string read FPersistentName write FPersistentName;
@@ -1693,6 +1695,7 @@ begin
   inherited Create;
   FOwner := AOwner;
   FOwner.AttributeMetadatas.Add(Self);
+  FIsPersistent := True;
 end;
 
 function TPressAttributeMetadata.CreateAttribute(
@@ -4723,7 +4726,8 @@ begin
     FValues[True] := Copy(VEditMask, 1, VPos - 1);
   end;
   inherited;
-  Value := False;
+  if IsNull then
+    Value := False;
 end;
 
 procedure TPressBoolean.Reset;

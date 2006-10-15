@@ -401,7 +401,8 @@ begin
     for I := 0 to Pred(APressObject.AttributeCount) do
     begin
       VPressAttr := APressObject.Attributes[I];
-      if VPressAttr.Name = SPressIdString then
+      if (VPressAttr.Name = SPressIdString) or
+       not VPressAttr.Metadata.IsPersistent then
         Continue;
       VInstantAttr := AInstantObject.AttributeByName(VPressAttr.PersistentName);
       case VPressAttr.AttributeBaseType of
@@ -504,7 +505,8 @@ begin
   for I := 0 to Pred(APressObject.AttributeCount) do
   begin
     VPressAttr := APressObject.Attributes[I];
-    if (VPressAttr.Name = SPressIdString) or (APressObject.IsPersistent and
+    if (VPressAttr.Name = SPressIdString) or
+     not VPressAttr.Metadata.IsPersistent or (APressObject.IsPersistent and
      not APressObject.IsOwned and not VPressAttr.IsChanged) then
       Continue;
     VInstantAttr := AInstantObject.AttributeByName(VPressAttr.PersistentName);

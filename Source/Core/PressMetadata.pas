@@ -155,6 +155,7 @@ const
   CAllSubClassesQueryProperty = 'Any';
   COrderFieldNameQueryProperty = 'Order';
   CNameAttributeProperty = 'Name';
+  CIsPersistentAttributeProperty = 'IsPersistent';
   CPersistentNameAttributeProperty = 'PersistentName';
   CEditMaskAttributeProperty = 'EditMask';
   CSizeAttributeProperty = 'Size';
@@ -384,6 +385,8 @@ begin
         FMetadata.EditMask := Reader.ReadToken
       else if SameText(CNameAttributeProperty, Token) then
         FMetadata.Name := Reader.ReadToken
+      else if SameText(CIsPersistentAttributeProperty, Token) then
+        FMetadata.IsPersistent := Reader.ReadBoolean
       else if SameText(CPersistentNameAttributeProperty, Token) then
         FMetadata.PersistentName := Reader.ReadToken
       else if SameText(CSizeAttributeProperty, Token) then
