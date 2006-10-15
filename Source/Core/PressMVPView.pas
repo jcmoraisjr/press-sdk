@@ -354,16 +354,27 @@ type
     {$ENDIF}
   end;
 
-  TPressMVPLabelView = class(TPressMVPAttributeView)
-  private
-    function GetControl: TCustomLabel;
+  TPressMVPCaptionView = class(TPressMVPAttributeView)
   protected
     function GetAsString: string; override;
     procedure InternalUpdateModel(AAttribute: TPressAttribute); override;
     procedure InternalUpdateView(AAttribute: TPressAttribute); override;
+  end;
+
+  TPressMVPLabelView = class(TPressMVPCaptionView)
+  private
+    function GetControl: TCustomLabel;
   public
     class function Apply(AControl: TControl): Boolean; override;
     property Control: TCustomLabel read GetControl;
+  end;
+
+  TPressMVPPanelView = class(TPressMVPCaptionView)
+  private
+    function GetControl: TCustomPanel;
+  public
+    class function Apply(AControl: TControl): Boolean; override;
+    property Control: TCustomPanel read GetControl;
   end;
 
   TPressMVPPictureView = class(TPressMVPAttributeView)
@@ -410,13 +421,13 @@ uses
   PressConsts;
 
 type
+  TPressMVPViewControlFriend = class(TControl);
   TPressMVPViewWinControlFriend = class(TWinControl);
   TPressMVPViewCustomEditFriend = class(TCustomEdit);
   TPressMVPViewCustomCalendarFriend = class(TCustomCalendar);
   TPressMVPViewCustomCheckBoxFriend = class(TCustomCheckBox);
   TPressMVPViewCustomComboBoxFriend = class(TCustomComboBox);
   TPressMVPViewCustomListBoxFriend = class(TCustomListBox);
-  TPressMVPViewCustomLabelFriend = class(TCustomLabel);
   TPressMVPViewCustomFormFriend = class(TCustomForm);
 
 { TPressMVPViewKeyboardEvent }
@@ -1245,6 +1256,26 @@ begin
     FViewSelectCellEvent(Sender, ACol, ARow, CanSelect);
 end;
 
+{ TPressMVPCaptionView }
+
+function TPressMVPCaptionView.GetAsString: string;
+begin
+  Result := TPressMVPViewControlFriend(Control).Caption;
+end;
+
+procedure TPressMVPCaptionView.InternalUpdateModel(AAttribute: TPressAttribute);
+begin
+  AAttribute.AsString := TPressMVPViewControlFriend(Control).Caption;
+end;
+
+procedure TPressMVPCaptionView.InternalUpdateView(AAttribute: TPressAttribute);
+begin
+  if Assigned(AAttribute) then
+    TPressMVPViewControlFriend(Control).Caption := AAttribute.DisplayText
+  else
+    TPressMVPViewControlFriend(Control).Caption := '';
+end;
+
 { TPressMVPLabelView }
 
 class function TPressMVPLabelView.Apply(AControl: TControl): Boolean;
@@ -1257,22 +1288,16 @@ begin
   Result := inherited Control as TCustomLabel;
 end;
 
-function TPressMVPLabelView.GetAsString: string;
+{ TPressMVPPanelView }
+
+class function TPressMVPPanelView.Apply(AControl: TControl): Boolean;
 begin
-  Result := TPressMVPViewCustomLabelFriend(Control).Caption;
+  Result := AControl is TCustomPanel;
 end;
 
-procedure TPressMVPLabelView.InternalUpdateModel(AAttribute: TPressAttribute);
+function TPressMVPPanelView.GetControl: TCustomPanel;
 begin
-  AAttribute.AsString := TPressMVPViewCustomLabelFriend(Control).Caption;
-end;
-
-procedure TPressMVPLabelView.InternalUpdateView(AAttribute: TPressAttribute);
-begin
-  if Assigned(AAttribute) then
-    TPressMVPViewCustomLabelFriend(Control).Caption := AAttribute.DisplayText
-  else
-    TPressMVPViewCustomLabelFriend(Control).Caption := '';
+  Result := inherited Control as TCustomPanel;
 end;
 
 { TPressMVPPictureView }
@@ -1354,6 +1379,7 @@ begin
   TPressMVPComboBoxView.RegisterView;
   TPressMVPGridView.RegisterView;
   TPressMVPLabelView.RegisterView;
+  TPressMVPPanelView.RegisterView;
   TPressMVPPictureView.RegisterView;
   TPressMVPFormView.RegisterView;
 end;
