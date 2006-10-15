@@ -676,7 +676,7 @@ end;
 
 function TPressMVPObjectCommand.InternalIsEnabled: Boolean;
 begin
-  Result := not Model.Subject.UpdatesDisabled;
+  Result := not Model.HasSubject or not Model.Subject.UpdatesDisabled;
 end;
 
 { TPressMVPSaveObjectCommand }
