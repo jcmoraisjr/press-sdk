@@ -199,6 +199,7 @@ type
     procedure ErrorEof;
     procedure ErrorExpected(const AExpectedToken, AToken: string);
     procedure ErrorFmt(const AMsg: string; const AParams: array of const);
+    function ReadBoolean: Boolean;
     function ReadIdentifier: string;
     function ReadInteger: Integer;
     procedure ReadMatch(const AToken: string);
@@ -263,7 +264,8 @@ uses
   PressConsts;
 
 const
-  { TODO : Remove this constant}
+  { TODO : Remove these constants}
+  CBooleanValueName = 'Valor lógico';
   CIntegerValueName = 'Valor inteiro';
 
 var
@@ -503,6 +505,18 @@ end;
 function TPressTextReader.IsStringDelimiter(Ch: Char): Boolean;
 begin
   Result := Ch in ['''', '"'];
+end;
+
+function TPressTextReader.ReadBoolean: Boolean;
+var
+  Token: string;
+begin
+  Token := ReadToken;
+  Result := False;
+  if SameText(Token, SPressTrueString) then
+    Result := True
+  else if not SameText(Token, SPressFalseString) then
+    ErrorExpected(CBooleanValueName, Token);
 end;
 
 function TPressTextReader.ReadChar: Char;
