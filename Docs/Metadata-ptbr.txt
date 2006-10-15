@@ -1,6 +1,7 @@
 Metadados são informações de classes de negócio, disponibilizadas ao
 framework em tempo de execução. O registro de metadados é feito através
-da função PressRegisterMetadata('<MetadataString>');
+da função virtual de classe InternalMetadataStr, que deve ser
+implementada em cada classe de negócio que possua atributos.
 
 MetadataString = <ObjectMetadata> | <QueryMetadata>
 

@@ -2,9 +2,9 @@ Para instalar o PressObjects, basta incluir os diretórios
 ($Press)/Source/Core e ($Press)/Source/Brokers na lista de paths de
 bibliotecas.
 
-O PressObjects não instala componentes e, atualmente, não possui
-packages para instalação. Futuramente serão apenas instaladas algumas
-opções no menu da IDE de seu compilador.
+O PressObjects possui atualmente apenas packages de Runtime, pois
+ainda não foi implementada nenhuma funcionalidade para a IDE.
 
-A única dependência é um broker de persistência, portanto é necessário
-instalá-lo para persistir objetos e ler objetos persistidos.
+A única dependência atual é um broker de persistência, portanto é
+necessário instalá-lo para persistir objetos e ler objetos
+persistidos. Vide Persistence-ptbr.txt.

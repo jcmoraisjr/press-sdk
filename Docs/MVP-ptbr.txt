@@ -43,7 +43,7 @@ ObjectClass = classe do objeto de negócio
 
 FormClass = classe do formulário
 
-FormPresenterType = fpInclude | fpPresent | fpIncludePresent
+FormPresenterType = fpInclude | fpPresent | fpIncludePresent | fpRegister
 
 fpInclude = indica que é um formulário de cadastro
 
@@ -53,6 +53,9 @@ alteração
 fpIncludePresent = default, indica que é um formulário misto, usado
 tanto para cadastro quanto para consulta e alteração
 
+fpRegister = apenas registra o Presenter a fim de ligá-lo a uma classe
+de negócio, mas sem incluí-lo na Factory de Presenters.
+
 Para executar o formulário de um Presenter, chame o método de classe Run
 daquele Presenter:
 <PresenterClass>.Run[(<BusinessObject>)];
@@ -61,9 +64,18 @@ BusinessObject = indica o objeto de negócio que deverá ser apresentado
 no formulário. Se nenhum objeto de negócio for passado como parâmetro,
 um novo objeto será criado.
 
-Para criar o Presenter do formulário principal, basta incluir uma chamada
-a PressAssignMainPresenterClass(<MainPresenterClass>); logo após o
-registro da classe, na área initialization da unit.
+== Presenter do Form principal
+==============================
+
+Para que o framework PressObjects seja devidamente inicializado, é
+necessário criar um Presenter para o Form principal da aplicação.
+
+Para isto, basta seguir os passos para criação de um Presenter,
+utilizando TPressMVPMainFormPresenter como a classe base, e alterar o
+arquivo principal do projeto, substituindo a instrução
+Application.Run por:
+
+<MainPresenterClass>.Run.
 
 == Criando um Model
 ===================

@@ -85,11 +85,9 @@ Cada classe de negócio precisa de informações que, nem o compilador
 Free Pascal ou Delphi para Win32 geram, e aqui entram os metadados das
 classes.
 
-Os metadados são, atualmente, gerados através de strings e inseridos na
-área initialization da unit, através da função PressRegisterMetadata.
-Esta função cria uma instância do metadado e retorna seu endereço. O
-endereço alocado não precisa e, geralmente, nem deve ser desalocado pela
-aplicação.
+Os metadados são gerados através de strings retornadas através da função
+virtual de classe InternalMetadataStr, criada em cada classe de negócio
+que possua atributos.
 
 Vide Metadata-ptbr.txt para maiores informações.
 

@@ -4,12 +4,12 @@ portanto esta tarefa é executada através de um broker de persistência.
 Até o momento, foi implementado apenas um broker para InstantObjects.
 
 Para selecionar um broker, inclua sua unit na cláusula uses do arquivo
-principal do projeto.
+principal do projeto ou de qualquer outra unit.
 
 == InstantObjects
 =================
 
 Para utilizar o InstantObjects, é necessário incluir ao menos duas units
-no arquivo principal do projeto: a primeira é a unit
-PressInstantObjectsBroker, as demais são os brokers de acesso aos dados
-do IO (pelo menos uma).
+no arquivo principal do projeto (ou em uma de suas units): a primeira é
+a unit PressInstantObjectsBroker, as demais são os brokers de acesso aos
+dados do IO (pelo menos uma).

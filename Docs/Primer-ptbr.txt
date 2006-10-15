@@ -3,25 +3,20 @@ aplicação com PressObjects.
 
 1. Criar um novo projeto na IDE do compilador;
 
-2. Alterar o arquivo principal do projeto:
+2. Criar o Presenter do formulário principal (vide MVP-ptbr.txt);
 
-2.1. Incluir a unit PressMVPPresenter;
+3. Alterar o arquivo principal do projeto, substituindo a chamada à
+Application.Run por <MainPresenterClass>.Run;
 
-2.2. Incluir as units de persistência (vide Persistence-ptbr.txt);
+4. Incluir as units de persistência no projeto (vide
+Persistence-ptbr.txt);
 
-2.3. Incluir uma chamada a PressInitMainFormPresenter logo antes da
-chamada a Application.Run;
+5. Criar modelo de classes de negócio do framework de persistência e
+do PressObjects (vide BusinessClasses-ptbr.txt);
 
-3. Criar modelo de classes de negócio do framework de persistência e do
-PressObjects (vide BusinessClasses-ptbr.txt);
+6. Criar formulários para as classes de negócio;
 
-4. Criar formulários para as classes de negócio;
+7. Criar o Presenter de cada formulário (vide MVP-ptbr.txt);
 
-5. Criar o Presenter de cada formulário (vide MVP-ptbr.txt);
-
-6. Criar Commands e associar, ou ao Model (menu de contexto), e/ou a um
-componente visual e/ou a um item de menu (vide MVP-ptbr.txt);
-
-7. Criar os Commands do formulário principal;
-
-8. Criar o MainPresenter (vide MainForm-ptbr.txt).
+8. Criar Commands e associar - ou ao Model (menu de contexto), e/ou a
+um componente visual e/ou a um item de menu (vide MVP-ptbr.txt).
