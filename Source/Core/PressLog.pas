@@ -42,15 +42,11 @@ type
   TPressLogClass = class of TPressLog;
 
   TPressLog = class(TPressSingleton)
-  private
-    { TODO : Create an abstract PressCustomLog without FLog,
-      use a stream into a default concrete PressLog class}
-    FLog: TStrings;
+  { TODO : Create an abstract PressCustomLog;
+    Refactor parameters to array of const }
   protected
-    function ArrayToString(const AParams: array of TObject): string; overload;
-    procedure Finit; override;
+    function ArrayToString(const AParams: array of TObject): string;
     function FormatClassName(const AMsg: string; AObj: TObject): string;
-    procedure Init; override;
     function InternalBuildMsg(Sender: TObject; const AMsg: string; const AParams: array of TObject): string; virtual;
   public
     procedure RegisterMsg(Sender: TObject; const AMsg: string; const AParams: array of TObject); virtual;
@@ -66,7 +62,8 @@ implementation
 
 uses
   SysUtils,
-  PressConsts;
+  PressConsts,
+  PressCompatibility;
 
 var
   _PressLogInstance: TPressLog;
@@ -112,14 +109,6 @@ begin
     SetLength(Result, Length(Result) - Length(Comma));
 end;
 
-procedure TPressLog.Finit;
-begin
-  inherited;
-  if FLog.Count > 0 then
-    FLog.SaveToFile('PressDebugLog.txt');
-  FLog.Free;
-end;
-
 function TPressLog.FormatClassName(const AMsg: string; AObj: TObject): string;
 const
   SClassNameFormat = '[%s] %s';
@@ -130,12 +119,6 @@ begin
     Result := Format(SClassNameFormat, [SPressNilString, AMsg]);
 end;
 
-procedure TPressLog.Init;
-begin
-  inherited;
-  FLog := TStringList.Create;
-end;
-
 function TPressLog.InternalBuildMsg(
   Sender: TObject; const AMsg: string; const AParams: array of TObject): string;
 const
@@ -144,17 +127,14 @@ begin
   Result := Format(SLogFormat, [
    FormatDateTime('mmm/dd hh:nn:ss', Now),
    FormatClassName(AMsg, Sender),
-   ArrayToString(AParams)])
+   ArrayToString(AParams)]);
+  OutputDebugString(Result);
 end;
 
 procedure TPressLog.RegisterMsg(
   Sender: TObject; const AMsg: string; const AParams: array of TObject);
-var
-  VMsg: string;
 begin
-  VMsg := InternalBuildMsg(Sender, AMsg, AParams);
-  if VMsg <> '' then
-    FLog.Add(VMsg);
+  InternalBuildMsg(Sender, AMsg, AParams);
 end;
 
 end.
