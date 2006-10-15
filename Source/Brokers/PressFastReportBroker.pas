@@ -29,6 +29,7 @@ uses
 type
   TPressFRReport = class(TPressReport)
   private
+    FOwner: TComponent;
     FReport: TfrReport;
     procedure ReportGetValue(const ParName: String; var ParValue: Variant);
   protected
@@ -50,7 +51,7 @@ type
   protected
     function InternalCurrentIndex: Integer; override;
   public
-    constructor Create(const AName: string);
+    constructor Create(AOwner: TComponent; const AName: string);
     destructor Destroy; override;
   end;
 
@@ -64,13 +65,17 @@ uses
 constructor TPressFRReport.Create;
 begin
   inherited Create;
-  FReport := TfrReport.Create(Application.MainForm);
+  FOwner := TForm.Create(nil);
+  FReport := TfrReport.Create(FOwner);
   FReport.OnGetValue := ReportGetValue;
 end;
 
 destructor TPressFRReport.Destroy;
 begin
+  while FOwner.ComponentCount > 0 do
+    FOwner.RemoveComponent(FOwner.Components[0]);
   FReport.Free;
+  FOwner.Free;
   inherited;
 end;
 
@@ -92,7 +97,7 @@ end;
 function TPressFRReport.InternalCreateReportDataSet(
   const AName: string): TPressReportDataSet;
 begin
-  Result := TPressFRReportDataSet.Create(AName);
+  Result := TPressFRReportDataSet.Create(FOwner, AName);
 end;
 
 procedure TPressFRReport.InternalDesignReport;
@@ -143,10 +148,11 @@ end;
 
 { TPressFRReportDataSet }
 
-constructor TPressFRReportDataSet.Create(const AName: string);
+constructor TPressFRReportDataSet.Create(
+  AOwner: TComponent; const AName: string);
 begin
   inherited Create(AName);
-  FDataSet := TfrDataSet.Create(Application.MainForm);
+  FDataSet := TfrDataSet.Create(AOwner);
   FDataSet.Name := StringReplace(
    AName, SPressAttributeSeparator, SPressIdentifierSeparator, [rfReplaceAll]);
   FDataSet.OnCheckEOF := ReportCheckEof;

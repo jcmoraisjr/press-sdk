@@ -14,6 +14,7 @@
     {.$DEFINE PressLogSubjectChanges}
     {$DEFINE PressLogSubjectMemento}
   {.$DEFINE PressLogMVP}
+  {$DEFINE PressLogReport}
   {$DEFINE PressLogOPF}
     {.$DEFINE PressLogOPFPersistence}
 
@@ -78,6 +79,7 @@
   {$UNDEF PressLogEvents}
   {$UNDEF PressLogMVP}
   {$UNDEF PressLogSubject}
+  {$UNDEF PressLogReport}
   {$UNDEF PressLogOPF}
 {$ENDIF}
 

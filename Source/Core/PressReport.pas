@@ -23,6 +23,8 @@ unit PressReport;
 
 interface
 
+{$I Press.inc}
+
 uses
   Classes, Contnrs, PressClasses, PressSubject, PressQuery;
 
@@ -75,8 +77,8 @@ type
   private
     FDataSet: TPressReportDataSet;
     FFields: TStrings;
-    FName: string;
     FParent: TPressReportDataSource;
+    function GetName: string;
   protected
     function InternalCheckEof: Boolean; virtual; abstract;
     function InternalCurrentItem: TPressObject; virtual; abstract;
@@ -89,7 +91,7 @@ type
     procedure CreateField(const AFieldName: string);
     function CurrentItem: TPressObject;
     property Fields: TStrings read FFields;
-    property Name: string read FName;
+    property Name: string read GetName;
   end;
 
   TPressReportDataSourceIterator = class;
@@ -187,6 +189,10 @@ type
   public
     procedure Design;
     procedure Execute;
+    procedure LoadFromFile(const AFileName: string);
+    procedure LoadFromStream(AStream: TStream);
+    procedure SaveToFile(const AFileName: string);
+    procedure SaveToStream(AStream: TStream);
     property ReportCaption: string read GetReportCaption;
     property ReportVisible: Boolean read GetReportVisible;
   end;
@@ -213,7 +219,7 @@ function PressReportService: TPressReportService;
 implementation
 
 uses
-  SysUtils, PressConsts;
+  SysUtils, PressConsts {$IFDEF PressLog}, PressLog{$ENDIF};
 
 var
   _PressReportService: TPressReportService;
@@ -329,6 +335,11 @@ begin
   FDataSet.Free;
   FFields.Free;
   inherited;
+end;
+
+function TPressReportDataSource.GetName: string;
+begin
+  Result := FDataSet.Name;
 end;
 
 { TPressReportDataSourceList }
@@ -553,6 +564,24 @@ begin
   end;
 end;
 
+procedure TPressReportGroupItem.LoadFromFile(const AFileName: string);
+var
+  VStream: TFileStream;
+begin
+  VStream := TFileStream.Create(AFileName, fmOpenRead + fmShareDenyWrite);
+  try
+    LoadFromStream(VStream);
+  finally
+    VStream.Free;
+  end;
+end;
+
+procedure TPressReportGroupItem.LoadFromStream(AStream: TStream);
+begin
+  Report.LoadFromStream(AStream);
+  SetReportData(AStream);
+end;
+
 procedure TPressReportGroupItem.LoadMetadatas;
 
   function CreateDataSet(const ADataSetName: string): TPressReportDataSet;
@@ -588,6 +617,10 @@ procedure TPressReportGroupItem.LoadMetadatas;
       VDataSource: TPressReportDataSource;
       VDataSetName: string;
     begin
+      {$IFDEF Press-LogReport}
+      PressLogMsg(Self, 'Reading '+ AMetadata.Owner.ObjectClass.ClassName +'('+
+       AMetadata.Name +')');
+      {$ENDIF}
       if Assigned(AMetadata.AttributeClass) then
       begin
         if AMetadata.AttributeClass.InheritsFrom(TPressValue) then
@@ -615,6 +648,11 @@ procedure TPressReportGroupItem.LoadMetadatas;
     end;
 
   begin
+    {$IFDEF PressLogReport}
+    PressLogMsg(Self, 'Loading ' + AObjectClass.ClassName + ' - DataSource: ' + 
+     ACurrentDataSource.Name + ' - Paths: ' +
+     ADataSetPath + '//' + AAttributePath );
+    {$ENDIF}
     if not Assigned(AObjectClass) then
       Exit;
     with AObjectClass.CreateAttributeMapIterator do
@@ -638,7 +676,7 @@ begin
     LoadPressMetadata(
      TPressObjectClass(VBusinessObj.ClassType),
      CreateDataSource(VBusinessObj.ClassName, TPressObject(VBusinessObj)),
-     '', '');
+     VBusinessObj.ClassName, '');
   { TODO : else if BO has RTTI then read published fields }
 end;
 
@@ -687,6 +725,23 @@ begin
   finally
     VStream.Free;
   end;
+end;
+
+procedure TPressReportGroupItem.SaveToFile(const AFileName: string);
+var
+  VStream: TFileStream;
+begin
+  VStream := TFileStream.Create(AFileName, fmCreate);
+  try
+    SaveToStream(VStream);
+  finally
+    VStream.Free;
+  end;
+end;
+
+procedure TPressReportGroupItem.SaveToStream(AStream: TStream);
+begin
+  GetReportData(AStream);
 end;
 
 procedure TPressReportGroupItem.SetReportData(AStream: TStream);
