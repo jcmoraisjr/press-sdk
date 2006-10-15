@@ -60,8 +60,6 @@ resourcestring
   SInvalidAttributeType = 'Tipo inválido para o atributo %s (%s)';
   SInvalidAttributeValue = 'Valor ''%s'' inválido para %s(''%s'')';
   SItemCountOverflow = '<%d itens>';
-  SMainPresenterClassIsAssigned = 'Classe do presenter principal já está associada';
-  SMainPresenterIsInitialized = 'Presenter principal já está inicializado';
   SMetadataNotFound = 'Metadata da classe %s não foi encontrada';
   SMetadataParseError = 'Erro ao interpretar metadata: "(%d,%d) %s"' + SPressLineBreak + '"%s"';
   SNonRelatedClasses = 'Classes %s e %s não são relacionadas';
@@ -76,6 +74,7 @@ resourcestring
   SUnassignedCandidateClasses = 'Classes candidata não estão associadas';
   SUnassignedTargetClass = 'Classe alvo não está associada';
   SUnassignedMainForm = 'Formulário principal não está associado';
+  SUnassignedMainPresenter = 'Presenter principal não está associado';
   SUnassignedModel = 'Model não está associado';
   SUnassignedPersistenceBroker = 'Broker de persistência não foi associado';
   SUnassignedPersistenceConnector = 'Conector de persistência não foi associado';

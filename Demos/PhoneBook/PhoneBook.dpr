@@ -2,7 +2,6 @@ program PhoneBook;
 
 uses
   Forms,
-  PressMVPPresenter,
   PressInstantObjectsBroker,
   // Insert at least one InstantObjects' unit broker here
   IOModel in 'IOModel.pas',
@@ -30,7 +29,6 @@ uses
 begin
   Application.Initialize;
   Application.CreateForm(TMainForm, MainForm);
-  PressInitMainPresenter;
-  Application.Run;
+  TMainPresenter.Run;
 end.
 

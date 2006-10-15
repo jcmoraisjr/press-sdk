@@ -345,6 +345,7 @@ type
     class function InternalViewClass: TPressMVPCustomFormViewClass; virtual;
     procedure InternalUpdateModel; override;
     procedure InternalUpdateView; override;
+    procedure Running; virtual;
   public
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
     class procedure RegisterFormPresenter(AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterType: TPressMVPFormPresenterType = fpIncludePresent);
@@ -369,16 +370,16 @@ type
     property Model: TPressMVPQueryModel read GetModel;
   end;
 
-  TPressMVPMainFormPresenterClass = class of TPressMVPMainFormPresenter;
-
   TPressMVPMainFormPresenter = class(TPressMVPQueryPresenter)
   private
     FOnIdle: TIdleEvent;
+    FAppRunning: Boolean;
   protected
     procedure Idle(Sender: TObject; var Done: Boolean);
     procedure InitPresenter; override;
   public
     constructor Create; reintroduce; virtual;
+    class procedure Run;
     procedure ShutDown;
   end;
 
@@ -423,11 +424,6 @@ type
     property CurrentItem: TPressMVPRegisteredForm read GetCurrentItem;
   end;
 
-procedure PressAssignMainPresenterClass(APresenterClass: TPressMVPMainFormPresenterClass);
-procedure PressInitMainPresenter;
-function PressMainPresenter: TPressMVPMainFormPresenter;
-function PressMainPresenterClass: TPressMVPMainFormPresenterClass;
-
 implementation
 
 uses
@@ -439,36 +435,14 @@ uses
   PressMVPCommand;
 
 var
-  _PressMVPMainPresenterClass: TPressMVPMainFormPresenterClass;
   _PressMVPMainPresenter: TPressMVPMainFormPresenter;
   _PressMVPRegisteredForms: TPressMVPRegisteredFormList;
-
-procedure PressAssignMainPresenterClass(APresenterClass: TPressMVPMainFormPresenterClass);
-begin
-  if Assigned(_PressMVPMainPresenter) then
-    raise EPressError.Create(SMainPresenterIsInitialized);
-  if Assigned(_PressMVPMainPresenterClass) then
-    raise EPressError.Create(SMainPresenterClassIsAssigned);
-  _PressMVPMainPresenterClass := APresenterClass;
-end;
-
-procedure PressInitMainPresenter;
-begin
-  PressMainPresenter;
-end;
 
 function PressMainPresenter: TPressMVPMainFormPresenter;
 begin
   if not Assigned(_PressMVPMainPresenter) then
-    _PressMVPMainPresenter := PressMainPresenterClass.Create;
+    raise EPressMVPError.Create(SUnassignedMainPresenter);
   Result := _PressMVPMainPresenter;
-end;
-
-function PressMainPresenterClass: TPressMVPMainFormPresenterClass;
-begin
-  if not Assigned(_PressMVPMainPresenterClass) then
-    _PressMVPMainPresenterClass := TPressMVPMainFormPresenter;
-  Result := _PressMVPMainPresenterClass;
 end;
 
 function PressMVPRegisteredForms: TPressMVPRegisteredFormList;
@@ -1639,6 +1613,11 @@ begin
   Result.FAutoDestroy := AAutoDestroy;
   Result.Refresh;
   Result.View.Control.Show;
+  Result.Running;
+end;
+
+procedure TPressMVPFormPresenter.Running;
+begin
 end;
 
 { TPressMVPQueryPresenter }
@@ -1708,12 +1687,15 @@ begin
   VModelClass := InternalModelClass;
   if not Assigned(VModelClass) then
     VModelClass := TPressMVPQueryModel;
+
+  VSubject := nil;
   VIndex := PressMVPRegisteredForms.IndexOfPresenterClass(
    TPressMVPFormPresenterClass(ClassType));
   if VIndex >= 0 then
-    VSubject := PressMVPRegisteredForms[VIndex].ObjectClass.Create
-  else
-    VSubject := nil;
+    with PressMVPRegisteredForms[VIndex] do
+      if Assigned(ObjectClass) then
+        VSubject := ObjectClass.Create;
+
   VModel := VModelClass.Create(nil, VSubject);
   if Assigned(VSubject) then
     VSubject.Release;
@@ -1725,6 +1707,11 @@ procedure TPressMVPMainFormPresenter.Idle(
   Sender: TObject; var Done: Boolean);
 begin
   {$IFDEF PressLogIdle}PressLogMsg(Self, 'Idle', [Sender]);{$ENDIF}
+  if not FAppRunning then
+  begin
+    FAppRunning := True;
+    Running;
+  end;
   PressProcessEventQueue;
   if Assigned(FOnIdle) then
     FOnIdle(Sender, Done);
@@ -1733,8 +1720,31 @@ end;
 procedure TPressMVPMainFormPresenter.InitPresenter;
 begin
   inherited;
+  FAutoDestroy := False;
   FOnIdle := Application.OnIdle;
   Application.OnIdle := Idle;
+end;
+
+class procedure TPressMVPMainFormPresenter.Run;
+var
+  VIndex: Integer;
+  VRef: TForm;
+begin
+  if not Assigned(Application.MainForm) then
+  begin
+    VIndex := PressMVPRegisteredForms.IndexOfPresenterClass(Self);
+    if VIndex >= 0 then
+      Application.CreateForm(PressMVPRegisteredForms[VIndex].FormClass, VRef)
+    else
+      raise EPressError.CreateFmt(SClassNotFound, [ClassName]);
+  end;
+  _PressMVPMainPresenter.Free;
+  _PressMVPMainPresenter := Create;
+  try
+    Application.Run;
+  finally
+    _PressMVPMainPresenter.Free;
+  end;
 end;
 
 procedure TPressMVPMainFormPresenter.ShutDown;

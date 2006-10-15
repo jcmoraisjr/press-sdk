@@ -30,6 +30,5 @@ end;
 
 initialization
   TMainPresenter.RegisterFormPresenter(TMainQuery, TMainForm);
-  PressAssignMainPresenterClass(TMainPresenter);
 
 end.
