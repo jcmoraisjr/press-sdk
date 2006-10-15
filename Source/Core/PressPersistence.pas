@@ -48,7 +48,7 @@ type
     function InternalGenerateOID(AObjectClass: TPressObjectClass): string; virtual; abstract;
     procedure InternalReleaseOID(AObjectClass: TPressObjectClass; const AOID: string); virtual;
   public
-    function GenerateOID(AObjectClass: TPressObjectClass): string;
+    function GenerateOID(AObjectClass: TPressObjectClass = nil): string;
     procedure ReleaseOID(AObjectClass: TPressObjectClass; const AOID: string);
   end;
 
@@ -62,42 +62,53 @@ type
   TPressPersistenceBroker = class(TObject)
   private
     FCurrentUser: TPressUser;
+    FOIDGenerators: TPressOIDGenerators;
     FUsers: TPressUsers;
     function GetCurrentUser: TPressUser;
     function GetHasUser: Boolean;
     function GetIsDefault: Boolean;
     function GetUsers: TPressUsers;
     procedure SetIsDefault(Value: Boolean);
+    function GetOIDGenerators: TPressOIDGenerators;
   protected
     function GetIdentifierQuotes: string; virtual;
     function GetStrQuote: Char; virtual;
     procedure InitPersistenceBroker; virtual;
+    procedure InternalCommitTransaction; virtual;
     procedure InternalDispose(AObject: TPressObject); virtual; abstract;
     procedure InternalConnect; virtual;
+    procedure InternalExecuteStatement(const AStatement: string); virtual;
     function InternalUsersClass: TPressUsersClass; virtual;
     function InternalLogon(const AUserID, APassword: string): Boolean; virtual;
     function InternalOIDGeneratorsClass: TPressOIDGeneratorsClass; virtual;
     function InternalRetrieve(const AClass, AId: string): TPressObject; virtual; abstract;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; virtual; abstract;
+    procedure InternalRollbackTransaction; virtual;
+    procedure InternalStartTransaction; virtual;
     procedure InternalStore(AObject: TPressObject); virtual; abstract;
     property Users: TPressUsers read GetUsers;
   public
     constructor Create;
     destructor Destroy; override;
+    procedure CommitTransaction;
     procedure Connect;
     procedure Dispose(const AClass, AId: string); overload;
     procedure Dispose(AObject: TPressObject); overload;
     procedure Dispose(AProxy: TPressProxy); overload;
+    procedure ExecuteStatement(const AStatement: string);
     procedure Logoff;
     function Logon(const AUserID, APassword: string): Boolean;
     class procedure RegisterPersistence;
     function Retrieve(const AClass, AId: string): TPressObject;
     function RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
+    procedure RollbackTransaction;
+    procedure StartTransaction;
     procedure Store(AObject: TPressObject);
     property CurrentUser: TPressUser read GetCurrentUser;
     property HasUser: Boolean read GetHasUser;
     property IdentifierQuotes: string read GetIdentifierQuotes;
     property IsDefault: Boolean read GetIsDefault write SetIsDefault;
+    property OIDGenerators: TPressOIDGenerators read GetOIDGenerators;
     property StrQuote: Char read GetStrQuote;
   end;
 
@@ -181,6 +192,11 @@ end;
 
 { TPressPersistenceBroker }
 
+procedure TPressPersistenceBroker.CommitTransaction;
+begin
+  InternalCommitTransaction;
+end;
+
 procedure TPressPersistenceBroker.Connect;
 begin
   InternalConnect;
@@ -198,6 +214,7 @@ destructor TPressPersistenceBroker.Destroy;
 begin
   { TODO : Work around in order to avoid AV during application shutdown }
   //Logoff;
+  FOIDGenerators.Free;
   FUsers.Free;
   IsDefault := False;
   inherited;
@@ -234,6 +251,11 @@ begin
   end;
 end;
 
+procedure TPressPersistenceBroker.ExecuteStatement(const AStatement: string);
+begin
+  InternalExecuteStatement(AStatement);
+end;
+
 function TPressPersistenceBroker.GetCurrentUser: TPressUser;
 begin
   if not Assigned(FCurrentUser) then
@@ -256,6 +278,13 @@ begin
   Result := _PressDefaultPersistenceBroker = Self;
 end;
 
+function TPressPersistenceBroker.GetOIDGenerators: TPressOIDGenerators;
+begin
+  if not Assigned(FOIDGenerators) then
+    FOIDGenerators := InternalOIDGeneratorsClass.Create;
+  Result := FOIDGenerators;
+end;
+
 function TPressPersistenceBroker.GetStrQuote: Char;
 begin
   Result := '''';
@@ -272,7 +301,16 @@ procedure TPressPersistenceBroker.InitPersistenceBroker;
 begin
 end;
 
+procedure TPressPersistenceBroker.InternalCommitTransaction;
+begin
+end;
+
 procedure TPressPersistenceBroker.InternalConnect;
+begin
+end;
+
+procedure TPressPersistenceBroker.InternalExecuteStatement(
+  const AStatement: string);
 begin
 end;
 
@@ -297,6 +335,14 @@ end;
 function TPressPersistenceBroker.InternalOIDGeneratorsClass: TPressOIDGeneratorsClass;
 begin
   Result := TPressSimpleOIDGenerators;
+end;
+
+procedure TPressPersistenceBroker.InternalRollbackTransaction;
+begin
+end;
+
+procedure TPressPersistenceBroker.InternalStartTransaction;
+begin
 end;
 
 function TPressPersistenceBroker.InternalUsersClass: TPressUsersClass;
@@ -341,7 +387,8 @@ begin
      Format('Retrieving %s(%s)', [AClass, AId]));{$ENDIF}
     { TODO : Ensure the class type of the retrieved object }
     Result := InternalRetrieve(AClass, AId);
-    TPressObjectFriend(Result).AfterRetrieve;
+    if Assigned(Result) then
+      TPressObjectFriend(Result).AfterRetrieve;
   end;
 end;
 
@@ -351,6 +398,11 @@ begin
   Result := InternalRetrieveProxyList(AQuery);
 end;
 
+procedure TPressPersistenceBroker.RollbackTransaction;
+begin
+  InternalRollbackTransaction;
+end;
+
 procedure TPressPersistenceBroker.SetIsDefault(Value: Boolean);
 begin
   if Value xor IsDefault then
@@ -358,6 +410,11 @@ begin
       _PressDefaultPersistenceBroker := Self
     else
       _PressDefaultPersistenceBroker := nil;
+end;
+
+procedure TPressPersistenceBroker.StartTransaction;
+begin
+  InternalStartTransaction;
 end;
 
 procedure TPressPersistenceBroker.Store(AObject: TPressObject);

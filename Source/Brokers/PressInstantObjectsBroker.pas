@@ -38,11 +38,9 @@ type
   private
     FConnectionManager: TInstantConnectionManager;
     FConnector: TInstantConnector;
-    FOIDGenerators: TPressOIDGenerators;
     procedure ConnectionManagerConnect(Sender: TObject; var ConnectionDef: TInstantConnectionDef; var Result: Boolean);
     function CreateInstantObject(AObject: TPressObject): TInstantObject;
     procedure GenerateOID(Sender: TObject; const AObject: TInstantObject; var Id: string);
-    function GetOIDGenerators: TPressOIDGenerators;
     procedure InstantLog(const AString: string);
     { TODO : Use streaming to copy an InstantObject to a PressObject and vice-versa }
     procedure ReadInstantObject(AInstantObject: TInstantObject; APressObject: TPressObject);
@@ -51,12 +49,16 @@ type
     function GetIdentifierQuotes: string; override;
     function GetStrQuote: Char; override;
     procedure InitPersistenceBroker; override;
+    procedure InternalCommitTransaction; override;
     procedure InternalConnect; override;
     procedure InternalDispose(AObject: TPressObject); override;
+    procedure InternalExecuteStatement(const AStatement: string); override;
     function InternalRetrieve(const AClass, AId: string): TPressObject; override;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
+    procedure InternalRollbackTransaction; override;
+    procedure InternalStartTransaction; override;
     procedure InternalStore(AObject: TPressObject); override;
-    property OIDGenerators: TPressOIDGenerators read GetOIDGenerators;
+    property Connector: TInstantConnector read FConnector;
   public
     destructor Destroy; override;
   end;
@@ -113,7 +115,6 @@ end;
 
 destructor TPressInstantObjectsPersistence.Destroy;
 begin
-  FOIDGenerators.Free;
   FConnectionManager.Free;
   FConnector.Free;
   inherited;
@@ -140,13 +141,6 @@ begin
     Result := TInstantCustomRelationalBroker(VInstantBroker).SQLDelimiters
   else
     Result := '';
-end;
-
-function TPressInstantObjectsPersistence.GetOIDGenerators: TPressOIDGenerators;
-begin
-  if not Assigned(FOIDGenerators) then
-    FOIDGenerators := InternalOIDGeneratorsClass.Create;
-  Result := FOIDGenerators;
 end;
 
 function TPressInstantObjectsPersistence.GetStrQuote: Char;
@@ -186,6 +180,11 @@ begin
   {$IFDEF PressLogOPFPersistence}PressLogMsg(Self, 'Instant: ' + AString);{$ENDIF}
 end;
 
+procedure TPressInstantObjectsPersistence.InternalCommitTransaction;
+begin
+  Connector.CommitTransaction;
+end;
+
 procedure TPressInstantObjectsPersistence.InternalConnect;
 begin
   if Assigned(FConnectionManager) then
@@ -205,6 +204,12 @@ begin
       VInstantObject.Free;
     end;
   end;
+end;
+
+procedure TPressInstantObjectsPersistence.InternalExecuteStatement(
+  const AStatement: string);
+begin
+  (Connector.Broker as TInstantCustomRelationalBroker).Execute(AStatement);
 end;
 
 function TPressInstantObjectsPersistence.InternalRetrieve(const AClass, AId: string): TPressObject;
@@ -271,6 +276,16 @@ begin
   finally
     VInstantQuery.Free;
   end;
+end;
+
+procedure TPressInstantObjectsPersistence.InternalRollbackTransaction;
+begin
+  Connector.RollbackTransaction;
+end;
+
+procedure TPressInstantObjectsPersistence.InternalStartTransaction;
+begin
+  Connector.StartTransaction;
 end;
 
 procedure TPressInstantObjectsPersistence.InternalStore(AObject: TPressObject);
