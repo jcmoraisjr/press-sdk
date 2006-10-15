@@ -17,6 +17,8 @@ type
     function GetName: string;
     procedure SetAddress(Value: TAddress);
     procedure SetName(const Value: string);
+  protected
+    class function InternalMetadataStr: string; override;
   public
     property Phones: TPressParts read _Phones;
   published
@@ -29,6 +31,8 @@ type
   private
     function GetNickName: string;
     procedure SetNickName(const Value: string);
+  protected
+    class function InternalMetadataStr: string; override;
   published
     property NickName: string read GetNickName write SetNickName;
   end;
@@ -38,6 +42,8 @@ type
   private
     function GetContact: TPerson;
     procedure SetContact(Value: TPerson);
+  protected
+    class function InternalMetadataStr: string; override;
   published
     property Contact: TPerson read GetContact write SetContact;
   end;
@@ -52,6 +58,8 @@ type
     function GetPhoneType: TPhoneType;
     procedure SetNumber(const Value: string);
     procedure SetPhoneType(Value: TPhoneType);
+  protected
+    class function InternalMetadataStr: string; override;
   published
     property PhoneType: TPhoneType read GetPhoneType write SetPhoneType;
     property Number: string read GetNumber write SetNumber;
@@ -70,6 +78,8 @@ type
     procedure SetCity(Value: TCity);
     procedure SetStreet(const Value: string);
     procedure SetZip(const Value: string);
+  protected
+    class function InternalMetadataStr: string; override;
   published
     property Street: string read GetStreet write SetStreet;
     property Zip: string read GetZip write SetZip;
@@ -84,6 +94,8 @@ type
     function GetState: string;
     procedure SetName(const Value: string);
     procedure SetState(const Value: string);
+  protected
+    class function InternalMetadataStr: string; override;
   published
     property Name: string read GetName write SetName;
     property State: string read GetState write SetState;
@@ -94,6 +106,8 @@ type
   private
     function GetName: string;
     procedure SetName(const Value: string);
+  protected
+    class function InternalMetadataStr: string; override;
   published
     property Name: string read GetName write SetName;
   end;
@@ -110,6 +124,15 @@ end;
 function TContact.GetName: string;
 begin
   Result := _Name.Value;
+end;
+
+class function TContact.InternalMetadataStr: string;
+begin
+  Result :=
+   'TContact;' +
+   'Name: String(40);' +
+   'Address: Part(TAddress);' +
+   'Phones: Parts(TPhone);';
 end;
 
 procedure TContact.SetAddress(Value: TAddress);
@@ -129,6 +152,13 @@ begin
   Result := _NickName.Value;
 end;
 
+class function TPerson.InternalMetadataStr: string;
+begin
+  Result :=
+   'TPerson;' +
+   'NickName: String(20);';
+end;
+
 procedure TPerson.SetNickName(const Value: string);
 begin
   _NickName.Value := Value;
@@ -139,6 +169,13 @@ end;
 function TCompany.GetContact: TPerson;
 begin
   Result := _Contact.Value as TPerson;
+end;
+
+class function TCompany.InternalMetadataStr: string;
+begin
+  Result :=
+   'TCompany;' +
+   'Contact: Reference(TPerson);';
 end;
 
 procedure TCompany.SetContact(Value: TPerson);
@@ -156,6 +193,14 @@ end;
 function TPhone.GetPhoneType: TPhoneType;
 begin
   Result := TPhoneType(_PhoneType.Value);
+end;
+
+class function TPhone.InternalMetadataStr: string;
+begin
+  Result :=
+   'TPhone;' +
+   'PhoneType: Enum(TPhoneType);' +
+   'Number: String(15);';
 end;
 
 procedure TPhone.SetNumber(const Value: string);
@@ -185,6 +230,15 @@ begin
   Result := _Zip.Value;
 end;
 
+class function TAddress.InternalMetadataStr: string;
+begin
+  Result :=
+   'TAddress;' +
+   'Street: String(40);' +
+   'Zip: String(10);' +
+   'City: Reference(TCity);';
+end;
+
 procedure TAddress.SetCity(Value: TCity);
 begin
   _City.Value := Value;
@@ -212,6 +266,14 @@ begin
   Result := _State.Value;
 end;
 
+class function TCity.InternalMetadataStr: string;
+begin
+  Result :=
+   'TCity;' +
+   'Name: String(30);' +
+   'State: String(5);';
+end;
+
 procedure TCity.SetName(const Value: string);
 begin
   _Name.Value := Value;
@@ -227,6 +289,13 @@ end;
 function TMainQuery.GetName: string;
 begin
   Result := _Name.Value;
+end;
+
+class function TMainQuery.InternalMetadataStr: string;
+begin
+  Result :=
+   'TMainQuery(TContact) Any: Order: Name;' +
+   'Name: String Category: Partial;';
 end;
 
 procedure TMainQuery.SetName(const Value: string);
@@ -245,49 +314,13 @@ begin
   TMainQuery.RegisterClass;
 end;
 
-procedure RegisterMetadatas;
+procedure RegisterTypes;
 begin
-  PressRegisterEnumMetadata(
-   TypeInfo(TPhoneType), 'TPhoneType');
-
-  PressRegisterMetadata(
-   'TContact;' +
-   'Name: String(40);' +
-   'Address: Part(TAddress);' +
-   'Phones: Parts(TPhone);');
-
-  PressRegisterMetadata(
-   'TPerson;' +
-   'NickName: String(20);');
-
-  PressRegisterMetadata(
-   'TCompany;' +
-   'Contact: Reference(TPerson);');
-
-  PressRegisterMetadata(
-   'TPhone;' +
-   'PhoneType: Enum(TPhoneType);' +
-   'Number: String(15);');
-
-  PressRegisterMetadata(
-   'TAddress;' +
-   'Street: String(40);' +
-   'Zip: String(10);' +
-   'City: Reference(TCity);');
-
-  PressRegisterMetadata(
-   'TCity;' +
-   'Name: String(30);' +
-   'State: String(5);');
-
-  { TODO : Fix Metadata parser - "Any:" }
-  PressRegisterMetadata(
-   'TMainQuery(TContact) Any: Order: Name;' +
-   'Name: String Category: Partial;');
+  PressRegisterEnumMetadata(TypeInfo(TPhoneType), 'TPhoneType');
 end;
 
 initialization
   RegisterClasses;
-  RegisterMetadatas;
+  RegisterTypes;
 
 end.
