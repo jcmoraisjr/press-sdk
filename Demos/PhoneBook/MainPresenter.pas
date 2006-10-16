@@ -9,6 +9,7 @@ type
   TMainPresenter = class(TPressMVPMainFormPresenter)
   protected
     procedure InitPresenter; override;
+    procedure Running; override;
   end;
 
 implementation
@@ -25,6 +26,11 @@ begin
    'ItemsStringGrid', 'Name(240);Address.City.Name(160)', TMainModel);
   BindCommand(TPressMVPExecuteQueryCommand, 'QuerySpeedButton');
   CreateSubPresenter('Name', 'NameQueryEdit');
+end;
+
+procedure TMainPresenter.Running;
+begin
+  inherited;
   PressPersistenceBroker.Logon('', '');
 end;
 
