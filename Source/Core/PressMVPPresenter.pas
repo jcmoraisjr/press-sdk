@@ -1820,10 +1820,11 @@ function TPressMVPRegisteredFormList.IndexOfQueryItemObject(
 
   function Match(ARegForm: TPressMVPRegisteredForm): Boolean;
   begin
-    Result := (ARegForm.ObjectClass.InheritsFrom(TPressQuery)) and
+    Result := Assigned(ARegForm.ObjectClass) and
+     (ARegForm.ObjectClass.InheritsFrom(TPressQuery)) and
      (ARegForm.FormPresenterType in [AFormPresenterType, fpIncludePresent]) and
-     (TPressQueryClass(ARegForm.ObjectClass).ClassMetadata.ItemObjectClassName =
-      AObjectClass.ClassName);
+     (TPressQueryClass(ARegForm.ObjectClass).ClassMetadata.ItemObjectClass =
+      AObjectClass);
   end;
 
 begin
