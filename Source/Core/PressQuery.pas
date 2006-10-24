@@ -124,18 +124,18 @@ function TPressQuery.AttributeToSQL(AAttribute: TPressAttribute): string;
 begin
   case AAttribute.AttributeBaseType of
     attString:
-      Result := AnsiQuotedStr(AAttribute.AsString, PressPersistenceBroker.StrQuote);
+      Result := AnsiQuotedStr(AAttribute.AsString, PressDefaultPersistence.StrQuote);
     attFloat, attCurrency:
       Result := StringReplace(AAttribute.AsString, ',', '.', [rfReplaceAll]);
     attDate:
-      Result := AnsiQuotedStr(FormatDateTime('yyyy-mm-dd', AAttribute.AsDate), PressPersistenceBroker.StrQuote);
+      Result := AnsiQuotedStr(FormatDateTime('yyyy-mm-dd', AAttribute.AsDate), PressDefaultPersistence.StrQuote);
     attTime:
-      Result := AnsiQuotedStr(FormatDateTime('hh:nn:ss', AAttribute.AsTime), PressPersistenceBroker.StrQuote);
+      Result := AnsiQuotedStr(FormatDateTime('hh:nn:ss', AAttribute.AsTime), PressDefaultPersistence.StrQuote);
     attDateTime:
-      Result := AnsiQuotedStr(FormatDateTime('yyyy-mm-dd hh:nn:ss', AAttribute.AsDateTime), PressPersistenceBroker.StrQuote);
+      Result := AnsiQuotedStr(FormatDateTime('yyyy-mm-dd hh:nn:ss', AAttribute.AsDateTime), PressDefaultPersistence.StrQuote);
     attReference:
       { TODO : Valid only to IDs stored in string format }
-      Result := AnsiQuotedStr(TPressReference(AAttribute).Value.PersistentId, PressPersistenceBroker.StrQuote);
+      Result := AnsiQuotedStr(TPressReference(AAttribute).Value.PersistentId, PressDefaultPersistence.StrQuote);
     else
       Result := AAttribute.AsString;
   end;
@@ -208,7 +208,7 @@ function TPressQuery.InternalBuildWhereClause: string;
   begin
     { TODO : Escape quotes into AsString, via AnsiQuotedStr }
     ReadItem(AFilterMask, [AAttribute.PersistentName,
-     PressPersistenceBroker.StrQuote, AAttribute.AsString], AResult);
+     PressDefaultPersistence.StrQuote, AAttribute.AsString], AResult);
   end;
 
   procedure ReadValueItem(
@@ -256,7 +256,7 @@ procedure TPressQuery.InternalUpdateReferenceList;
 begin
   _QueryItems.DisableChanges;
   try
-    _QueryItems.AssignProxyList(PressPersistenceBroker.RetrieveProxyList(Self));
+    _QueryItems.AssignProxyList(PressDefaultPersistence.RetrieveProxyList(Self));
   finally
     _QueryItems.EnableChanges;
   end;

@@ -2912,7 +2912,7 @@ end;
 
 procedure TPressObject.InternalDispose;
 begin
-  PressPersistenceBroker.Dispose(Self);
+  PressDefaultPersistence.Dispose(Self);
 end;
 
 function TPressObject.InternalIsValid: Boolean;
@@ -2929,7 +2929,7 @@ end;
 
 procedure TPressObject.InternalSave;
 begin
-  PressPersistenceBroker.Store(Self);
+  PressDefaultPersistence.Store(Self);
 end;
 
 procedure TPressObject.NotifyChange;
@@ -2974,7 +2974,7 @@ var
   VInstance: TPressObject;
 begin
   inherited Create;
-  VInstance := PressPersistenceBroker.Retrieve(ClassName, AId);
+  VInstance := PressDefaultPersistence.Retrieve(ClassName, AId);
   if Assigned(VInstance) then
   begin
     inherited FreeInstance;
@@ -3221,7 +3221,7 @@ var
 begin
   if HasReference then
   begin
-    VInstance := PressPersistenceBroker.Retrieve(FRefClass, FRefID);
+    VInstance := PressDefaultPersistence.Retrieve(FRefClass, FRefID);
     { TODO : Implement IsBroken support }
     if not Assigned(VInstance) then
       raise EPressError.CreateFmt(SInstanceNotFound, [FRefClass, FRefID]);

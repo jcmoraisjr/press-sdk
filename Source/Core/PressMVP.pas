@@ -912,7 +912,7 @@ begin
   if Model.Subject is TPressObject then
     Notifier.AddNotificationItem(Model.Subject, [TPressObjectChangedEvent]);
   Notifier.AddNotificationItem(
-   PressPersistenceBroker, [TPressPersistenceEvent]);
+   PressDefaultPersistence, [TPressPersistenceEvent]);
 end;
 
 function TPressMVPCommand.InternalIsEnabled: Boolean;
@@ -960,12 +960,12 @@ begin
     VCommandReg := PressRegisteredCommands[VIndex]
   else
     VCommandReg := nil;
-  if PressPersistenceBroker.HasUser then
+  if PressDefaultPersistence.HasUser then
   begin
     if Assigned(VCommandReg) and not VCommandReg.AlwaysEnabled and
      (VCommandReg.AccessID <> -1) then
       VAccessMode :=
-       PressPersistenceBroker.CurrentUser.AccessMode(VCommandReg.AccessID)
+       PressDefaultPersistence.CurrentUser.AccessMode(VCommandReg.AccessID)
     else
       VAccessMode := amWritable;
   end else if Assigned(VCommandReg) and

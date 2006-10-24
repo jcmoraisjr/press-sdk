@@ -252,7 +252,6 @@ type
   TPressMVPCloseApplicationCommand = class(TPressMVPCommand)
   protected
     procedure InternalExecute; override;
-    function InternalIsEnabled: Boolean; override;
   end;
 
 implementation
@@ -263,6 +262,7 @@ uses
   Forms,
   ExtDlgs,
   PressConsts,
+  PressApplication,
   PressDialogs,
   PressPersistence,
   PressMVPPresenter;
@@ -818,13 +818,7 @@ end;
 
 procedure TPressMVPCloseApplicationCommand.InternalExecute;
 begin
-  { TODO : Fix AVs }
-  TPressMVPModelCloseFormEvent.Create(Model).Notify;
-end;
-
-function TPressMVPCloseApplicationCommand.InternalIsEnabled: Boolean;
-begin
-  Result := False;
+  PressApp.Finalize;
 end;
 
 initialization

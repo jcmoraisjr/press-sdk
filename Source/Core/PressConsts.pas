@@ -76,8 +76,8 @@ resourcestring
   SUnassignedMainForm = 'Formulário principal não está associado';
   SUnassignedMainPresenter = 'Presenter principal não está associado';
   SUnassignedModel = 'Model não está associado';
-  SUnassignedPersistenceBroker = 'Broker de persistência não foi associado';
   SUnassignedPersistenceConnector = 'Conector de persistência não foi associado';
+  SUnassignedServiceType = 'Serviço %s não foi associado ou registrado';
   SUnassignedSubject = 'Subject não foi associado';
   SUnexpectedEof = 'Fim de arquivo inesperado';
   SUnexpectedMVPClassParam = 'Classe MVP %s inicializada com parâmetros inesperados';

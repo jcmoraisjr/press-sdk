@@ -372,15 +372,13 @@ type
 
   TPressMVPMainFormPresenter = class(TPressMVPQueryPresenter)
   private
-    FOnIdle: TIdleEvent;
-    FAppRunning: Boolean;
-  protected
-    procedure Idle(Sender: TObject; var Done: Boolean);
-    procedure InitPresenter; override;
+    FNotifier: TPressNotifier;
+    procedure Notify(AEvent: TPressEvent);
   public
     constructor Create; reintroduce; virtual;
+    destructor Destroy; override;
+    class procedure Initialize;
     class procedure Run;
-    procedure ShutDown;
   end;
 
   TPressMVPRegisteredForm = class(TObject)
@@ -429,6 +427,7 @@ implementation
 uses
   SysUtils,
   Math,
+  PressApplication,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressConsts,
   PressQuery,
@@ -1112,7 +1111,8 @@ end;
 class function TPressMVPCloseFormInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
-  Result := APresenter is TPressMVPFormPresenter;
+  Result := (APresenter is TPressMVPFormPresenter) and
+   not (APresenter is TPressMVPMainFormPresenter);
 end;
 
 function TPressMVPCloseFormInteractor.GetOwner: TPressMVPFormPresenter;
@@ -1131,11 +1131,7 @@ procedure TPressMVPCloseFormInteractor.Notify(AEvent: TPressEvent);
 begin
   inherited;
   if Owner.AutoDestroy or not (AEvent is TPressMVPViewCloseFormEvent) then
-    with TPressMVPFreePresenterEvent.Create(Owner) do
-      if Owner is TPressMVPMainFormPresenter then
-        Notify
-      else
-        QueueNotification;
+    TPressMVPFreePresenterEvent.Create(Owner).QueueNotification;
 end;
 
 { TPressMVPFreePresenterInteractor }
@@ -1701,31 +1697,17 @@ begin
     VSubject.Release;
   VView := TPressMVPView.CreateFromControl(Application.MainForm);
   inherited Create(nil, VModel, VView);
+  FNotifier := TPressNotifier.Create(Notify);
+  FNotifier.AddNotificationItem(PressApp, [TPressApplicationEvent]);
 end;
 
-procedure TPressMVPMainFormPresenter.Idle(
-  Sender: TObject; var Done: Boolean);
+destructor TPressMVPMainFormPresenter.Destroy;
 begin
-  {$IFDEF PressLogIdle}PressLogMsg(Self, 'Idle', [Sender]);{$ENDIF}
-  if not FAppRunning then
-  begin
-    FAppRunning := True;
-    Running;
-  end;
-  PressProcessEventQueue;
-  if Assigned(FOnIdle) then
-    FOnIdle(Sender, Done);
-end;
-
-procedure TPressMVPMainFormPresenter.InitPresenter;
-begin
+  FNotifier.Free;
   inherited;
-  FAutoDestroy := False;
-  FOnIdle := Application.OnIdle;
-  Application.OnIdle := Idle;
 end;
 
-class procedure TPressMVPMainFormPresenter.Run;
+class procedure TPressMVPMainFormPresenter.Initialize;
 var
   VIndex: Integer;
   VRef: TForm;
@@ -1740,17 +1722,21 @@ begin
   end;
   _PressMVPMainPresenter.Free;
   _PressMVPMainPresenter := Create;
-  try
-    Application.Run;
-  finally
-    _PressMVPMainPresenter.Free;
-  end;
 end;
 
-procedure TPressMVPMainFormPresenter.ShutDown;
+procedure TPressMVPMainFormPresenter.Notify(AEvent: TPressEvent);
 begin
-  { TODO : Finalize instances }
-  Application.Terminate;
+  if AEvent is TPressApplicationRunningEvent then
+    Running
+  else if AEvent is TPressApplicationDoneEvent then
+    Free;
+end;
+
+class procedure TPressMVPMainFormPresenter.Run;
+begin
+  if not Assigned(_PressMVPMainPresenter) then
+    Initialize;
+  PressApp.Run;
 end;
 
 { TPressMVPRegisteredForm }
