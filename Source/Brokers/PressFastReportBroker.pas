@@ -40,7 +40,7 @@ type
     procedure InternalLoadFromStream(AStream: TStream); override;
     procedure InternalSaveToStream(AStream: TStream); override;
   public
-    constructor Create; override;
+    constructor Create;
     destructor Destroy; override;
   end;
 

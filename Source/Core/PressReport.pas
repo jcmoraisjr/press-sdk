@@ -48,7 +48,6 @@ type
     procedure InternalLoadFromStream(AStream: TStream); virtual; abstract;
     procedure InternalSaveToStream(AStream: TStream); virtual; abstract;
   public
-    constructor Create; virtual;
     procedure CreateFields(ADataSet: TPressReportDataSet; AFields: TStrings);
     function CreateReportDataSet(const AName: string): TPressReportDataSet;
     procedure Design;
@@ -237,11 +236,6 @@ begin
 end;
 
 { TPressReport }
-
-constructor TPressReport.Create;
-begin
-  inherited Create;
-end;
 
 procedure TPressReport.CreateFields(ADataSet: TPressReportDataSet; AFields: TStrings);
 begin
