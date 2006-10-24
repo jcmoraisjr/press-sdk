@@ -115,9 +115,12 @@ type
     *)
   public
     constructor Create(AOwnsObjects: Boolean);
-    { TODO : Include the Extract method into *all* TPressCustomList decendants }
+    { TODO : Include the Extract, First and Last methods
+      into *all* TPressCustomList decendants }
     { TODO : Change Index to AIndex into *all* TPressCustomList decendants }
     function Extract(AObject: TObject): TObject;
+    function First: TObject;
+    function Last: TObject;
     property OwnsObjects: Boolean read FOwnsObjects write FOwnsObjects;
     property Items[AIndex: Integer]: TObject read GetItems write SetItems; default;
     // Reintroduce the following methods and the property into the decendants,
@@ -126,8 +129,10 @@ type
     function Add(AObject: TObject): Integer;
     function CreateIterator: TPressIterator;
     function Extract(AObject: TObject): TObject;
+    function First: TObject;
     function IndexOf(AObject: TObject): Integer;
-    procedure Insert(Index: Integer; AObject: TObject);
+    procedure Insert(AIndex: Integer; AObject: TObject);
+    function Last: TObject;
     function Remove(AObject: TObject): Integer;
     property Items[AIndex: Integer]: TObject read GetItems write SetItems; default;
     *)
@@ -138,6 +143,39 @@ type
     function GetCurrentItem: TObject;
   public
     property CurrentItem: TObject read GetCurrentItem;
+    // Reintroduce the following property, changing the result type
+    (*
+    property CurrentItem: TObject read GetCurrentItem;
+    *)
+  end;
+
+  TPressClassIterator = class;
+
+  TPressClassList = class(TPressCustomList)
+  protected
+    // Override the following method into the decendants,
+    // calling the reintroduced CreateIterator (public section)
+    (*
+    function InternalCreateIterator: TPressCustomIterator; override;
+    *)
+  public
+    // Reintroduce the following methods and the property into the decendants,
+    // changing the class pointer type
+    (*
+    function Add(AClass: TClass): Integer;
+    function CreateIterator: TPressClassIterator;
+    function Extract(AClass: TClass): TClass;
+    function First: TClass;
+    function IndexOf(AClass: TClass): Integer;
+    procedure Insert(AIndex: Integer; AClass: TClass);
+    function Last: TClass;
+    function Remove(AClass: TClass): Integer;
+    property Items[AIndex: Integer]: TClass read GetItems write SetItems; default;
+    *)
+  end;
+
+  TPressClassIterator = class(TPressCustomIterator)
+  public
     // Reintroduce the following property, changing the result type
     (*
     property CurrentItem: TObject read GetCurrentItem;
@@ -341,9 +379,19 @@ begin
   Result := inherited Extract(AObject);
 end;
 
+function TPressList.First: TObject;
+begin
+  Result := TObject(inherited First);
+end;
+
 function TPressList.GetItems(AIndex: Integer): TObject;
 begin
   Result := TObject(inherited Items[AIndex]);
+end;
+
+function TPressList.Last: TObject;
+begin
+  Result := TObject(inherited Last);
 end;
 
 procedure TPressList.Notify(Ptr: Pointer; Action: TListNotification);
