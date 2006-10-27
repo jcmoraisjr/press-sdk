@@ -42,16 +42,18 @@ type
   TPressPersistenceLogoffEvent = class(TPressPersistenceEvent)
   end;
 
+  TPressPersistence = class;
+
   TPressOIDGeneratorClass = class of TPressOIDGenerator;
 
   TPressOIDGenerator = class(TPressService)
   protected
-    function InternalGenerateOID(AObjectClass: TPressObjectClass): string; virtual;
-    procedure InternalReleaseOID(AObjectClass: TPressObjectClass; const AOID: string); virtual;
+    function InternalGenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass): string; virtual;
+    procedure InternalReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AOID: string); virtual;
     class function InternalServiceType: TPressServiceType; override;
   public
-    function GenerateOID(AObjectClass: TPressObjectClass = nil): string;
-    procedure ReleaseOID(AObjectClass: TPressObjectClass; const AOID: string);
+    function GenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass = nil): string;
+    procedure ReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AOID: string);
   end;
 
   TPressPersistence = class(TPressService)
@@ -82,6 +84,7 @@ type
     class function InternalServiceType: TPressServiceType; override;
     procedure InternalStartTransaction; virtual;
     procedure InternalStore(AObject: TPressObject); virtual; abstract;
+    property OIDGenerator: TPressOIDGenerator read GetOIDGenerator;
     property UserQuery: TPressUserQuery read GetUserQuery;
   public
     destructor Destroy; override;
@@ -91,6 +94,7 @@ type
     procedure Dispose(AObject: TPressObject); overload;
     procedure Dispose(AProxy: TPressProxy); overload;
     procedure ExecuteStatement(const AStatement: string);
+    function GenerateOID(AObjectClass: TPressObjectClass): string;
     procedure Logoff;
     function Logon(const AUserID: string = ''; const APassword: string = ''): Boolean;
     function OQLQuery(const AOQLStatement: string): TPressProxyList;
@@ -103,7 +107,6 @@ type
     property CurrentUser: TPressUser read GetCurrentUser;
     property HasUser: Boolean read GetHasUser;
     property IdentifierQuotes: string read GetIdentifierQuotes;
-    property OIDGenerator: TPressOIDGenerator read GetOIDGenerator;
     property StrQuote: Char read GetStrQuote;
   end;
 
@@ -124,30 +127,23 @@ type
   TPressUserFriend = class(TPressUser);
   TPressObjectFriend = class(TPressObject);
 
-var
-  _PressDefaultPersistence: TPressPersistence;
-
 { Global routines }
 
 function PressDefaultPersistence: TPressPersistence;
 begin
-  { TODO : Use a fast, but *functional* way }
-  if not Assigned(_PressDefaultPersistence) then
-    _PressDefaultPersistence :=
-     PressApp.DefaultService(stPersistence) as TPressPersistence;
-  Result := _PressDefaultPersistence;
+  Result := PressApp.DefaultService(stPersistence) as TPressPersistence;
 end;
 
 { TPressOIDGenerator }
 
 function TPressOIDGenerator.GenerateOID(
-  AObjectClass: TPressObjectClass): string;
+  Sender: TPressPersistence; AObjectClass: TPressObjectClass): string;
 begin
-  Result := InternalGenerateOID(AObjectClass);
+  Result := InternalGenerateOID(Sender, AObjectClass);
 end;
 
 function TPressOIDGenerator.InternalGenerateOID(
-  AObjectClass: TPressObjectClass): string;
+  Sender: TPressPersistence; AObjectClass: TPressObjectClass): string;
 var
   VId: array[0..15] of Byte;
   I: Integer;
@@ -158,7 +154,7 @@ begin
     Move(IntToHex(VId[I], 2)[1], Result[2*I+1], 2);
 end;
 
-procedure TPressOIDGenerator.InternalReleaseOID(
+procedure TPressOIDGenerator.InternalReleaseOID(Sender: TPressPersistence;
   AObjectClass: TPressObjectClass; const AOID: string);
 begin
 end;
@@ -168,10 +164,10 @@ begin
   Result := stOIDGenerator;
 end;
 
-procedure TPressOIDGenerator.ReleaseOID(
+procedure TPressOIDGenerator.ReleaseOID(Sender: TPressPersistence;
   AObjectClass: TPressObjectClass; const AOID: string);
 begin
-  InternalReleaseOID(AObjectClass, AOID);
+  InternalReleaseOID(Sender, AObjectClass, AOID);
 end;
 
 { TPressPersistence }
@@ -233,6 +229,12 @@ end;
 procedure TPressPersistence.ExecuteStatement(const AStatement: string);
 begin
   InternalExecuteStatement(AStatement);
+end;
+
+function TPressPersistence.GenerateOID(
+  AObjectClass: TPressObjectClass): string;
+begin
+  Result := OIDGenerator.GenerateOID(Self, AObjectClass);
 end;
 
 function TPressPersistence.GetCurrentUser: TPressUser;

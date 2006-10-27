@@ -173,7 +173,7 @@ begin
     VObjectClass := PressObjectClassByPersistentName(AObject.ClassName)
   else
     VObjectClass := nil;
-  Id := OIDGenerator.GenerateOID(VObjectClass);
+  Id := GenerateOID(VObjectClass);
 end;
 
 procedure TPressInstantObjectsPersistence.InstantLog(const AString: string);
