@@ -1,5 +1,5 @@
 (*
-  PressObjects, Application, Registry and Service classes
+  PressObjects, Application Context Classes
   Copyright (C) 2006 Laserpress Ltda.
 
   http://www.pressobjects.org
@@ -23,10 +23,11 @@ unit PressApplication;
 
 interface
 
+{$DEFINE PressBaseUnit}
+
 {$I Press.inc}
 
 uses
-  Contnrs,
   Forms,
   PressClasses,
   PressNotifier;
@@ -60,7 +61,7 @@ type
     procedure InitService; virtual;
     class function InternalServiceType: TPressServiceType; virtual; abstract;
   public
-    constructor Create;
+    constructor Create; virtual;
     destructor Destroy; override;
     class procedure RegisterService(AIsDefault: Boolean = False);
     property IsDefault: Boolean read GetIsDefault write SetIsDefault;
@@ -133,8 +134,10 @@ type
     FServiceType: TPressServiceType;
     function CreateOwnedService(AServiceClass: TPressServiceClass): TPressService;
     function GetDefaultService: TPressService;
+    function GetDefaultServiceClass: TPressServiceClass;
     function GetServiceTypeName: string;
     procedure SetDefaultService(Value: TPressService);
+    procedure SetDefaultServiceClass(Value: TPressServiceClass);
   protected
     property ServiceClasses: TPressServiceClassList read FServiceClasses;
     property Services: TPressServiceList read FServices;
@@ -147,6 +150,7 @@ type
     procedure RegisterService(AServiceClass: TPressServiceClass; AIsDefault: Boolean);
     procedure RemoveService(AService: TPressService);
     property DefaultService: TPressService read GetDefaultService write SetDefaultService;
+    property DefaultServiceClass: TPressServiceClass read GetDefaultServiceClass write SetDefaultServiceClass;
     property ServiceType: TPressServiceType read FServiceType;
     property ServiceTypeName: string read GetServiceTypeName;
   end;
@@ -197,7 +201,9 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    function CreateDefaultService(AServiceType: TPressServiceType): TPressService;
     function DefaultService(AServiceType: TPressServiceType): TPressService;
+    function DefaultServiceClass(AServiceType: TPressServiceType): TPressServiceClass;
     procedure RegisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass; AIsDefault: Boolean);
     procedure Run;
     procedure Finalize;
@@ -440,15 +446,21 @@ begin
   if not Assigned(FDefaultService) then
     if Assigned(FOwnedService) then
       FDefaultService := FOwnedService
-    else if Assigned(FDefaultServiceClass) then
-      FDefaultService := CreateOwnedService(FDefaultServiceClass)
     else if Services.Count > 0 then
       FDefaultService := Services.Last
-    else if ServiceClasses.Count > 0 then
-      FDefaultService := CreateOwnedService(ServiceClasses.Last)
+    else
+      FDefaultService := CreateOwnedService(DefaultServiceClass);
+  Result := FDefaultService;
+end;
+
+function TPressRegistry.GetDefaultServiceClass: TPressServiceClass;
+begin
+  if not Assigned(FDefaultServiceClass) then
+    if ServiceClasses.Count > 0 then
+      FDefaultServiceClass := ServiceClasses.Last
     else
       raise EPressError.CreateFmt(SUnassignedServiceType, [ServiceTypeName]);
-  Result := FDefaultService;
+  Result := FDefaultServiceClass;
 end;
 
 function TPressRegistry.GetServiceTypeName: string;
@@ -482,6 +494,11 @@ end;
 procedure TPressRegistry.SetDefaultService(Value: TPressService);
 begin
   FDefaultService := Value;
+end;
+
+procedure TPressRegistry.SetDefaultServiceClass(Value: TPressServiceClass);
+begin
+  FDefaultServiceClass := Value;
 end;
 
 { TPressRegistryList }
@@ -586,10 +603,22 @@ begin
   FRegistries := TPressRegistryList.Create(True);
 end;
 
+function TPressApplication.CreateDefaultService(
+  AServiceType: TPressServiceType): TPressService;
+begin
+  Result := DefaultServiceClass(AServiceType).Create;
+end;
+
 function TPressApplication.DefaultService(
   AServiceType: TPressServiceType): TPressService;
 begin
   Result := Registry[AServiceType].DefaultService;
+end;
+
+function TPressApplication.DefaultServiceClass(
+  AServiceType: TPressServiceType): TPressServiceClass;
+begin
+  Result := Registry[AServiceType].DefaultServiceClass;
 end;
 
 destructor TPressApplication.Destroy;
