@@ -696,8 +696,10 @@ type
     FOnChangeList: TPressProxyListEvent;
     FProxyType: TPressProxyType;
     function CreateProxy: TPressProxy;
+    function GetInstances(AIndex: Integer): TPressObject;
     function GetItems(AIndex: Integer): TPressProxy;
     function GetNotificationDisabled: Boolean;
+    procedure SetInstances(AIndex: Integer; Value: TPressObject);
     procedure SetItems(AIndex: Integer; Value: TPressProxy);
   protected
     function InternalCreateIterator: TPressCustomIterator; override;
@@ -720,6 +722,7 @@ type
     function Remove(AObject: TPressProxy): Integer;
     function RemoveInstance(AObject: TPressObject): Integer;
     function RemoveReference(const ARefClass, ARefID: string): Integer;
+    property Instances[AIndex: Integer]: TPressObject read GetInstances write SetInstances;
     property Items[AIndex: Integer]: TPressProxy read GetItems write SetItems; default;
     property NotificationDisabled: Boolean read GetNotificationDisabled;
     property OnChangeList: TPressProxyListEvent read FOnChangeList write FOnChangeList;
@@ -3419,6 +3422,11 @@ begin
   Result := inherited Extract(AObject) as TPressProxy;
 end;
 
+function TPressProxyList.GetInstances(AIndex: Integer): TPressObject;
+begin
+  Result := Items[AIndex].Instance;
+end;
+
 function TPressProxyList.GetItems(AIndex: Integer): TPressProxy;
 begin
   Result := inherited Items[AIndex] as TPressProxy;
@@ -3521,6 +3529,11 @@ begin
   Result := IndexOfReference(ARefClass, ARefID);
   if Result >= 0 then
     Delete(Result);
+end;
+
+procedure TPressProxyList.SetInstances(AIndex: Integer; Value: TPressObject);
+begin
+  Items[AIndex].Instance := Value;
 end;
 
 procedure TPressProxyList.SetItems(
