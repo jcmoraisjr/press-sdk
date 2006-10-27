@@ -53,8 +53,6 @@ resourcestring
   SDisplayNameMissing = 'Falta DisplayName para o controle %s(''%s'')';
   SEnumItemNotFound = 'Enumeration ''%s'' não encontrado';
   SEnumMetadataNotFound = 'Enumeration metadata %s não encontrado';
-  SFieldAlreadyInitialized = 'Campo %s já foi inicializado com %s';
-  SFieldNotInitialized = 'Campo %s ainda não foi inicializado';
   SInstanceNotFound = 'Instance not found: %s(%s)';
   SInvalidAttributeClass = 'O atributo %s(''%s'') requer objetos da classe %s';
   SInvalidAttributeType = 'Tipo inválido para o atributo %s (%s)';
@@ -86,6 +84,7 @@ resourcestring
   SUnsupportedComponent = 'O componente %s não é suportado';
   SUnsupportedControl = 'O controle %s(''%s'') não é suportado';
   SUnsupportedDisplayName = 'DisplayName não é suportado para o atributo %s(''%s.%s'')';
+  SUnsupportedFeature = 'Feature %s não é suportada';
   SUnsupportedModel = 'Model %s não é suportado por %s';
   SUnsupportedObject = 'Nenhuma classe %s suporta objetos %s';
 

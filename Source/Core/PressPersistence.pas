@@ -1,5 +1,5 @@
 (*
-  PressObjects, Persistence Broker Class
+  PressObjects, Base Persistence Classes
   Copyright (C) 2006 Laserpress Ltda.
 
   http://www.pressobjects.org
@@ -44,10 +44,11 @@ type
 
   TPressOIDGeneratorClass = class of TPressOIDGenerator;
 
-  TPressOIDGenerator = class(TPressQuery)
+  TPressOIDGenerator = class(TPressService)
   protected
     function InternalGenerateOID(AObjectClass: TPressObjectClass): string; virtual;
     procedure InternalReleaseOID(AObjectClass: TPressObjectClass; const AOID: string); virtual;
+    class function InternalServiceType: TPressServiceType; override;
   public
     function GenerateOID(AObjectClass: TPressObjectClass = nil): string;
     procedure ReleaseOID(AObjectClass: TPressObjectClass; const AOID: string);
@@ -57,11 +58,11 @@ type
   private
     FCurrentUser: TPressUser;
     FOIDGenerator: TPressOIDGenerator;
-    FUsers: TPressUsers;
+    FUserQuery: TPressUserQuery;
     function GetCurrentUser: TPressUser;
     function GetHasUser: Boolean;
     function GetOIDGenerator: TPressOIDGenerator;
-    function GetUsers: TPressUsers;
+    function GetUserQuery: TPressUserQuery;
   protected
     procedure DoneService; override;
     function GetIdentifierQuotes: string; virtual;
@@ -70,16 +71,18 @@ type
     procedure InternalDispose(AObject: TPressObject); virtual; abstract;
     procedure InternalConnect; virtual;
     procedure InternalExecuteStatement(const AStatement: string); virtual;
-    function InternalUsersClass: TPressUsersClass; virtual;
     function InternalLogon(const AUserID, APassword: string): Boolean; virtual;
     function InternalOIDGeneratorClass: TPressOIDGeneratorClass; virtual;
+    function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; virtual;
     function InternalRetrieve(const AClass, AId: string): TPressObject; virtual; abstract;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; virtual; abstract;
     procedure InternalRollbackTransaction; virtual;
+    function InternalSQLQuery(const ASQLStatement: string): TPressProxyList; virtual;
+    function InternalUserQueryClass: TPressUserQueryClass;
     class function InternalServiceType: TPressServiceType; override;
     procedure InternalStartTransaction; virtual;
     procedure InternalStore(AObject: TPressObject); virtual; abstract;
-    property Users: TPressUsers read GetUsers;
+    property UserQuery: TPressUserQuery read GetUserQuery;
   public
     destructor Destroy; override;
     procedure CommitTransaction;
@@ -89,10 +92,12 @@ type
     procedure Dispose(AProxy: TPressProxy); overload;
     procedure ExecuteStatement(const AStatement: string);
     procedure Logoff;
-    function Logon(const AUserID, APassword: string): Boolean;
+    function Logon(const AUserID: string = ''; const APassword: string = ''): Boolean;
+    function OQLQuery(const AOQLStatement: string): TPressProxyList;
     function Retrieve(const AClass, AId: string): TPressObject;
     function RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
     procedure RollbackTransaction;
+    function SQLQuery(const ASQLStatement: string): TPressProxyList;
     procedure StartTransaction;
     procedure Store(AObject: TPressObject);
     property CurrentUser: TPressUser read GetCurrentUser;
@@ -158,6 +163,11 @@ procedure TPressOIDGenerator.InternalReleaseOID(
 begin
 end;
 
+class function TPressOIDGenerator.InternalServiceType: TPressServiceType;
+begin
+  Result := stOIDGenerator;
+end;
+
 procedure TPressOIDGenerator.ReleaseOID(
   AObjectClass: TPressObjectClass; const AOID: string);
 begin
@@ -179,19 +189,13 @@ end;
 destructor TPressPersistence.Destroy;
 begin
   FOIDGenerator.Free;
-  FUsers.Free;
+  FUserQuery.Free;
   inherited;
 end;
 
 procedure TPressPersistence.Dispose(AProxy: TPressProxy);
 begin
   Dispose(AProxy.Instance);
-end;
-
-procedure TPressPersistence.DoneService;
-begin
-  inherited;
-  Logoff;
 end;
 
 procedure TPressPersistence.Dispose(AObject: TPressObject);
@@ -218,6 +222,12 @@ begin
   finally
     VObject.Free;
   end;
+end;
+
+procedure TPressPersistence.DoneService;
+begin
+  inherited;
+  Logoff;
 end;
 
 procedure TPressPersistence.ExecuteStatement(const AStatement: string);
@@ -254,11 +264,11 @@ begin
   Result := '''';
 end;
 
-function TPressPersistence.GetUsers: TPressUsers;
+function TPressPersistence.GetUserQuery: TPressUserQuery;
 begin
-  if not Assigned(FUsers) then
-    FUsers := InternalUsersClass.Create;
-  Result := FUsers;
+  if not Assigned(FUserQuery) then
+    FUserQuery := InternalUserQueryClass.Create;
+  Result := FUserQuery;
 end;
 
 procedure TPressPersistence.InternalCommitTransaction;
@@ -280,7 +290,7 @@ var
   VNewUser: TPressUser;
 begin
   { TODO : Implement DB Connection }
-  VNewUser := Users.CheckLogon(AUserID, APassword);
+  VNewUser := UserQuery.CheckLogon(AUserID, APassword);
   Result := Assigned(VNewUser);
   if Result then
     try
@@ -294,7 +304,13 @@ end;
 
 function TPressPersistence.InternalOIDGeneratorClass: TPressOIDGeneratorClass;
 begin
-  Result := TPressOIDGenerator;
+  Result := TPressOIDGeneratorClass(PressApp.DefaultServiceClass(stOIDGenerator));
+end;
+
+function TPressPersistence.InternalOQLQuery(
+  const AOQLStatement: string): TPressProxyList;
+begin
+  raise EPressError.CreateFmt(SUnsupportedFeature, ['OQL Query']);
 end;
 
 procedure TPressPersistence.InternalRollbackTransaction;
@@ -306,13 +322,19 @@ begin
   Result := stPersistence;
 end;
 
+function TPressPersistence.InternalSQLQuery(
+  const ASQLStatement: string): TPressProxyList;
+begin
+  raise EPressError.CreateFmt(SUnsupportedFeature, ['SQL Query']);
+end;
+
 procedure TPressPersistence.InternalStartTransaction;
 begin
 end;
 
-function TPressPersistence.InternalUsersClass: TPressUsersClass;
+function TPressPersistence.InternalUserQueryClass: TPressUserQueryClass;
 begin
-  Result := TPressDefaultUsers;
+  Result := PressUserData.UserQueryClass;
 end;
 
 procedure TPressPersistence.Logoff;
@@ -334,6 +356,12 @@ begin
     TPressPersistenceLogonEvent.Create(Self).Notify;
     TPressUserFriend(CurrentUser).AfterLogon;  // friend class
   end;
+end;
+
+function TPressPersistence.OQLQuery(
+  const AOQLStatement: string): TPressProxyList;
+begin
+  Result := InternalOQLQuery(AOQLStatement);
 end;
 
 function TPressPersistence.Retrieve(const AClass, AId: string): TPressObject;
@@ -363,6 +391,12 @@ begin
   InternalRollbackTransaction;
 end;
 
+function TPressPersistence.SQLQuery(
+  const ASQLStatement: string): TPressProxyList;
+begin
+  Result := InternalSQLQuery(ASQLStatement);
+end;
+
 procedure TPressPersistence.StartTransaction;
 begin
   InternalStartTransaction;
@@ -382,5 +416,8 @@ begin
     end;
   end;
 end;
+
+initialization
+  TPressOIDGenerator.RegisterService;
 
 end.

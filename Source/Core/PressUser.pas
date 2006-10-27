@@ -26,6 +26,7 @@ interface
 {$I Press.inc}
 
 uses
+  PressApplication,
   PressSubject,
   PressQuery;
 
@@ -44,21 +45,31 @@ type
   TPressDefaultUser = class(TPressUser)
   end;
 
-  TPressUsersClass = class of TPressUsers;
+  TPressUserQueryClass = class of TPressUserQuery;
 
-  TPressUsers = class(TPressQuery)
+  TPressUserQuery = class(TPressQuery)
   protected
-    function InternalCheckLogon(const AUserID, APassword: string): TPressUser; virtual; abstract;
+    function InternalCheckLogon(const AUserID, APassword: string): TPressUser; virtual;
   public
     function CheckLogon(const AUserID, APassword: string): TPressUser;
   end;
 
-  TPressDefaultUsers = class(TPressUsers)
+  TPressUserData = class(TPressService)
   protected
-    function InternalCheckLogon(const AUserID, APassword: string): TPressUser; override;
+    class function InternalServiceType: TPressServiceType; override;
+    function InternalUserQueryClass: TPressUserQueryClass; virtual;
+  public
+    function UserQueryClass: TPressUserQueryClass;
   end;
 
+function PressUserData: TPressUserData;
+
 implementation
+
+function PressUserData: TPressUserData;
+begin
+  Result := PressApp.DefaultService(stUserData) as TPressUserData;
+end;
 
 { TPressUser }
 
@@ -81,19 +92,37 @@ begin
   Result := amWritable;
 end;
 
-{ TPressUsers }
+{ TPressUserQuery }
 
-function TPressUsers.CheckLogon(const AUserID, APassword: string): TPressUser;
+function TPressUserQuery.CheckLogon(const AUserID, APassword: string): TPressUser;
 begin
   Result := InternalCheckLogon(AUserID, APassword);
 end;
 
-{ TPressDefaultUsers }
-
-function TPressDefaultUsers.InternalCheckLogon(
-  const AUserID, APassword: string): TPressUser;
+function TPressUserQuery.InternalCheckLogon(const AUserID,
+  APassword: string): TPressUser;
 begin
   Result := TPressDefaultUser.Create;
 end;
+
+{ TPressUserData }
+
+class function TPressUserData.InternalServiceType: TPressServiceType;
+begin
+  Result := stUserData;
+end;
+
+function TPressUserData.InternalUserQueryClass: TPressUserQueryClass;
+begin
+  Result := TPressUserQuery;
+end;
+
+function TPressUserData.UserQueryClass: TPressUserQueryClass;
+begin
+  Result := InternalUserQueryClass;
+end;
+
+initialization
+  TPressUserData.RegisterService;
 
 end.

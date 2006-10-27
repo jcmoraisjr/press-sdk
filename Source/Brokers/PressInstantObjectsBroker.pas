@@ -53,6 +53,7 @@ type
     procedure InternalConnect; override;
     procedure InternalDispose(AObject: TPressObject); override;
     procedure InternalExecuteStatement(const AStatement: string); override;
+    function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; override;
     function InternalRetrieve(const AClass, AId: string): TPressObject; override;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
     procedure InternalRollbackTransaction; override;
@@ -212,7 +213,38 @@ begin
   (Connector.Broker as TInstantCustomRelationalBroker).Execute(AStatement);
 end;
 
-function TPressInstantObjectsPersistence.InternalRetrieve(const AClass, AId: string): TPressObject;
+function TPressInstantObjectsPersistence.InternalOQLQuery(
+  const AOQLStatement: string): TPressProxyList;
+var
+  VInstantQuery: TInstantQuery;
+  I: Integer;
+begin
+  VInstantQuery := DefaultConnector.CreateQuery;
+  try
+    Result := TPressProxyList.Create(True, ptShared);
+    try
+      VInstantQuery.Command := AOQLStatement;
+      VInstantQuery.Open;
+      if VInstantQuery is TInstantSQLQuery then
+        for I := 0 to Pred(VInstantQuery.ObjectCount) do
+          with TPressInstantSQLQueryFriend(VInstantQuery).ObjectReferenceList.RefItems[I] do
+            Result.AddReference(ObjectClassName, ObjectId)
+      else
+        { TODO : Implement }
+        // for I := 0 to Pred(VQuery.ObjectCount) do
+        //   Result.Add(CreateReference(CreatePressObject(VQuery.Objects[I])));
+        ;
+    except
+      Result.Free;
+      raise;
+    end;
+  finally
+    VInstantQuery.Free;
+  end;
+end;
+
+function TPressInstantObjectsPersistence.InternalRetrieve(
+  const AClass, AId: string): TPressObject;
 var
   VPressObjectClass: TPressObjectClass;
   VInstantObject: TInstantObject;
@@ -237,45 +269,22 @@ end;
 function TPressInstantObjectsPersistence.InternalRetrieveProxyList(
   AQuery: TPressQuery): TPressProxyList;
 var
-  VInstantQuery: TInstantQuery;
   VQueryStr: string;
   WhereClause: string;
   OrderByClause: string;
-  I: Integer;
 begin
-  VInstantQuery := DefaultConnector.CreateQuery;
-  try
-    Result := TPressProxyList.Create(True, ptShared);
-    try
-      VQueryStr := 'SELECT * FROM ';
-      if AQuery.Metadata.IncludeSubClasses then
-        VQueryStr := VQueryStr + 'ANY ';
-      VQueryStr := VQueryStr + AQuery.Metadata.ItemObjectClassName;
-      WhereClause := AQuery.WhereClause;
-      OrderByClause := AQuery.OrderByClause;
-      if WhereClause <> '' then
-        VQueryStr := VQueryStr + ' WHERE ' + WhereClause;
-      if OrderByClause <> '' then
-        VQueryStr := VQueryStr + ' ORDER BY ' + OrderByClause;
-      {$IFDEF PressLogOPF}PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');{$ENDIF}
-      VInstantQuery.Command := VQueryStr;
-      VInstantQuery.Open;
-      if VInstantQuery is TInstantSQLQuery then
-        for I := 0 to Pred(VInstantQuery.ObjectCount) do
-          with TPressInstantSQLQueryFriend(VInstantQuery).ObjectReferenceList.RefItems[I] do
-            Result.AddReference(ObjectClassName, ObjectId)
-      else
-        { TODO : Implement }
-        // for I := 0 to Pred(VQuery.ObjectCount) do
-        //   Result.Add(CreateReference(CreatePressObject(VQuery.Objects[I])));
-        ;
-    except
-      Result.Free;
-      raise;
-    end;
-  finally
-    VInstantQuery.Free;
-  end;
+  VQueryStr := 'SELECT * FROM ';
+  if AQuery.Metadata.IncludeSubClasses then
+    VQueryStr := VQueryStr + 'ANY ';
+  VQueryStr := VQueryStr + AQuery.Metadata.ItemObjectClassName;
+  WhereClause := AQuery.WhereClause;
+  OrderByClause := AQuery.OrderByClause;
+  if WhereClause <> '' then
+    VQueryStr := VQueryStr + ' WHERE ' + WhereClause;
+  if OrderByClause <> '' then
+    VQueryStr := VQueryStr + ' ORDER BY ' + OrderByClause;
+  {$IFDEF PressLogOPF}PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');{$ENDIF}
+  Result := OQLQuery(VQueryStr);
 end;
 
 procedure TPressInstantObjectsPersistence.InternalRollbackTransaction;

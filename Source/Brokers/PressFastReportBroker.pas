@@ -40,7 +40,7 @@ type
     procedure InternalLoadFromStream(AStream: TStream); override;
     procedure InternalSaveToStream(AStream: TStream); override;
   public
-    constructor Create;
+    constructor Create; override;
     destructor Destroy; override;
   end;
 
@@ -176,6 +176,6 @@ begin
 end;
 
 initialization
-  PressReportService.RegisterReport(TPressFRReport);
+  TPressFRReport.RegisterService;
 
 end.

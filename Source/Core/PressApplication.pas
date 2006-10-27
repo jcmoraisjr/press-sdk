@@ -45,7 +45,9 @@ type
   TPressApplicationDoneEvent = class(TPressApplicationEvent)
   end;
 
-  TPressServiceType = (stPersistence);
+  TPressServiceType = (
+   stPersistence, stOIDGenerator, stUserData,
+   stReport, stReportData);
 
   TPressRegistry = class;
 

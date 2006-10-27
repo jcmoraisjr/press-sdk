@@ -26,18 +26,20 @@ interface
 {$I Press.inc}
 
 uses
-  Classes, Contnrs, PressClasses, PressSubject, PressQuery;
+  Classes,
+  Contnrs,
+  PressApplication,
+  PressClasses,
+  PressSubject,
+  PressQuery;
 
 type
   TPressReportNeedValueEvent = procedure(
    const ADataSetName, AFieldName: string; var AValue: Variant) of object;
 
-  TPressReportClass = class of TPressReport;
-
-  TPressReportService = class;
   TPressReportDataSet = class;
 
-  TPressReport = class(TObject)
+  TPressReport = class(TPressService)
   private
     FOnNeedValue: TPressReportNeedValueEvent;
   protected
@@ -47,6 +49,7 @@ type
     procedure InternalExecuteReport; virtual; abstract;
     procedure InternalLoadFromStream(AStream: TStream); virtual; abstract;
     procedure InternalSaveToStream(AStream: TStream); virtual; abstract;
+    class function InternalServiceType: TPressServiceType; override;
   public
     procedure CreateFields(ADataSet: TPressReportDataSet; AFields: TStrings);
     function CreateReportDataSet(const AName: string): TPressReportDataSet;
@@ -143,13 +146,12 @@ type
     constructor Create(ADataSet: TPressReportDataSet; const AItemsName: string; AParent: TPressReportDataSource);
   end;
 
-  TPressReportGroupsClass = class of TPressReportGroups;
-
   TPressReportGroup = class;
 
-  TPressReportGroups = class(TPressQuery)
+  TPressReportData = class(TPressService)
   protected
-    function InternalFindReportGroup(const AObjectClassName: string): TPressReportGroup; virtual;
+    function InternalFindReportGroup(const AObjectClassName: string): TPressReportGroup; virtual; abstract;
+    class function InternalServiceType: TPressServiceType; override;
   public
     function FindReportGroup(const AObjectClassName: string): TPressReportGroup;
   end;
@@ -196,43 +198,20 @@ type
     property ReportVisible: Boolean read GetReportVisible;
   end;
 
-  TPressReportService = class(TObject)
-  private
-    FDefaultReport: TPressReportClass;
-    FRegisteredReports: TClassList;
-    FReportGroupsClass: TPressReportGroupsClass;
-    function GetDefaultReport: TPressReportClass;
-    procedure SetReportGroupsClass(Value: TPressReportGroupsClass);
-    function GetReportGroupsClass: TPressReportGroupsClass;
-  public
-    constructor Create;
-    destructor Destroy; override;
-    function FindReportGroup(AObject: TPressObject): TPressReportGroup;
-    procedure RegisterReport(AReportClass: TPressReportClass);
-    property DefaultReport: TPressReportClass read GetDefaultReport write FDefaultReport;
-    property ReportGroupsClass: TPressReportGroupsClass read GetReportGroupsClass write SetReportGroupsClass;
-  end;
-
-function PressReportService: TPressReportService;
+function PressReportData: TPressReportData;
 
 implementation
 
 uses
-  SysUtils, PressConsts {$IFDEF PressLog}, PressLog{$ENDIF};
-
-var
-  _PressReportService: TPressReportService;
+  SysUtils,
+  {$IFDEF PressLog}PressLog,{$ENDIF}
+  PressConsts;
 
 { Global routines }
 
-function PressReportService: TPressReportService;
+function PressReportData: TPressReportData;
 begin
-  if not Assigned(_PressReportService) then
-  begin
-    _PressReportService := TPressReportService.Create;
-    PressRegisterSingleObject(_PressReportService);
-  end;
-  Result := _PressReportService;
+  Result := PressApp.DefaultService(stReportData) as TPressReportData;
 end;
 
 { TPressReport }
@@ -264,6 +243,11 @@ end;
 
 procedure TPressReport.InternalDesignReport;
 begin
+end;
+
+class function TPressReport.InternalServiceType: TPressServiceType;
+begin
+  Result := stReport;
 end;
 
 procedure TPressReport.LoadFromStream(AStream: TStream);
@@ -462,18 +446,17 @@ begin
   Result := Items[DataSet.CurrentIndex];
 end;
 
-{ TPressReportGroups }
+{ TPressReportData }
 
-function TPressReportGroups.FindReportGroup(
+function TPressReportData.FindReportGroup(
   const AObjectClassName: string): TPressReportGroup;
 begin
   Result := InternalFindReportGroup(AObjectClassName);
 end;
 
-function TPressReportGroups.InternalFindReportGroup(
-  const AObjectClassName: string): TPressReportGroup;
+class function TPressReportData.InternalServiceType: TPressServiceType;
 begin
-  Result := nil;
+  Result := stReportData;
 end;
 
 { TPressReportGroup }
@@ -522,7 +505,7 @@ function TPressReportGroupItem.GetReport: TPressReport;
 begin
   if not Assigned(FReport) then
   begin
-    FReport := PressReportService.DefaultReport.Create;
+    FReport := PressApp.CreateDefaultService(stReport) as TPressReport;
     FReport.OnNeedValue := ReportNeedValue;
     LoadReport;
     LoadMetadatas;
@@ -740,64 +723,6 @@ end;
 
 procedure TPressReportGroupItem.SetReportData(AStream: TStream);
 begin
-end;
-
-{ TPressReportService }
-
-constructor TPressReportService.Create;
-begin
-  inherited Create;
-  FRegisteredReports := TClassList.Create;
-end;
-
-destructor TPressReportService.Destroy;
-begin
-  FRegisteredReports.Free;
-  inherited;
-end;
-
-function TPressReportService.FindReportGroup(
-  AObject: TPressObject): TPressReportGroup;
-begin
-  with ReportGroupsClass.Create do
-  try
-    Result := FindReportGroup(AObject.ClassName);
-    Result.BusinessObj := AObject;
-  finally
-    Free;
-  end;
-end;
-
-function TPressReportService.GetDefaultReport: TPressReportClass;
-begin
-  if not Assigned(FDefaultReport) then
-    if FRegisteredReports.Count > 0 then
-      FDefaultReport := TPressReportClass(FRegisteredReports[0])
-    else
-      raise EPressError.Create(SNoRegisteredReport);
-  Result := FDefaultReport;
-end;
-
-function TPressReportService.GetReportGroupsClass: TPressReportGroupsClass;
-begin
-  if not Assigned(FReportGroupsClass) then
-    raise EPressError.CreateFmt(SFieldNotInitialized,
-     [TPressReportGroupsClass.ClassName]);
-  Result := FReportGroupsClass;
-end;
-
-procedure TPressReportService.RegisterReport(AReportClass: TPressReportClass);
-begin
-  FRegisteredReports.Add(AReportClass);
-end;
-
-procedure TPressReportService.SetReportGroupsClass(
-  Value: TPressReportGroupsClass);
-begin
-  if Assigned(FReportGroupsClass) then
-    raise EPressError.CreateFmt(SFieldAlreadyInitialized,
-     [TPressReportGroupsClass.ClassName, FReportGroupsClass.ClassName]);
-  FReportGroupsClass := Value;
 end;
 
 end.
