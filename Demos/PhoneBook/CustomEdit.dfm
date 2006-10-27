@@ -1,9 +1,10 @@
 object CustomEditForm: TCustomEditForm
   Left = 250
   Top = 143
-  Width = 305
-  Height = 223
+  BorderStyle = bsDialog
   Caption = 'CustomEditForm'
+  ClientHeight = 196
+  ClientWidth = 297
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText

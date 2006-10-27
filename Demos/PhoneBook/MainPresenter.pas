@@ -31,7 +31,7 @@ end;
 procedure TMainPresenter.Running;
 begin
   inherited;
-  PressDefaultPersistence.Logon('', '');
+  PressDefaultPersistence.Logon;
 end;
 
 initialization

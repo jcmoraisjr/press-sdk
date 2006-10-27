@@ -31,4 +31,3 @@ begin
   Application.CreateForm(TMainForm, MainForm);
   TMainPresenter.Run;
 end.
-
