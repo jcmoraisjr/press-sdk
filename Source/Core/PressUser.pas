@@ -42,9 +42,6 @@ type
     function AccessMode(AAccessObjectID: Integer): TPressAccessMode;
   end;
 
-  TPressDefaultUser = class(TPressUser)
-  end;
-
   TPressUserQueryClass = class of TPressUserQuery;
 
   TPressUserQuery = class(TPressQuery)
@@ -94,15 +91,16 @@ end;
 
 { TPressUserQuery }
 
-function TPressUserQuery.CheckLogon(const AUserID, APassword: string): TPressUser;
+function TPressUserQuery.CheckLogon(
+  const AUserID, APassword: string): TPressUser;
 begin
   Result := InternalCheckLogon(AUserID, APassword);
 end;
 
-function TPressUserQuery.InternalCheckLogon(const AUserID,
-  APassword: string): TPressUser;
+function TPressUserQuery.InternalCheckLogon(
+  const AUserID, APassword: string): TPressUser;
 begin
-  Result := TPressDefaultUser.Create;
+  Result := TPressUser.Create;
 end;
 
 { TPressUserData }
