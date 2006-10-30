@@ -129,10 +129,10 @@ end;
 class function TContact.InternalMetadataStr: string;
 begin
   Result :=
-   'TContact;' +
+   'TContact (' +
    'Name: String(40);' +
    'Address: Part(TAddress);' +
-   'Phones: Parts(TPhone);';
+   'Phones: Parts(TPhone))';
 end;
 
 procedure TContact.SetAddress(Value: TAddress);
@@ -155,8 +155,8 @@ end;
 class function TPerson.InternalMetadataStr: string;
 begin
   Result :=
-   'TPerson;' +
-   'NickName: String(20);';
+   'TPerson (' +
+   'NickName: String(20))';
 end;
 
 procedure TPerson.SetNickName(const Value: string);
@@ -174,8 +174,8 @@ end;
 class function TCompany.InternalMetadataStr: string;
 begin
   Result :=
-   'TCompany;' +
-   'Contact: Reference(TPerson);';
+   'TCompany (' +
+   'Contact: Reference(TPerson))';
 end;
 
 procedure TCompany.SetContact(Value: TPerson);
@@ -198,9 +198,9 @@ end;
 class function TPhone.InternalMetadataStr: string;
 begin
   Result :=
-   'TPhone;' +
+   'TPhone (' +
    'PhoneType: Enum(TPhoneType);' +
-   'Number: String(15);';
+   'Number: String(15))';
 end;
 
 procedure TPhone.SetNumber(const Value: string);
@@ -233,10 +233,10 @@ end;
 class function TAddress.InternalMetadataStr: string;
 begin
   Result :=
-   'TAddress;' +
+   'TAddress (' +
    'Street: String(40);' +
    'Zip: String(10);' +
-   'City: Reference(TCity);';
+   'City: Reference(TCity))';
 end;
 
 procedure TAddress.SetCity(Value: TCity);
@@ -269,9 +269,9 @@ end;
 class function TCity.InternalMetadataStr: string;
 begin
   Result :=
-   'TCity;' +
+   'TCity (' +
    'Name: String(30);' +
-   'State: String(5);';
+   'State: String(5))';
 end;
 
 procedure TCity.SetName(const Value: string);
@@ -294,8 +294,8 @@ end;
 class function TMainQuery.InternalMetadataStr: string;
 begin
   Result :=
-   'TMainQuery(TContact) Any: Order: Name;' +
-   'Name: String Category: Partial;';
+   'TMainQuery(TContact) Any Order=Name (' +
+   'Name: String(40) Category=acPartial)';
 end;
 
 procedure TMainQuery.SetName(const Value: string);

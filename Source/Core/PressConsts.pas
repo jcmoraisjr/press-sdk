@@ -39,7 +39,10 @@ const
   SPressNilString = 'nil';
   SPressIdString = 'Id';
   SPressIdentifierString = 'Identifier';
+  SPressIntegerString = 'Integer';
+  SPressLiteralString = 'Literal';
   SPressQueryItemsString = 'QueryItems';
+  SPressEofString = 'final de arquivo';
 
 resourcestring
   SAmbiguousConcreteClass = 'Classe concreta ambígua (%s e %s) para o objeto %s';

@@ -39,10 +39,10 @@ type
     FCategory: TPressQueryAttributeCategory;
     FIncludeIfEmpty: Boolean;
   public
-    constructor Create(AOwner: TPressQueryMetadata);
+    constructor Create(AOwner: TPressObjectMetadata); override;
   published
-    property Category: TPressQueryAttributeCategory read FCategory write FCategory;
-    property IncludeIfEmpty: Boolean read FIncludeIfEmpty write FIncludeIfEmpty;
+    property Category: TPressQueryAttributeCategory read FCategory write FCategory default acMatch;
+    property IncludeIfEmpty: Boolean read FIncludeIfEmpty write FIncludeIfEmpty default False;
   end;
 
   TPressQueryMetadata = class(TPressObjectMetadata)
@@ -52,12 +52,16 @@ type
     FItemObjectClassName: string;
     FOrderFieldName: string;
     procedure SetItemObjectClassName(const Value: string);
+  protected
+    function InternalAttributeMetadataClass: TPressAttributeMetadataClass; override;
   public
+    property IncludeSubClasses: Boolean read FIncludeSubClasses;
     property ItemObjectClass: TPressObjectClass read FItemObjectClass;
-  published
-    property IncludeSubClasses: Boolean read FIncludeSubClasses write FIncludeSubClasses default False;
     property ItemObjectClassName: string read FItemObjectClassName write SetItemObjectClassName;
-    property OrderFieldName: string read FOrderFieldName write FOrderFieldName;
+    property OrderFieldName: string read FOrderFieldName;
+  published
+    property Any: Boolean read FIncludeSubClasses write FIncludeSubClasses default False;
+    property Order: string read FOrderFieldName write FOrderFieldName;
   end;
 
   TPressQueryClass = class of TPressQuery;
@@ -82,6 +86,7 @@ type
     function Count: Integer;
     class function ClassMetadata: TPressQueryMetadata;
     function CreateIterator: TPressQueryIterator;
+    class function ObjectMetadataClass: TPressObjectMetadataClass; override;
     function Remove(AObject: TPressObject): Integer;
     procedure UpdateReferenceList;
     property Metadata: TPressQueryMetadata read GetMetadata;
@@ -94,12 +99,13 @@ implementation
 
 uses
   SysUtils,
+  PressConsts,
   PressPersistence;
 
 { TPressQueryAttributeMetadata }
 
 constructor TPressQueryAttributeMetadata.Create(
-  AOwner: TPressQueryMetadata);
+  AOwner: TPressObjectMetadata);
 begin
   inherited Create(AOwner);
   FCategory := acMatch;
@@ -107,10 +113,25 @@ end;
 
 { TPressQueryMetadata }
 
+function TPressQueryMetadata.InternalAttributeMetadataClass: TPressAttributeMetadataClass;
+begin
+  Result := TPressQueryAttributeMetadata;
+end;
+
 procedure TPressQueryMetadata.SetItemObjectClassName(const Value: string);
 begin
-  FItemObjectClass := PressObjectClassByName(Value);
-  FItemObjectClassName := Value;
+  if FItemObjectClassName <> Value then
+  begin
+    { TODO : Remove old ItemMetadata, if it exists }
+    with TPressAttributeMetadata.Create(Self) do
+    begin
+      Name := SPressQueryItemsString;
+      AttributeName := TPressReferences.AttributeName;
+      ObjectClassName := Value;
+    end;
+    FItemObjectClass := PressObjectClassByName(Value);
+    FItemObjectClassName := Value;
+  end;
 end;
 
 { TPressQuery }
@@ -260,6 +281,11 @@ begin
   finally
     _QueryItems.EnableChanges;
   end;
+end;
+
+class function TPressQuery.ObjectMetadataClass: TPressObjectMetadataClass;
+begin
+  Result := TPressQueryMetadata;
 end;
 
 function TPressQuery.Remove(AObject: TPressObject): Integer;

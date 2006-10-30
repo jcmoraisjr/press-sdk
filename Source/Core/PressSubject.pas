@@ -32,7 +32,6 @@ uses
   SysUtils,
   {$IFDEF D6+}Variants,{$ENDIF}
   Classes,
-  Controls,
   Graphics,
   PressCompatibility,
   PressClasses,
@@ -65,13 +64,6 @@ type
   TPressParts = TInstantParts;
   TPressReferences = TInstantReferences;
 {$ELSE}
-  TPressObject = class;
-  TPressObjectClass = class of TPressObject;
-  TPressObjectMetadata = class;
-  PPressAttribute = ^TPressAttribute;
-  TPressAttribute = class;
-  TPressAttributeClass = class of TPressAttribute;
-
   { Metadata declarations }
 
   TPressEnumMetadata = class(TObject)
@@ -83,7 +75,7 @@ type
   public
     constructor Create(ATypeAddress: Pointer);
     destructor Destroy; override;
-    property Items: TStrings read FItems write FItems;
+    property Items: TStrings read FItems;
     property Name: string read FName write FName;
     property TypeAddress: Pointer read FTypeAddress;
   end;
@@ -113,6 +105,15 @@ type
     property CurrentItem: TPressEnumMetadata read GetCurrentItem;
   end;
 
+  TPressObject = class;
+  TPressObjectClass = class of TPressObject;
+  PPressAttribute = ^TPressAttribute;
+  TPressAttribute = class;
+  TPressAttributeClass = class of TPressAttribute;
+  TPressObjectMetadata = class;
+
+  TPressAttributeMetadataClass = class of TPressAttributeMetadata;
+
   TPressAttributeMetadata = class(TPressStreamable)
   private
     FAttributeClass: TPressAttributeClass;
@@ -131,7 +132,8 @@ type
     procedure SetName(const Value: string);
     procedure SetObjectClassName(const Value: string);
   public
-    constructor Create(AOwner: TPressObjectMetadata);
+    constructor Create(AOwner: TPressObjectMetadata); virtual;
+    destructor Destroy; override;
     function CreateAttribute(AOwner: TPressObject): TPressAttribute;
     property AttributeClass: TPressAttributeClass read FAttributeClass;
     property ObjectClass: TPressObjectClass read FObjectClass;
@@ -183,15 +185,20 @@ type
     destructor Destroy; override;
   end;
 
+  TPressObjectMetadataClass = class of TPressObjectMetadata;
+
   TPressObjectMetadata = class(TPressStreamable)
   private
     FAttributeMetadatas: TPressAttributeMetadataList;
     FObjectClass: TPressObjectClass;
     FPersistentName: string;
     function GetAttributeMetadatas: TPressAttributeMetadataList;
+  protected
+    function InternalAttributeMetadataClass: TPressAttributeMetadataClass; virtual;
   public
     constructor Create(AObjectClass: TPressObjectClass);
     destructor Destroy; override;
+    function CreateAttributeMetadata: TPressAttributeMetadata;
     function ParentMetadata: TPressObjectMetadata;
     property AttributeMetadatas: TPressAttributeMetadataList read GetAttributeMetadatas;
     property ObjectClass: TPressObjectClass read FObjectClass;
@@ -552,6 +559,7 @@ type
     procedure EnableUpdates;
     function FindAttribute(const AAttributeName: string): TPressAttribute;
     function FindPathAttribute(const APath: string): TPressAttribute;
+    class function ObjectMetadataClass: TPressObjectMetadataClass; virtual;
     class procedure RegisterClass;
     procedure Save;
     procedure Unchanged;
@@ -974,7 +982,7 @@ type
 
   TPressEnum = class(TPressValue)
   private
-    FValue: Byte;
+    FValue: Integer;
   protected
     function GetAsBoolean: Boolean; override;
     function GetAsDate: TDate; override;
@@ -985,7 +993,7 @@ type
     function GetAsTime: TTime; override;
     function GetAsVariant: Variant; override;
     function GetIsEmpty: Boolean; override;
-    function GetValue: Byte; virtual;
+    function GetValue: Integer; virtual;
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
@@ -994,13 +1002,13 @@ type
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
     procedure SetAsVariant(AValue: Variant); override;
-    procedure SetValue(AValue: Byte); virtual;
+    procedure SetValue(AValue: Integer); virtual;
   public
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Reset; override;
-    property Value: Byte read GetValue write SetValue;
+    property Value: Integer read GetValue write SetValue;
   end;
 
   TPressBoolean = class(TPressValue)
@@ -1475,7 +1483,8 @@ begin
   AObject._Id.FValue := AId;  // friend class
 end;
 
-function PressFindAttributeClass(const AAttributeName: string): TPressAttributeClass;
+function PressFindAttributeClass(
+  const AAttributeName: string): TPressAttributeClass;
 var
   I: Integer;
 begin
@@ -1529,10 +1538,11 @@ begin
   raise EPressError.CreateFmt(SPersistentClassNotFound, [APersistentName]);
 end;
 
-function PressRegisterMetadata(const AMetadataStr: string): TPressObjectMetadata;
+function PressRegisterMetadata(
+  const AMetadataStr: string): TPressObjectMetadata;
 var
-  VCodeMetadata: TPressCodeMetadata;
-  VCodeReader: TPressCodeReader;
+  VParser: TPressMetaParser;
+  VReader: TPressMetaParserReader;
   VStream: TMemoryStream;
 begin
   { TODO : Improve (remove TStream instance) }
@@ -1540,12 +1550,12 @@ begin
   VStream := TMemoryStream.Create;
   if AMetadataStr <> '' then
     VStream.Write(AMetadataStr[1], Length(AMetadataStr));
-  VCodeReader := TPressCodeReader.Create(VStream);
-  VCodeMetadata := TPressCodeMetadata.Create(nil);
+  VReader := TPressMetaParserReader.Create(VStream);
+  VParser := TPressMetaParser.Create(nil);
   try
     try
-      VCodeMetadata.Read(VCodeReader);
-      Result := VCodeMetadata.Metadata;
+      VParser.Read(VReader);
+      Result := VParser.Metadata;
     except
       on E: EPressParseError do
         raise EPressError.CreateFmt(SMetadataParseError,
@@ -1554,8 +1564,8 @@ begin
         raise;
     end;
   finally
-    VCodeMetadata.Free;
-    VCodeReader.Free;
+    VParser.Free;
+    VReader.Free;
     VStream.Free;
   end;
 end;
@@ -1616,7 +1626,8 @@ begin
   inherited;
 end;
 
-function TPressEnumMetadata.RemoveEnumItemPrefix(const AEnumName: string): string;
+function TPressEnumMetadata.RemoveEnumItemPrefix(
+  const AEnumName: string): string;
 var
   I: Integer;
   VLen: Integer;
@@ -1696,8 +1707,10 @@ end;
 constructor TPressAttributeMetadata.Create(AOwner: TPressObjectMetadata);
 begin
   inherited Create;
+  { TODO : Validate Owner }
   FOwner := AOwner;
-  FOwner.AttributeMetadatas.Add(Self);
+  if Assigned(FOwner) then
+    FOwner.AttributeMetadatas.Add(Self);
   FIsPersistent := True;
 end;
 
@@ -1709,6 +1722,13 @@ begin
   else
     raise EPressError.CreateFmt(SUnassignedAttributeType,
      [AOwner.ClassName, Name]);
+end;
+
+destructor TPressAttributeMetadata.Destroy;
+begin
+  if Assigned(FOwner) then
+    FOwner.AttributeMetadatas.Extract(Self);
+  inherited;
 end;
 
 procedure TPressAttributeMetadata.SetAttributeName(const Value: string);
@@ -1835,6 +1855,11 @@ begin
   PressObjectMetadatas.Add(Self);
 end;
 
+function TPressObjectMetadata.CreateAttributeMetadata: TPressAttributeMetadata;
+begin
+  Result := InternalAttributeMetadataClass.Create(Self);
+end;
+
 destructor TPressObjectMetadata.Destroy;
 begin
   FAttributeMetadatas.Free;
@@ -1846,6 +1871,11 @@ begin
   if not Assigned(FAttributeMetadatas) then
     FAttributeMetadatas := TPressAttributeMetadataList.Create(True);
   Result := FAttributeMetadatas;
+end;
+
+function TPressObjectMetadata.InternalAttributeMetadataClass: TPressAttributeMetadataClass;
+begin
+  Result := TPressAttributeMetadata;
 end;
 
 function TPressObjectMetadata.ParentMetadata: TPressObjectMetadata;
@@ -2926,8 +2956,8 @@ end;
 class function TPressObject.InternalMetadataStr: string;
 begin
   Result :=
-   TPressObject.ClassName + ';' +
-   SPressIdString+': String(32);';
+   TPressObject.ClassName + ' (' +
+   SPressIdString+': String(32))';
 end;
 
 procedure TPressObject.InternalSave;
@@ -2964,6 +2994,11 @@ procedure TPressObject.NotifyUnchange;
 begin
   {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s unchanged', [Signature]));{$ENDIF}
   TPressObjectUnchangedEvent.Create(Self).Notify;
+end;
+
+class function TPressObject.ObjectMetadataClass: TPressObjectMetadataClass;
+begin
+  Result := TPressObjectMetadata;
 end;
 
 class procedure TPressObject.RegisterClass;
@@ -4577,7 +4612,7 @@ begin
   Result := IsNull;
 end;
 
-function TPressEnum.GetValue: Byte;
+function TPressEnum.GetValue: Integer;
 begin
   Result := FValue;
 end;
@@ -4652,7 +4687,7 @@ begin
   end;
 end;
 
-procedure TPressEnum.SetValue(AValue: Byte);
+procedure TPressEnum.SetValue(AValue: Integer);
 begin
   if IsNull or (AValue <> FValue) then
   begin

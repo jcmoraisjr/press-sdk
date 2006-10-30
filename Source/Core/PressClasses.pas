@@ -218,9 +218,9 @@ type
     FStream: TStream;
     FCurrentPos: TPressTextPos;
     FTokenPos: TPressTextPos;
+    function GetEof: Boolean;
     procedure SetCurrentPos(const Value: TPressTextPos);
   protected
-    function GetEof: Boolean;
     function IsLiteralChar(Ch: Char; First: Boolean): Boolean;
     function IsNumericChar(Ch: Char; First: Boolean): Boolean;
     function IsStringDelimiter(Ch: Char): Boolean;
@@ -230,20 +230,21 @@ type
     function ReadString: string;
     procedure Reset;
     procedure SkipSpaces;
-    property Eof: Boolean read GetEof;
     property Position: TPressTextPos read FCurrentPos write SetCurrentPos;
   public
     constructor Create(AStream: TStream);
-    procedure ErrorEof;
     procedure ErrorExpected(const AExpectedToken, AToken: string);
     procedure ErrorFmt(const AMsg: string; const AParams: array of const);
     function ReadBoolean: Boolean;
     function ReadIdentifier: string;
     function ReadInteger: Integer;
     procedure ReadMatch(const AToken: string);
+    procedure ReadMatchEof;
+    function ReadNextToken: string;
     function ReadToken: string;
     procedure UnreadChar;
     procedure UnreadToken;
+    property Eof: Boolean read GetEof;
     property TokenPos: TPressTextPos read FTokenPos;
   end;
 
@@ -518,14 +519,15 @@ begin
   Reset;
 end;
 
-procedure TPressTextReader.ErrorEof;
-begin
-  raise EPressParseError.Create(TokenPos, SUnexpectedEof);
-end;
-
 procedure TPressTextReader.ErrorExpected(const AExpectedToken, AToken: string);
+var
+  VToken: string;
 begin
-  raise EPressParseError.CreateFmt(TokenPos, STokenExpected, [AExpectedToken, AToken]);
+  if AToken = '' then
+    VToken := SPressEofString
+  else
+    VToken := AToken;
+  raise EPressParseError.CreateFmt(TokenPos, STokenExpected, [AExpectedToken, VToken]);
 end;
 
 procedure TPressTextReader.ErrorFmt(
@@ -569,9 +571,9 @@ end;
 
 function TPressTextReader.ReadChar: Char;
 begin
-  if Eof then
-    ErrorEof;
   Result := #0;
+  if Eof then
+    Exit;
   FStream.Read(Result, SizeOf(Result));
   if Result = #10 then
   begin
@@ -589,7 +591,7 @@ begin
   Result := '';
   SkipSpaces;
   if Eof then
-    ErrorEof;
+    ErrorExpected(SPressIdentifierString, '');
   Ch := ReadChar;
   UnreadChar;
   if IsLiteralChar(Ch, True) then
@@ -603,6 +605,8 @@ var
   Token: string;
 begin
   Token := ReadToken;
+  if Token = '' then
+    ErrorExpected(SPressIntegerString, '');
   try
     Result := StrtoInt(Token);
   except
@@ -617,6 +621,8 @@ var
 begin
   Result := '';
   Ch := ReadChar;
+  if Ch = #0 then
+    ErrorExpected(SPressLiteralString, '');
   if IsLiteralChar(Ch, True) then
   begin
     repeat
@@ -636,6 +642,18 @@ begin
   Token := ReadToken;
   if Token <> AToken then
     ErrorExpected(AToken, Token);
+end;
+
+procedure TPressTextReader.ReadMatchEof;
+begin
+  if not Eof then
+    ErrorExpected(SPressEofString, ReadNextToken);
+end;
+
+function TPressTextReader.ReadNextToken: string;
+begin
+  Result := ReadToken;
+  UnreadToken;
 end;
 
 function TPressTextReader.ReadNumber: string;
@@ -690,9 +708,9 @@ var
 begin
   Result := '';
   SkipSpaces;
-  if Eof then
-    ErrorEof;
   FTokenPos := Position;
+  if Eof then
+    Exit;
   Ch := ReadChar;
   if Eof then
   begin
@@ -732,7 +750,7 @@ end;
 
 procedure TPressTextReader.SkipSpaces;
 begin
-  while ReadChar in [' ', #9, #10, #13] do
+  while ReadChar in [' ', #0, #9, #10, #13] do
     if Eof then
       Exit;
   UnreadChar;

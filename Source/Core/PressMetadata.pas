@@ -1,5 +1,5 @@
 (*
-  PressObjects, Metadata parser
+  PressObjects, Metadata Parser
   Copyright (C) 2006 Laserpress Ltda.
 
   http://www.pressobjects.org
@@ -26,413 +26,251 @@ interface
 {$I Press.inc}
 
 uses
-  PressClasses,
-  PressSubject;
-  
+  Classes,
+  PressParser,
+  PressSubject,
+  PressQuery;
+
 type
-  TPressCodeReader = class(TPressTextReader)
+  TPressMetaParserReader = class(TPressParserReader)
   end;
 
-  TPressCodeObjectList = class;
+  TPressMetaParserObject = class;
+  TPressMetaParserAttributes = class;
 
-  TPressCodeObjectClass = class of TPressCodeObject;
-
-  { TPressCodeObject }
-
-  TPressCodeObject = class(TObject)
+  TPressMetaParser = class(TPressParserObject)
   private
-    FCodeObjects: TPressCodeObjectList;
-    FOwner: TPressCodeObject;
-    function GetCodeObjects: TPressCodeObjectList;
+    FObject: TPressMetaParserObject;
+    FAttributes: TPressMetaParserAttributes;
+    function GetMetadata: TPressObjectMetadata;
   protected
-    function FindRule(Reader: TPressCodeReader; AClasses: array of TPressCodeObjectClass): TPressCodeObjectClass;
-    class function InternalApply(Reader: TPressCodeReader): Boolean; virtual;
-    procedure InternalRead(Reader: TPressCodeReader); virtual;
-    property CodeObjects: TPressCodeObjectList read GetCodeObjects;
+    procedure InternalRead(Reader: TPressParserReader); override;
   public
-    constructor Create(AOwner: TPressCodeObject);
-    destructor Destroy; override;
-    class function Apply(Reader: TPressCodeReader): Boolean;
-    procedure Read(Reader: TPressCodeReader);
-    property Owner: TPressCodeObject read FOwner;
+    property Metadata: TPressObjectMetadata read GetMetadata;
   end;
 
-  TPressCodeObjectIterator = class;
-
-  TPressCodeObjectList = class(TPressList)
-  private
-    function GetItems(AIndex: Integer): TPressCodeObject;
-    procedure SetItems(AIndex: Integer; Value: TPressCodeObject);
-  protected
-    function InternalCreateIterator: TPressCustomIterator; override;
-  public
-    function Add(AObject: TPressCodeObject): Integer;
-    function CreateIterator: TPressCodeObjectIterator;
-    function IndexOf(AObject: TPressCodeObject): Integer;
-    procedure Insert(Index: Integer; AObject: TPressCodeObject);
-    function Remove(AObject: TPressCodeObject): Integer;
-    property Items[AIndex: Integer]: TPressCodeObject read GetItems write SetItems; default;
-  end;
-
-  TPressCodeObjectIterator = class(TPressIterator)
-  private
-    function GetCurrentItem: TPressCodeObject;
-  public
-    property CurrentItem: TPressCodeObject read GetCurrentItem;
-  end;
-
-  TPressCodeMetadata = class(TPressCodeObject)
+  TPressMetaParserObject = class(TPressParserObject)
   private
     FMetadata: TPressObjectMetadata;
   protected
-    procedure InternalRead(Reader: TPressCodeReader); override;
+    function CreateObjectMetadata(Reader: TPressParserReader): TPressObjectMetadata;
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    procedure InternalRead(Reader: TPressParserReader); override;
+    procedure InternalReadParams(Reader: TPressParserReader); virtual;
   public
     property Metadata: TPressObjectMetadata read FMetadata;
   end;
 
-  TPressCodeAttributeMetadata = class(TPressCodeObject)
+  TPressMetaParserQuery = class(TPressMetaParserObject)
+  private
+    function GetMetadata: TPressQueryMetadata;
+  protected
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    procedure InternalReadParams(Reader: TPressParserReader); override;
+  public
+    property Metadata: TPressQueryMetadata read GetMetadata;
+  end;
+
+  TPressMetaParserAttributeType = class;
+
+  TPressMetaParserAttributes = class(TPressParserObject)
+  private
+    FAttributeType: TPressMetaParserAttributeType;
+    FNextAttribute: TPressMetaParserAttributes;
+  protected
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    procedure InternalRead(Reader: TPressParserReader); override;
+  end;
+
+  TPressMetaParserAttributeType = class(TPressParserObject)
   private
     FMetadata: TPressAttributeMetadata;
-    function GetOwner: TPressCodeMetadata;
-  protected
-    procedure InternalRead(Reader: TPressCodeReader); override;
-  public
-    property Metadata: TPressAttributeMetadata read FMetadata;
-    property Owner: TPressCodeMetadata read GetOwner;
-  end;
-
-  TPressCodeAttributeTypeMetadata = class(TPressCodeObject)
-  private
-    function GetOwner: TPressCodeAttributeMetadata;
   protected
     class function AttributeInheritsFrom(const AAttributeName: string; AAttributeClassList: array of TPressAttributeClass): Boolean;
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    procedure InternalRead(Reader: TPressParserReader); override;
   public
-    property Owner: TPressCodeAttributeMetadata read GetOwner;
+    property Metadata: TPressAttributeMetadata read FMetadata;
   end;
 
-  TPressCodeStructureTypeMetadata = class(TPressCodeAttributeTypeMetadata)
+  TPressMetaParserSizeable = class(TPressMetaParserAttributeType)
   protected
-    class function InternalApply(Reader: TPressCodeReader): Boolean; override;
-    procedure InternalRead(Reader: TPressCodeReader); override;
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    procedure InternalRead(Reader: TPressParserReader); override;
   end;
 
-  TPressCodeSizeableTypeMetadata = class(TPressCodeAttributeTypeMetadata)
+  TPressMetaParserEnum = class(TPressMetaParserAttributeType)
   protected
-    class function InternalApply(Reader: TPressCodeReader): Boolean; override;
-    procedure InternalRead(Reader: TPressCodeReader); override;
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    procedure InternalRead(Reader: TPressParserReader); override;
   end;
 
-  TPressCodeEnumTypeMetadata = class(TPressCodeAttributeTypeMetadata)
+  TPressMetaParserStructure = class(TPressMetaParserAttributeType)
   protected
-    class function InternalApply(Reader: TPressCodeReader): Boolean; override;
-    procedure InternalRead(Reader: TPressCodeReader); override;
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    procedure InternalRead(Reader: TPressParserReader); override;
   end;
 
-  TPressCodeOtherTypeMetadata = class(TPressCodeAttributeTypeMetadata)
+  TPressMetaParserProperties = class(TPressParserObject)
+  private
+    FTarget: TPersistent;
   protected
-    class function InternalApply(Reader: TPressCodeReader): Boolean; override;
-    procedure InternalRead(Reader: TPressCodeReader); override;
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    procedure InternalRead(Reader: TPressParserReader); override;
+  public
+    property Target: TPersistent read FTarget write FTarget;
   end;
 
 implementation
 
 uses
   SysUtils,
-  PressConsts,
-  PressQuery;
+  TypInfo,
+  PressConsts;
 
 const
-  { TODO : Organize }
-  CClassName = 'Nome de classe';
-  CObjectPropertyName = 'Propriedade de objeto';
-  CQueryPropertyName = 'Propriedade da query';
-  CAttributePropertyName = 'Propriedade de atributo';
-  CQueryAttributePropertyName = 'Propriedade de atributo da query';
-  CAttributeTypeName = 'Tipo de atributo';
-  CCategoryQueryAttributeName = 'Nome de categoria de atributo da query';
+  CClassName = 'class name';
+  CAttributeName = 'attribute name';
+  CPropertyName = 'property name';
 
-  CPersistentClassObjectProperty = 'PersistentName';
-  CAllSubClassesQueryProperty = 'Any';
-  COrderFieldNameQueryProperty = 'Order';
-  CNameAttributeProperty = 'Name';
-  CIsPersistentAttributeProperty = 'IsPersistent';
-  CPersistentNameAttributeProperty = 'PersistentName';
-  CEditMaskAttributeProperty = 'EditMask';
-  CSizeAttributeProperty = 'Size';
-  CDefaultValueAttributeProperty = 'DefaultValue';
-  CCategoryQueryAttributeProperty = 'Category';
-  CMatchCategoryName = 'Match';
-  CStartingCategoryName = 'Starting';
-  CFinishingCategoryName = 'Finishing';
-  CPartialCategoryName = 'Partial';
-  CGreaterThanCategoryName = 'Greater';
-  CGreaterEqualThanCategoryName = 'GreaterEqual';
-  CLesserThanCategoryName = 'Lesser';
-  CLesserEqualThanCategoryName = 'LesserEqual';
-  CIncludeIfEmptyQueryAttributeProperty = 'IncludeIfEmpty';
+{ TPressMetaParser }
 
-{ TPressCodeObject }
-
-class function TPressCodeObject.Apply(Reader: TPressCodeReader): Boolean;
-var
-  VPosition: TPressTextPos;
+function TPressMetaParser.GetMetadata: TPressObjectMetadata;
 begin
-  VPosition := Reader.Position;
-  try
-    Result := InternalApply(Reader);
-  finally
-    Reader.Position := VPosition;
-  end;
+  if Assigned(FObject) then
+    Result := FObject.Metadata
+  else
+    Result := nil;
 end;
 
-constructor TPressCodeObject.Create(AOwner: TPressCodeObject);
+procedure TPressMetaParser.InternalRead(Reader: TPressParserReader);
 begin
-  inherited Create;
-  FOwner := AOwner;
-  if Assigned(FOwner) then
-    FOwner.CodeObjects.Add(Self);
-end;
-
-destructor TPressCodeObject.Destroy;
-begin
-  FCodeObjects.Free;
-  if Assigned(FOwner) then
-    FOwner.CodeObjects.Extract(Self);
   inherited;
-end;
-
-function TPressCodeObject.FindRule(Reader: TPressCodeReader;
-  AClasses: array of TPressCodeObjectClass): TPressCodeObjectClass;
-var
-  I: Integer;
-begin
-  for I := Low(AClasses) to High(AClasses) do
+  if not Parse(Reader, @FObject,
+   [TPressMetaParserQuery, TPressMetaParserObject]) then
+    Reader.ErrorExpected(CClassName, Reader.ReadToken);
+  if Reader.ReadToken = '(' then
   begin
-    Result := AClasses[I];
-    if Result.Apply(Reader) then
-      Exit;
-  end;
-  Result := nil;
+    Parse(Reader, @FAttributes, [TPressMetaParserAttributes]);
+    Reader.ReadMatch(')');
+  end else
+    Reader.UnreadToken;
+  if not Reader.Eof then
+    Reader.ReadMatch(';');
+  Reader.ReadMatchEof;
 end;
 
-function TPressCodeObject.GetCodeObjects: TPressCodeObjectList;
-begin
-  if not Assigned(FCodeObjects) then
-    FCodeObjects := TPressCodeObjectList.Create(True);
-  Result := FCodeObjects;
-end;
+{ TPressMetaParserObject }
 
-class function TPressCodeObject.InternalApply(
-  Reader: TPressCodeReader): Boolean;
-begin
-  Result := False;
-end;
-
-procedure TPressCodeObject.InternalRead(Reader: TPressCodeReader);
-begin
-end;
-
-procedure TPressCodeObject.Read(Reader: TPressCodeReader);
-begin
-  InternalRead(Reader);
-end;
-
-{ TPressCodeObjectList }
-
-function TPressCodeObjectList.Add(AObject: TPressCodeObject): Integer;
-begin
-  Result := inherited Add(AObject);
-end;
-
-function TPressCodeObjectList.CreateIterator: TPressCodeObjectIterator;
-begin
-  Result := TPressCodeObjectIterator.Create(Self);
-end;
-
-function TPressCodeObjectList.GetItems(AIndex: Integer): TPressCodeObject;
-begin
-  Result := inherited Items[AIndex] as TPressCodeObject;
-end;
-
-function TPressCodeObjectList.IndexOf(AObject: TPressCodeObject): Integer;
-begin
-  Result := inherited IndexOf(AObject);
-end;
-
-procedure TPressCodeObjectList.Insert(
-  Index: Integer; AObject: TPressCodeObject);
-begin
-  inherited Insert(Index, AObject);
-end;
-
-function TPressCodeObjectList.InternalCreateIterator: TPressCustomIterator;
-begin
-  Result := CreateIterator;
-end;
-
-function TPressCodeObjectList.Remove(AObject: TPressCodeObject): Integer;
-begin
-  Result := inherited Remove(AObject);
-end;
-
-procedure TPressCodeObjectList.SetItems(
-  AIndex: Integer; Value: TPressCodeObject);
-begin
-  inherited Items[AIndex] := Value;
-end;
-
-{ TPressCodeObjectIterator }
-
-function TPressCodeObjectIterator.GetCurrentItem: TPressCodeObject;
-begin
-  Result := inherited CurrentItem as TPressCodeObject;
-end;
-
-{ TPressCodeMetadata }
-
-procedure TPressCodeMetadata.InternalRead(Reader: TPressCodeReader);
+function TPressMetaParserObject.CreateObjectMetadata(
+  Reader: TPressParserReader): TPressObjectMetadata;
 var
   Token: string;
   VObjClass: TPressObjectClass;
 begin
-  inherited;
   Token := Reader.ReadIdentifier;
   VObjClass := PressFindObjectClass(Token);
   if not Assigned(VObjClass) then
     Reader.ErrorExpected(CClassName, Token);
-
-  if VObjClass.InheritsFrom(TPressQuery) then
-  begin
-    FMetadata := TPressQueryMetadata.Create(VObjClass);
-    Token := Reader.ReadToken;
-    if Token = '(' then
-    begin
-      Token := Reader.ReadIdentifier;
-      TPressQueryMetadata(FMetadata).ItemObjectClassName := Token;
-      { TODO : Check duplicated attribute registration }
-      with TPressAttributeMetadata.Create(FMetadata) do
-      begin
-        Name := SPressQueryItemsString;
-        AttributeName := TPressReferences.AttributeName;
-        ObjectClassName := Token;
-      end;
-      Reader.ReadMatch(')');
-    end else
-      Reader.UnreadToken;
-  end else
-    FMetadata := TPressObjectMetadata.Create(VObjClass);
-
-  Token := Reader.ReadToken;
-  while Token <> ';' do
-  begin
-    Reader.ReadMatch(':');
-    if SameText(CPersistentClassObjectProperty, Token) then
-      FMetadata.PersistentName := Reader.ReadIdentifier
-    else if FMetadata is TPressQueryMetadata then
-    { TODO : Improve }
-    begin
-      if SameText(COrderFieldNameQueryProperty, Token) then
-        TPressQueryMetadata(FMetadata).OrderFieldName := Reader.ReadIdentifier
-      else if SameText(CAllSubClassesQueryProperty, Token) then
-        TPressQueryMetadata(FMetadata).IncludeSubClasses := True
-      else
-        Reader.ErrorExpected(CQueryPropertyName, Token);
-    end else
-      Reader.ErrorExpected(CObjectPropertyName, Token);
-    Token := Reader.ReadToken;
-  end;
-
-  TPressCodeAttributeMetadata.Create(Self).Read(Reader);
+  Result := VObjClass.ObjectMetadataClass.Create(VObjClass);
 end;
 
-{ TPressCodeAttributeMetadata }
-
-function TPressCodeAttributeMetadata.GetOwner: TPressCodeMetadata;
+class function TPressMetaParserObject.InternalApply(
+  Reader: TPressParserReader): Boolean;
 begin
-  Result := inherited Owner as TPressCodeMetadata;
+  Result := Assigned(PressFindObjectClass(Reader.ReadToken));
 end;
 
-procedure TPressCodeAttributeMetadata.InternalRead(Reader: TPressCodeReader);
+procedure TPressMetaParserObject.InternalRead(Reader: TPressParserReader);
+begin
+  inherited;
+  FMetadata := CreateObjectMetadata(Reader);
+  InternalReadParams(Reader);
+  if TPressMetaParserProperties.Apply(Reader) then
+    with TPressMetaParserProperties.Create(Self) do
+    try
+      Target := FMetadata;
+      Read(Reader);
+    finally
+      Free;
+    end;
+end;
+
+procedure TPressMetaParserObject.InternalReadParams(
+  Reader: TPressParserReader);
+begin
+end;
+
+{ TPressMetaParserQuery }
+
+function TPressMetaParserQuery.GetMetadata: TPressQueryMetadata;
+begin
+  Result := inherited Metadata as TPressQueryMetadata;
+end;
+
+class function TPressMetaParserQuery.InternalApply(
+  Reader: TPressParserReader): Boolean;
+var
+  VObjectClass: TPressObjectClass;
+begin
+  VObjectClass := PressFindObjectClass(Reader.ReadToken);
+  Result := Assigned(VObjectClass) and VObjectClass.InheritsFrom(TPressQuery);
+end;
+
+procedure TPressMetaParserQuery.InternalReadParams(
+  Reader: TPressParserReader);
 var
   Token: string;
-  VRuleClass: TPressCodeObjectClass;
 begin
   inherited;
   Token := Reader.ReadToken;
-  while Token <> ';' do
+  if Token = '(' then
   begin
-    { TODO : Improve }
-    if Owner.Metadata is TPressQueryMetadata then
-      FMetadata := TPressQueryAttributeMetadata.Create(TPressQueryMetadata(Owner.Metadata))
-    else
-      FMetadata := TPressAttributeMetadata.Create(Owner.Metadata);
-    FMetadata.Name := Token;
-    Reader.ReadMatch(':');
-
-    VRuleClass := FindRule(Reader, [TPressCodeStructureTypeMetadata,
-     TPressCodeSizeableTypeMetadata, TPressCodeEnumTypeMetadata,
-     TPressCodeOtherTypeMetadata]);
-    if Assigned(VRuleClass) then
-      VRuleClass.Create(Self).Read(Reader)
-    else
-      Reader.ErrorExpected(CAttributeTypeName, Reader.ReadToken);
-
-    Token := Reader.ReadToken;
-    while Token <> ';' do
-    begin
-      Reader.ReadMatch(':');
-      if SameText(CEditMaskAttributeProperty, Token) then
-        FMetadata.EditMask := Reader.ReadToken
-      else if SameText(CNameAttributeProperty, Token) then
-        FMetadata.Name := Reader.ReadToken
-      else if SameText(CIsPersistentAttributeProperty, Token) then
-        FMetadata.IsPersistent := Reader.ReadBoolean
-      else if SameText(CPersistentNameAttributeProperty, Token) then
-        FMetadata.PersistentName := Reader.ReadToken
-      else if SameText(CSizeAttributeProperty, Token) then
-        FMetadata.Size := Reader.ReadInteger
-      else if SameText(CDefaultValueAttributeProperty, Token) then
-        FMetadata.DefaultValue := Reader.ReadToken
-      else if FMetadata is TPressQueryAttributeMetadata then
-      begin
-        if SameText(CCategoryQueryAttributeProperty, Token) then
-        begin
-          Token := Reader.ReadToken;
-          if SameText(CMatchCategoryName, Token) then
-            TPressQueryAttributeMetadata(FMetadata).Category := acMatch
-          else if SameText(CStartingCategoryName, Token) then
-            TPressQueryAttributeMetadata(FMetadata).Category := acStarting
-          else if SameText(CFinishingCategoryName, Token) then
-            TPressQueryAttributeMetadata(FMetadata).Category := acFinishing
-          else if SameText(CPartialCategoryName, Token) then
-            TPressQueryAttributeMetadata(FMetadata).Category := acPartial
-          else if SameText(CGreaterThanCategoryName, Token) then
-            TPressQueryAttributeMetadata(FMetadata).Category := acGreaterThan
-          else if SameText(CGreaterEqualThanCategoryName, Token) then
-            TPressQueryAttributeMetadata(FMetadata).Category := acGreaterEqualThan
-          else if SameText(CLesserThanCategoryName, Token) then
-            TPressQueryAttributeMetadata(FMetadata).Category := acLesserThan
-          else if SameText(CLesserEqualThanCategoryName, Token) then
-            TPressQueryAttributeMetadata(FMetadata).Category := acLesserEqualThan
-          else
-            Reader.ErrorExpected(CCategoryQueryAttributeName, Token);
-        end else if SameText(CIncludeIfEmptyQueryAttributeProperty, Token) then
-          TPressQueryAttributeMetadata(FMetadata).IncludeIfEmpty := True
-        else
-          Reader.ErrorExpected(CQueryAttributePropertyName, Token);
-      end else
-        Reader.ErrorExpected(CAttributePropertyName, Token);
-      Token := Reader.ReadToken;
-    end;
-
-    if not Reader.Eof then
-      Token := Reader.ReadToken;
-  end;
+    Token := Reader.ReadIdentifier;
+    Reader.ReadMatch(')');
+    Metadata.ItemObjectClassName := Token;
+  end else
+    Reader.UnreadToken;
 end;
 
-{ TPressCodeAttributeTypeMetadata }
+{ TPressMetaParserAttributes }
 
-class function TPressCodeAttributeTypeMetadata.AttributeInheritsFrom(
+class function TPressMetaParserAttributes.InternalApply(
+  Reader: TPressParserReader): Boolean;
+begin
+  Result := IsValidIdent(Reader.ReadToken);
+end;
+
+procedure TPressMetaParserAttributes.InternalRead(
+  Reader: TPressParserReader);
+var
+  Token: string;
+begin
+  inherited;
+  Token := Reader.ReadIdentifier;
+  Reader.ReadMatch(':');
+  if not Parse(Reader, @FAttributeType, [
+   TPressMetaParserSizeable, TPressMetaParserEnum,
+   TPressMetaParserStructure, TPressMetaParserAttributeType]) then
+    Reader.ErrorExpected(CAttributeName, Reader.ReadToken);
+  FAttributeType.Metadata.Name := Token;
+  if TPressMetaParserProperties.Apply(Reader) then
+    with TPressMetaParserProperties.Create(Self) do
+    try
+      Target := FAttributeType.Metadata;
+      Read(Reader);
+    finally
+      Free;
+    end;
+  if Reader.ReadToken = ';' then
+    Parse(Reader, @FNextAttribute, [TPressMetaParserAttributes], Owner)
+  else
+    Reader.UnreadToken;
+end;
+
+{ TPressMetaParserAttributeType }
+
+class function TPressMetaParserAttributeType.AttributeInheritsFrom(
   const AAttributeName: string;
   AAttributeClassList: array of TPressAttributeClass): Boolean;
 var
@@ -448,92 +286,111 @@ begin
   Result := False;
 end;
 
-function TPressCodeAttributeTypeMetadata.GetOwner: TPressCodeAttributeMetadata;
+class function TPressMetaParserAttributeType.InternalApply(
+  Reader: TPressParserReader): Boolean;
 begin
-  Result := inherited Owner as TPressCodeAttributeMetadata;
+  Result := Assigned(PressFindAttributeClass(Reader.ReadToken));
 end;
 
-{ TPressCodeStructureTypeMetadata }
+procedure TPressMetaParserAttributeType.InternalRead(
+  Reader: TPressParserReader);
+begin
+  inherited;
+  FMetadata :=
+   (Owner.Owner as TPressMetaParser).Metadata.CreateAttributeMetadata;
+  FMetadata.AttributeName := Reader.ReadIdentifier;
+end;
 
-class function TPressCodeStructureTypeMetadata.InternalApply(
-  Reader: TPressCodeReader): Boolean;
+{ TPressMetaParserSizeable }
+
+class function TPressMetaParserSizeable.InternalApply(
+  Reader: TPressParserReader): Boolean;
+begin
+  Result := AttributeInheritsFrom(Reader.ReadToken, [TPressString]);
+end;
+
+procedure TPressMetaParserSizeable.InternalRead(
+  Reader: TPressParserReader);
+var
+  Token: string;
+begin
+  inherited;
+  Token := Reader.ReadToken;
+  if Token = '(' then
+  begin
+    Metadata.Size := Reader.ReadInteger;
+    Reader.ReadMatch(')');
+  end else
+    Reader.UnreadToken;
+end;
+
+{ TPressMetaParserEnum }
+
+class function TPressMetaParserEnum.InternalApply(
+  Reader: TPressParserReader): Boolean;
+begin
+  Result := AttributeInheritsFrom(Reader.ReadToken, [TPressEnum]);
+end;
+
+procedure TPressMetaParserEnum.InternalRead(
+  Reader: TPressParserReader);
+begin
+  inherited;
+  Reader.ReadMatch('(');
+  Metadata.EnumMetadata := PressEnumMetadataByName(Reader.ReadIdentifier);
+  Reader.ReadMatch(')');
+end;
+
+{ TPressMetaParserStructure }
+
+class function TPressMetaParserStructure.InternalApply(
+  Reader: TPressParserReader): Boolean;
 begin
   Result := AttributeInheritsFrom(Reader.ReadToken,
    [TPressPart, TPressReference, TPressParts, TPressReferences]);
 end;
 
-procedure TPressCodeStructureTypeMetadata.InternalRead(
-  Reader: TPressCodeReader);
+procedure TPressMetaParserStructure.InternalRead(
+  Reader: TPressParserReader);
 begin
   inherited;
-  Owner.Metadata.AttributeName := Reader.ReadToken;
   Reader.ReadMatch('(');
-  Owner.Metadata.ObjectClassName := Reader.ReadToken;
+  Metadata.ObjectClassName := Reader.ReadToken;
   Reader.ReadMatch(')');
 end;
 
-{ TPressCodeSizeableTypeMetadata }
+{ TPressMetaParserProperties }
 
-class function TPressCodeSizeableTypeMetadata.InternalApply(
-  Reader: TPressCodeReader): Boolean;
+class function TPressMetaParserProperties.InternalApply(
+  Reader: TPressParserReader): Boolean;
 begin
-  Result := AttributeInheritsFrom(Reader.ReadToken, [TPressString]);
+  Result := IsValidIdent(Reader.ReadToken);
 end;
 
-procedure TPressCodeSizeableTypeMetadata.InternalRead(
-  Reader: TPressCodeReader);
+procedure TPressMetaParserProperties.InternalRead(
+  Reader: TPressParserReader);
 var
   Token: string;
+  VPropertyName: string;
+  VValue: string;
 begin
   inherited;
-  Owner.Metadata.AttributeName := Reader.ReadToken;
   Token := Reader.ReadToken;
-  if Token = '(' then
+  while IsValidIdent(Token) do
   begin
-    Owner.Metadata.Size := Reader.ReadInteger;
-    Reader.ReadMatch(')');
-  end else
-    Reader.UnreadToken;
-end;
-
-{ TPressCodeEnumTypeMetadata }
-
-class function TPressCodeEnumTypeMetadata.InternalApply(
-  Reader: TPressCodeReader): Boolean;
-begin
-  Result := AttributeInheritsFrom(Reader.ReadToken, [TPressEnum]);
-end;
-
-procedure TPressCodeEnumTypeMetadata.InternalRead(
-  Reader: TPressCodeReader);
-var
-  Token: string;
-begin
-  inherited;
-  Owner.Metadata.AttributeName := Reader.ReadToken;
-  Token := Reader.ReadToken;
-  if Token = '(' then
-  begin
-    Owner.Metadata.EnumMetadata :=
-     PressEnumMetadataByName(Reader.ReadIdentifier);
-    Reader.ReadMatch(')');
-  end else
-    Reader.UnreadToken;
-end;
-
-{ TPressCodeOtherTypeMetadata }
-
-class function TPressCodeOtherTypeMetadata.InternalApply(
-  Reader: TPressCodeReader): Boolean;
-begin
-  Result := PressFindAttributeClass(Reader.ReadToken) <> nil;
-end;
-
-procedure TPressCodeOtherTypeMetadata.InternalRead(
-  Reader: TPressCodeReader);
-begin
-  inherited;
-  Owner.Metadata.AttributeName := Reader.ReadToken;
+    VPropertyName := Token;
+    Token := Reader.ReadToken;
+    if Token = '=' then
+    begin
+      VValue := Reader.ReadToken;
+      Token := Reader.ReadToken;
+    end else
+      VValue := SPressTrueString;
+    if not Assigned(GetPropInfo(FTarget, VPropertyName)) then
+      Reader.ErrorExpected(CPropertyName, VPropertyName);
+    SetPropValue(FTarget, VPropertyName, VValue);
+  end;
+  Reader.UnreadToken;
 end;
 
 end.

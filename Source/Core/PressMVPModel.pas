@@ -379,7 +379,7 @@ end;
 
 class function TPressMVPReferenceQuery.InternalMetadataStr: string;
 begin
-  Result := 'TPressMVPReferenceQuery(TPressObject);;';
+  Result := 'TPressMVPReferenceQuery(TPressObject)';
 end;
 
 procedure TPressMVPReferenceQuery.SetName(const Value: string);
@@ -461,8 +461,7 @@ end;
 
 function TPressMVPReferenceModel.GetMetadata: TPressQueryMetadata;
 const
-  { TODO : Fix Metadata parser - "Any:" }
-  CQueryMetadata = '%s(%s) Any: Order: Name; Name: String;';
+  CQueryMetadata = '%s(%s) Any Order=Name (Name: String)';
 begin
   if not Assigned(FMetadata) then
     FMetadata := PressRegisterMetadata(Format(
