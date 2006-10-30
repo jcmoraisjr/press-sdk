@@ -48,9 +48,7 @@ bem como ouvir as notificações do framework.
 == Instalação
 =============
 
-O PressObjects possui um processo de instalação bastante simples e não
-cria quaisquer componentes na IDE do seu compilador, apenas inclui
-algumas opções no menu (em desenvolvimento).
+Atualmente o PressObjects não possui código ou package de Design Time.
 
 Vide ($Press)/Docs/Install-ptbr.txt para maiores informações.
 

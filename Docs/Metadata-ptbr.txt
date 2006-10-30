@@ -6,16 +6,23 @@ implementada em cada classe de negócio que possua atributos.
 MetadataString = <ObjectMetadata> | <QueryMetadata>
 
 ObjectMetadata =
-<ObjectClass> [<ObjectParam> [<ObjectParam> [...]]] ;
-[<AttributeName> : <AttributeType> [<ObjectAttributeParam> [<ObjectAttributeParam>; [...]]]] ;
+ <ObjectClass> [<ObjectParam> [<ObjectParam> [...]]]
+ [ ( <ObjectAttributeDeclaration> [; <ObjectAttributeDeclaration> [...]] ) ]
 
 QueryMetadata =
-<QueryClass> ( <TargerObjectClass> ) [<QueryParam> [<QueryParam> [...]]] ;
-[<AttributeName> : <AttributeType> [<QueryAttributeParam> [<QueryAttributeParam>; [...]]]] ;
+ <QueryClass> [ (<TargerObjectClass>) ] [<QueryParam> [<QueryParam> [...]]] ;
+ [ ( <QueryAttributeDeclaration> [; <QueryAttributeDeclaration> [...]] ) ]
 
 ObjectClass = nome da classe de negócio a ser registrada
 
-ObjectParam = PersistentName: <ClassPersistentName>
+ObjectParam = 
+ <PersistentName = <ClassPersistentName>>
+
+ObjectAttributeDeclaration =
+ [<AttributeName> : <AttributeType> [<ObjectAttributeParam> [<ObjectAttributeParam> [...]]]]
+
+QueryAttributeDeclaration =
+ [<AttributeName> : <AttributeType> [<QueryAttributeParam> [<QueryAttributeParam> [...]]]]
 
 ClassPersistentName = Nome da classe ou da tabela para fazer a
 persistência. Se não for declarado, é utilizado o próprio nome da
@@ -24,18 +31,18 @@ classe.
 AttributeName = Nome do atributo
 
 AttributeType =
-<String [(<FieldSize>)]> | <Integer> | <Float> | <Currency> |
-<Enum [(<EnumMetadataName>)]> | <Boolean> | <Date> | <Time> |
-<DateTime> | <Memo> | <Picture> |
-<Part(<TargetObjectClass>)> | <Reference(<TargetObjectClass>)> |
-<Parts(<TargetObjectClass>)> | <References(<TargetObjectClass>)>
+ <String [(<FieldSize>)]> | <Integer> | <Float> | <Currency> |
+ <Enum [(<EnumMetadataName>)]> | <Boolean> | <Date> | <Time> |
+ <DateTime> | <Memo> | <Picture> | <Binary> |
+ <Part(<TargetObjectClass>)> | <Reference(<TargetObjectClass>)> |
+ <Parts(<TargetObjectClass>)> | <References(<TargetObjectClass>)>
 
 EnumMetadataName = Nome do metadado Enum, registrado através da função
 PressRegisterEnumMetadata
 
 ObjectAttributeParam =
-<Name: <AttributeName>> | <PersistentName: <AttributePersistentName>> |
-<EditMask: <EditMask>> | <Size: <Size>>
+ <Name = <AttributeName>> | <PersistentName = <AttributePersistentName>> |
+ <EditMask = <EditMask>> | <Size = <Size>>
 
 AttributePersistentName = Nome do atributo ou do campo para fazer a
 persistência. Se não for declarado, é utilizado o próprio nome do
@@ -50,42 +57,44 @@ QueryClass = Nome da Query a ser registrada
 TargetObjectClass = Nome da classe de negócio comum a todos os itens da
 lista
 
-QueryParam = <ObjectParam> | <Any:> | <Order: <FieldName>>
+QueryParam =
+ <ObjectParam> | <Any> | <Order = <FieldName>>
 
 Any = indica que todas as classes decendentes da classe Target devem ser
 recuperadas, do contrário, apenas a classe Target é recuperada da base
-de dados. Obs.: A sintaxe atual do Any exige dois pontos após a
-declaração, trata-se de um bug que deverá ser removido em breve.
+de dados.
 
 Order = indica através de qual atributo persistence o resultado deverá
 ser ordenado
 
 QueryAttributeParam =
-<ObjectAtributeParam> | <Category: <CategoryType>>
+ <ObjectAtributeParam> | <Category = <CategoryType>>
 
 Category = Indica o critério a ser utilizado para pesquisar objetos na
 base de dados
 
 CategoryType =
-<Match> | <Starting> | <Finishing> | <Partial> |
-<Greater> | <GreaterEqual> | <Lesser> | <LesserEqual>
+ <acMatch> | <acStarting> | <acFinishing> | <acPartial> |
+ <acGreaterThan> | <acGreaterEqualThan> |
+ <acLesserThan> | <acLesserEqualThan>
 
-Match = Para ser recuperado, o atributo do objeto deve possuir o mesmo
+acMatch = Para ser recuperado, o atributo do objeto deve possuir o mesmo
 valor que o atributo da Query
 
-Starting = para atributos string, indica que ele deve começar com o
+acStarting = para atributos string, indica que ele deve começar com o
 valor do atributo da Query
 
-Finishing = para atributos string, indica que ele deve terminar com o
+acFinishing = para atributos string, indica que ele deve terminar com o
 valor do atributo da Query
 
-Partial = para atributos string, indica que parte dele deve coincidir
+acPartial = para atributos string, indica que parte dele deve coincidir
 com o valor do atributo da Query
 
-Greater = O atributo do objeto deve ser maior do que o atributo da Query
+acGreaterThan = O atributo do objeto deve ser maior do que o atributo da
+Query
 
-GreaterEqual = deve ser maior ou igual
+acGreaterEqualThan = deve ser maior ou igual
 
-Lesser = deve ser menor
+acLesserThan = deve ser menor
 
-LesserEqual = deve ser menor ou igual
+acLesserEqualThan = deve ser menor ou igual

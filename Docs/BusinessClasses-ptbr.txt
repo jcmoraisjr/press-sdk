@@ -24,8 +24,8 @@ _NomeAtributo deve ser declarado antes da área private, para que ele gere RTTI.
 TTipoAtributo é um dos atributos do PressObjects, e pode ser:
 TPressString, TPressInteger, TPressFloat, TPressCurrency, TPressEnum,
 TPressBoolean, TPressDate, TPressTime, TPressDateTime, TPressVariant,
-TPressMemo, TPressPicture, TPressPart, TPressReference, TPressParts ou
-TPressReferences.
+TPressMemo, TPressPicture, TPressBinary, TPressPart, TPressReference,
+TPressParts ou TPressReferences.
 
 TipoNativo é o tipo reconhecido pelo compilador e que é relacionado com o
 atributo.
@@ -40,6 +40,7 @@ TPressTime = TTime
 TPressDateTime = TDateTime
 TPressMemo = string
 TPressPicture = (não implementado)
+TPressBinary = a critério, geralmente usado para streaming
 TPressPart e TPressReference = classe de negócio
 TPressParts e TPressReferences retornam, provisoriamente, os próprios
 atributos.
