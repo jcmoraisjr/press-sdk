@@ -240,7 +240,9 @@ type
     function ReadInteger: Integer;
     procedure ReadMatch(const AToken: string);
     procedure ReadMatchEof;
+    procedure ReadMatchText(const AToken: string);
     function ReadNextToken: string;
+    function ReadPath: string;
     function ReadToken: string;
     procedure UnreadChar;
     procedure UnreadToken;
@@ -650,6 +652,15 @@ begin
     ErrorExpected(SPressEofString, ReadNextToken);
 end;
 
+procedure TPressTextReader.ReadMatchText(const AToken: string);
+var
+  Token: string;
+begin
+  Token := ReadToken;
+  if not SameText(Token, AToken) then
+    ErrorExpected(AToken, Token);
+end;
+
 function TPressTextReader.ReadNextToken: string;
 begin
   Result := ReadToken;
@@ -673,6 +684,12 @@ begin
     until not IsNumericChar(Ch, False);
   end;
   UnreadChar;
+end;
+
+function TPressTextReader.ReadPath: string;
+begin
+  { TODO : Implement }
+  Result := ReadToken;
 end;
 
 function TPressTextReader.ReadString: string;

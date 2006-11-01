@@ -107,6 +107,18 @@ type
 
   TPressObject = class;
   TPressObjectClass = class of TPressObject;
+
+  TPressCalcMetadata = class(TObject)
+  private
+    FListenedAttributes: TStrings;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure AddListenedAttribute(const AAttributePath: string);
+    procedure BindCalcNotification(AInstance: TPressObject; ANotifier: TPressNotifier);
+    procedure ReleaseCalcNotification(AInstance: TPressObject; ANotifier: TPressNotifier);
+  end;
+
   PPressAttribute = ^TPressAttribute;
   TPressAttribute = class;
   TPressAttributeClass = class of TPressAttribute;
@@ -118,6 +130,7 @@ type
   private
     FAttributeClass: TPressAttributeClass;
     FAttributeName: string;
+    FCalcMetadata: TPressCalcMetadata;
     FDefaultValue: string;
     FEditMask: string;
     FEnumMetadata: TPressEnumMetadata;
@@ -131,21 +144,24 @@ type
     procedure SetAttributeName(const Value: string);
     procedure SetName(const Value: string);
     procedure SetObjectClassName(const Value: string);
+    procedure SetCalcMetadata(const Value: TPressCalcMetadata);
+    procedure SetEnumMetadata(const Value: TPressEnumMetadata);
   public
     constructor Create(AOwner: TPressObjectMetadata); virtual;
     destructor Destroy; override;
     function CreateAttribute(AOwner: TPressObject): TPressAttribute;
     property AttributeClass: TPressAttributeClass read FAttributeClass;
+    property AttributeName: string read FAttributeName write SetAttributeName;
+    property CalcMetadata: TPressCalcMetadata read FCalcMetadata write SetCalcMetadata;
+    property EnumMetadata: TPressEnumMetadata read FEnumMetadata write SetEnumMetadata;
+    property Name: string read FName write SetName;
     property ObjectClass: TPressObjectClass read FObjectClass;
+    property ObjectClassName: string read FObjectClassName write SetObjectClassName;
     property Owner: TPressObjectMetadata read FOwner;
   published
-    property AttributeName: string read FAttributeName write SetAttributeName;
     property DefaultValue: string read FDefaultValue write FDefaultValue;
     property EditMask: string read FEditMask write FEditMask;
-    property EnumMetadata: TPressEnumMetadata read FEnumMetadata write FEnumMetadata;
     property IsPersistent: Boolean read FIsPersistent write FIsPersistent default True;
-    property Name: string read FName write SetName;
-    property ObjectClassName: string read FObjectClassName write SetObjectClassName;
     property PersistentName: string read FPersistentName write FPersistentName;
     property Size: Integer read FSize write FSize;
   end;
@@ -532,6 +548,7 @@ type
     procedure Finalize; virtual;
     function GetOwner: TPersistent; override;
     procedure Initialize; virtual;
+    procedure InternalCalcAttribute(AAttribute: TPressAttribute); virtual;
     procedure InternalDispose; virtual;
     function InternalIsValid: Boolean; virtual;
     class function InternalMetadataStr: string; virtual;
@@ -756,15 +773,21 @@ type
 
   TPressAttribute = class(TPressSubject)
   private
+    FCalcUpdated: Boolean;
+    FIsCalculating: Boolean;
     FIsChanged: Boolean;
     FIsNull: Boolean;
     FMetadata: TPressAttributeMetadata;
+    FNotifier: TPressNotifier;
     FOwner: TPressObject;
     function CreateMemento: TPressAttributeMemento;
     function GetChangesDisabled: Boolean;
     function GetDefaultValue: string;
     function GetEditMask: string;
+    function GetIsCalcAttribute: Boolean;
+    function GetIsNull: Boolean;
     function GetName: string;
+    function GetNotifier: TPressNotifier;
     function GetPersistentName: string;
     procedure NotifyChange;
     procedure NotifyInvalidate;
@@ -774,10 +797,12 @@ type
     function AccessError(const AAttributeName: string): EPressError;
     { TODO : Use exception messages from the PressDialog class }
     function ConversionError(E: EConvertError): EPressConversionError;
-    procedure Changing;
     function InvalidClassError(const AClassName: string): EPressError;
     function InvalidValueError(AValue: Variant; E: EVariantError): EPressError;
     { TODO : Review the need of As<Type> methods }
+    procedure BindCalcNotification(AInstance: TPressObject);
+    procedure Changing;
+    procedure Finit; override;
     function GetAsBoolean: Boolean; virtual;
     function GetAsCurrency: Currency; virtual;
     function GetAsDate: TDate; virtual;
@@ -791,6 +816,8 @@ type
     function GetIsEmpty: Boolean; virtual;
     procedure Initialize; virtual;
     function InternalCreateMemento: TPressAttributeMemento; virtual; abstract;
+    procedure Notify(AEvent: TPressEvent); virtual;
+    procedure ReleaseCalcNotification(AInstance: TPressObject);
     procedure SetAsBoolean(AValue: Boolean); virtual;
     procedure SetAsCurrency(AValue: Currency); virtual;
     procedure SetAsDate(AValue: TDate); virtual;
@@ -801,6 +828,8 @@ type
     procedure SetAsTime(AValue: TTime); virtual;
     procedure SetAsVariant(AValue: Variant); virtual;
     function ValidateChars(const AStr: string; const AChars: TChars): Boolean;
+    procedure VerifyCalcAttribute;
+    property Notifier: TPressNotifier read GetNotifier;
   public
     constructor Create(AOwner: TPressObject; AMetadata: TPressAttributeMetadata); virtual;
     class function AttributeBaseType: TPressAttributeBaseType; virtual; abstract;
@@ -826,9 +855,11 @@ type
     property DefaultValue: string read GetDefaultValue;
     property DisplayText: string read GetDisplayText;
     property EditMask: string read GetEditMask;
+    property IsCalcAttribute: Boolean read GetIsCalcAttribute;
+    property IsCalculating: Boolean read FIsCalculating;
     property IsChanged: Boolean read FIsChanged write SetIsChanged;
     property IsEmpty: Boolean read GetIsEmpty;
-    property IsNull: Boolean read FIsNull;
+    property IsNull: Boolean read GetIsNull;
     property Metadata: TPressAttributeMetadata read FMetadata;
     property Name: string read GetName;
     property Owner: TPressObject read FOwner;
@@ -1214,9 +1245,7 @@ type
 
   TPressStructure = class(TPressAttribute)
   private
-    FNotifier: TPressNotifier;
     function GetObjectClass: TPressObjectClass;
-    procedure Notify(AEvent: TPressEvent);
   protected
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); virtual;
     procedure AfterChangeItem(AItem: TPressObject); virtual;
@@ -1227,10 +1256,10 @@ type
     procedure BeforeRetrieveInstance(Sender: TPressProxy); virtual;
     procedure BindInstance(AInstance: TPressObject); virtual;
     procedure BindProxy(AProxy: TPressProxy);
-    procedure Finit; override;
     procedure InternalAssignItem(AProxy: TPressProxy); virtual; abstract;
     procedure InternalAssignObject(AObject: TPressObject); virtual; abstract;
     procedure InternalUnassignObject(AObject: TPressObject); virtual; abstract;
+    procedure Notify(AEvent: TPressEvent); override;
     procedure NotifyReferenceChange;
     procedure ReleaseInstance(AInstance: TPressObject); virtual;
     procedure ValidateObject(AObject: TPressObject);
@@ -1238,7 +1267,6 @@ type
     procedure ValidateObjectClass(const AClassName: string); overload;
     procedure ValidateProxy(AProxy: TPressProxy);
   public
-    constructor Create(AOwner: TPressObject; AMetadata: TPressAttributeMetadata); override;
     procedure AssignItem(AProxy: TPressProxy);
     procedure AssignObject(AObject: TPressObject);
     procedure UnassignObject(AObject: TPressObject);
@@ -1702,6 +1730,47 @@ begin
   Result := inherited CurrentItem as TPressEnumMetadata;
 end;
 
+{ TPressCalcMetadata }
+
+procedure TPressCalcMetadata.AddListenedAttribute(
+  const AAttributePath: string);
+begin
+  FListenedAttributes.Add(AAttributePath);
+end;
+
+procedure TPressCalcMetadata.BindCalcNotification(
+  AInstance: TPressObject; ANotifier: TPressNotifier);
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(FListenedAttributes.Count) do
+    { TODO : only one level }
+    ANotifier.AddNotificationItem(
+     AInstance.AttributeByPath(FListenedAttributes[I]), [
+     TPressAttributeChangedEvent]);
+end;
+
+constructor TPressCalcMetadata.Create;
+begin
+  FListenedAttributes := TStringList.Create;
+end;
+
+destructor TPressCalcMetadata.Destroy;
+begin
+  FListenedAttributes.Free;
+  inherited;
+end;
+
+procedure TPressCalcMetadata.ReleaseCalcNotification(
+  AInstance: TPressObject; ANotifier: TPressNotifier);
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(FListenedAttributes.Count) do
+    ANotifier.RemoveNotificationItem(
+     AInstance.AttributeByPath(FListenedAttributes[I]));
+end;
+
 { TPressAttributeMetadata }
 
 constructor TPressAttributeMetadata.Create(AOwner: TPressObjectMetadata);
@@ -1726,6 +1795,7 @@ end;
 
 destructor TPressAttributeMetadata.Destroy;
 begin
+  FCalcMetadata.Free;
   if Assigned(FOwner) then
     FOwner.AttributeMetadatas.Extract(Self);
   inherited;
@@ -1740,6 +1810,20 @@ begin
     raise EPressError.CreateFmt(SUnsupportedAttributeType, [Value]);
   FAttributeClass := VAttributeClass;
   FAttributeName := Value;
+end;
+
+procedure TPressAttributeMetadata.SetCalcMetadata(
+  const Value: TPressCalcMetadata);
+begin
+  FCalcMetadata.Free;
+  FCalcMetadata := Value;
+end;
+
+procedure TPressAttributeMetadata.SetEnumMetadata(
+  const Value: TPressEnumMetadata);
+begin
+  FEnumMetadata.Free;
+  FEnumMetadata := Value;
 end;
 
 procedure TPressAttributeMetadata.SetName(const Value: string);
@@ -2678,6 +2762,7 @@ begin
     end;
     VMetadataStr := VTargetClass.InternalMetadataStr;
     if VMetadataStr <> '' then
+    { TODO : Verify if VMetadataStr is the metadata of the VTargetClass }
     begin
       Result := PressRegisterMetadata(VMetadataStr);
       Exit;
@@ -2750,6 +2835,14 @@ begin
         raise EPressError.CreateFmt(SAttributeNotFound,
          [VMetadata.Owner.ObjectClass.ClassName, VMetadata.Name]);
     end;
+  finally
+    Free;
+  end;
+  with CreateAttributeIterator do
+  try
+    BeforeFirstItem;
+    while NextItem do
+      CurrentItem.BindCalcNotification(Self);  // friend class
   finally
     Free;
   end;
@@ -2940,6 +3033,10 @@ begin
 end;
 
 procedure TPressObject.Initialize;
+begin
+end;
+
+procedure TPressObject.InternalCalcAttribute(AAttribute: TPressAttribute);
 begin
 end;
 
@@ -3592,6 +3689,12 @@ begin
    SAttributeAccessError, [ClassName, Name, AAttributeName]);
 end;
 
+procedure TPressAttribute.BindCalcNotification(AInstance: TPressObject);
+begin
+  if IsCalcAttribute and Assigned(AInstance) then
+    Metadata.CalcMetadata.BindCalcNotification(AInstance, Notifier);
+end;
+
 procedure TPressAttribute.Changed;
 begin
   FIsNull := False;
@@ -3600,7 +3703,7 @@ end;
 
 procedure TPressAttribute.Changing;
 begin
-  if Assigned(FOwner) then
+  if not IsCalculating and Assigned(FOwner) then
     FOwner.Changing(Self);
 end;
 
@@ -3666,6 +3769,12 @@ procedure TPressAttribute.EnableChanges;
 begin
   if Assigned(FOwner) then
     FOwner.EnableChanges;
+end;
+
+procedure TPressAttribute.Finit;
+begin
+  FNotifier.Free;
+  inherited;
 end;
 
 function TPressAttribute.GetAsBoolean: Boolean;
@@ -3745,9 +3854,20 @@ begin
     Result := '';
 end;
 
+function TPressAttribute.GetIsCalcAttribute: Boolean;
+begin
+  Result := Assigned(Metadata) and Assigned(Metadata.CalcMetadata)
+end;
+
 function TPressAttribute.GetIsEmpty: Boolean;
 begin
   Result := IsNull;
+end;
+
+function TPressAttribute.GetIsNull: Boolean;
+begin
+  VerifyCalcAttribute;
+  Result := FIsNull;
 end;
 
 function TPressAttribute.GetName: string;
@@ -3756,6 +3876,13 @@ begin
     Result := Metadata.Name
   else
     Result := '';
+end;
+
+function TPressAttribute.GetNotifier: TPressNotifier;
+begin
+  if not Assigned(FNotifier) then
+    FNotifier := TPressNotifier.Create(Notify);
+  Result := FNotifier;
 end;
 
 function TPressAttribute.GetPersistentName: string;
@@ -3787,6 +3914,15 @@ begin
    SInvalidAttributeValue, [VarToStr(AValue), ClassName, Name]);
 end;
 
+procedure TPressAttribute.Notify(AEvent: TPressEvent);
+begin
+  if IsCalcAttribute and (AEvent.ClassType = TPressAttributeChangedEvent) then
+  begin
+    FCalcUpdated := False;
+    NotifyInvalidate;
+  end;
+end;
+
 procedure TPressAttribute.NotifyChange;
 begin
   {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Attribute %s changed', [Signature]));{$ENDIF}
@@ -3808,6 +3944,12 @@ class procedure TPressAttribute.RegisterAttribute;
 begin
   { TODO : Check duplicated attribute name }
   PressRegisteredAttributes.Add(Self);
+end;
+
+procedure TPressAttribute.ReleaseCalcNotification(AInstance: TPressObject);
+begin
+  if IsCalcAttribute and Assigned(AInstance) then
+    Metadata.CalcMetadata.ReleaseCalcNotification(AInstance, Notifier);
 end;
 
 procedure TPressAttribute.Reset;
@@ -3886,6 +4028,22 @@ begin
     if not (AStr[I] in AChars) then
       Exit;
   Result := True;
+end;
+
+procedure TPressAttribute.VerifyCalcAttribute;
+begin
+  if IsCalculating then
+    Exit;
+  if not FCalcUpdated and IsCalcAttribute and Assigned(Owner) then
+  begin
+    FIsCalculating := True;
+    try
+      Owner.InternalCalcAttribute(Self);  // friend class
+      FCalcUpdated := True;
+    finally
+      FIsCalculating := False;
+    end;
+  end;
 end;
 
 { TPressAttributeList }
@@ -4070,7 +4228,8 @@ end;
 
 function TPressString.GetValue: string;
 begin
-  Result:= FValue;
+  VerifyCalcAttribute;
+  Result := FValue;
 end;
 
 procedure TPressString.Reset;
@@ -4256,6 +4415,7 @@ end;
 
 function TPressInteger.GetValue: Integer;
 begin
+  VerifyCalcAttribute;
   Result := FValue;
 end;
 
@@ -4362,6 +4522,7 @@ end;
 
 function TPressFloat.GetValue: Double;
 begin
+  VerifyCalcAttribute;
   Result := FValue;
 end;
 
@@ -4483,6 +4644,7 @@ end;
 
 function TPressCurrency.GetValue: Currency;
 begin
+  VerifyCalcAttribute;
   Result := FValue;
 end;
 
@@ -4614,6 +4776,7 @@ end;
 
 function TPressEnum.GetValue: Integer;
 begin
+  VerifyCalcAttribute;
   Result := FValue;
 end;
 
@@ -4752,6 +4915,7 @@ end;
 
 function TPressBoolean.GetValue: Boolean;
 begin
+  VerifyCalcAttribute;
   Result := FValue;
 end;
 
@@ -4898,6 +5062,7 @@ end;
 
 function TPressDate.GetValue: TDate;
 begin
+  VerifyCalcAttribute;
   Result := FValue;
 end;
 
@@ -5042,6 +5207,7 @@ end;
 
 function TPressTime.GetValue: TTime;
 begin
+  VerifyCalcAttribute;
   Result := FValue;
 end;
 
@@ -5183,6 +5349,7 @@ end;
 
 function TPressDateTime.GetValue: TDateTime;
 begin
+  VerifyCalcAttribute;
   Result := FValue;
 end;
 
@@ -5376,6 +5543,7 @@ end;
 
 function TPressVariant.GetValue: Variant;
 begin
+  VerifyCalcAttribute;
   Result := FValue;
 end;
 
@@ -5493,6 +5661,7 @@ end;
 
 function TPressBlob.GetValue: string;
 begin
+  VerifyCalcAttribute;
   if Assigned(FStream) and (FStream.Size > 0) then
   begin
     SetLength(Result, FStream.Size);
@@ -5519,6 +5688,7 @@ end;
 
 procedure TPressBlob.SaveToStream(AStream: TStream);
 begin
+  VerifyCalcAttribute;
   if Assigned(AStream) then
     Stream.SaveToStream(AStream);
 end;
@@ -5731,7 +5901,10 @@ end;
 procedure TPressStructure.BindInstance(AInstance: TPressObject);
 begin
   if Assigned(AInstance) then
-    FNotifier.AddNotificationItem(AInstance, [TPressObjectChangedEvent]);
+  begin
+    Notifier.AddNotificationItem(AInstance, [TPressObjectChangedEvent]);
+    { TODO : Bind owner's attributes calc notifications }
+  end;
 end;
 
 procedure TPressStructure.BindProxy(AProxy: TPressProxy);
@@ -5745,19 +5918,6 @@ begin
     BindInstance(AProxy.Instance);
 end;
 
-constructor TPressStructure.Create(
-  AOwner: TPressObject; AMetadata: TPressAttributeMetadata);
-begin
-  inherited Create(AOwner, AMetadata);
-  FNotifier := TPressNotifier.Create(Notify);
-end;
-
-procedure TPressStructure.Finit;
-begin
-  FNotifier.Free;
-  inherited;
-end;
-
 function TPressStructure.GetObjectClass: TPressObjectClass;
 begin
   if Assigned(Metadata) then
@@ -5768,6 +5928,7 @@ end;
 
 procedure TPressStructure.Notify(AEvent: TPressEvent);
 begin
+  inherited;
   if AEvent.Owner is TPressObject then
     AfterChangeItem(TPressObject(AEvent.Owner));
 end;
@@ -5782,7 +5943,10 @@ end;
 procedure TPressStructure.ReleaseInstance(AInstance: TPressObject);
 begin
   if Assigned(AInstance) then
-    FNotifier.RemoveNotificationItem(AInstance);
+  begin
+    { TODO : Release owner's attributes calc notifications }
+    Notifier.RemoveNotificationItem(AInstance);
+  end;
 end;
 
 procedure TPressStructure.UnassignObject(AObject: TPressObject);
@@ -5812,8 +5976,7 @@ begin
   ValidateObjectClass(PressObjectClassByName(AClassName));
 end;
 
-procedure TPressStructure.ValidateProxy(
-  AProxy: TPressProxy);
+procedure TPressStructure.ValidateProxy(AProxy: TPressProxy);
 begin
   if AProxy.HasInstance then
     ValidateObject(AProxy.Instance)
@@ -5961,7 +6124,7 @@ end;
 procedure TPressPart.BindInstance(AInstance: TPressObject);
 begin
   inherited;
-  AInstance.SetOwnerContext(Self);
+  AInstance.SetOwnerContext(Self);  // friend class
 end;
 
 function TPressPart.CreateProxy: TPressProxy;
@@ -5977,7 +6140,7 @@ end;
 procedure TPressPart.ReleaseInstance(AInstance: TPressObject);
 begin
   inherited;
-  AInstance.ClearOwnerContext;
+  AInstance.ClearOwnerContext;  // friend class
 end;
 
 { TPressReference }
@@ -6393,7 +6556,7 @@ end;
 procedure TPressParts.BindInstance(AInstance: TPressObject);
 begin
   inherited;
-  AInstance.SetOwnerContext(Self);
+  AInstance.SetOwnerContext(Self);  // friend class
 end;
 
 procedure TPressParts.InternalAssignItem(AProxy: TPressProxy);
@@ -6409,7 +6572,7 @@ end;
 procedure TPressParts.ReleaseInstance(AInstance: TPressObject);
 begin
   inherited;
-  AInstance.ClearOwnerContext;
+  AInstance.ClearOwnerContext;  // friend class
 end;
 
 { TPressReferences }

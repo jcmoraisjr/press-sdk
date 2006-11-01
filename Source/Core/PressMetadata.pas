@@ -72,15 +72,27 @@ type
   end;
 
   TPressMetaParserAttributeType = class;
+  TPressMetaParserCalculated = class;
 
   TPressMetaParserAttributes = class(TPressParserObject)
   private
     FAttributeType: TPressMetaParserAttributeType;
+    FCalcMetadata: TPressMetaParserCalculated;
     FNextAttribute: TPressMetaParserAttributes;
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalRead(Reader: TPressParserReader); override;
+  public
+    property AttributeType: TPressMetaParserAttributeType read FAttributeType;
   end;
+
+  TPressMetaParserCalculated = class(TPressParserObject)
+  private
+    FCalcMetadata: TPressCalcMetadata;
+  protected
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    procedure InternalRead(Reader: TPressParserReader); override;
+  end;  
 
   TPressMetaParserAttributeType = class(TPressParserObject)
   private
@@ -132,6 +144,7 @@ const
   CClassName = 'class name';
   CAttributeName = 'attribute name';
   CPropertyName = 'property name';
+  CCalcString = 'Calc';
 
 { TPressMetaParser }
 
@@ -254,6 +267,7 @@ begin
    TPressMetaParserStructure, TPressMetaParserAttributeType]) then
     Reader.ErrorExpected(CAttributeName, Reader.ReadToken);
   FAttributeType.Metadata.Name := Token;
+  Parse(Reader, @FCalcMetadata, [TPressMetaParserCalculated]);
   if TPressMetaParserProperties.Apply(Reader) then
     with TPressMetaParserProperties.Create(Self) do
     try
@@ -266,6 +280,44 @@ begin
     Parse(Reader, @FNextAttribute, [TPressMetaParserAttributes], Owner)
   else
     Reader.UnreadToken;
+end;
+
+{ TPressMetaParserCalculated }
+
+class function TPressMetaParserCalculated.InternalApply(
+  Reader: TPressParserReader): Boolean;
+begin
+  Result := SameText(Reader.ReadToken, CCalcString);
+end;
+
+procedure TPressMetaParserCalculated.InternalRead(Reader: TPressParserReader);
+var
+  Token: string;
+begin
+  inherited;
+  Reader.ReadMatchText(CCalcString);
+  FCalcMetadata := TPressCalcMetadata.Create;
+  try
+    if Reader.ReadToken = '(' then
+    begin
+      Token := Reader.ReadPath;
+      while Token <> ')' do
+      begin
+        FCalcMetadata.AddListenedAttribute(Token);
+        Token := Reader.ReadToken;
+        if Token = ',' then
+          Token := Reader.ReadPath
+        else if Token <> ')' then
+          Reader.ErrorExpected(')', Token);
+      end;
+    end else
+      Reader.UnreadToken;
+    (Owner as TPressMetaParserAttributes).
+     AttributeType.Metadata.CalcMetadata := FCalcMetadata;
+  except
+    FCalcMetadata.Free;
+    raise;
+  end;
 end;
 
 { TPressMetaParserAttributeType }
