@@ -454,8 +454,8 @@ end;
 
 destructor TPressMVPReferenceModel.Destroy;
 begin
-  PressUnregisterMetadata(FMetadata);
   FQuery.Free;
+  PressUnregisterMetadata(FMetadata);
   inherited;
 end;
 
