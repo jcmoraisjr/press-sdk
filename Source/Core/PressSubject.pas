@@ -142,10 +142,10 @@ type
     FPersistentName: string;
     FSize: Integer;
     procedure SetAttributeName(const Value: string);
+    procedure SetCalcMetadata(Value: TPressCalcMetadata);
+    procedure SetEnumMetadata(Value: TPressEnumMetadata);
     procedure SetName(const Value: string);
     procedure SetObjectClassName(const Value: string);
-    procedure SetCalcMetadata(const Value: TPressCalcMetadata);
-    procedure SetEnumMetadata(const Value: TPressEnumMetadata);
   public
     constructor Create(AOwner: TPressObjectMetadata); virtual;
     destructor Destroy; override;
@@ -1812,15 +1812,13 @@ begin
   FAttributeName := Value;
 end;
 
-procedure TPressAttributeMetadata.SetCalcMetadata(
-  const Value: TPressCalcMetadata);
+procedure TPressAttributeMetadata.SetCalcMetadata(Value: TPressCalcMetadata);
 begin
   FCalcMetadata.Free;
   FCalcMetadata := Value;
 end;
 
-procedure TPressAttributeMetadata.SetEnumMetadata(
-  const Value: TPressEnumMetadata);
+procedure TPressAttributeMetadata.SetEnumMetadata(Value: TPressEnumMetadata);
 begin
   FEnumMetadata.Free;
   FEnumMetadata := Value;

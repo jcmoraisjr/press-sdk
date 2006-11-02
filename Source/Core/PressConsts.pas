@@ -78,7 +78,7 @@ resourcestring
   SUnassignedMainPresenter = 'Presenter principal não está associado';
   SUnassignedModel = 'Model não está associado';
   SUnassignedPersistenceConnector = 'Conector de persistência não foi associado';
-  SUnassignedServiceType = 'Serviço %s não foi associado ou registrado';
+  SUnassignedServiceType = 'Nenhum serviço %s foi associado ou registrado';
   SUnassignedSubject = 'Subject não foi associado';
   SUnexpectedEof = 'Fim de arquivo inesperado';
   SUnexpectedMVPClassParam = 'Classe MVP %s inicializada com parâmetros inesperados';
