@@ -180,6 +180,7 @@ type
     function IndexOf(AObject: TPressAttributeMetadata): Integer;
     procedure Insert(Index: Integer; AObject: TPressAttributeMetadata);
     function Remove(AObject: TPressAttributeMetadata): Integer;
+    function RemoveMetadataName(const AName: string): Integer;
     property Items[AIndex: Integer]: TPressAttributeMetadata read GetItems write SetItems; default;
   end;
 
@@ -1846,6 +1847,18 @@ begin
   Result := inherited Remove(AObject);
 end;
 
+function TPressAttributeMetadataList.RemoveMetadataName(
+  const AName: string): Integer;
+begin
+  for Result := 0 to Pred(Count) do
+    if Items[Result].Name = AName then
+    begin
+      Delete(Result);
+      Exit;
+    end;
+  Result := -1;
+end;
+
 procedure TPressAttributeMetadataList.SetItems(
   AIndex: Integer; Value: TPressAttributeMetadata);
 begin
@@ -1880,6 +1893,8 @@ end;
 
 procedure TPressAttributeMapIterator.ReadMetadatas(
   AObjectMetadata: TPressObjectMetadata);
+var
+  VCurrentMetadata: TPressAttributeMetadata;
 begin
   if not Assigned(AObjectMetadata) then
     Exit;
@@ -1888,7 +1903,11 @@ begin
   try
     BeforeFirstItem;
     while NextItem do
-      AttributeMap.Add(CurrentItem);
+    begin
+      VCurrentMetadata := CurrentItem;
+      AttributeMap.RemoveMetadataName(VCurrentMetadata.Name);
+      AttributeMap.Add(VCurrentMetadata);
+    end;
   finally
     Free;
   end;
