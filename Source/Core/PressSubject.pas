@@ -2731,32 +2731,22 @@ end;
 
 class function TPressObject.ClassMetadata: TPressObjectMetadata;
 var
-  VTargetClass: TPressObjectClass;
   VMetadataStr: string;
   I: Integer;
 begin
-  VTargetClass := Self;
-  while Assigned(VTargetClass) do
+  for I := 0 to Pred(PressObjectMetadatas.Count) do
   begin
-    for I := 0 to Pred(PressObjectMetadatas.Count) do
-    begin
-      Result := TPressObjectMetadata(PressObjectMetadatas[I]);
-      if Result.ObjectClass = VTargetClass then
-        Exit;
-    end;
-    VMetadataStr := VTargetClass.InternalMetadataStr;
-    if VMetadataStr <> '' then
-    { TODO : Verify if VMetadataStr is the metadata of the VTargetClass }
-    begin
-      Result := TPressMetaParser.ParseMetadata(VMetadataStr);
+    Result := TPressObjectMetadata(PressObjectMetadatas[I]);
+    if Result.ObjectClass = Self then
       Exit;
-    end;
-    if VTargetClass <> TPressObject then
-      VTargetClass := TPressObjectClass(VTargetClass.ClassParent)
-    else
-      VTargetClass := nil;
   end;
-  raise EPressError.CreateFmt(SMetadataNotFound, [ClassName]);
+  { TODO : Verify InternalMetadataStr implementation }
+  // if InternalMetadataStr is implemented then
+  VMetadataStr := InternalMetadataStr;
+  // else VMetadataStr := ClassName;
+  if VMetadataStr = '' then
+    VMetadataStr := ClassName;
+  Result := TPressMetaParser.ParseMetadata(VMetadataStr);
 end;
 
 function TPressObject.ClassType: TPressObjectClass;
