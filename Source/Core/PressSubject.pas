@@ -3083,7 +3083,7 @@ var
   VInstance: TPressObject;
 begin
   inherited Create;
-  VInstance := PressDefaultPersistence.Retrieve(ClassName, AId);
+  VInstance := PressDefaultPersistence.Retrieve(PersistentName, AId);
   if Assigned(VInstance) then
   begin
     inherited FreeInstance;
