@@ -214,9 +214,10 @@ type
 
   TPressTextReader = class(TObject)
   private
+    FCurrentPos: TPressTextPos;
+    FOwnsStream: Boolean;
     FSize: Integer;
     FStream: TStream;
-    FCurrentPos: TPressTextPos;
     FTokenPos: TPressTextPos;
     function GetEof: Boolean;
     procedure SetCurrentPos(const Value: TPressTextPos);
@@ -232,7 +233,9 @@ type
     procedure SkipSpaces;
     property Position: TPressTextPos read FCurrentPos write SetCurrentPos;
   public
-    constructor Create(AStream: TStream);
+    constructor Create(AStream: TStream; AOwnsStream: Boolean = False); overload;
+    constructor Create(const AString: string); overload;
+    destructor Destroy; override;
     procedure ErrorExpected(const AExpectedToken, AToken: string);
     procedure ErrorFmt(const AMsg: string; const AParams: array of const);
     function ReadBoolean: Boolean;
@@ -514,11 +517,29 @@ end;
 
 { TPressTextReader }
 
-constructor TPressTextReader.Create(AStream: TStream);
+constructor TPressTextReader.Create(AStream: TStream; AOwnsStream: Boolean);
 begin
   inherited Create;
   FStream := AStream;
+  FOwnsStream := AOwnsStream;
   Reset;
+end;
+
+constructor TPressTextReader.Create(const AString: string);
+var
+  VStream: TMemoryStream;
+begin
+  VStream := TMemoryStream.Create;
+  if AString <> '' then
+    VStream.Write(AString[1], Length(AString));
+  Create(VStream, True);
+end;
+
+destructor TPressTextReader.Destroy;
+begin
+  if FOwnsStream then
+    FStream.Free;
+  inherited;
 end;
 
 procedure TPressTextReader.ErrorExpected(const AExpectedToken, AToken: string);
