@@ -1416,7 +1416,6 @@ function PressFindObject(const AClass, AId: string): TPressObject;
 function PressFindObjectClass(const AClassName: string): TPressObjectClass;
 function PressObjectClassByName(const AClassName: string): TPressObjectClass;
 function PressObjectClassByPersistentName(const APersistentName: string): TPressObjectClass;
-function PressRegisterMetadata(const AMetadataStr: string): TPressObjectMetadata;
 procedure PressUnregisterMetadata(AMetadata: TPressObjectMetadata);
 function PressRegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string): TPressEnumMetadata;
 function PressEnumMetadataByName(const AEnumName: string): TPressEnumMetadata;
@@ -1564,38 +1563,6 @@ begin
           Exit;
         end;
   raise EPressError.CreateFmt(SPersistentClassNotFound, [APersistentName]);
-end;
-
-function PressRegisterMetadata(
-  const AMetadataStr: string): TPressObjectMetadata;
-var
-  VParser: TPressMetaParser;
-  VReader: TPressMetaParserReader;
-  VStream: TMemoryStream;
-begin
-  { TODO : Improve (remove TStream instance) }
-  Result := nil;
-  VStream := TMemoryStream.Create;
-  if AMetadataStr <> '' then
-    VStream.Write(AMetadataStr[1], Length(AMetadataStr));
-  VReader := TPressMetaParserReader.Create(VStream);
-  VParser := TPressMetaParser.Create(nil);
-  try
-    try
-      VParser.Read(VReader);
-      Result := VParser.Metadata;
-    except
-      on E: EPressParseError do
-        raise EPressError.CreateFmt(SMetadataParseError,
-         [E.Line, E.Column, E.Message, AMetadataStr]);
-      else
-        raise;
-    end;
-  finally
-    VParser.Free;
-    VReader.Free;
-    VStream.Free;
-  end;
 end;
 
 procedure PressUnregisterMetadata(AMetadata: TPressObjectMetadata);
@@ -2762,7 +2729,7 @@ begin
     if VMetadataStr <> '' then
     { TODO : Verify if VMetadataStr is the metadata of the VTargetClass }
     begin
-      Result := PressRegisterMetadata(VMetadataStr);
+      Result := TPressMetaParser.ParseMetadata(VMetadataStr);
       Exit;
     end;
     if VTargetClass <> TPressObject then

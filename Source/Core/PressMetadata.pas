@@ -47,6 +47,7 @@ type
     procedure InternalRead(Reader: TPressParserReader); override;
   public
     property Metadata: TPressObjectMetadata read GetMetadata;
+    class function ParseMetadata(const AMetadataStr: string): TPressObjectMetadata;
   end;
 
   TPressMetaParserObject = class(TPressParserObject)
@@ -138,7 +139,8 @@ implementation
 uses
   SysUtils,
   TypInfo,
-  PressConsts;
+  PressConsts,
+  PressClasses;
 
 const
   CClassName = 'class name';
@@ -171,6 +173,32 @@ begin
   if not Reader.Eof then
     Reader.ReadMatch(';');
   Reader.ReadMatchEof;
+end;
+
+class function TPressMetaParser.ParseMetadata(
+  const AMetadataStr: string): TPressObjectMetadata;
+var
+  VParser: TPressMetaParser;
+  VReader: TPressMetaParserReader;
+begin
+  VReader := TPressMetaParserReader.Create(AMetadataStr);
+  VParser := TPressMetaParser.Create(nil);
+  Result := nil;
+  try
+    try
+      VParser.Read(VReader);
+      Result := VParser.Metadata;
+    except
+      on E: EPressParseError do
+        raise EPressError.CreateFmt(SMetadataParseError,
+         [E.Line, E.Column, E.Message, AMetadataStr]);
+      else
+        raise;
+    end;
+  finally
+    VParser.Free;
+    VReader.Free;
+  end;
 end;
 
 { TPressMetaParserObject }

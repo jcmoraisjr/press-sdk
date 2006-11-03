@@ -307,6 +307,7 @@ implementation
 uses
   SysUtils,
   PressConsts,
+  PressMetadata,
   PressMVPCommand;
 
 { TPressMVPValueModel }
@@ -464,7 +465,7 @@ const
   CQueryMetadata = '%s(%s) Any Order=Name (Name: String)';
 begin
   if not Assigned(FMetadata) then
-    FMetadata := PressRegisterMetadata(Format(
+    FMetadata := TPressMetaParser.ParseMetadata(Format(
      CQueryMetadata, [TPressMVPReferenceQuery.ClassName,
      Subject.ObjectClass.ClassMetadata.PersistentName])) as TPressQueryMetadata;
   Result := FMetadata;
