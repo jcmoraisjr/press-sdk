@@ -1163,25 +1163,25 @@ end;
 procedure TPressMVPGridView.InternalAlignColumns;
 var
   VControl: TDrawGrid;
-  VColCount, VClientWidth, VTotalWidth, VDiff, VDelta: Integer;
+  VColCount, VClientWidth, VTotalWidth, VWidth, VDiff, VDelta: Integer;
   I: Integer;
 begin
   VControl := Control;
   VColCount := VControl.ColCount;
   if VColCount < 2 then
     Exit;
-  VClientWidth := VControl.ClientWidth;
+  VClientWidth := VControl.ClientWidth - VControl.ColWidths[0] - VColCount;
   VTotalWidth := 0;
-  for I := 0 to Pred(VColCount) do
+  for I := 1 to Pred(VColCount) do
     VTotalWidth := VTotalWidth + VControl.ColWidths[I];
-  VDiff := VTotalWidth + VColCount - VClientWidth;
-  I := 1;
-  while VDiff > 0 do
+  VDiff := VTotalWidth - VClientWidth;
+  for I := 1 to Pred(VColCount) do
   begin
-    VDelta := VDiff div (VColCount - I);
-    VControl.ColWidths[I] := VControl.ColWidths[I] - VDelta;
+    VWidth := VControl.ColWidths[I];
+    VDelta := Round(VDiff * VWidth / VTotalWidth);
+    VControl.ColWidths[I] := VWidth - VDelta;
+    VTotalWidth := VTotalWidth - VWidth;
     VDiff := VDiff - VDelta;
-    Inc(I);
   end;
 end;
 
