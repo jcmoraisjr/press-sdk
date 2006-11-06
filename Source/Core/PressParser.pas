@@ -46,7 +46,7 @@ type
     function FindRule(Reader: TPressParserReader; AClasses: array of TPressParserClass): TPressParserClass;
     class function InternalApply(Reader: TPressParserReader): Boolean; virtual;
     procedure InternalRead(Reader: TPressParserReader); virtual;
-    function Parse(Reader: TPressParserReader; AParserObject: Pointer; AParserClasses: array of TPressParserClass; AOwner: TPressParserObject = nil): Boolean;
+    function Parse(Reader: TPressParserReader; AParserClasses: array of TPressParserClass; AOwner: TPressParserObject = nil): TPressParserObject;
     property ParserObjects: TPressParserList read GetParserObjects;
   public
     constructor Create(AOwner: TPressParserObject);
@@ -120,7 +120,7 @@ begin
   for I := Low(AClasses) to High(AClasses) do
   begin
     Result := AClasses[I];
-    if Result.Apply(Reader) then
+    if Assigned(Result) and Result.Apply(Reader) then
       Exit;
   end;
   Result := nil;
@@ -144,21 +144,21 @@ begin
 end;
 
 function TPressParserObject.Parse(
-  Reader: TPressParserReader; AParserObject: Pointer;
+  Reader: TPressParserReader;
   AParserClasses: array of TPressParserClass;
-  AOwner: TPressParserObject): Boolean;
+  AOwner: TPressParserObject): TPressParserObject;
 var
   VRule: TPressParserClass;
 begin
   VRule := FindRule(Reader, AParserClasses);
-  Result := Assigned(VRule);
-  if Result then
+  if Assigned(VRule) then
   begin
     if not Assigned(AOwner) then
       AOwner := Self;
-    TPressParserObject(AParserObject^) := VRule.Create(AOwner);
-    TPressParserObject(AParserObject^).Read(Reader);
-  end;
+    Result := VRule.Create(AOwner);
+    Result.Read(Reader);
+  end else
+    Result := nil;
 end;
 
 procedure TPressParserObject.Read(Reader: TPressParserReader);

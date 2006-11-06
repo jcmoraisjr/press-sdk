@@ -161,12 +161,14 @@ end;
 procedure TPressMetaParser.InternalRead(Reader: TPressParserReader);
 begin
   inherited;
-  if not Parse(Reader, @FObject,
-   [TPressMetaParserQuery, TPressMetaParserObject]) then
+  FObject := Parse(Reader, [
+   TPressMetaParserQuery, TPressMetaParserObject]) as TPressMetaParserObject;
+  if not Assigned(FObject) then
     Reader.ErrorExpected(CClassName, Reader.ReadToken);
   if Reader.ReadToken = '(' then
   begin
-    Parse(Reader, @FAttributes, [TPressMetaParserAttributes]);
+    FAttributes := Parse(Reader, [
+     TPressMetaParserAttributes]) as TPressMetaParserAttributes;
     Reader.ReadMatch(')');
   end else
     Reader.UnreadToken;
@@ -290,12 +292,14 @@ begin
   inherited;
   Token := Reader.ReadIdentifier;
   Reader.ReadMatch(':');
-  if not Parse(Reader, @FAttributeType, [
-   TPressMetaParserSizeable, TPressMetaParserEnum,
-   TPressMetaParserStructure, TPressMetaParserAttributeType]) then
+  FAttributeType := Parse(Reader, [TPressMetaParserSizeable,
+   TPressMetaParserEnum, TPressMetaParserStructure,
+   TPressMetaParserAttributeType]) as TPressMetaParserAttributeType;
+  if not Assigned(FAttributeType) then
     Reader.ErrorExpected(CAttributeName, Reader.ReadToken);
   FAttributeType.Metadata.Name := Token;
-  Parse(Reader, @FCalcMetadata, [TPressMetaParserCalculated]);
+  FCalcMetadata := Parse(Reader, [
+   TPressMetaParserCalculated]) as TPressMetaParserCalculated;
   if TPressMetaParserProperties.Apply(Reader) then
     with TPressMetaParserProperties.Create(Self) do
     try
@@ -305,7 +309,8 @@ begin
       Free;
     end;
   if Reader.ReadToken = ';' then
-    Parse(Reader, @FNextAttribute, [TPressMetaParserAttributes], Owner)
+    FNextAttribute := Parse(Reader, [TPressMetaParserAttributes],
+     Owner) as TPressMetaParserAttributes
   else
     Reader.UnreadToken;
 end;
