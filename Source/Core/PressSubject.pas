@@ -576,7 +576,7 @@ type
     procedure EnableChanges;
     procedure EnableUpdates;
     function FindAttribute(const AAttributeName: string): TPressAttribute;
-    function FindPathAttribute(const APath: string): TPressAttribute;
+    function FindPathAttribute(const APath: string; ASilent: Boolean = True): TPressAttribute;
     class function ObjectMetadataClass: TPressObjectMetadataClass; virtual;
     class procedure RegisterClass;
     procedure Save;
@@ -2698,9 +2698,9 @@ end;
 
 function TPressObject.AttributeByPath(const APath: string): TPressAttribute;
 begin
-  Result := FindPathAttribute(APath);
+  Result := FindPathAttribute(APath, False);
   if not Assigned(Result) then
-    raise EPressError.CreateFmt(SAttributeNotFound, [ClassName, APath]);
+    raise EPressError.CreateFmt(SPathReferencesNil, [ClassName, APath]);
 end;
 
 function TPressObject.AttributeCount: Integer;
@@ -2881,28 +2881,40 @@ begin
     Result := nil;
 end;
 
-function TPressObject.FindPathAttribute(const APath: string): TPressAttribute;
+function TPressObject.FindPathAttribute(
+  const APath: string; ASilent: Boolean): TPressAttribute;
+
+  function AttributeSearch(const AAttributeName: string): TPressAttribute;
+  begin
+    if ASilent then
+      Result := FindAttribute(AAttributeName)
+    else
+      Result := AttributeByName(AAttributeName);
+  end;
+
 var
   P: Integer;
+  VItemPart: string;
 begin
-  if APath = '' then
-  begin
-    Result := nil;
-    Exit;
-  end;
   P := Pos(SPressAttributeSeparator, APath);
-  { TODO : Provide different results if an attribute isn't found or
-    all attributes are found and some reference(s) is nil }
   if P = 0 then
-    Result := FindAttribute(APath)
+    Result := AttributeSearch(APath)
   else
   begin
-    Result := FindAttribute(Copy(APath, 1, P-1));
-    if (Result is TPressItem) and Assigned(TPressItem(Result).Value) then
-      Result := TPressItem(Result).Value.
-       FindPathAttribute(Copy(APath, P+1, Length(APath)))
+    VItemPart := Copy(APath, 1, P-1);
+    Result := AttributeSearch(VItemPart);
+    if Result is TPressItem then
+      if Assigned(TPressItem(Result).Value) then
+        Result := TPressItem(Result).Value.
+         FindPathAttribute(Copy(APath, P+1, Length(APath)-P), ASilent)
+      else
+        Result := nil
     else
-      Result := nil;
+      if ASilent then
+        Result := nil
+      else
+        raise EPressError.CreateFmt(SAttributeIsNotItem,
+         [ClassName, VItemPart]);
   end;
 end;
 

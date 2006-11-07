@@ -48,6 +48,7 @@ resourcestring
   SAmbiguousConcreteClass = 'Classe concreta ambígua (%s e %s) para o objeto %s';
   SAttributeAccessError = 'Não é possível acessar o atributo %s(''%s'') como %s';
   SAttributeConversionError = 'Erro ao converter valor para o atributo %s(''%s''):' + #10 + '%s';
+  SAttributeIsNotItem = 'O atributo %s(''%s'') não é Part ou Reference';
   SAttributeNotFound = 'O atributo %s(''%s'') não foi encontrado';
   SClassNotFound = 'Classe %s não encontrada';
   SComponentIsNotAControl = 'O componente %s(''%s'') não é um controle';
@@ -67,6 +68,7 @@ resourcestring
   SNoLoggedUser = 'Não existe usuário logado';
   SNoReference = 'Não existe referência';
   SNoRegisteredReport = 'Nenhum relatório foi registrado';
+  SPathReferencesNil = 'O caminho %s(''%s'') possui atributo(s) Reference apontando para nil';
   SPersistentClassNotFound = 'Classe persistente %s não encontrada';
   SSingletonClassNotFound = 'Classe Singleton %s não encontrada';
   SStringOverflow = 'String overflow: %s(%s)';
