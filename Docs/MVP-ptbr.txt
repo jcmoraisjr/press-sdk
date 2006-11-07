@@ -77,6 +77,17 @@ Application.Run por:
 
 <MainPresenterClass>.Run.
 
+Note que o registro do Main Presenter pode ser opcional.
+
+Para remover o registro é necessário que exista ao menos um Auto Create
+Form -- o primeiro deles será considerado o formulário principal do
+projeto; e que o Main Model (Model do Main Presenter) não precise criar
+um objeto de negócio.
+
+Caso o Main Model precise criar um objeto de negócio, ou o Main View
+precise criar o Form principal (ou seja, a aplicação não possui um
+MainForm), o Main Presenter precisa ser registrado.
+
 == Criando um Model
 ===================
 
