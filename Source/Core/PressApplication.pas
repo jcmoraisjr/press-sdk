@@ -472,7 +472,9 @@ end;
 
 function TPressRegistry.HasDefaultService: Boolean;
 begin
-  Result := Assigned(FDefaultService);
+  Result := Assigned(FDefaultService) or Assigned(FOwnedService) or
+   (Services.Count > 0) or Assigned(FDefaultServiceClass) or
+   (ServiceClasses.Count > 0);
 end;
 
 procedure TPressRegistry.InsertService(AService: TPressService);
