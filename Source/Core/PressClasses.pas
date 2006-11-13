@@ -59,8 +59,6 @@ type
 
   TChars = set of Char;
 
-  TPressStringArray = array of string;
-
   TPressReader = class(TReader)
   end;
 
