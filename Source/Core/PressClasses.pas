@@ -59,6 +59,8 @@ type
 
   TChars = set of Char;
 
+  TPressStringArray = array of string;
+
   TPressReader = class(TReader)
   end;
 
@@ -91,6 +93,7 @@ type
   public
     constructor Create(AOwner: TPressCustomList);
     function BeforeFirstItem: Boolean;
+    function Count: Integer;
     procedure First;
     function FirstItem: Boolean;
     function IsDone: Boolean;
@@ -460,6 +463,11 @@ function TPressCustomIterator.BeforeFirstItem: Boolean;
 begin
   FPosition := -1;
   Result := not IsDone;
+end;
+
+function TPressCustomIterator.Count: Integer;
+begin
+  Result := FOwner.Count;
 end;
 
 constructor TPressCustomIterator.Create(AOwner: TPressCustomList);
