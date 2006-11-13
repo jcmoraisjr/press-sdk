@@ -36,11 +36,13 @@ type
     function InternalCancelChanges: Boolean; virtual;
     function InternalConfirmDlg(const AMsg: string): Boolean; virtual;
     function InternalConfirmRemove(ACount: Integer): Boolean; virtual;
+    procedure InternalDefaultDlg(const AMsg: string); virtual;
     function InternalSaveChanges: Boolean; virtual;
   public
     function CancelChanges: Boolean;
     function ConfirmDlg(const AMsg: string): Boolean;
     function ConfirmRemove(ACount: Integer): Boolean;
+    procedure DefaultDlg(const AMsg: string);
     function SaveChanges: Boolean;
   end;
 
@@ -108,9 +110,19 @@ begin
      SPressConfirmRemoveItemsDialog, [ACount]));
 end;
 
+procedure TPressDialogs.InternalDefaultDlg(const AMsg: string);
+begin
+  MessageDlg(AMsg, mtInformation, [mbOk], 0);
+end;
+
 function TPressDialogs.InternalSaveChanges: Boolean;
 begin
   Result := ConfirmDlg(SPressSaveChangesDialog);
+end;
+
+procedure TPressDialogs.DefaultDlg(const AMsg: string);
+begin
+  InternalDefaultDlg(AMsg);
 end;
 
 function TPressDialogs.SaveChanges: Boolean;
