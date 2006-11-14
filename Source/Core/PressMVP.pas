@@ -1233,9 +1233,9 @@ end;
 
 function TPressMVPModel.GetSubject: TPressSubject;
 begin
-  Result := FSubject;
-  if not Assigned(Result) then
+  if not Assigned(FSubject) then
     raise EPressMVPError.Create(SUnassignedSubject);
+  Result := FSubject;
 end;
 
 function TPressMVPModel.HasCommands: Boolean;

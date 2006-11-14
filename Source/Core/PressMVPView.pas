@@ -171,6 +171,7 @@ type
     FOwnsControl: Boolean;
     FViewClickEvent: TNotifyEvent;
     FViewDblClickEvent: TNotifyEvent;
+    function GetModel: TPressMVPModel;
   protected
     procedure ViewClickEvent(Sender: TObject); virtual;
     procedure ViewDblClickEvent(Sender: TObject); virtual;
@@ -180,7 +181,7 @@ type
     procedure InternalUpdate; virtual;
     procedure ModelChanged(AChangeType: TPressMVPChangeType); virtual;
     procedure SetModel(Value: TPressMVPModel);
-    property Model: TPressMVPModel read FModel;
+    property Model: TPressMVPModel read GetModel;
   public
     constructor Create(AControl: TControl; AOwnsControl: Boolean = False);
     destructor Destroy; override;
@@ -624,6 +625,13 @@ begin
   if FOwnsControl then
     FControl.Free;
   inherited;
+end;
+
+function TPressMVPView.GetModel: TPressMVPModel;
+begin
+  if not Assigned(FModel) then
+    raise EPressMVPError.Create(SUnassignedModel);
+  Result := FModel;
 end;
 
 procedure TPressMVPView.InitView;
