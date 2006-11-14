@@ -3932,7 +3932,8 @@ end;
 
 procedure TPressAttribute.Notify(AEvent: TPressEvent);
 begin
-  if IsCalcAttribute and (AEvent.ClassType = TPressAttributeChangedEvent) then
+  if AEvent.ClassType.InheritsFrom(TPressAttributeChangedEvent) and
+   IsCalcAttribute then
   begin
     FCalcUpdated := False;
     NotifyInvalidate;
@@ -6214,7 +6215,10 @@ procedure TPressItems.AfterChangeInstance(
   ChangeType: TPressProxyChangeType);
 begin
   inherited;
-  ChangedItem(Instance, ChangeType = pctAssigning);
+  { TODO : Verify this improvement }
+  //ChangedItem(Instance, ChangeType = pctAssigning);
+  if ChangeType = pctAssigning then
+    ChangedItem(Instance, True);
 end;
 
 procedure TPressItems.Assign(Source: TPersistent);
