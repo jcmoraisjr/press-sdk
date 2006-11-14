@@ -36,8 +36,6 @@ uses
 type
   EPressMVPError = class(EPressError);
 
-  TPressMVPModel = class;
-  TPressMVPView = class;
   TPressMVPCommand = class;
 
   TPressMVPCommandComponent = class(TObject)
@@ -121,9 +119,10 @@ type
   TPressMVPCommandChangedEvent = class(TPressEvent)
   end;
 
-  TPressMVPCommandClass = class of TPressMVPCommand;
-
+  TPressMVPModel = class;
   TPressMVPRegisteredCommand = class;
+
+  TPressMVPCommandClass = class of TPressMVPCommand;
 
   TPressMVPCommand = class(TObject)
   private
@@ -375,50 +374,6 @@ type
     function GetCurrentItem: TPressMVPModel;
   public
     property CurrentItem: TPressMVPModel read GetCurrentItem;
-  end;
-
-  TPressMVPViewEvent = class(TPressEvent)
-  protected
-    {$IFNDEF PressLogViewEvents}
-    function AllowLog: Boolean; override;
-    {$ENDIF}
-  end;
-
-  TPressMVPViewClickEvent = class(TPressMVPViewEvent)
-  end;
-
-  TPressMVPViewDblClickEvent = class(TPressMVPViewEvent)
-  end;
-
-  TPressMVPViewClass = class of TPressMVPView;
-
-  TPressMVPView = class(TPressMVPObject)
-  private
-    FControl: TControl;
-    FModel: TPressMVPModel;
-    FOwnsControl: Boolean;
-    FViewClickEvent: TNotifyEvent;
-    FViewDblClickEvent: TNotifyEvent;
-  protected
-    procedure ViewClickEvent(Sender: TObject); virtual;
-    procedure ViewDblClickEvent(Sender: TObject); virtual;
-  protected
-    procedure InitView; virtual;
-    procedure InternalReset; virtual;
-    procedure InternalUpdate; virtual;
-    procedure ModelChanged(AChangeType: TPressMVPChangeType); virtual;
-    procedure SetModel(Value: TPressMVPModel);
-    property Model: TPressMVPModel read FModel;
-  public
-    constructor Create(AControl: TControl; AOwnsControl: Boolean = False);
-    destructor Destroy; override;
-    class function Apply(AControl: TControl): Boolean; virtual; abstract;
-    { TODO : Remove this factory method }
-    class function CreateFromControl(AControl: TControl; AOwnsControl: Boolean = False): TPressMVPView;
-    class procedure RegisterView;
-    procedure Update;
-    property Control: TControl read FControl;
-    property OwnsControl: Boolean read FOwnsControl write FOwnsControl;
   end;
 
 implementation
@@ -1378,99 +1333,6 @@ end;
 function TPressMVPModelIterator.GetCurrentItem: TPressMVPModel;
 begin
   Result := inherited CurrentItem as TPressMVPModel;
-end;
-
-{ TPressMVPViewEvent }
-
-{$IFNDEF PressLogViewEvents}
-function TPressMVPViewEvent.AllowLog: Boolean;
-begin
-  Result := False;
-end;
-{$ENDIF}
-
-{ TPressMVPView }
-
-constructor TPressMVPView.Create(AControl: TControl; AOwnsControl: Boolean);
-begin
-  CheckClass(Apply(AControl));
-  inherited Create;
-  FControl := AControl;
-  FOwnsControl := AOwnsControl;
-  InitView;
-end;
-
-class function TPressMVPView.CreateFromControl(AControl: TControl;
-  AOwnsControl: Boolean): TPressMVPView;
-begin
-  Result := PressDefaultMVPFactory.MVPViewFactory(AControl, AOwnsControl);
-end;
-
-destructor TPressMVPView.Destroy;
-begin
-  if FOwnsControl then
-    FControl.Free;
-  inherited;
-end;
-
-procedure TPressMVPView.InitView;
-begin
-  with TPressMVPControlFriend(Control) do
-  begin
-    FViewClickEvent := OnClick;
-    FViewDblClickEvent := OnDblClick;
-    OnClick := ViewClickEvent;
-    OnDblClick := ViewDblClickEvent;
-  end;
-end;
-
-procedure TPressMVPView.InternalReset;
-begin
-end;
-
-procedure TPressMVPView.InternalUpdate;
-begin
-end;
-
-procedure TPressMVPView.ModelChanged(AChangeType: TPressMVPChangeType);
-begin
-  case AChangeType of
-    ctSubject: InternalUpdate;
-    ctDisplay: InternalReset;
-  end;
-end;
-
-class procedure TPressMVPView.RegisterView;
-begin
-  PressDefaultMVPFactory.RegisterView(Self);
-end;
-
-procedure TPressMVPView.SetModel(Value: TPressMVPModel);
-begin
-  FModel := Value;
-end;
-
-procedure TPressMVPView.Update;
-begin
-  InternalUpdate;
-end;
-
-procedure TPressMVPView.ViewClickEvent(Sender: TObject);
-begin
-  if EventsDisabled then
-    Exit;
-  TPressMVPViewClickEvent.Create(Self).Notify;
-  if Assigned(FViewClickEvent) then
-    FViewClickEvent(Sender);
-end;
-
-procedure TPressMVPView.ViewDblClickEvent(Sender: TObject);
-begin
-  if EventsDisabled then
-    Exit;
-  TPressMVPViewDblClickEvent.Create(Self).Notify;
-  if Assigned(FViewDblClickEvent) then
-    FViewDblClickEvent(Sender);
 end;
 
 end.

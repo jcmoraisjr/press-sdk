@@ -29,6 +29,7 @@ uses
   PressApplication,
   PressSubject,
   PressMVP,
+  PressMVPView,
   PressMVPPresenter;
 
 type
