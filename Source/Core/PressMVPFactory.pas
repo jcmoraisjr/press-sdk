@@ -23,6 +23,8 @@ unit PressMVPFactory;
 
 interface
 
+{$I Press.inc}
+
 uses
   Controls,
   Contnrs,
