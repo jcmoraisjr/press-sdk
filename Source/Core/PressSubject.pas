@@ -73,7 +73,8 @@ type
     FTypeAddress: Pointer;
     function RemoveEnumItemPrefix(const AEnumName: string): string;
   public
-    constructor Create(ATypeAddress: Pointer);
+    constructor Create(ATypeAddress: Pointer); overload;
+    constructor Create(ATypeAddress: Pointer; AEnumValues: array of string); overload;
     destructor Destroy; override;
     property Items: TStrings read FItems;
     property Name: string read FName write FName;
@@ -1418,7 +1419,8 @@ function PressFindObjectClass(const AClassName: string): TPressObjectClass;
 function PressObjectClassByName(const AClassName: string): TPressObjectClass;
 function PressObjectClassByPersistentName(const APersistentName: string): TPressObjectClass;
 procedure PressUnregisterMetadata(AMetadata: TPressObjectMetadata);
-function PressRegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string): TPressEnumMetadata;
+function PressRegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string): TPressEnumMetadata; overload;
+function PressRegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string; AEnumValues: array of string): TPressEnumMetadata; overload;
 function PressEnumMetadataByName(const AEnumName: string): TPressEnumMetadata;
 
 {$ENDIF}
@@ -1584,7 +1586,15 @@ function PressRegisterEnumMetadata(
 begin
   Result := TPressEnumMetadata.Create(AEnumAddress);
   Result.Name := AEnumName;
-  { TODO : Store complete enum name as well as display name (user-defined) }
+  PressEnumMetadatas.Add(Result);
+end;
+
+function PressRegisterEnumMetadata(
+  AEnumAddress: Pointer; const AEnumName: string;
+  AEnumValues: array of string): TPressEnumMetadata;
+begin
+  Result := TPressEnumMetadata.Create(AEnumAddress, AEnumValues);
+  Result.Name := AEnumName;
   PressEnumMetadatas.Add(Result);
 end;
 
@@ -1614,6 +1624,26 @@ begin
   FItems := TStringList.Create;
   for I := VTypeData.MinValue to VTypeData.MaxValue do
     FItems.Add(RemoveEnumItemPrefix(GetEnumName(FTypeAddress, I)));
+end;
+
+constructor TPressEnumMetadata.Create(
+  ATypeAddress: Pointer; AEnumValues: array of string);
+var
+  I, J: Integer;
+  VTypeData: PTypeData;
+begin
+  inherited Create;
+  FTypeAddress := ATypeAddress;
+  VTypeData := GetTypeData(FTypeAddress);
+  FItems := TStringList.Create;
+  J := Low(AEnumValues);
+  for I := VTypeData.MinValue to VTypeData.MaxValue do
+    if J <= High(AEnumValues) then
+    begin
+      FItems.Add(AEnumValues[J]);
+      Inc(J);
+    end else
+      FItems.Add(RemoveEnumItemPrefix(GetEnumName(FTypeAddress, I)));
 end;
 
 destructor TPressEnumMetadata.Destroy;
@@ -4768,7 +4798,8 @@ end;
 
 procedure TPressEnum.Reset;
 begin
-  Clear;
+  FValue := -1;
+  IsChanged := True;
 end;
 
 procedure TPressEnum.SetAsBoolean(AValue: Boolean);
@@ -4800,22 +4831,15 @@ procedure TPressEnum.SetAsString(const AValue: string);
 var
   VIndex: Integer;
 begin
-  try
-    if AValue = '' then
-      Clear
+  if AValue = '' then
+    Clear
+  else
+  begin
+    VIndex := Metadata.EnumMetadata.Items.IndexOf(AValue);
+    if VIndex <> -1 then
+      Value := VIndex
     else
-    begin
-      VIndex := Metadata.EnumMetadata.Items.IndexOf(AValue);
-      if VIndex <> -1 then
-        Value := VIndex
-      else
-        raise EPressError.CreateFmt(SEnumItemNotFound, [AValue]);
-    end;
-  except
-    on E: EConvertError do
-      raise ConversionError(E);
-    else
-      raise;
+      raise EPressError.CreateFmt(SEnumItemNotFound, [AValue]);
   end;
 end;
 
@@ -4838,7 +4862,9 @@ end;
 
 procedure TPressEnum.SetValue(AValue: Integer);
 begin
-  if IsNull or (AValue <> FValue) then
+  if AValue = -1 then
+    Clear
+  else if IsNull or (AValue <> FValue) then
   begin
     Changing;
     FValue := AValue;
