@@ -149,17 +149,25 @@ type
   { TPressMVPView }
 
   TPressMVPAttributeView = class(TPressMVPView)
+  private
+    function AccessError(const ADataType: string): EPressMVPError;
+    function GetModel: TPressMVPAttributeModel;
   protected
+    function GetAsBoolean: Boolean; virtual;
+    function GetAsDateTime: TDateTime; virtual;
+    function GetAsInteger: Integer; virtual;
     function GetAsString: string; virtual;
+    function GetIsClear: Boolean; virtual;
     procedure InternalClear; virtual;
-    procedure InternalUpdateModel(AAttribute: TPressAttribute); virtual;
-    procedure InternalUpdateView(AAttribute: TPressAttribute); virtual;
     procedure SetSize(Value: Integer); virtual;
   public
     procedure Clear;
-    procedure UpdateModel(AAttribute: TPressAttribute);
-    procedure UpdateView(AAttribute: TPressAttribute);
+    property AsBoolean: Boolean read GetAsBoolean;
+    property AsDateTime: TDateTime read GetAsDateTime;
+    property AsInteger: Integer read GetAsInteger;
     property AsString: string read GetAsString;
+    property IsClear: Boolean read GetIsClear;
+    property Model: TPressMVPAttributeModel read GetModel;
     property Size: Integer write SetSize;
   end;
 
@@ -180,7 +188,7 @@ type
     procedure InitView; override;
   public
     procedure SelectNext; virtual;
-    procedure SetFocus; virtual;
+    procedure SetFocus; 
   end;
 
   TPressMVPEditView = class(TPressMVPWinView)
@@ -193,14 +201,13 @@ type
     procedure ViewEnterEvent(Sender: TObject); override;
   protected
     function GetAsString: string; override;
+    function GetIsClear: Boolean; override;
     procedure InitView; override;
     procedure InternalClear; override;
-    procedure InternalUpdateModel(AAttribute: TPressAttribute); override;
-    procedure InternalUpdateView(AAttribute: TPressAttribute); override;
+    procedure InternalUpdate; override;
     procedure SetSize(Value: Integer); override;
   public
     class function Apply(AControl: TControl): Boolean; override;
-    procedure SetFocus; override;
     property Changed: Boolean read FChanged;
     property Control: TCustomEdit read GetControl;
   end;
@@ -209,22 +216,27 @@ type
   private
     function GetControl: TCustomCalendar;
   protected
+    function GetAsDateTime: TDateTime; override;
     function GetAsString: string; override;
+    function GetIsClear: Boolean; override;
     procedure InternalClear; override;
-    procedure InternalUpdateModel(AAttribute: TPressAttribute); override;
-    procedure InternalUpdateView(AAttribute: TPressAttribute); override;
+    procedure InternalUpdate; override;
   public
     class function Apply(AControl: TControl): Boolean; override;
     property Control: TCustomCalendar read GetControl;
   end;
 
-  TPressMVPCheckBoxView = class(TPressMVPWinView)
+  TPressMVPBooleanView = class(TPressMVPWinView)
+  end;
+
+  TPressMVPCheckBoxView = class(TPressMVPBooleanView)
   private
     function GetControl: TCustomCheckBox;
   protected
+    function GetAsBoolean: Boolean; override;
+    function GetIsClear: Boolean; override;
     procedure InternalClear; override;
-    procedure InternalUpdateModel(AAttribute: TPressAttribute); override;
-    procedure InternalUpdateView(AAttribute: TPressAttribute); override;
+    procedure InternalUpdate; override;
   public
     class function Apply(AControl: TControl): Boolean; override;
     property Control: TCustomCheckBox read GetControl;
@@ -232,38 +244,37 @@ type
 
   TPressMVPItemView = class(TPressMVPWinView)
   protected
-    procedure InternalAddReference(const ACaption: string; AReference: TPressObject); virtual; abstract;
+    procedure InternalAddReference(const ACaption: string); virtual; abstract;
     procedure InternalClearReferences; virtual; abstract;
-    function InternalCurrentItem: Integer; virtual; abstract;
+    procedure InternalUpdate; override;
   public
-    procedure AddReference(const ACaption: string; AReference: TPressObject);
+    procedure AddReference(const ACaption: string);
+    procedure AssignReferences(AItems: TStrings);
     procedure ClearReferences;
-    function CurrentItem: Integer;
   end;
 
   TPressMVPComboBoxView = class(TPressMVPItemView)
-  { TODO : This view shouldn't be so smart }
   private
     FChanged: Boolean;
     FViewChangeEvent: TNotifyEvent;
     FViewDropDownEvent: TNotifyEvent;
     function GetComboStyle: TComboBoxStyle;
     function GetControl: TCustomComboBox;
-    function GetDroppedDown: Boolean;
+    function GetReferencesVisible: Boolean;
     procedure SetComboStyle(Value: TComboBoxStyle);
   protected
     procedure ViewChangeEvent(Sender: TObject); virtual;
     procedure ViewDropDownEvent(Sender: TObject); virtual;
     procedure ViewEnterEvent(Sender: TObject); override;
   protected
+    function GetAsInteger: Integer; override;
     function GetAsString: string; override;
+    function GetIsClear: Boolean; override;
     procedure InitView; override;
-    procedure InternalAddReference(const ACaption: string; AReference: TPressObject); override;
+    procedure InternalAddReference(const ACaption: string); override;
     procedure InternalClear; override;
     procedure InternalClearReferences; override;
-    function InternalCurrentItem: Integer; override;
-    procedure InternalUpdateModel(AAttribute: TPressAttribute); override;
-    procedure InternalUpdateView(AAttribute: TPressAttribute); override;
+    procedure InternalUpdate; override;
     procedure SetSize(Value: Integer); override;
   public
     class function Apply(AControl: TControl): Boolean; override;
@@ -272,29 +283,27 @@ type
     property Changed: Boolean read FChanged;
     property ComboStyle: TComboBoxStyle read GetComboStyle write SetComboStyle;
     property Control: TCustomComboBox read GetControl;
-    property DroppedDown: Boolean read GetDroppedDown;
+    property ReferencesVisible: Boolean read GetReferencesVisible;
   end;
 
   TPressMVPItemsView = class(TPressMVPWinView)
   private
+    function GetModel: TPressMVPItemsModel;
     function GetRowCount: Integer;
     procedure SetRowCount(ARowCount: Integer);
   protected
-    procedure InternalAlignColumns; virtual;
     function InternalCurrentItem: Integer; virtual; abstract;
     function InternalGetRowCount: Integer; virtual; abstract;
     procedure InternalSelectItem(AIndex: Integer); virtual; abstract;
     procedure InternalSetColumnCount(AColumnCount: Integer); virtual;
     procedure InternalSetColumnWidth(AColumn, AWidth: Integer); virtual;
     procedure InternalSetRowCount(ARowCount: Integer); virtual; abstract;
-    procedure InternalUpdateView(AAttribute: TPressAttribute); override;
+    procedure InternalUpdate; override;
+    property RowCount: Integer read GetRowCount write SetRowCount;
   public
-    procedure AlignColumns;
     function CurrentItem: Integer;
     procedure SelectItem(AIndex: Integer);
-    procedure SetColumnCount(AColumnCount: Integer);
-    procedure SetColumnWidth(AColumn, AWidth: Integer);
-    property RowCount: Integer read GetRowCount write SetRowCount;
+    property Model: TPressMVPItemsModel read GetModel;
   end;
 
   TPressDrawItemEvent = procedure(Sender: TPressMVPListBoxView;
@@ -338,14 +347,16 @@ type
     procedure ViewSelectCellEvent(Sender: TObject; ACol, ARow: Longint; var CanSelect: Boolean);
   protected
     procedure InitView; override;
-    procedure InternalAlignColumns; override;
+    procedure InternalAlignColumns; virtual;
     function InternalCurrentItem: Integer; override;
     function InternalGetRowCount: Integer; override;
+    procedure InternalReset; override;
     procedure InternalSelectItem(AIndex: Integer); override;
     procedure InternalSetColumnCount(AColumnCount: Integer); override;
     procedure InternalSetColumnWidth(AColumn, AWidth: Integer); override;
     procedure InternalSetRowCount(ARowCount: Integer); override;
   public
+    procedure AlignColumns;
     class function Apply(AControl: TControl): Boolean; override;
     property Control: TDrawGrid read GetControl;
     {$IFDEF PressViewDirectEvent}
@@ -357,32 +368,24 @@ type
   TPressMVPCaptionView = class(TPressMVPAttributeView)
   protected
     function GetAsString: string; override;
-    procedure InternalUpdateModel(AAttribute: TPressAttribute); override;
-    procedure InternalUpdateView(AAttribute: TPressAttribute); override;
+    procedure InternalUpdate; override;
   end;
 
   TPressMVPLabelView = class(TPressMVPCaptionView)
-  private
-    function GetControl: TCustomLabel;
   public
     class function Apply(AControl: TControl): Boolean; override;
-    property Control: TCustomLabel read GetControl;
   end;
 
   TPressMVPPanelView = class(TPressMVPCaptionView)
-  private
-    function GetControl: TCustomPanel;
   public
     class function Apply(AControl: TControl): Boolean; override;
-    property Control: TCustomPanel read GetControl;
   end;
 
   TPressMVPPictureView = class(TPressMVPAttributeView)
   private
     function GetControl: TImage;
   protected
-    procedure InternalUpdateModel(AAttribute: TPressAttribute); override;
-    procedure InternalUpdateView(AAttribute: TPressAttribute); override;
+    procedure InternalUpdate; override;
   public
     class function Apply(AControl: TControl): Boolean; override;
     property Control: TImage read GetControl;
@@ -391,6 +394,9 @@ type
   TPressMVPCustomFormViewClass = class of TPressMVPCustomFormView;
 
   TPressMVPCustomFormView = class(TPressMVPView)
+  public
+    function ComponentByName(const AComponentName: ShortString): TComponent;
+    function ControlByName(const AControlName: ShortString): TControl;
   end;
 
   TPressMVPFormView = class(TPressMVPCustomFormView)
@@ -421,6 +427,8 @@ uses
   PressConsts;
 
 type
+  { Friend classes }
+
   TPressMVPViewControlFriend = class(TControl);
   TPressMVPViewWinControlFriend = class(TWinControl);
   TPressMVPViewCustomEditFriend = class(TCustomEdit);
@@ -541,41 +549,54 @@ end;
 
 { TPressMVPAttributeView }
 
+function TPressMVPAttributeView.AccessError(
+  const ADataType: string): EPressMVPError;
+begin
+  Result := EPressMVPError.CreateFmt(SViewAccessError,
+   [ClassName, Control.Name, ADataType]);
+end;
+
 procedure TPressMVPAttributeView.Clear;
 begin
   InternalClear;
 end;
 
+function TPressMVPAttributeView.GetAsBoolean: Boolean;
+begin
+  raise AccessError('Boolean');
+end;
+
+function TPressMVPAttributeView.GetAsDateTime: TDateTime;
+begin
+  raise AccessError('DateTime');
+end;
+
+function TPressMVPAttributeView.GetAsInteger: Integer;
+begin
+  raise AccessError('Integer');
+end;
+
 function TPressMVPAttributeView.GetAsString: string;
 begin
-  Result := '';
+  raise AccessError('String');
+end;
+
+function TPressMVPAttributeView.GetIsClear: Boolean;
+begin
+  Result := False;
+end;
+
+function TPressMVPAttributeView.GetModel: TPressMVPAttributeModel;
+begin
+  Result := inherited Model as TPressMVPAttributeModel;
 end;
 
 procedure TPressMVPAttributeView.InternalClear;
 begin
 end;
 
-procedure TPressMVPAttributeView.InternalUpdateModel(AAttribute: TPressAttribute);
-begin
-end;
-
-procedure TPressMVPAttributeView.InternalUpdateView(AAttribute: TPressAttribute);
-begin
-end;
-
 procedure TPressMVPAttributeView.SetSize(Value: Integer);
 begin
-end;
-
-procedure TPressMVPAttributeView.UpdateModel(AAttribute: TPressAttribute);
-begin
-  if Assigned(AAttribute) then
-    InternalUpdateModel(AAttribute);
-end;
-
-procedure TPressMVPAttributeView.UpdateView(AAttribute: TPressAttribute);
-begin
-  InternalUpdateView(AAttribute);
 end;
 
 { TPressMVPWinView }
@@ -679,6 +700,11 @@ begin
   Result := inherited Control as TCustomEdit;
 end;
 
+function TPressMVPEditView.GetIsClear: Boolean;
+begin
+  Result := Control.Text = '';
+end;
+
 procedure TPressMVPEditView.InitView;
 begin
   inherited;
@@ -694,29 +720,15 @@ begin
   TPressMVPViewCustomEditFriend(Control).Text := '';
 end;
 
-procedure TPressMVPEditView.InternalUpdateModel(AAttribute: TPressAttribute);
-begin
-  if Changed then
-    AAttribute.AsString := TPressMVPViewCustomEditFriend(Control).Text;
-end;
-
-procedure TPressMVPEditView.InternalUpdateView(AAttribute: TPressAttribute);
-begin
-  if Assigned(AAttribute) then
-    if Control.Focused then
-    begin
-      TPressMVPViewCustomEditFriend(Control).Text := AAttribute.AsString;
-      Control.SelectAll;
-    end else
-      TPressMVPViewCustomEditFriend(Control).Text := AAttribute.DisplayText
-  else
-    TPressMVPViewCustomEditFriend(Control).Text := '';
-end;
-
-procedure TPressMVPEditView.SetFocus;
+procedure TPressMVPEditView.InternalUpdate;
 begin
   inherited;
-  Control.SelectAll;
+  if Control.Focused then
+  begin
+    TPressMVPViewCustomEditFriend(Control).Text := Model.Subject.AsString;
+    Control.SelectAll;
+  end else
+    TPressMVPViewCustomEditFriend(Control).Text := Model.AsString;
 end;
 
 procedure TPressMVPEditView.SetSize(Value: Integer);
@@ -737,6 +749,7 @@ procedure TPressMVPEditView.ViewEnterEvent(Sender: TObject);
 begin
   inherited;
   FChanged := False;
+  Control.SelectAll;
 end;
 
 { TPressMVPDateTimeView }
@@ -744,6 +757,11 @@ end;
 class function TPressMVPDateTimeView.Apply(AControl: TControl): Boolean;
 begin
   Result := AControl is TCustomCalendar;
+end;
+
+function TPressMVPDateTimeView.GetAsDateTime: TDateTime;
+begin
+  Result := TPressMVPViewCustomCalendarFriend(Control).DateTime;
 end;
 
 function TPressMVPDateTimeView.GetAsString: string;
@@ -756,21 +774,21 @@ begin
   Result := inherited Control as TCustomCalendar;
 end;
 
+function TPressMVPDateTimeView.GetIsClear: Boolean;
+begin
+  Result := TPressMVPViewCustomCalendarFriend(Control).DateTime = 0;
+end;
+
 procedure TPressMVPDateTimeView.InternalClear;
 begin
   TPressMVPViewCustomCalendarFriend(Control).DateTime := 0;
 end;
 
-procedure TPressMVPDateTimeView.InternalUpdateModel(AAttribute: TPressAttribute);
+procedure TPressMVPDateTimeView.InternalUpdate;
 begin
-  AAttribute.AsDateTime := TPressMVPViewCustomCalendarFriend(Control).DateTime;
-end;
-
-procedure TPressMVPDateTimeView.InternalUpdateView(AAttribute: TPressAttribute);
-begin
-  if Assigned(AAttribute) then
-    TPressMVPViewCustomCalendarFriend(Control).DateTime := AAttribute.AsDateTime;
-  { TODO : else? }
+  inherited;
+  TPressMVPViewCustomCalendarFriend(Control).DateTime :=
+   Model.Subject.AsDateTime;
 end;
 
 { TPressMVPCheckBoxView }
@@ -780,9 +798,19 @@ begin
   Result := AControl is TCustomCheckBox;
 end;
 
+function TPressMVPCheckBoxView.GetAsBoolean: Boolean;
+begin
+  Result := TPressMVPViewCustomCheckBoxFriend(Control).Checked;
+end;
+
 function TPressMVPCheckBoxView.GetControl: TCustomCheckBox;
 begin
   Result := inherited Control as TCustomCheckBox;
+end;
+
+function TPressMVPCheckBoxView.GetIsClear: Boolean;
+begin
+  Result := TPressMVPViewCustomCheckBoxFriend(Control).State = cbGrayed;
 end;
 
 procedure TPressMVPCheckBoxView.InternalClear;
@@ -790,37 +818,34 @@ begin
   TPressMVPViewCustomCheckBoxFriend(Control).State := cbUnchecked;
 end;
 
-procedure TPressMVPCheckBoxView.InternalUpdateModel(AAttribute: TPressAttribute);
+procedure TPressMVPCheckBoxView.InternalUpdate;
+var
+  VAttribute: TPressAttribute;
 begin
-  if TPressMVPViewCustomCheckBoxFriend(Control).State = cbGrayed then
-    AAttribute.Clear
+  inherited;
+  VAttribute := Model.Subject;
+  if VAttribute.IsNull then
+    TPressMVPViewCustomCheckBoxFriend(Control).State := cbGrayed
+  else if VAttribute.AsBoolean then
+    TPressMVPViewCustomCheckBoxFriend(Control).State := cbChecked
   else
-    AAttribute.AsBoolean :=
-     TPressMVPViewCustomCheckBoxFriend(Control).State = cbChecked;
-end;
-
-procedure TPressMVPCheckBoxView.InternalUpdateView(AAttribute: TPressAttribute);
-begin
-  if Assigned(AAttribute) then
-  begin
-    if AAttribute.IsNull then
-      TPressMVPViewCustomCheckBoxFriend(Control).State := cbGrayed
-    else if AAttribute.AsBoolean then
-      TPressMVPViewCustomCheckBoxFriend(Control).State := cbChecked
-    else
-      TPressMVPViewCustomCheckBoxFriend(Control).State := cbUnchecked;
-  end else
     TPressMVPViewCustomCheckBoxFriend(Control).State := cbUnchecked;
 end;
 
 { TPressMVPItemView }
 
-procedure TPressMVPItemView.AddReference(const ACaption: string; AReference: TPressObject);
+procedure TPressMVPItemView.AddReference(const ACaption: string);
 begin
-  InternalAddReference(ACaption, AReference);
-  { TODO : Release instance before ClearReferences
-    (like updating or destroying the visual control) } 
-//  AReference.AddRef;
+  InternalAddReference(ACaption);
+end;
+
+procedure TPressMVPItemView.AssignReferences(AItems: TStrings);
+var
+  I: Integer;
+begin
+  InternalClearReferences;
+  for I := 0 to Pred(AItems.Count) do
+    InternalAddReference(AItems[I]);
 end;
 
 procedure TPressMVPItemView.ClearReferences;
@@ -828,9 +853,10 @@ begin
   InternalClearReferences;
 end;
 
-function TPressMVPItemView.CurrentItem: Integer;
+procedure TPressMVPItemView.InternalUpdate;
 begin
-  Result := InternalCurrentItem;
+  inherited;
+  ClearReferences;
 end;
 
 { TPressMVPComboBoxView }
@@ -838,6 +864,11 @@ end;
 class function TPressMVPComboBoxView.Apply(AControl: TControl): Boolean;
 begin
   Result := AControl is TCustomComboBox;
+end;
+
+function TPressMVPComboBoxView.GetAsInteger: Integer;
+begin
+  Result := Control.ItemIndex;
 end;
 
 function TPressMVPComboBoxView.GetAsString: string;
@@ -855,7 +886,12 @@ begin
   Result := inherited Control as TCustomComboBox;
 end;
 
-function TPressMVPComboBoxView.GetDroppedDown: Boolean;
+function TPressMVPComboBoxView.GetIsClear: Boolean;
+begin
+  Result := AsString = '';
+end;
+
+function TPressMVPComboBoxView.GetReferencesVisible: Boolean;
 begin
   Result := Control.DroppedDown;
 end;
@@ -873,10 +909,9 @@ begin
   end;
 end;
 
-procedure TPressMVPComboBoxView.InternalAddReference(
-  const ACaption: string; AReference: TPressObject);
+procedure TPressMVPComboBoxView.InternalAddReference(const ACaption: string);
 begin
-  Control.Items.AddObject(ACaption, AReference);
+  Control.Items.Add(ACaption);
 end;
 
 procedure TPressMVPComboBoxView.InternalClear;
@@ -891,53 +926,10 @@ begin
   Control.Items.Clear;
 end;
 
-function TPressMVPComboBoxView.InternalCurrentItem: Integer;
+procedure TPressMVPComboBoxView.InternalUpdate;
 begin
-  Result := Control.ItemIndex;
-end;
-
-procedure TPressMVPComboBoxView.InternalUpdateModel(AAttribute: TPressAttribute);
-var
-  VObject: TPressObject;
-begin
-  if AAttribute is TPressReference then
-  begin
-    if AsString = '' then
-      VObject := nil
-    else if Control.ItemIndex >= 0 then
-      VObject := Control.Items.Objects[Control.ItemIndex] as TPressObject
-    else if Control.Items.Count = 1 then
-      VObject := Control.Items.Objects[0] as TPressObject
-    else
-      VObject := nil;
-    TPressReference(AAttribute).Value := VObject;
-  end else if (AAttribute is TPressEnum) then
-    if Control.ItemIndex = -1 then
-      AAttribute.Clear
-    else
-      AAttribute.AsInteger := Control.ItemIndex;
-end;
-
-procedure TPressMVPComboBoxView.InternalUpdateView(AAttribute: TPressAttribute);
-begin
-  { TODO : Wrong aproach -- fix }
-  if AAttribute is TPressEnum then
-  begin
-    if AAttribute.IsNull then
-      Control.ItemIndex := -1
-    else
-      Control.ItemIndex := AAttribute.AsInteger;
-  end else
-  begin
-    Control.Items.Clear;
-    if Assigned(AAttribute) then
-    begin
-      TPressMVPViewCustomComboBoxFriend(Control).Text := AAttribute.DisplayText;
-      Control.Items.AddObject(AAttribute.DisplayText, AAttribute.Owner);
-      Control.ItemIndex := 0;
-    end else
-      TPressMVPViewCustomComboBoxFriend(Control).Text := '';
-  end;
+  inherited;
+  TPressMVPViewCustomComboBoxFriend(Control).Text := Model.AsString;
 end;
 
 procedure TPressMVPComboBoxView.SelectAll;
@@ -995,23 +987,19 @@ end;
 
 { TPressMVPItemsView }
 
-procedure TPressMVPItemsView.AlignColumns;
-begin
-  InternalAlignColumns;
-end;
-
 function TPressMVPItemsView.CurrentItem: Integer;
 begin
   Result := InternalCurrentItem;
 end;
 
+function TPressMVPItemsView.GetModel: TPressMVPItemsModel;
+begin
+  Result := inherited Model as TPressMVPItemsModel;
+end;
+
 function TPressMVPItemsView.GetRowCount: Integer;
 begin
   Result := InternalGetRowCount;
-end;
-
-procedure TPressMVPItemsView.InternalAlignColumns;
-begin
 end;
 
 procedure TPressMVPItemsView.InternalSetColumnCount(AColumnCount: Integer);
@@ -1022,8 +1010,11 @@ procedure TPressMVPItemsView.InternalSetColumnWidth(AColumn, AWidth: Integer);
 begin
 end;
 
-procedure TPressMVPItemsView.InternalUpdateView(AAttribute: TPressAttribute);
+procedure TPressMVPItemsView.InternalUpdate;
 begin
+  inherited;
+  RowCount := Model.Count;
+  { TODO : Improve }
   Control.Invalidate;
 end;
 
@@ -1031,22 +1022,11 @@ procedure TPressMVPItemsView.SelectItem(AIndex: Integer);
 var
   VRowCount: Integer;
 begin
-  { TODO : Improve, moving RowCount check to presenter }
+  { TODO : Improve }
   VRowCount := RowCount;
   if AIndex = VRowCount then
     RowCount := VRowCount + 1;
-
   InternalSelectItem(AIndex);
-end;
-
-procedure TPressMVPItemsView.SetColumnCount(AColumnCount: Integer);
-begin
-  InternalSetColumnCount(AColumnCount);
-end;
-
-procedure TPressMVPItemsView.SetColumnWidth(AColumn, AWidth: Integer);
-begin
-  InternalSetColumnWidth(AColumn, AWidth);
 end;
 
 procedure TPressMVPItemsView.SetRowCount(ARowCount: Integer);
@@ -1075,7 +1055,7 @@ begin
     OnDrawItem := ViewDrawItemEvent;
     Style := lbOwnerDrawFixed;
     { TODO : Implement multi selection }
-    //MultiSelect := True;
+    MultiSelect := False; //True;
   end;
 end;
 
@@ -1129,6 +1109,11 @@ end;
 
 { TPressMVPGridView }
 
+procedure TPressMVPGridView.AlignColumns;
+begin
+  InternalAlignColumns;
+end;
+
 class function TPressMVPGridView.Apply(AControl: TControl): Boolean;
 begin
   Result := AControl is TDrawGrid;
@@ -1150,13 +1135,6 @@ begin
     OnSelectCell := ViewSelectCellEvent;
     { TODO : Implement multi selection }
     Options := Options + [goColSizing, goRowSelect] - [goHorzLine, goRangeSelect];
-    FixedCols := 1;
-    FixedRows := 1;
-    ColCount := 2;
-    RowCount := 2;
-    DefaultColWidth := 48;
-    DefaultRowHeight := 16;
-    ColWidths[0] := 24;
   end;
 end;
 
@@ -1193,6 +1171,32 @@ end;
 function TPressMVPGridView.InternalGetRowCount: Integer;
 begin
   Result := Control.RowCount - 1;
+end;
+
+procedure TPressMVPGridView.InternalReset;
+var
+  VColumnData: TPressMVPColumnData;
+  I: Integer;
+begin
+  inherited;
+  with Control do
+  begin
+    DefaultRowHeight := 16;
+    VColumnData := Model.ColumnData;
+    ColCount := VColumnData.ColumnCount + 1;
+    for I := 0 to Pred(VColumnData.ColumnCount) do
+      ColWidths[I + 1] := VColumnData[I].Width;
+    if ColCount > 0 then
+    begin
+      ColWidths[0] := 24;
+      FixedCols := 1;
+    end;
+    if RowCount < 2 then
+      RowCount := 2;
+    FixedRows := 1;
+    AlignColumns;
+  end;
+  Update;
 end;
 
 procedure TPressMVPGridView.InternalSelectItem(AIndex: Integer);
@@ -1263,17 +1267,10 @@ begin
   Result := TPressMVPViewControlFriend(Control).Caption;
 end;
 
-procedure TPressMVPCaptionView.InternalUpdateModel(AAttribute: TPressAttribute);
+procedure TPressMVPCaptionView.InternalUpdate;
 begin
-  AAttribute.AsString := TPressMVPViewControlFriend(Control).Caption;
-end;
-
-procedure TPressMVPCaptionView.InternalUpdateView(AAttribute: TPressAttribute);
-begin
-  if Assigned(AAttribute) then
-    TPressMVPViewControlFriend(Control).Caption := AAttribute.DisplayText
-  else
-    TPressMVPViewControlFriend(Control).Caption := '';
+  inherited;
+  TPressMVPViewControlFriend(Control).Caption := Model.AsString;
 end;
 
 { TPressMVPLabelView }
@@ -1283,21 +1280,11 @@ begin
   Result := AControl is TCustomLabel;
 end;
 
-function TPressMVPLabelView.GetControl: TCustomLabel;
-begin
-  Result := inherited Control as TCustomLabel;
-end;
-
 { TPressMVPPanelView }
 
 class function TPressMVPPanelView.Apply(AControl: TControl): Boolean;
 begin
   Result := AControl is TCustomPanel;
-end;
-
-function TPressMVPPanelView.GetControl: TCustomPanel;
-begin
-  Result := inherited Control as TCustomPanel;
 end;
 
 { TPressMVPPictureView }
@@ -1312,13 +1299,31 @@ begin
   Result := inherited Control as TImage;
 end;
 
-procedure TPressMVPPictureView.InternalUpdateModel(AAttribute: TPressAttribute);
+procedure TPressMVPPictureView.InternalUpdate;
 begin
+  inherited;
+  { TODO : Implement }
 end;
 
-procedure TPressMVPPictureView.InternalUpdateView(AAttribute: TPressAttribute);
+{ TPressMVPCustomFormView }
+
+function TPressMVPCustomFormView.ComponentByName(
+  const AComponentName: ShortString): TComponent;
 begin
-  { TODO : Implement }
+  Result := Control.FindComponent(AComponentName);
+  if not Assigned(Result) then
+    raise EPressMVPError.CreateFmt(SComponentNotFound, [AComponentName]);
+end;
+
+function TPressMVPCustomFormView.ControlByName(
+  const AControlName: ShortString): TControl;
+var
+  VComponent: TComponent;
+begin
+  VComponent := ComponentByName(AControlName);
+  if not (VComponent is TControl) then
+    raise EPressMVPError.CreateFmt(SComponentIsNotAControl, [AControlName]);
+  Result := TControl(VComponent);
 end;
 
 { TPressMVPFormView }

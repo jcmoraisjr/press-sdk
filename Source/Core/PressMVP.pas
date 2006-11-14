@@ -38,7 +38,6 @@ type
 
   TPressMVPModel = class;
   TPressMVPView = class;
-  TPressMVPPresenter = class;
   TPressMVPCommand = class;
 
   TPressMVPCommandComponent = class(TObject)
@@ -253,48 +252,6 @@ type
     procedure UnassignCommands;
   end;
 
-  TPressMVPInteractorClass = class of TPressMVPInteractor;
-
-  TPressMVPInteractor = class(TObject)
-  private
-    FNotifier: TPressNotifier;
-    FOwner: TPressMVPPresenter;
-    function GetNotifier: TPressNotifier;
-  protected
-    procedure InitInteractor; virtual;
-    procedure Notify(AEvent: TPressEvent); virtual;
-    property Notifier: TPressNotifier read GetNotifier;
-  public
-    constructor Create(AOwner: TPressMVPPresenter); virtual;
-    destructor Destroy; override;
-    class procedure RegisterInteractor;
-    class function Apply(APresenter: TPressMVPPresenter): Boolean; virtual; abstract;
-    property Owner: TPressMVPPresenter read FOwner;
-  end;
-
-  TPressMVPInteractorIterator = class;
-
-  TPressMVPInteractorList = class(TPressList)
-  private
-    function GetItems(AIndex: Integer): TPressMVPInteractor;
-  protected
-    function InternalCreateIterator: TPressCustomIterator; override;
-  public
-    function Add(AObject: TPressMVPInteractor): Integer;
-    function CreateIterator: TPressMVPInteractorIterator;
-    function IndexOf(AObject: TPressMVPInteractor): Integer;
-    procedure Insert(Index: Integer; AObject: TPressMVPInteractor);
-    function Remove(AObject: TPressMVPInteractor): Integer;
-    property Items[AIndex: Integer]: TPressMVPInteractor read GetItems; default;
-  end;
-
-  TPressMVPInteractorIterator = class(TPressIterator)
-  private
-    function GetCurrentItem: TPressMVPInteractor;
-  public
-    property CurrentItem: TPressMVPInteractor read GetCurrentItem;
-  end;
-
   TPressMVPObjectClass = class of TPressMVPObject;
 
   TPressMVPObject = class(TPressStreamable)
@@ -343,7 +300,10 @@ type
     {$ENDIF}
   end;
 
-  TPressMVPModelNotifyEvent = procedure(Sender: TPressMVPModel) of object;
+  TPressMVPChangeType = (ctSubject, ctDisplay);
+
+  TPressMVPModelNotifyEvent =
+   procedure(AChangeType: TPressMVPChangeType) of object;
 
   TPressMVPModelClass = class of TPressMVPModel;
 
@@ -362,10 +322,13 @@ type
     function GetNotifier: TPressNotifier;
     function GetOwnedCommands: TPressMVPCommandList;
     function GetSelection: TPressMVPSelection;
+    function GetSubject: TPressSubject;
   protected
+    procedure DoChanged(AChangeType: TPressMVPChangeType);
     procedure InitCommands; virtual;
     function InternalCreateSelection: TPressMVPSelection; virtual;
     procedure Notify(AEvent: TPressEvent); virtual;
+    procedure SetChangeEvent(Value: TPressMVPModelNotifyEvent);
     property Commands: TPressMVPCommands read GetCommands;
     property Notifier: TPressNotifier read GetNotifier;
     property OwnedCommands: TPressMVPCommandList read GetOwnedCommands;
@@ -376,7 +339,6 @@ type
     function AddCommandInstance(ACommand: TPressMVPCommand): Integer;
     procedure AddCommands(ACommandClasses: array of TPressMVPCommandClass);
     class function Apply: TPressSubjectClass; virtual; abstract;
-    procedure Changed;
     { TODO : Remove this factory method }
     class function CreateFromSubject(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
     function FindCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
@@ -387,7 +349,7 @@ type
     property HasSubject: Boolean read GetHasSubject;
     property Parent: TPressMVPModel read FParent;
     property Selection: TPressMVPSelection read GetSelection;
-    property Subject: TPressSubject read FSubject;
+    property Subject: TPressSubject read GetSubject;
   end;
 
   TPressMVPModelIterator = class;
@@ -433,8 +395,8 @@ type
   TPressMVPView = class(TPressMVPObject)
   private
     FControl: TControl;
+    FModel: TPressMVPModel;
     FOwnsControl: Boolean;
-    FPresenter: TPressMVPPresenter;
     FViewClickEvent: TNotifyEvent;
     FViewDblClickEvent: TNotifyEvent;
   protected
@@ -442,105 +404,21 @@ type
     procedure ViewDblClickEvent(Sender: TObject); virtual;
   protected
     procedure InitView; virtual;
-    { TODO : rename - use a pattern (here and in the Subject unit,
-      structure classes) }
-    procedure ModelChanged(Sender: TPressMVPModel); virtual;
+    procedure InternalReset; virtual;
+    procedure InternalUpdate; virtual;
+    procedure ModelChanged(AChangeType: TPressMVPChangeType); virtual;
+    procedure SetModel(Value: TPressMVPModel);
+    property Model: TPressMVPModel read FModel;
   public
-    constructor Create(AControl: TControl; AOwnsControl: Boolean = False); virtual;
+    constructor Create(AControl: TControl; AOwnsControl: Boolean = False);
     destructor Destroy; override;
     class function Apply(AControl: TControl): Boolean; virtual; abstract;
     { TODO : Remove this factory method }
     class function CreateFromControl(AControl: TControl; AOwnsControl: Boolean = False): TPressMVPView;
     class procedure RegisterView;
+    procedure Update;
     property Control: TControl read FControl;
     property OwnsControl: Boolean read FOwnsControl write FOwnsControl;
-    property Presenter: TPressMVPPresenter read FPresenter;
-  end;
-
-  TPressMVPFreePresenterEvent = class(TPressEvent)
-  end;
-
-  TPressMVPPresenterList = class;
-
-  TPressMVPPresenterClass = class of TPressMVPPresenter;
-
-  TPressMVPPresenter = class(TPressMVPObject)
-  private
-    FCommandMenu: TPressMVPCommandMenu;
-    FInteractors: TPressMVPInteractorList;
-    FModel: TPressMVPModel;
-    FParent: TPressMVPPresenter;
-    FSubPresenters: TPressMVPPresenterList;
-    FView: TPressMVPView;
-    procedure AfterChangeCommandMenu;
-    procedure AfterChangeModel;
-    procedure AfterChangeView;
-    procedure BeforeChangeCommandMenu;
-    procedure BeforeChangeModel;
-    procedure BeforeChangeView;
-    procedure DoInitPresenter;
-    procedure DoInitInteractors;
-    function GetInteractors: TPressMVPInteractorList;
-    function GetSubPresenter(AIndex: Integer): TPressMVPPresenter;
-    function GetSubPresenters: TPressMVPPresenterList;
-    procedure SetCommandMenu(Value: TPressMVPCommandMenu);
-    procedure SetModel(Value: TPressMVPModel);
-    procedure SetView(Value: TPressMVPView);
-  protected
-    procedure AfterInitInteractors; virtual;
-    procedure BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString);
-    function ComponentByName(const AComponentName: ShortString): TComponent;
-    function ControlByName(const AControlName: ShortString): TControl;
-    procedure InitPresenter; virtual;
-    function InternalCreateCommandMenu: TPressMVPCommandMenu; virtual;
-    function InternalCreateSubModel(ASubject: TPressSubject): TPressMVPModel; virtual;
-    function InternalCreateSubPresenter(AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter; virtual;
-    function InternalCreateSubView(AControl: TControl): TPressMVPView; virtual;
-    function InternalFindComponent(const AComponentName: string): TComponent; virtual;
-    procedure InternalUpdateModel; virtual; abstract;
-    procedure InternalUpdateView; virtual; abstract;
-    property CommandMenu: TPressMVPCommandMenu read FCommandMenu write SetCommandMenu;
-    property Interactors: TPressMVPInteractorList read GetInteractors;
-    property SubPresenters: TPressMVPPresenterList read GetSubPresenters;
-  public
-    constructor Create(AOwner: TPressMVPPresenter; AModel: TPressMVPModel; AView: TPressMVPView); virtual;
-    destructor Destroy; override;
-    procedure AddSubPresenter(APresenter: TPressMVPPresenter);
-    class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; virtual; abstract;
-    { TODO : Remove this factory method }
-    class function CreateFromControllers(AOwner: TPressMVPPresenter; AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
-    procedure Refresh;
-    class procedure RegisterPresenter;
-    function SubPresenterCount: Integer;
-    procedure UpdateModel;
-    procedure UpdateView;
-    property Model: TPressMVPModel read FModel;
-    property Parent: TPressMVPPresenter read FParent;
-    property SubPresenter[AIndex: Integer]: TPressMVPPresenter read GetSubPresenter;
-    property View: TPressMVPView read FView;
-  end;
-
-  TPressMVPPresenterIterator = class;
-
-  TPressMVPPresenterList = class(TPressList)
-  private
-    function GetItems(AIndex: Integer): TPressMVPPresenter;
-  protected
-    function InternalCreateIterator: TPressCustomIterator; override;
-  public
-    function Add(AObject: TPressMVPPresenter): Integer;
-    function CreateIterator: TPressMVPPresenterIterator;
-    function IndexOf(AObject: TPressMVPPresenter): Integer;
-    procedure Insert(Index: Integer; AObject: TPressMVPPresenter);
-    function Remove(AObject: TPressMVPPresenter): Integer;
-    property Items[AIndex: Integer]: TPressMVPPresenter read GetItems; default;
-  end;
-
-  TPressMVPPresenterIterator = class(TPressIterator)
-  private
-    function GetCurrentItem: TPressMVPPresenter;
-  public
-    property CurrentItem: TPressMVPPresenter read GetCurrentItem;
   end;
 
 implementation
@@ -552,56 +430,14 @@ uses
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressUser,
   PressPersistence,
+  PressMVPFactory,
   PressMVPCommand;
 
 type
-  TPressMVPFactory = class(TPressSingleton)
-  private
-    function ChooseConcreteClass(ATargetClass, ACandidateClass1, ACandidateClass2: TClass): Integer;
-  public
-    function MVPModelFactory(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
-    function MVPViewFactory(AControl: TControl; AOwnsControl: Boolean = False): TPressMVPView;
-    function MVPPresenterFactory(AOwner: TPressMVPPresenter; AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter; overload;
-  end;
-
   TPressMVPControlFriend = class(TControl);
 
 var
-  _PressRegisteredModels: TClassList;
-  _PressRegisteredViews: TClassList;
-  _PressRegisteredPresenters: TClassList;
   _PressRegisteredCommands: TPressMVPRegisteredCommandList;
-  _PressRegisteredInteractors: TClassList;
-
-function PressRegisteredModels: TClassList;
-begin
-  if not Assigned(_PressRegisteredModels) then
-  begin
-    _PressRegisteredModels := TClassList.Create;
-    PressRegisterSingleObject(_PressRegisteredModels);
-  end;
-  Result := _PressRegisteredModels;
-end;
-
-function PressRegisteredViews: TClassList;
-begin
-  if not Assigned(_PressRegisteredViews) then
-  begin
-    _PressRegisteredViews := TClassList.Create;
-    PressRegisterSingleObject(_PressRegisteredViews);
-  end;
-  Result := _PressRegisteredViews;
-end;
-
-function PressRegisteredPresenters: TClassList;
-begin
-  if not Assigned(_PressRegisteredPresenters) then
-  begin
-    _PressRegisteredPresenters := TClassList.Create;
-    PressRegisterSingleObject(_PressRegisteredPresenters);
-  end;
-  Result := _PressRegisteredPresenters;
-end;
 
 function PressRegisteredCommands: TPressMVPRegisteredCommandList;
 begin
@@ -611,16 +447,6 @@ begin
     PressRegisterSingleObject(_PressRegisteredCommands);
   end;
   Result := _PressRegisteredCommands;
-end;
-
-function PressRegisteredInteractors: TClassList;
-begin
-  if not Assigned(_PressRegisteredInteractors) then
-  begin
-    _PressRegisteredInteractors := TClassList.Create;
-    PressRegisterSingleObject(_PressRegisteredInteractors);
-  end;
-  Result := _PressRegisteredInteractors;
 end;
 
 { TPressMVPCommandComponent }
@@ -909,7 +735,7 @@ procedure TPressMVPCommand.InitNotifier;
 begin
   Notifier.AddNotificationItem(
    Model.Selection, [TPressMVPSelectionChangedEvent]);
-  if Model.Subject is TPressObject then
+  if Model.HasSubject and (Model.Subject is TPressObject) then
     Notifier.AddNotificationItem(Model.Subject, [TPressObjectChangedEvent]);
   Notifier.AddNotificationItem(
    PressDefaultPersistence, [TPressPersistenceEvent]);
@@ -1188,85 +1014,6 @@ begin
   InternalClearMenuItems;
 end;
 
-{ TPressMVPInteractor }
-
-constructor TPressMVPInteractor.Create(AOwner: TPressMVPPresenter);
-begin
-  inherited Create;
-  FOwner := AOwner;
-  InitInteractor;
-end;
-
-destructor TPressMVPInteractor.Destroy;
-begin
-  FNotifier.Free;
-  inherited;
-end;
-
-function TPressMVPInteractor.GetNotifier: TPressNotifier;
-begin
-  if not Assigned(FNotifier) then
-    FNotifier := TPressNotifier.Create(Notify);
-  Result := FNotifier;
-end;
-
-procedure TPressMVPInteractor.InitInteractor;
-begin
-end;
-
-procedure TPressMVPInteractor.Notify(AEvent: TPressEvent);
-begin
-end;
-
-class procedure TPressMVPInteractor.RegisterInteractor;
-begin
-  PressRegisteredInteractors.Add(Self);
-end;
-
-{ TPressMVPInteractorList }
-
-function TPressMVPInteractorList.Add(AObject: TPressMVPInteractor): Integer;
-begin
-  Result := inherited Add(AObject);
-end;
-
-function TPressMVPInteractorList.CreateIterator: TPressMVPInteractorIterator;
-begin
-  Result := TPressMVPInteractorIterator.Create(Self);
-end;
-
-function TPressMVPInteractorList.GetItems(AIndex: Integer): TPressMVPInteractor;
-begin
-  Result := inherited Items[AIndex] as TPressMVPInteractor;
-end;
-
-function TPressMVPInteractorList.IndexOf(AObject: TPressMVPInteractor): Integer;
-begin
-  Result := inherited IndexOf(AObject);
-end;
-
-procedure TPressMVPInteractorList.Insert(Index: Integer; AObject: TPressMVPInteractor);
-begin
-  inherited Insert(Index, AObject);
-end;
-
-function TPressMVPInteractorList.InternalCreateIterator: TPressCustomIterator;
-begin
-  Result := CreateIterator;
-end;
-
-function TPressMVPInteractorList.Remove(AObject: TPressMVPInteractor): Integer;
-begin
-  Result := inherited Remove(AObject);
-end;
-
-{ TPressMVPInteractorIterator }
-
-function TPressMVPInteractorIterator.GetCurrentItem: TPressMVPInteractor;
-begin
-  Result := inherited CurrentItem as TPressMVPInteractor;
-end;
-
 { TPressMVPObject }
 
 class procedure TPressMVPObject.CheckClass(AApplyClass: Boolean);
@@ -1443,12 +1190,6 @@ begin
     AddCommand(ACommandClasses[I]);
 end;
 
-procedure TPressMVPModel.Changed;
-begin
-  if not EventsDisabled and Assigned(FOnChange) then
-    FOnChange(Self);
-end;
-
 constructor TPressMVPModel.Create(
   AParent: TPressMVPModel; ASubject: TPressSubject);
 begin
@@ -1467,7 +1208,7 @@ end;
 class function TPressMVPModel.CreateFromSubject(
   AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
 begin
-  Result := TPressMVPFactory.Instance.MVPModelFactory(AParent, ASubject);
+  Result := PressDefaultMVPFactory.MVPModelFactory(AParent, ASubject);
 end;
 
 destructor TPressMVPModel.Destroy;
@@ -1478,6 +1219,12 @@ begin
   FSelection.Free;
   FOwnedCommands.Free;
   inherited;
+end;
+
+procedure TPressMVPModel.DoChanged(AChangeType: TPressMVPChangeType);
+begin
+  if not EventsDisabled and Assigned(FOnChange) then
+    FOnChange(AChangeType);
 end;
 
 function TPressMVPModel.FindCommand(
@@ -1529,6 +1276,13 @@ begin
   Result := FSelection;
 end;
 
+function TPressMVPModel.GetSubject: TPressSubject;
+begin
+  Result := FSubject;
+  if not Assigned(Result) then
+    raise EPressMVPError.Create(SUnassignedSubject);
+end;
+
 function TPressMVPModel.HasCommands: Boolean;
 begin
   Result := Assigned(FCommands) and (FCommands.Count > 0);
@@ -1546,7 +1300,7 @@ end;
 procedure TPressMVPModel.Notify(AEvent: TPressEvent);
 begin
   if AEvent is TPressSubjectChangedEvent then
-    Changed;
+    DoChanged(ctSubject);
 end;
 
 function TPressMVPModel.RegisterCommand(
@@ -1562,7 +1316,12 @@ end;
 
 class procedure TPressMVPModel.RegisterModel;
 begin
-  PressRegisteredModels.Add(Self);
+  PressDefaultMVPFactory.RegisterModel(Self);
+end;
+
+procedure TPressMVPModel.SetChangeEvent(Value: TPressMVPModelNotifyEvent);
+begin
+  FOnChange := Value;
 end;
 
 { TPressMVPModelList }
@@ -1644,7 +1403,7 @@ end;
 class function TPressMVPView.CreateFromControl(AControl: TControl;
   AOwnsControl: Boolean): TPressMVPView;
 begin
-  Result := TPressMVPFactory.Instance.MVPViewFactory(AControl, AOwnsControl);
+  Result := PressDefaultMVPFactory.MVPViewFactory(AControl, AOwnsControl);
 end;
 
 destructor TPressMVPView.Destroy;
@@ -1665,14 +1424,35 @@ begin
   end;
 end;
 
-procedure TPressMVPView.ModelChanged(Sender: TPressMVPModel);
+procedure TPressMVPView.InternalReset;
 begin
-  Presenter.UpdateView;
+end;
+
+procedure TPressMVPView.InternalUpdate;
+begin
+end;
+
+procedure TPressMVPView.ModelChanged(AChangeType: TPressMVPChangeType);
+begin
+  case AChangeType of
+    ctSubject: InternalUpdate;
+    ctDisplay: InternalReset;
+  end;
 end;
 
 class procedure TPressMVPView.RegisterView;
 begin
-  PressRegisteredViews.Add(Self);
+  PressDefaultMVPFactory.RegisterView(Self);
+end;
+
+procedure TPressMVPView.SetModel(Value: TPressMVPModel);
+begin
+  FModel := Value;
+end;
+
+procedure TPressMVPView.Update;
+begin
+  InternalUpdate;
 end;
 
 procedure TPressMVPView.ViewClickEvent(Sender: TObject);
@@ -1691,498 +1471,6 @@ begin
   TPressMVPViewDblClickEvent.Create(Self).Notify;
   if Assigned(FViewDblClickEvent) then
     FViewDblClickEvent(Sender);
-end;
-
-{ TPressMVPPresenter }
-
-procedure TPressMVPPresenter.AddSubPresenter(APresenter: TPressMVPPresenter);
-begin
-  APresenter.FParent := Self;
-  SubPresenters.Add(APresenter);
-end;
-
-procedure TPressMVPPresenter.AfterChangeCommandMenu;
-begin
-  if Assigned(FCommandMenu) then
-  begin
-    if Assigned(FView) then
-      FCommandMenu.AssignMenu(FView.Control);
-    if Assigned(FModel) then
-      FCommandMenu.AssignCommands(FModel.Commands);
-  end;
-end;
-
-procedure TPressMVPPresenter.AfterChangeModel;
-begin
-  if Assigned(FModel) then
-  begin
-    if Assigned(FView) then
-      FModel.FOnChange := FView.ModelChanged;  // friend class
-    if Assigned(FCommandMenu) then
-      FCommandMenu.AssignCommands(FModel.Commands);
-  end;
-end;
-
-procedure TPressMVPPresenter.AfterChangeView;
-begin
-  if Assigned(FView) then
-  begin
-    if Assigned(FCommandMenu) then
-      FCommandMenu.AssignMenu(FView.Control);
-    if Assigned(FModel) then
-      FModel.FOnChange := FView.ModelChanged;  // friend class
-  end;
-end;
-
-procedure TPressMVPPresenter.AfterInitInteractors;
-begin
-end;
-
-procedure TPressMVPPresenter.BeforeChangeCommandMenu;
-begin
-  if Assigned(FCommandMenu) then
-  begin
-    if Assigned(FView) then
-      FCommandMenu.AssignMenu(nil);
-    if Assigned(FModel) then
-      FCommandMenu.UnassignCommands;
-  end;
-end;
-
-procedure TPressMVPPresenter.BeforeChangeModel;
-begin
-  if Assigned(FModel) then
-  begin
-    if Assigned(FView) then
-      FModel.FOnChange := nil;  // friend class
-    if Assigned(FCommandMenu) then
-      FCommandMenu.UnassignCommands;
-    FreeAndNil(FModel);
-  end;
-end;
-
-procedure TPressMVPPresenter.BeforeChangeView;
-begin
-  if Assigned(FView) then
-  begin
-    if Assigned(FCommandMenu) then
-      FCommandMenu.AssignMenu(nil);
-    if Assigned(FModel) then
-      FModel.FOnChange := nil;  // friend class
-    FreeAndNil(FView);
-  end;
-end;
-
-procedure TPressMVPPresenter.BindCommand(
-  ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString);
-var
-  VComponent: TComponent;
-begin
-  VComponent := ComponentByName(AComponentName);
-  if not Assigned(ACommandClass) then
-    ACommandClass := TPressMVPNullCommand;
-  Model.RegisterCommand(ACommandClass).AddComponent(VComponent);
-end;
-
-function TPressMVPPresenter.ComponentByName(
-  const AComponentName: ShortString): TComponent;
-begin
-  Result := InternalFindComponent(AComponentName);
-  if not Assigned(Result) then
-    raise EPressMVPError.CreateFmt(SComponentNotFound,
-     [View.Control.ClassName, AComponentName]);
-end;
-
-function TPressMVPPresenter.ControlByName(
-  const AControlName: ShortString): TControl;
-var
-  VComponent: TComponent;
-begin
-  VComponent := ComponentByName(AControlName);
-  if not (VComponent is TControl) then
-    raise EPressMVPError.CreateFmt(SComponentIsNotAControl,
-     [View.Control.ClassName, AControlName]);
-  Result := TControl(VComponent);
-end;
-
-constructor TPressMVPPresenter.Create(
-  AOwner: TPressMVPPresenter; AModel: TPressMVPModel; AView: TPressMVPView);
-begin
-  CheckClass(Apply(AModel, AView));
-  inherited Create;
-  if Assigned(AOwner) then
-    AOwner.AddSubPresenter(Self);
-  SetModel(AModel);
-  SetView(AView);
-  View.FPresenter := Self;  // friend class
-  if Model.HasCommands then
-    CommandMenu := InternalCreateCommandMenu;
-  DoInitPresenter;
-  DoInitInteractors;
-end;
-
-class function TPressMVPPresenter.CreateFromControllers(
-  AOwner: TPressMVPPresenter;
-  AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
-begin
-  Result :=
-   TPressMVPFactory.Instance.MVPPresenterFactory(AOwner, AModel, AView);
-end;
-
-destructor TPressMVPPresenter.Destroy;
-begin
-  { TODO : Avoid events (specially View events) when destroying MVP objects
-    Create CanNotify property or Destroying status }
-  if Assigned(FParent) then
-    FParent.SubPresenters.Extract(Self);
-  FSubPresenters.Free;
-  BeforeChangeCommandMenu;
-  BeforeChangeModel;
-  BeforeChangeView;
-  FCommandMenu.Free;
-  FInteractors.Free;
-  inherited;
-end;
-
-procedure TPressMVPPresenter.DoInitInteractors;
-
-  function ExistSubClasses(AClass: TPressMVPInteractorClass): Boolean;
-  var
-    I: Integer;
-  begin
-    for I := 0 to Pred(Interactors.Count) do
-    begin
-      Result := Interactors[I].InheritsFrom(AClass);
-      if Result then
-        Exit;
-    end;
-    Result := False;
-  end;
-
-  procedure RemoveSuperClasses(AClass: TPressMVPInteractorClass);
-  var
-    I: Integer;
-  begin
-    for I := Pred(Interactors.Count) downto 0 do
-      if AClass.InheritsFrom(Interactors[I].ClassType) then
-        Interactors.Delete(I);
-  end;
-
-var
-  VInteractorClass: TPressMVPInteractorClass;
-  I: Integer;
-begin
-  for I := 0 to Pred(PressRegisteredInteractors.Count) do
-  begin
-    VInteractorClass := TPressMVPInteractorClass(PressRegisteredInteractors[I]);
-    if VInteractorClass.Apply(Self) and not ExistSubClasses(VInteractorClass) then
-    begin
-      RemoveSuperClasses(VInteractorClass);
-      Interactors.Add(VInteractorClass.Create(Self));
-    end;
-  end;
-  AfterInitInteractors;
-end;
-
-procedure TPressMVPPresenter.DoInitPresenter;
-begin
-  InitPresenter;
-end;
-
-function TPressMVPPresenter.GetInteractors: TPressMVPInteractorList;
-begin
-  if not Assigned(FInteractors) then
-    FInteractors := TPressMVPInteractorList.Create(True);
-  Result := FInteractors;
-end;
-
-function TPressMVPPresenter.GetSubPresenter(AIndex: Integer): TPressMVPPresenter;
-begin
-  Result := SubPresenters[AIndex];
-end;
-
-function TPressMVPPresenter.GetSubPresenters: TPressMVPPresenterList;
-begin
-  if not Assigned(FSubPresenters) then
-    FSubPresenters := TPressMVPPresenterList.Create(True);
-  Result := FSubPresenters;
-end;
-
-procedure TPressMVPPresenter.InitPresenter;
-begin
-end;
-
-function TPressMVPPresenter.InternalCreateCommandMenu: TPressMVPCommandMenu;
-begin
-  Result := TPressMVPPopupCommandMenu.Create;
-end;
-
-function TPressMVPPresenter.InternalCreateSubModel(ASubject: TPressSubject): TPressMVPModel;
-begin
-  Result := TPressMVPModel.CreateFromSubject(Model, ASubject);
-end;
-
-function TPressMVPPresenter.InternalCreateSubPresenter(
-  AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
-begin
-  Result := TPressMVPPresenter.CreateFromControllers(Self, AModel, AView);
-end;
-
-function TPressMVPPresenter.InternalCreateSubView(AControl: TControl): TPressMVPView;
-begin
-  Result := TPressMVPView.CreateFromControl(AControl);
-end;
-
-function TPressMVPPresenter.InternalFindComponent(
-  const AComponentName: string): TComponent;
-begin
-  if Assigned(FParent) then
-    Result := FParent.InternalFindComponent(AComponentName)
-  else
-    Result := nil;
-end;
-
-procedure TPressMVPPresenter.Refresh;
-begin
-  UpdateView;
-  with SubPresenters.CreateIterator do
-  try
-    BeforeFirstItem;
-    while NextItem do
-      CurrentItem.UpdateView;
-  finally
-    Free;
-  end;
-end;
-
-class procedure TPressMVPPresenter.RegisterPresenter;
-begin
-  PressRegisteredPresenters.Add(Self);
-end;
-
-procedure TPressMVPPresenter.SetCommandMenu(Value: TPressMVPCommandMenu);
-begin
-  if FCommandMenu <> Value then
-  begin
-    BeforeChangeCommandMenu;
-    FCommandMenu := Value;
-    AfterChangeCommandMenu;
-  end;
-end;
-
-procedure TPressMVPPresenter.SetModel(Value: TPressMVPModel);
-begin
-  if FModel <> Value then
-  begin
-    BeforeChangeModel;
-    FModel := Value;
-    AfterChangeModel;
-  end;
-end;
-
-procedure TPressMVPPresenter.SetView(Value: TPressMVPView);
-begin
-  if FView <> Value then
-  begin
-    BeforeChangeView;
-    FView := Value;
-    AfterChangeView;
-  end;
-end;
-
-function TPressMVPPresenter.SubPresenterCount: Integer;
-begin
-  if Assigned(FSubPresenters) then
-    Result := FSubPresenters.Count
-  else
-    Result := 0;
-end;
-
-procedure TPressMVPPresenter.UpdateModel;
-begin
-  {$IFDEF PressLogMVP}PressLogMsg(Self, 'Updating Model');{$ENDIF}
-  InternalUpdateModel;
-  with SubPresenters.CreateIterator do
-  try
-    BeforeFirstItem;
-    while NextItem do
-      CurrentItem.UpdateModel;
-  finally
-    Free;
-  end;
-end;
-
-procedure TPressMVPPresenter.UpdateView;
-begin
-  {$IFDEF PressLogMVP}PressLogMsg(Self, 'Updating View ', [View.Control]);{$ENDIF}
-  InternalUpdateView;
-end;
-
-{ TPressMVPPresenterList }
-
-function TPressMVPPresenterList.Add(AObject: TPressMVPPresenter): Integer;
-begin
-  Result := inherited Add(AObject);
-end;
-
-function TPressMVPPresenterList.CreateIterator: TPressMVPPresenterIterator;
-begin
-  Result := TPressMVPPresenterIterator.Create(Self);
-end;
-
-function TPressMVPPresenterList.GetItems(AIndex: Integer): TPressMVPPresenter;
-begin
-  Result := inherited Items[AIndex] as TPressMVPPresenter;
-end;
-
-function TPressMVPPresenterList.IndexOf(AObject: TPressMVPPresenter): Integer;
-begin
-  Result := inherited IndexOf(AObject);
-end;
-
-procedure TPressMVPPresenterList.Insert(Index: Integer; AObject: TPressMVPPresenter);
-begin
-  inherited Insert(Index, AObject);
-end;
-
-function TPressMVPPresenterList.InternalCreateIterator: TPressCustomIterator;
-begin
-  Result := CreateIterator;
-end;
-
-function TPressMVPPresenterList.Remove(AObject: TPressMVPPresenter): Integer;
-begin
-  Result := inherited Remove(AObject);
-end;
-
-{ TPressMVPPresenterIterator }
-
-function TPressMVPPresenterIterator.GetCurrentItem: TPressMVPPresenter;
-begin
-  Result := inherited CurrentItem as TPressMVPPresenter;
-end;
-
-{ TPressMVPFactory }
-
-function TPressMVPFactory.ChooseConcreteClass(
-  ATargetClass, ACandidateClass1, ACandidateClass2: TClass): Integer;
-
-  function InheritanceLevel(AClass: TClass): Integer;
-  begin
-    Result := 0;
-    while Assigned(AClass) do
-    begin
-      Inc(Result);
-      AClass := AClass.ClassParent;
-    end;
-  end;
-
-var
-  VLevel1, VLevel2: Integer;
-begin
-  { TODO : Return a class or a boolean instead an Integer }
-  if not Assigned(ATargetClass) then
-    raise EPressMVPError.Create(SUnassignedTargetClass)
-  else if not Assigned(ACandidateClass1) and not Assigned(ACandidateClass2) then
-    raise EPressMVPError.Create(SUnassignedCandidateClasses)
-  else if Assigned(ACandidateClass1) and not ATargetClass.InheritsFrom(ACandidateClass1) then
-    raise EPressMVPError.CreateFmt(SNonRelatedClasses,
-     [ATargetClass.ClassName, ACandidateClass1.ClassName])
-  else if Assigned(ACandidateClass2) and not ATargetClass.InheritsFrom(ACandidateClass2) then
-    raise EPressMVPError.CreateFmt(SNonRelatedClasses,
-     [ATargetClass.ClassName, ACandidateClass2.ClassName])
-  else if not Assigned(ACandidateClass1) then
-    Result := 2
-  else if not Assigned(ACandidateClass2) then
-    Result := 1
-  else
-  begin
-    VLevel1 := InheritanceLevel(ACandidateClass1);
-    VLevel2 := InheritanceLevel(ACandidateClass2);
-    if VLevel1 > VLevel2 then
-      Result := 1
-    else if VLevel2 > VLevel1 then
-      Result := 2
-    else
-      raise EPressMVPError.CreateFmt(SAmbiguousConcreteClass,
-       [ACandidateClass1.ClassName, ACandidateClass2.ClassName,
-       ATargetClass.ClassName]);
-  end;
-end;
-
-function TPressMVPFactory.MVPModelFactory(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
-var
-  VModelClass, VCandidateClass: TPressMVPModelClass;
-  I: Integer;
-begin
-  if Assigned(ASubject) then
-  begin
-    VCandidateClass := nil;
-    for I := 0 to Pred(PressRegisteredModels.Count) do
-    begin
-      VModelClass := TPressMVPModelClass(PressRegisteredModels[I]);
-      if ASubject.InheritsFrom(VModelClass.Apply) and
-       (not Assigned(VCandidateClass) or (ChooseConcreteClass(
-       ASubject.ClassType, VCandidateClass.Apply, VModelClass.Apply) = 2)) then
-        VCandidateClass := VModelClass;
-    end;
-    if not Assigned(VCandidateClass) then
-      raise EPressMVPError.CreateFmt(SUnsupportedObject,
-       [TPressMVPModel.ClassName, ASubject.ClassName]);
-  end else
-    raise EPressMVPError.Create(SUnassignedSubject);
-  Result := VCandidateClass.Create(AParent, ASubject);
-end;
-
-function TPressMVPFactory.MVPPresenterFactory(
-  AOwner: TPressMVPPresenter;
-  AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
-var
-  VPresenterClass, VCandidateClass: TPressMVPPresenterClass;
-  I: Integer;
-begin
-  VCandidateClass := nil;
-  for I := 0 to Pred(PressRegisteredPresenters.Count) do
-  begin
-    VPresenterClass := TPressMVPPresenterClass(PressRegisteredPresenters[I]);
-    if VPresenterClass.Apply(AModel, AView) then
-    begin
-      if Assigned(VCandidateClass) then
-        raise EPressMVPError.CreateFmt(SAmbiguousConcreteClass,
-         [VCandidateClass.ClassName, VPresenterClass.ClassName,
-         TPressMVPPresenter.ClassName, AModel.ClassName + ', ' + AView.ClassName]);
-      VCandidateClass := VPresenterClass;
-    end;
-  end;
-  if not Assigned(VCandidateClass) then
-    raise EPressMVPError.CreateFmt(SUnsupportedObject,
-     [TPressMVPPresenter.ClassName, AModel.ClassName + ', ' + AView.ClassName]);
-  Result := VCandidateClass.Create(AOwner, AModel, AView);
-end;
-
-function TPressMVPFactory.MVPViewFactory(AControl: TControl;
-  AOwnsControl: Boolean): TPressMVPView;
-var
-  VViewClass, VCandidateClass: TPressMVPViewClass;
-  I: Integer;
-begin
-  VCandidateClass := nil;
-  for I := 0 to Pred(PressRegisteredViews.Count) do
-  begin
-    VViewClass := TPressMVPViewClass(PressRegisteredViews[I]);
-    if VViewClass.Apply(AControl) then
-    begin
-      if Assigned(VCandidateClass) then
-        raise EPressMVPError.CreateFmt(SAmbiguousConcreteClass,
-         [VCandidateClass.ClassName, VViewClass.ClassName,
-         AControl.ClassName, AControl.Name]);
-      VCandidateClass := VViewClass;
-    end;
-  end;
-  if not Assigned(VCandidateClass) then
-    raise EPressMVPError.CreateFmt(SUnsupportedControl,
-     [AControl.ClassName, AControl.Name]);
-  Result := VCandidateClass.Create(AControl, AOwnsControl);
 end;
 
 end.

@@ -49,25 +49,23 @@ resourcestring
   SAttributeAccessError = 'Não é possível acessar o atributo %s(''%s'') como %s';
   SAttributeConversionError = 'Erro ao converter valor para o atributo %s(''%s''):' + #10 + '%s';
   SAttributeIsNotItem = 'O atributo %s(''%s'') não é Part ou Reference';
+  SAttributeIsNotValue = 'O atributo %s(''%s'') não é Value';
   SAttributeNotFound = 'O atributo %s(''%s'') não foi encontrado';
   SClassNotFound = 'Classe %s não encontrada';
+  SColumnDataParseError = 'Erro ao interpretar dados da coluna %s(''%s''): "%s"';
   SComponentIsNotAControl = 'O componente %s(''%s'') não é um controle';
   SComponentNotFound = 'O componente %s(''%s'') não foi encontrado';
   SDialogClassIsAssigned = 'Classe do objeto de diálogo já está associado';
-  SDisplayNameMissing = 'Falta DisplayName para o controle %s(''%s'')';
   SEnumItemNotFound = 'Enumeration ''%s'' não encontrado';
   SEnumMetadataNotFound = 'Enumeration metadata %s não encontrado';
   SInstanceNotFound = 'Instance not found: %s(%s)';
   SInvalidAttributeClass = 'O atributo %s(''%s'') requer objetos da classe %s';
-  SInvalidAttributeType = 'Tipo inválido para o atributo %s (%s)';
   SInvalidAttributeValue = 'Valor ''%s'' inválido para %s(''%s'')';
-  SItemCountOverflow = '<%d itens>';
-  SMetadataNotFound = 'Metadata da classe %s não foi encontrada';
+  SMaxItemCountReached = 'A consulta retornou %d itens, o limite é %d';
   SMetadataParseError = 'Erro ao interpretar metadata: "(%d,%d) %s"' + SPressLineBreak + '"%s"';
   SNonRelatedClasses = 'Classes %s e %s não são relacionadas';
   SNoLoggedUser = 'Não existe usuário logado';
   SNoReference = 'Não existe referência';
-  SNoRegisteredReport = 'Nenhum relatório foi registrado';
   SPathReferencesNil = 'O caminho %s(''%s'') possui atributo(s) Reference apontando para nil';
   SPersistentClassNotFound = 'Classe persistente %s não encontrada';
   SSingletonClassNotFound = 'Classe Singleton %s não encontrada';
@@ -82,7 +80,6 @@ resourcestring
   SUnassignedPersistenceConnector = 'Conector de persistência não foi associado';
   SUnassignedServiceType = 'Nenhum serviço %s foi associado ou registrado';
   SUnassignedSubject = 'Subject não foi associado';
-  SUnexpectedEof = 'Fim de arquivo inesperado';
   SUnexpectedMVPClassParam = 'Classe MVP %s inicializada com parâmetros inesperados';
   SUnsupportedAttribute = 'O atributo %s(''%s'') não é suportado';
   SUnsupportedAttributeType = 'O tipo de atributo %s não é suportado';
@@ -92,6 +89,7 @@ resourcestring
   SUnsupportedFeature = 'Feature %s não é suportada';
   SUnsupportedModel = 'Model %s não é suportado por %s';
   SUnsupportedObject = 'Nenhuma classe %s suporta objetos %s';
+  SViewAccessError = 'Não é possível acessar a view %s(''%s'') como %s';
 
   SConnectionManagerCaption = 'Conector';
 

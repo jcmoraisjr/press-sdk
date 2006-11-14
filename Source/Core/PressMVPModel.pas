@@ -35,9 +35,7 @@ uses
   PressMVP;
 
 type
-  TPressMVPStructureModel = class;
-  TPressMVPItemsModel = class;
-  TPressMVPObjectModel = class;
+  { MVP-Model events }
 
   TPressMVPModelCreateFormEvent = class(TPressMVPModelEvent)
   end;
@@ -60,15 +58,76 @@ type
   TPressMVPModelUpdateDataEvent = class(TPressMVPModelEvent)
   end;
 
-  TPressMVPValueModel = class(TPressMVPModel)
+  { Base Attribute Models }
+
+  TPressMVPAttributeModel = class(TPressMVPModel)
+  private
+    function GetSubject: TPressAttribute;
+  protected
+    function GetAsString: string; virtual;
+  public
+    property AsString: string read GetAsString;
+    property Subject: TPressAttribute read GetSubject;
+  end;
+
+  { Base Value Models }
+
+  TPressMVPValueModel = class(TPressMVPAttributeModel)
   private
     function GetSubject: TPressValue;
-    function GetValue: Variant;
-    procedure SetValue(Value: Variant);
   public
     class function Apply: TPressSubjectClass; override;
     property Subject: TPressValue read GetSubject;
-    property Value: Variant read GetValue write SetValue;
+  end;
+
+  { Value Models }
+
+  TPressMVPEnumValueItem = class(TObject)
+  private
+    FEnumName: string;
+    FEnumValue: Integer;
+  public
+    constructor Create;
+    property EnumName: string read FEnumName write FEnumName;
+    property EnumValue: Integer read FEnumValue write FEnumValue;
+  end;
+
+  TPressMVPEnumValueIterator = class;
+
+  TPressMVPEnumValueList = class(TPressList)
+  private
+    function GetItems(AIndex: Integer): TPressMVPEnumValueItem;
+    procedure SetItems(AIndex: Integer; const Value: TPressMVPEnumValueItem);
+  protected
+    function InternalCreateIterator: TPressCustomIterator; override;
+  public
+    function Add(AObject: TPressMVPEnumValueItem): Integer;
+    function CreateIterator: TPressMVPEnumValueIterator;
+    function Extract(AObject: TPressMVPEnumValueItem): TPressMVPEnumValueItem;
+    function First: TPressMVPEnumValueItem;
+    function IndexOf(AObject: TPressMVPEnumValueItem): Integer;
+    procedure Insert(AIndex: Integer; AObject: TPressMVPEnumValueItem);
+    function Last: TPressMVPEnumValueItem;
+    function Remove(AObject: TPressMVPEnumValueItem): Integer;
+    property Items[AIndex: Integer]: TPressMVPEnumValueItem read GetItems write SetItems; default;
+  end;
+
+  TPressMVPEnumValueIterator = class(TPressIterator)
+  private
+    function GetCurrentItem: TPressMVPEnumValueItem;
+  public
+    property CurrentItem: TPressMVPEnumValueItem read GetCurrentItem;
+  end;
+
+  TPressMVPEnumModel = class(TPressMVPValueModel)
+  private
+    FEnumValues: TPressMVPEnumValueList;
+  public
+    destructor Destroy; override;
+    class function Apply: TPressSubjectClass; override;
+    function CreateEnumValueIterator(AEnumQuery: string): TPressMVPEnumValueIterator;
+    function EnumOf(AIndex: Integer): Integer;
+    function EnumValueCount: Integer;
   end;
 
   TPressMVPDateModel = class(TPressMVPValueModel)
@@ -85,6 +144,8 @@ type
     class function Apply: TPressSubjectClass; override;
   end;
 
+  { Base Structure Models }
+
   TPressMVPObjectSelection = class(TPressMVPSelection)
   private
     function GetObjects(Index: Integer): TPressObject;
@@ -97,16 +158,86 @@ type
     property Objects[Index: Integer]: TPressObject read GetObjects; default;
   end;
 
-  TPressMVPStructureModel = class(TPressMVPModel)
+  TPressMVPColumnItem = class(TPressStreamable)
+  { TODO : Collection item }
   private
+    FAttributeName: string;
+    FAttributeAlignment: TAlignment;
+    FHeaderAlignment: TAlignment;
+    FHeaderCaption: string;
+    FWidth: Integer;
+  public
+    constructor Create;
+    procedure ReadColumnItem(const AColumnItem: string);
+  published
+    property AttributeName: string read FAttributeName write FAttributeName;
+    property AttributeAlignment: TAlignment read FAttributeAlignment write FAttributeAlignment;
+    property HeaderAlignment: TAlignment read FHeaderAlignment write FHeaderAlignment;
+    property HeaderCaption: string read FHeaderCaption write FHeaderCaption;
+    property Width: Integer read FWidth write FWidth;
+  end;
+
+  TPressMVPColumnIterator = class;
+
+  TPressMVPColumnList = class(TPressList)
+  private
+    function GetItems(AIndex: Integer): TPressMVPColumnItem;
+    procedure SetItems(AIndex: Integer; Value: TPressMVPColumnItem);
+  protected
+    function InternalCreateIterator: TPressCustomIterator; override;
+  public
+    function Add(AObject: TPressMVPColumnItem): Integer;
+    function CreateIterator: TPressMVPColumnIterator;
+    function Extract(AObject: TPressMVPColumnItem): TPressMVPColumnItem;
+    function First: TPressMVPColumnItem;
+    function IndexOf(AObject: TPressMVPColumnItem): Integer;
+    procedure Insert(AIndex: Integer; AObject: TPressMVPColumnItem);
+    function Last: TPressMVPColumnItem;
+    function Remove(AObject: TPressMVPColumnItem): Integer;
+    property Items[AIndex: Integer]: TPressMVPColumnItem read GetItems write SetItems; default;
+  end;
+
+  TPressMVPColumnIterator = class(TPressIterator)
+  private
+    function GetCurrentItem: TPressMVPColumnItem;
+  public
+    property CurrentItem: TPressMVPColumnItem read GetCurrentItem;
+  end;
+
+  TPressMVPColumnData = class(TObject)
+  { TODO : Collection }
+  private
+    FColumnList: TPressMVPColumnList;
+    function GetColumnList: TPressMVPColumnList;
+    function GetColumns(AIndex: Integer): TPressMVPColumnItem;
+  protected
+    property ColumnList: TPressMVPColumnList read GetColumnList;
+  public
+    destructor Destroy; override;
+    function AddColumn: TPressMVPColumnItem;
+    function ColumnCount: Integer;
+    property Columns[AIndex: Integer]: TPressMVPColumnItem read GetColumns; default;
+  end;
+
+  TPressMVPStructureModel = class(TPressMVPAttributeModel)
+  private
+    FColumnData: TPressMVPColumnData;
+    function GetColumnData: TPressMVPColumnData;
     function GetSelection: TPressMVPObjectSelection;
     function GetSubject: TPressStructure;
   protected
+    procedure AssignColumnData(const AColumnData: string);
+    procedure InternalAssignDisplayNames(const ADisplayNames: string); virtual; abstract;
     function InternalCreateSelection: TPressMVPSelection; override;
   public
+    destructor Destroy; override;
+    procedure AssignDisplayNames(const ADisplayNames: string);
+    property ColumnData: TPressMVPColumnData read GetColumnData;
     property Selection: TPressMVPObjectSelection read GetSelection;
     property Subject: TPressStructure read GetSubject;
   end;
+
+  { Reference Model }
 
   TPressMVPReferenceQuery = class(TPressQuery)
     _Name: TPressString;
@@ -120,31 +251,32 @@ type
     property Name: string read GetName write SetName;
   end;
 
-  TPressMVPQueryModel = class;
-
   TPressMVPReferenceModel = class(TPressMVPStructureModel)
   private
     FMetadata: TPressQueryMetadata;
     FQuery: TPressMVPReferenceQuery;
+    FReferencedAttribute: string;
     function GetMetadata: TPressQueryMetadata;
     function GetQuery: TPressMVPReferenceQuery;
     function GetSubject: TPressReference;
-    function GetValue: TPressObject;
-    procedure SetValue(Value: TPressObject);
   protected
+    function GetAsString: string; override;
     procedure InitCommands; override;
+    procedure InternalAssignDisplayNames(const ADisplayNames: string); override;
     procedure Notify(AEvent: TPressEvent); override;
     property Metadata: TPressQueryMetadata read GetMetadata;
   public
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
     destructor Destroy; override;
     class function Apply: TPressSubjectClass; override;
-    function CreateQueryIterator: TPressQueryIterator;
-    procedure UpdateQuery(const ADisplayName, AQueryValue: string);
+    function CreateQueryIterator(const AQueryString: string): TPressQueryIterator;
+    function ObjectOf(AIndex: Integer): TPressObject;
+    function ReferencedValue(AObject: TPressObject): TPressValue;
     property Query: TPressMVPReferenceQuery read GetQuery;
     property Subject: TPressReference read GetSubject;
-    property Value: TPressObject read GetValue write SetValue;
   end;
+
+  { Items Model }
 
   TPressMVPObjectList = class;
 
@@ -172,22 +304,16 @@ type
   TPressMVPObjectIterator = class;
 
   TPressMVPObjectList = class(TPressList)
-  { TODO : Implement column list }
   private
-    FDisplayNameList: TStrings;
-    FDisplayNames: string;
+    FColumnData: TPressMVPColumnData;
     procedure CreateAttributes(AObjectItem: TPressMVPObjectItem);
     function CreateObjectItem(AProxy: TPressProxy): TPressMVPObjectItem;
-    function GetDisplayNameList: TStrings;
     function GetItems(AIndex: Integer): TPressMVPObjectItem;
-    procedure ResetAttributes;
-    procedure SetDisplayNames(const Value: string);
     procedure SetItems(AIndex: Integer; Value: TPressMVPObjectItem);
   protected
     function InternalCreateIterator: TPressCustomIterator; override;
-    property DisplayNameList: TStrings read GetDisplayNameList;
   public
-    destructor Destroy; override;
+    constructor Create(AColumnData: TPressMVPColumnData);
     function Add(AObject: TPressMVPObjectItem): Integer;
     function AddProxy(AProxy: TPressProxy): Integer;
     function CreateIterator: TPressMVPObjectIterator;
@@ -200,7 +326,6 @@ type
     procedure Reindex;
     function Remove(AObject: TPressMVPObjectItem): Integer;
     function RemoveProxy(AProxy: TPressProxy): Integer;
-    property DisplayNames: string read FDisplayNames write SetDisplayNames;
     property Items[AIndex: Integer]: TPressMVPObjectItem read GetItems write SetItems; default;
   end;
 
@@ -214,15 +339,14 @@ type
   TPressMVPItemsModel = class(TPressMVPStructureModel)
   private
     FObjectList: TPressMVPObjectList;
-    function GetDisplayNames: string;
     function GetObjectList: TPressMVPObjectList;
     function GetObjects(AIndex: Integer): TPressObject;
     function GetSubject: TPressItems;
     procedure ItemsChanged(AEvent: TPressItemsChangedEvent);
     procedure RebuildObjectList;
-    procedure SetDisplayNames(const Value: string);
   protected
     procedure InitCommands; override;
+    procedure InternalAssignDisplayNames(const ADisplayNames: string); override;
     procedure InternalCreateAddCommands; virtual;
     procedure InternalCreateEditCommands; virtual;
     procedure InternalCreateRemoveCommands; virtual;
@@ -236,7 +360,6 @@ type
     function IndexOf(AObject: TPressObject): Integer;
     procedure SelectIndex(AIndex: Integer);
     function TextAlignment(ACol: Integer): TAlignment;
-    property DisplayNames: string read GetDisplayNames write SetDisplayNames;
     property Objects[AIndex: Integer]: TPressObject read GetObjects; default;
     property Subject: TPressItems read GetSubject;
   end;
@@ -252,6 +375,8 @@ type
   public
     class function Apply: TPressSubjectClass; override;
   end;
+
+  { Object Model }
 
   TPressMVPModelSelection = class(TPressMVPSelection)
   end;
@@ -307,8 +432,21 @@ implementation
 uses
   SysUtils,
   PressConsts,
+  PressDialogs,
   PressMetadata,
   PressMVPCommand;
+
+{ TPressMVPAttributeModel }
+
+function TPressMVPAttributeModel.GetAsString: string;
+begin
+  Result := Subject.DisplayText;
+end;
+
+function TPressMVPAttributeModel.GetSubject: TPressAttribute;
+begin
+  Result := inherited Subject as TPressAttribute;
+end;
 
 { TPressMVPValueModel }
 
@@ -322,16 +460,134 @@ begin
   Result := inherited Subject as TPressValue;
 end;
 
-function TPressMVPValueModel.GetValue: Variant;
+{ TPressMVPEnumValueItem }
+
+constructor TPressMVPEnumValueItem.Create;
 begin
-  { TODO : RTTI }
-  Result := Subject.AsVariant;
+  inherited Create;
 end;
 
-procedure TPressMVPValueModel.SetValue(Value: Variant);
+{ TPressMVPEnumValueList }
+
+function TPressMVPEnumValueList.Add(
+  AObject: TPressMVPEnumValueItem): Integer;
 begin
-  { TODO : RTTI }
-  Subject.AsVariant := Value;
+  Result := inherited Add(AObject);
+end;
+
+function TPressMVPEnumValueList.CreateIterator: TPressMVPEnumValueIterator;
+begin
+  Result := TPressMVPEnumValueIterator.Create(Self);
+end;
+
+function TPressMVPEnumValueList.Extract(
+  AObject: TPressMVPEnumValueItem): TPressMVPEnumValueItem;
+begin
+  Result := inherited Extract(AObject) as TPressMVPEnumValueItem;
+end;
+
+function TPressMVPEnumValueList.First: TPressMVPEnumValueItem;
+begin
+  Result := inherited First as TPressMVPEnumValueItem;
+end;
+
+function TPressMVPEnumValueList.GetItems(
+  AIndex: Integer): TPressMVPEnumValueItem;
+begin
+  Result := inherited Items[AIndex] as TPressMVPEnumValueItem;
+end;
+
+function TPressMVPEnumValueList.IndexOf(
+  AObject: TPressMVPEnumValueItem): Integer;
+begin
+  Result := inherited IndexOf(AObject);
+end;
+
+procedure TPressMVPEnumValueList.Insert(
+  AIndex: Integer; AObject: TPressMVPEnumValueItem);
+begin
+  inherited Insert(AIndex, AObject);
+end;
+
+function TPressMVPEnumValueList.InternalCreateIterator: TPressCustomIterator;
+begin
+  Result := CreateIterator;
+end;
+
+function TPressMVPEnumValueList.Last: TPressMVPEnumValueItem;
+begin
+  Result := inherited Last as TPressMVPEnumValueItem;
+end;
+
+function TPressMVPEnumValueList.Remove(
+  AObject: TPressMVPEnumValueItem): Integer;
+begin
+  Result := inherited Remove(AObject);
+end;
+
+procedure TPressMVPEnumValueList.SetItems(AIndex: Integer;
+  const Value: TPressMVPEnumValueItem);
+begin
+  inherited Items[AIndex] := Value;
+end;
+
+{ TPressMVPEnumValueIterator }
+
+function TPressMVPEnumValueIterator.GetCurrentItem: TPressMVPEnumValueItem;
+begin
+  Result := inherited CurrentItem as TPressMVPEnumValueItem;
+end;
+
+{ TPressMVPEnumModel }
+
+class function TPressMVPEnumModel.Apply: TPressSubjectClass;
+begin
+  Result := TPressEnum;
+end;
+
+function TPressMVPEnumModel.CreateEnumValueIterator(
+  AEnumQuery: string): TPressMVPEnumValueIterator;
+var
+  VEnumItems: TStrings;
+  VEnumValueItem: TPressMVPEnumValueItem;
+  I: Integer;
+begin
+  FEnumValues.Free;
+  FEnumValues := TPressMVPEnumValueList.Create(True);
+  VEnumItems := Subject.Metadata.EnumMetadata.Items;
+  AEnumQuery := AnsiUpperCase(AEnumQuery);
+  for I := 0 to Pred(VEnumItems.Count) do
+    if (AEnumQuery = '') or
+     (Pos(AEnumQuery, AnsiUpperCase(VEnumItems[I])) > 0) then
+    begin
+      VEnumValueItem := TPressMVPEnumValueItem.Create;
+      FEnumValues.Add(VEnumValueItem);
+      VEnumValueItem.EnumName := VEnumItems[I];
+      VEnumValueItem.EnumValue := I;
+    end;
+  Result := FEnumValues.CreateIterator;
+end;
+
+destructor TPressMVPEnumModel.Destroy;
+begin
+  FEnumValues.Free;
+  inherited;
+end;
+
+function TPressMVPEnumModel.EnumOf(AIndex: Integer): Integer;
+begin
+  if Assigned(FEnumValues) then
+    Result := FEnumValues[AIndex].EnumValue
+  else
+    Result := -1;
+end;
+
+function TPressMVPEnumModel.EnumValueCount: Integer;
+begin
+  if Assigned(FEnumValues) then
+    Result := FEnumValues.Count
+  else
+    Result := 0;
 end;
 
 { TPressMVPDateModel }
@@ -416,7 +672,191 @@ begin
   Result := True;
 end;
 
+{ TPressMVPColumnItem }
+
+constructor TPressMVPColumnItem.Create;
+begin
+  inherited Create;
+  FAttributeAlignment := taLeftJustify;
+  FHeaderAlignment := taCenter;
+  FWidth := 64;
+end;
+
+procedure TPressMVPColumnItem.ReadColumnItem(const AColumnItem: string);
+begin
+  if AColumnItem = '' then
+    Exit;
+  if AColumnItem[1] in ['0'..'9'] then
+  begin
+    try
+      FWidth := StrtoInt(AColumnItem)
+    except
+      on E: Exception do
+        if not (E is EConvertError) then
+          raise;
+    end;
+  end;
+  { TODO : Implement alignments, caption }
+end;
+
+{ TPressMVPColumnList }
+
+function TPressMVPColumnList.Add(AObject: TPressMVPColumnItem): Integer;
+begin
+  Result := inherited Add(AObject);
+end;
+
+function TPressMVPColumnList.CreateIterator: TPressMVPColumnIterator;
+begin
+  Result := TPressMVPColumnIterator.Create(Self);
+end;
+
+function TPressMVPColumnList.Extract(
+  AObject: TPressMVPColumnItem): TPressMVPColumnItem;
+begin
+  Result := inherited Extract(AObject) as TPressMVPColumnItem;
+end;
+
+function TPressMVPColumnList.First: TPressMVPColumnItem;
+begin
+  Result := inherited First as TPressMVPColumnItem;
+end;
+
+function TPressMVPColumnList.GetItems(AIndex: Integer): TPressMVPColumnItem;
+begin
+  Result := inherited Items[AIndex] as TPressMVPColumnItem;
+end;
+
+function TPressMVPColumnList.IndexOf(AObject: TPressMVPColumnItem): Integer;
+begin
+  Result := inherited IndexOf(AObject);
+end;
+
+procedure TPressMVPColumnList.Insert(
+  AIndex: Integer; AObject: TPressMVPColumnItem);
+begin
+  inherited Insert(AIndex, AObject);
+end;
+
+function TPressMVPColumnList.InternalCreateIterator: TPressCustomIterator;
+begin
+  Result := CreateIterator;
+end;
+
+function TPressMVPColumnList.Last: TPressMVPColumnItem;
+begin
+ Result := inherited Last as TPressMVPColumnItem;
+end;
+
+function TPressMVPColumnList.Remove(AObject: TPressMVPColumnItem): Integer;
+begin
+  Result := inherited Remove(AObject);
+end;
+
+procedure TPressMVPColumnList.SetItems(
+  AIndex: Integer; Value: TPressMVPColumnItem);
+begin
+  inherited Items[AIndex] := Value;
+end;
+
+{ TPressMVPColumnIterator }
+
+function TPressMVPColumnIterator.GetCurrentItem: TPressMVPColumnItem;
+begin
+  Result := inherited CurrentItem as TPressMVPColumnItem;
+end;
+
+{ TPressMVPColumnData }
+
+function TPressMVPColumnData.AddColumn: TPressMVPColumnItem;
+begin
+  Result := TPressMVPColumnItem.Create;
+  ColumnList.Add(Result);
+end;
+
+function TPressMVPColumnData.ColumnCount: Integer;
+begin
+  if Assigned(FColumnList) then
+    Result := FColumnList.Count
+  else
+    Result := 0;
+end;
+
+destructor TPressMVPColumnData.Destroy;
+begin
+  FColumnList.Free;
+  inherited;
+end;
+
+function TPressMVPColumnData.GetColumnList: TPressMVPColumnList;
+begin
+  if not Assigned(FColumnList) then
+    FColumnList := TPressMVPColumnList.Create(True);
+  Result := FColumnList;
+end;
+
+function TPressMVPColumnData.GetColumns(AIndex: Integer): TPressMVPColumnItem;
+begin
+  Result := ColumnList[AIndex];
+end;
+
 { TPressMVPStructureModel }
+
+procedure TPressMVPStructureModel.AssignColumnData(const AColumnData: string);
+var
+  VLastDelimiter, VDelimiterPos, VBracket1Pos, VBracket2Pos: Integer;
+  VColumnItemString: string;
+  VColumnItem: TPressMVPColumnItem;
+begin
+  if AColumnData = '' then
+    Exit;
+  VLastDelimiter := 0;
+  VDelimiterPos := 0;
+  repeat
+    Inc(VDelimiterPos);
+    while (VDelimiterPos <= Length(AColumnData)) and
+     (AColumnData[VDelimiterPos] <> SPressFieldDelimiter) do
+      Inc(VDelimiterPos);
+    VColumnItemString :=
+     Copy(AColumnData, VLastDelimiter + 1, VDelimiterPos - VLastDelimiter - 1);
+    VBracket1Pos := Pos(SPressBrackets[1], VColumnItemString);
+    VBracket2Pos := Pos(SPressBrackets[2], VColumnItemString);
+    if VBracket1Pos > VBracket2Pos then
+      raise EPressMVPError.CreateFmt(SColumnDataParseError,
+       [Subject.ClassName, Subject.Name, AColumnData]);
+    VColumnItem := ColumnData.AddColumn;
+    if VBracket1Pos = 0 then
+      VColumnItem.AttributeName := VColumnItemString
+    else
+    begin
+      VColumnItem.AttributeName :=
+       Copy(VColumnItemString, 1, VBracket1Pos - 1);
+      VColumnItem.ReadColumnItem(Copy(
+       VColumnItemString, VBracket1Pos + 1, VBracket2Pos - VBracket1Pos - 1));
+    end;
+    VLastDelimiter := VDelimiterPos;
+  until VDelimiterPos > Length(AColumnData);
+end;
+
+procedure TPressMVPStructureModel.AssignDisplayNames(
+  const ADisplayNames: string);
+begin
+  InternalAssignDisplayNames(ADisplayNames);
+  DoChanged(ctDisplay);
+end;
+
+destructor TPressMVPStructureModel.Destroy;
+begin
+  FColumnData.Free;
+  inherited;
+end;
+
+function TPressMVPStructureModel.GetColumnData: TPressMVPColumnData;
+begin
+  if not Assigned(FColumnData) then
+    FColumnData := TPressMVPColumnData.Create;
+  Result := FColumnData;
+end;
 
 function TPressMVPStructureModel.GetSelection: TPressMVPObjectSelection;
 begin
@@ -448,8 +888,18 @@ begin
     Selection.SelectObject(Subject.Value);
 end;
 
-function TPressMVPReferenceModel.CreateQueryIterator: TPressQueryIterator;
+function TPressMVPReferenceModel.CreateQueryIterator(
+  const AQueryString: string): TPressQueryIterator;
 begin
+  Query._Name.Metadata.PersistentName := FReferencedAttribute;
+  Query.Name := AQueryString;
+  Query.UpdateReferenceList;
+  if Query.Count > SPressMaxItemCount then
+  begin
+    PressDialog.DefaultDlg(
+     Format(SMaxItemCountReached, [Query.Count, SPressMaxItemCount]));
+    Query.Clear;
+  end;
   Result := Query.CreateIterator;
 end;
 
@@ -458,6 +908,22 @@ begin
   FQuery.Free;
   PressUnregisterMetadata(FMetadata);
   inherited;
+end;
+
+function TPressMVPReferenceModel.GetAsString: string;
+var
+  VObject: TPressObject;
+  VAttribute: TPressAttribute;
+begin
+  VObject := Subject.Value;
+  if Assigned(VObject) then
+    VAttribute := VObject.FindPathAttribute(FReferencedAttribute, False)
+  else
+    VAttribute := nil;
+  if Assigned(VAttribute) then
+    Result := VAttribute.DisplayText
+  else
+    Result := '';
 end;
 
 function TPressMVPReferenceModel.GetMetadata: TPressQueryMetadata;
@@ -483,16 +949,25 @@ begin
   Result := inherited Subject as TPressReference;
 end;
 
-function TPressMVPReferenceModel.GetValue: TPressObject;
-begin
-  { TODO : RTTI }
-  Result := Subject.Value;
-end;
-
 procedure TPressMVPReferenceModel.InitCommands;
 begin
   inherited;
   AddCommands([TPressMVPIncludeObjectCommand, TPressMVPEditItemCommand]);
+end;
+
+procedure TPressMVPReferenceModel.InternalAssignDisplayNames(
+  const ADisplayNames: string);
+var
+  VPos: Integer;
+begin
+  VPos := Pos(SPressFieldDelimiter, ADisplayNames);
+  if VPos > 0 then
+  begin
+    FReferencedAttribute := Copy(ADisplayNames, 1, VPos - 1);
+    AssignColumnData(
+     Copy(ADisplayNames, VPos + 1, Length(ADisplayNames) - VPos - 1));
+  end else
+    FReferencedAttribute := ADisplayNames;
 end;
 
 procedure TPressMVPReferenceModel.Notify(AEvent: TPressEvent);
@@ -502,18 +977,21 @@ begin
     Selection.SelectObject(Subject.Value);
 end;
 
-procedure TPressMVPReferenceModel.SetValue(Value: TPressObject);
+function TPressMVPReferenceModel.ObjectOf(AIndex: Integer): TPressObject;
 begin
-  { TODO : RTTI }
-  Subject.Value := Value;
+  Result := Query[AIndex];
 end;
 
-procedure TPressMVPReferenceModel.UpdateQuery(
-  const ADisplayName, AQueryValue: string);
+function TPressMVPReferenceModel.ReferencedValue(
+  AObject: TPressObject): TPressValue;
+var
+  VAttribute: TPressAttribute;
 begin
-  Query._Name.Metadata.PersistentName := ADisplayName;
-  Query.Name := AQueryValue;
-  Query.UpdateReferenceList;
+  VAttribute := AObject.AttributeByPath(FReferencedAttribute);
+  if not (VAttribute is TPressValue) then
+    raise EPressMVPError.CreateFmt(SAttributeIsNotValue,
+     [AObject.ClassName, VAttribute.Name]);
+  Result := TPressValue(VAttribute);
 end;
 
 { TPressMVPObjectItem }
@@ -594,15 +1072,22 @@ begin
   end;
 end;
 
+constructor TPressMVPObjectList.Create(AColumnData: TPressMVPColumnData);
+begin
+  inherited Create(True);
+  FColumnData := AColumnData;
+end;
+
 procedure TPressMVPObjectList.CreateAttributes(
   AObjectItem: TPressMVPObjectItem);
 var
   VAttr: TPressAttribute;
   I: Integer;
 begin
-  for I := 0 to Pred(DisplayNameList.Count) do
+  for I := 0 to Pred(FColumnData.ColumnCount) do
   begin
-    VAttr := AObjectItem.Instance.FindPathAttribute(DisplayNameList[I]);
+    VAttr :=
+     AObjectItem.Instance.FindPathAttribute(FColumnData[I].AttributeName);
     AObjectItem.AddAttribute(VAttr);
   end;
 end;
@@ -618,23 +1103,10 @@ begin
   Result := TPressMVPObjectItem.Create(Self, AProxy);
 end;
 
-destructor TPressMVPObjectList.Destroy;
-begin
-  FDisplayNameList.Free;
-  inherited;
-end;
-
 function TPressMVPObjectList.Extract(
   AObject: TPressMVPObjectItem): TPressMVPObjectItem;
 begin
   Result := inherited Extract(AObject) as TPressMVPObjectItem;
-end;
-
-function TPressMVPObjectList.GetDisplayNameList: TStrings;
-begin
-  if not Assigned(FDisplayNameList) then
-    FDisplayNameList := TStringList.Create;
-  Result := FDisplayNameList;
 end;
 
 function TPressMVPObjectList.GetItems(
@@ -711,28 +1183,6 @@ begin
     Delete(Result);
 end;
 
-procedure TPressMVPObjectList.ResetAttributes;
-begin
-  with CreateIterator do
-  try
-    BeforeFirstItem;
-    while NextItem do
-      CurrentItem.ClearAttributes;
-  finally
-    Free;
-  end;
-end;
-
-procedure TPressMVPObjectList.SetDisplayNames(const Value: string);
-begin
-  if FDisplayNames <> Value then
-  begin
-    FDisplayNames := Value;
-    DisplayNameList.Text := Value;
-    ResetAttributes;
-  end;
-end;
-
 procedure TPressMVPObjectList.SetItems(
   AIndex: Integer; Value: TPressMVPObjectItem);
 begin
@@ -775,15 +1225,10 @@ begin
     Result := ObjectList[ARow].DisplayText[ACol];
 end;
 
-function TPressMVPItemsModel.GetDisplayNames: string;
-begin
-  Result := ObjectList.DisplayNames;
-end;
-
 function TPressMVPItemsModel.GetObjectList: TPressMVPObjectList;
 begin
   if not Assigned(FObjectList) then
-    FObjectList := TPressMVPObjectList.Create(True);
+    FObjectList := TPressMVPObjectList.Create(ColumnData);
   Result := FObjectList;
 end;
 
@@ -808,6 +1253,12 @@ begin
   InternalCreateAddCommands;
   InternalCreateEditCommands;
   InternalCreateRemoveCommands;
+end;
+
+procedure TPressMVPItemsModel.InternalAssignDisplayNames(
+  const ADisplayNames: string);
+begin
+  AssignColumnData(ADisplayNames);
 end;
 
 procedure TPressMVPItemsModel.InternalCreateAddCommands;
@@ -881,7 +1332,7 @@ begin
       RebuildObjectList;
   end;
   if AEvent.EventType <> ietNotify then
-    Changed;
+    DoChanged(ctSubject);
 end;
 
 procedure TPressMVPItemsModel.Notify(AEvent: TPressEvent);
@@ -911,14 +1362,9 @@ begin
   Selection.SelectObject(ObjectList[AIndex].Instance);
 end;
 
-procedure TPressMVPItemsModel.SetDisplayNames(const Value: string);
-begin
-  ObjectList.DisplayNames := Value;
-end;
-
 function TPressMVPItemsModel.TextAlignment(ACol: Integer): TAlignment;
 begin
-  Result := taLeftJustify;
+  Result := ColumnData[ACol].AttributeAlignment;
 end;
 
 { TPressMVPPartsModel }
@@ -999,8 +1445,6 @@ end;
 function TPressMVPObjectModel.GetSubject: TPressObject;
 begin
   Result := inherited Subject as TPressObject;
-  if not Assigned(Result) then
-    raise EPressMVPError.Create(SUnassignedSubject);
 end;
 
 function TPressMVPObjectModel.GetSubModels: TPressMVPModelList;
@@ -1093,6 +1537,7 @@ end;
 procedure RegisterModels;
 begin
   TPressMVPValueModel.RegisterModel;
+  TPressMVPEnumModel.RegisterModel;
   TPressMVPDateModel.RegisterModel;
   TPressMVPPictureModel.RegisterModel;
   TPressMVPReferenceModel.RegisterModel;

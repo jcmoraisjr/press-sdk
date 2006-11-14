@@ -47,7 +47,7 @@ type
 
   TPressServiceType = (
    stPersistence, stOIDGenerator, stUserData,
-   stReport, stReportData);
+   stReport, stReportData, stMVPFactory);
 
   TPressRegistry = class;
 
