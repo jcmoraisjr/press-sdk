@@ -257,7 +257,11 @@ type
 implementation
 
 uses
+  {$IFDEF FPC}
+  LCLType,
+  {$ELSE}
   Windows, { TODO : Move to Compatibility }
+  {$ENDIF}
   SysUtils,
   Forms,
   ExtDlgs,

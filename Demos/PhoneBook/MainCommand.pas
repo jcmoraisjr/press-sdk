@@ -25,7 +25,7 @@ type
 implementation
 
 uses
-  Windows, Menus, ObjectModel;
+  {$IFDEF FPC}LCLType{$ELSE}Windows{$ENDIF}, Menus, ObjectModel;
 
 { TMainAddPersonCommand }
 

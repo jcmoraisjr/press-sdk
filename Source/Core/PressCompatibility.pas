@@ -48,7 +48,7 @@ type
    {$IFDEF FPC}Calendar.TCustomCalendar{$ELSE}ComCtrls.TCommonCalendar{$ENDIF};
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
-procedure GenerateGUID(var AGUID: TGUID);
+procedure GenerateGUID(out AGUID: TGUID);
 procedure OutputDebugString(const AStr: string);
 procedure ThreadSafeIncrement(var AValue: Integer);
 procedure ThreadSafeDecrement(var AValue: Integer);
@@ -57,7 +57,7 @@ implementation
 
 uses
   {$IFDEF FPC}MaskEdit{$ELSE}{$IFDEF D6+}MaskUtils{$ELSE}Mask{$ENDIF}{$ENDIF},
-  {$IFNDEF FPC}ComObj,{$ENDIF} ActiveX;
+  {$IFDEF FPC}SysUtils{$ELSE}ActiveX, ComObj{$ENDIF};
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
 begin
@@ -67,15 +67,19 @@ begin
 end;
 
 {$IFDEF FPC}
-procedure OleCheck(AResult: HResult);
+procedure CreateGUIDResultCheck(AResult: Integer);
 begin
   { TODO : Check error }
 end;
 {$ENDIF}
 
-procedure GenerateGUID(var AGUID: TGUID);
+procedure GenerateGUID(out AGUID: TGUID);
 begin
+  {$IFDEF FPC}
+  CreateGUIDResultCheck(CreateGUID(AGUID));
+  {$ELSE}
   OleCheck(CoCreateGUID(AGUID));
+  {$ENDIF}
 end;
 
 procedure OutputDebugString(const AStr: string);
