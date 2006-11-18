@@ -26,8 +26,6 @@ uses
   CityEdit,
   CityEditPresenter;
 
-{$R *.RES}
-
 begin
   Application.Title := 'PhoneBook';
   Application.Initialize;
