@@ -21,9 +21,9 @@
 
 unit PressLog;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
   Classes,

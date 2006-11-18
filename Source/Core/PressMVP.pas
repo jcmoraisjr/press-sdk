@@ -21,9 +21,9 @@
 
 unit PressMVP;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
   Classes,
@@ -380,7 +380,6 @@ implementation
 
 uses
   SysUtils,
-  Contnrs,
   PressConsts,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressUser,

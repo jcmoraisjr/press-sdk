@@ -21,9 +21,9 @@
 
 unit PressParser;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
   PressClasses;

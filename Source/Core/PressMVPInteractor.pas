@@ -21,9 +21,9 @@
 
 unit PressMVPInteractor;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
   Classes,

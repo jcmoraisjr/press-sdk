@@ -21,9 +21,9 @@
 
 unit PressMVPFactory;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
   Controls,

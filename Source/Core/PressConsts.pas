@@ -21,9 +21,9 @@
 
 unit PressConsts;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 const
   SPressMaxItemCount = 100;

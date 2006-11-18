@@ -21,9 +21,9 @@
 
 unit PressMVPView;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
   Classes,

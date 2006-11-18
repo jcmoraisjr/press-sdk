@@ -21,9 +21,9 @@
 
 unit PressPersistence;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
   PressApplication,
@@ -116,7 +116,6 @@ implementation
 
 uses
   SysUtils,
-  Contnrs,
   ActiveX,
   ComObj,
   PressClasses,

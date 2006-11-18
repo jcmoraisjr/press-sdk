@@ -21,9 +21,9 @@
 
 unit PressMVPCommand;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
   Classes,

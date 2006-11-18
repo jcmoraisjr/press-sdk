@@ -21,6 +21,8 @@
 
 unit PressMVPPresenter;
 
+{$I Press.inc}
+
 interface
 
 uses
@@ -32,8 +34,6 @@ uses
   PressMVP,
   PressMVPModel,
   PressMVPView;
-
-{$I Press.inc}
 
 type
   TPressMVPPresenter = class;

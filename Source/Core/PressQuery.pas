@@ -21,6 +21,8 @@
 
 unit PressQuery;
 
+{$I Press.inc}
+
 interface
 
 uses

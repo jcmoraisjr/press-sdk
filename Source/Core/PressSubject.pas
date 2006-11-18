@@ -21,9 +21,9 @@
 
 unit PressSubject;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
 {$IFDEF USE_INSTANTOBJECTS}

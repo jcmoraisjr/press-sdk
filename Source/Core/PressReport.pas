@@ -21,9 +21,9 @@
 
 unit PressReport;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
   Classes,

@@ -21,9 +21,9 @@
 
 unit PressCompatibility;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
   {$IFDEF FPC}Calendar, Grids{$ELSE}ComCtrls{$ENDIF}

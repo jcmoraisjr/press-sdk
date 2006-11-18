@@ -21,9 +21,9 @@
 
 unit PressMetadata;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
   Classes,

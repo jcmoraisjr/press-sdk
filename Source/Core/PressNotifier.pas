@@ -21,14 +21,12 @@
 
 unit PressNotifier;
 
-interface
-
 {$DEFINE PressBaseUnit}
-
 {$I Press.inc}
 
+interface
+
 uses
-  Contnrs,
   PressClasses;
 
 type

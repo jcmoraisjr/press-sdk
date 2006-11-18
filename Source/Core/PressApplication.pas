@@ -21,11 +21,10 @@
 
 unit PressApplication;
 
-interface
-
 {$DEFINE PressBaseUnit}
-
 {$I Press.inc}
+
+interface
 
 uses
   Forms,

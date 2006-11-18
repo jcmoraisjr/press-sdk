@@ -21,9 +21,9 @@
 
 unit PressUser;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
   PressApplication,

@@ -21,9 +21,9 @@
 
 unit PressDialogs;
 
-interface
-
 {$I Press.inc}
+
+interface
 
 uses
   PressClasses;
