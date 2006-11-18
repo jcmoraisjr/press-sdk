@@ -116,8 +116,7 @@ implementation
 
 uses
   SysUtils,
-  ActiveX,
-  ComObj,
+  PressCompatibility,
   PressClasses,
   PressConsts
   {$IFDEF PressLog},PressLog{$ENDIF};
@@ -147,7 +146,7 @@ var
   VId: array[0..15] of Byte;
   I: Integer;
 begin
-  OleCheck(CoCreateGUID(TGUID(VId)));
+  GenerateGUID(TGUID(VId));
   SetLength(Result, 32);
   for I := 0 to 15 do
     Move(IntToHex(VId[I], 2)[1], Result[2*I+1], 2);

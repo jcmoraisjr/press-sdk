@@ -51,15 +51,16 @@ type
   private
     FIncludeSubClasses: Boolean;
     FItemObjectClass: TPressObjectClass;
-    FItemObjectClassName: string;
     FOrderFieldName: string;
+    function GetItemObjectClassName: string;
+    procedure SetItemObjectClass(Value: TPressObjectClass);
     procedure SetItemObjectClassName(const Value: string);
   protected
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; override;
   public
     property IncludeSubClasses: Boolean read FIncludeSubClasses;
-    property ItemObjectClass: TPressObjectClass read FItemObjectClass;
-    property ItemObjectClassName: string read FItemObjectClassName write SetItemObjectClassName;
+    property ItemObjectClass: TPressObjectClass read FItemObjectClass write SetItemObjectClass;
+    property ItemObjectClassName: string read GetItemObjectClassName write SetItemObjectClassName;
     property OrderFieldName: string read FOrderFieldName;
   published
     property Any: Boolean read FIncludeSubClasses write FIncludeSubClasses default False;
@@ -115,25 +116,43 @@ end;
 
 { TPressQueryMetadata }
 
+function TPressQueryMetadata.GetItemObjectClassName: string;
+begin
+  if Assigned(FItemObjectClass) then
+    Result := FItemObjectClass.ClassName
+  else
+    Result := '';
+end;
+
 function TPressQueryMetadata.InternalAttributeMetadataClass: TPressAttributeMetadataClass;
 begin
   Result := TPressQueryAttributeMetadata;
 end;
 
+procedure TPressQueryMetadata.SetItemObjectClass(Value: TPressObjectClass);
+var
+  VAttributeMetadata: TPressAttributeMetadata;
+  I: Integer;
+begin
+  if FItemObjectClass <> Value then
+  begin
+    I := AttributeMetadatas.IndexOfName(SPressQueryItemsString);
+    if I = -1 then
+    begin
+      VAttributeMetadata := InternalAttributeMetadataClass.Create(Self);
+      VAttributeMetadata.Name := SPressQueryItemsString;
+      VAttributeMetadata.AttributeName := TPressReferences.AttributeName;
+    end else
+      VAttributeMetadata := AttributeMetadatas[I];
+    VAttributeMetadata.ObjectClass := Value;
+    FItemObjectClass := Value;
+  end;
+end;
+
 procedure TPressQueryMetadata.SetItemObjectClassName(const Value: string);
 begin
-  if FItemObjectClassName <> Value then
-  begin
-    { TODO : Remove old ItemMetadata, if it exists }
-    with TPressAttributeMetadata.Create(Self) do
-    begin
-      Name := SPressQueryItemsString;
-      AttributeName := TPressReferences.AttributeName;
-      ObjectClassName := Value;
-    end;
-    FItemObjectClass := PressObjectClassByName(Value);
-    FItemObjectClassName := Value;
-  end;
+  if ItemObjectClassName <> Value then
+    ItemObjectClass := PressObjectClassByName(Value);
 end;
 
 { TPressQuery }

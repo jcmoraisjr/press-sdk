@@ -40,12 +40,14 @@ type
 
   {$IFDEF FPC}
   TDrawCellEvent = TOnDrawCell;
+  TSelectCellEvent = TOnSelectCellEvent;
   {$ENDIF}
 
   TCustomCalendar =
    {$IFDEF FPC}Calendar.TCustomCalendar{$ELSE}ComCtrls.TCommonCalendar{$ENDIF};
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
+procedure GenerateGUID(var AGUID: TGUID);
 procedure OutputDebugString(const AStr: string);
 procedure ThreadSafeIncrement(var AValue: Integer);
 procedure ThreadSafeDecrement(var AValue: Integer);
@@ -53,7 +55,8 @@ procedure ThreadSafeDecrement(var AValue: Integer);
 implementation
 
 uses
-  {$IFDEF FPC}MaskEdit{$ELSE}{$IFDEF D6+}MaskUtils{$ELSE}Mask{$ENDIF}{$ENDIF};
+  {$IFDEF FPC}MaskEdit{$ELSE}{$IFDEF D6+}MaskUtils{$ELSE}Mask{$ENDIF}{$ENDIF},
+  {$IFNDEF FPC}ComObj,{$ENDIF} ActiveX;
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
 begin
@@ -62,19 +65,41 @@ begin
    FormatMaskText(EditMask, Value);
 end;
 
+{$IFDEF FPC}
+procedure OleCheck(AResult: HResult);
+begin
+  { TODO : Check error }
+end;
+{$ENDIF}
+
+procedure GenerateGUID(var AGUID: TGUID);
+begin
+  OleCheck(CoCreateGUID(AGUID));
+end;
+
 procedure OutputDebugString(const AStr: string);
 begin
+  {$IFNDEF FPC}
   Windows.OutputDebugString(PChar(AStr));
+  {$ENDIF}
 end;
 
 procedure ThreadSafeIncrement(var AValue: Integer);
 begin
+  {$IFDEF FPC}
+  Inc(AValue);  // IncLocked(AValue);
+  {$ELSE}
   InterlockedIncrement(AValue);
+  {$ENDIF}
 end;
 
 procedure ThreadSafeDecrement(var AValue: Integer);
 begin
+  {$IFDEF FPC}
+  Dec(AValue);  // DecLocked(AValue);
+  {$ELSE}
   InterlockedDecrement(AValue);
+  {$ENDIF}
 end;
 
 end.

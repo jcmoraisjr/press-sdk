@@ -138,14 +138,15 @@ type
     FIsPersistent: Boolean;
     FName: string;
     FObjectClass: TPressObjectClass;
-    FObjectClassName: string;
     FOwner: TPressObjectMetadata;
     FPersistentName: string;
     FSize: Integer;
+    function GetObjectClassName: string;
     procedure SetAttributeName(const Value: string);
     procedure SetCalcMetadata(Value: TPressCalcMetadata);
     procedure SetEnumMetadata(Value: TPressEnumMetadata);
     procedure SetName(const Value: string);
+    procedure SetObjectClass(Value: TPressObjectClass);
     procedure SetObjectClassName(const Value: string);
   public
     constructor Create(AOwner: TPressObjectMetadata); virtual;
@@ -156,8 +157,8 @@ type
     property CalcMetadata: TPressCalcMetadata read FCalcMetadata write SetCalcMetadata;
     property EnumMetadata: TPressEnumMetadata read FEnumMetadata write SetEnumMetadata;
     property Name: string read FName write SetName;
-    property ObjectClass: TPressObjectClass read FObjectClass;
-    property ObjectClassName: string read FObjectClassName write SetObjectClassName;
+    property ObjectClass: TPressObjectClass read FObjectClass write SetObjectClass;
+    property ObjectClassName: string read GetObjectClassName write SetObjectClassName;
     property Owner: TPressObjectMetadata read FOwner;
   published
     property DefaultValue: string read FDefaultValue write FDefaultValue;
@@ -179,6 +180,7 @@ type
     function Add(AObject: TPressAttributeMetadata): Integer;
     function CreateIterator: TPressAttributeMetadataIterator;
     function IndexOf(AObject: TPressAttributeMetadata): Integer;
+    function IndexOfName(const AName: string): Integer;
     procedure Insert(Index: Integer; AObject: TPressAttributeMetadata);
     function Remove(AObject: TPressAttributeMetadata): Integer;
     function RemoveMetadataName(const AName: string): Integer;
@@ -501,7 +503,9 @@ type
   TDate = TDateTime;
   TTime = TDateTime;
 
+  {$M+}
   TPressString = class;
+  {$M-}
   TPressAttributeList = class;
   TPressAttributeIterator = class;
 
@@ -566,7 +570,7 @@ type
     procedure Changed(AAttribute: TPressAttribute);
     procedure Changing(AAttribute: TPressAttribute);
     class function ClassMetadata: TPressObjectMetadata;
-    function ClassType: TPressObjectClass;
+    {$IFDEF FPC}class{$ENDIF} function ClassType: TPressObjectClass;
     function Clone: TPressObject;
     function CreateAttributeIterator: TPressAttributeIterator;
     class function CreateAttributeMapIterator(AMetadata: TPressObjectMetadata = nil): TPressAttributeMapIterator;
@@ -837,7 +841,7 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; virtual; abstract;
     class function AttributeName: string; virtual; abstract;
     procedure Changed;
-    function ClassType: TPressAttributeClass;
+    {$IFDEF FPC}class{$ENDIF} function ClassType: TPressAttributeClass;
     procedure Clear;
     function Clone: TPressAttribute;
     procedure DisableChanges;
@@ -1799,6 +1803,14 @@ begin
   inherited;
 end;
 
+function TPressAttributeMetadata.GetObjectClassName: string;
+begin
+  if Assigned(FObjectClass) then
+    Result := FObjectClass.ClassName
+  else
+    Result := '';
+end;
+
 procedure TPressAttributeMetadata.SetAttributeName(const Value: string);
 var
   VAttributeClass: TPressAttributeClass;
@@ -1829,10 +1841,15 @@ begin
     FPersistentName := FName;
 end;
 
+procedure TPressAttributeMetadata.SetObjectClass(Value: TPressObjectClass);
+begin
+  FObjectClass := Value;
+end;
+
 procedure TPressAttributeMetadata.SetObjectClassName(const Value: string);
 begin
-  FObjectClass := PressObjectClassByName(Value);
-  FObjectClassName := Value;
+  if ObjectClassName <> Value then
+    ObjectClass := PressObjectClassByName(Value);
 end;
 
 { TPressAttributeMetadataList }
@@ -1858,6 +1875,14 @@ function TPressAttributeMetadataList.IndexOf(
   AObject: TPressAttributeMetadata): Integer;
 begin
   Result := inherited IndexOf(AObject);
+end;
+
+function TPressAttributeMetadataList.IndexOfName(const AName: string): Integer;
+begin
+  for Result := 0 to Pred(Count) do
+    if SameText(Items[Result].Name, AName) then
+      Exit;
+  Result := -1;
 end;
 
 procedure TPressAttributeMetadataList.Insert(Index: Integer;
@@ -2779,7 +2804,7 @@ begin
   Result := TPressMetaParser.ParseMetadata(VMetadataStr);
 end;
 
-function TPressObject.ClassType: TPressObjectClass;
+{$IFDEF FPC}class{$ENDIF} function TPressObject.ClassType: TPressObjectClass;
 begin
   Result := TPressObjectClass(inherited ClassType);
 end;
@@ -3233,7 +3258,7 @@ end;
 
 constructor TPressSingletonObject.Instance;
 begin
-  Self := Retrieve(SingletonOID);
+  Self := TPressSingletonObject(Retrieve(SingletonOID));
 end;
 
 class procedure TPressSingletonObject.RegisterOID(AOID: string);
@@ -3723,7 +3748,7 @@ begin
     FOwner.Changing(Self);
 end;
 
-function TPressAttribute.ClassType: TPressAttributeClass;
+{$IFDEF FPC}class{$ENDIF} function TPressAttribute.ClassType: TPressAttributeClass;
 begin
   Result := TPressAttributeClass(inherited ClassType);
 end;
