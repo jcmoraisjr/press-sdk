@@ -473,7 +473,10 @@ begin
       VValue := SPressTrueString;
     if not Assigned(GetPropInfo(FTarget, VPropertyName)) then
       Reader.ErrorExpected(CPropertyName, VPropertyName);
+    { TODO : Implement FPC RTTI routines }
+    {$IFNDEF FPC}
     SetPropValue(FTarget, VPropertyName, VValue);
+    {$ENDIF}
   end;
   Reader.UnreadToken;
 end;
