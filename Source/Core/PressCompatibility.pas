@@ -26,7 +26,7 @@ unit PressCompatibility;
 interface
 
 uses
-  {$IFDEF FPC}Calendar, Grids{$ELSE}ComCtrls{$ENDIF}
+  {$IFDEF FPC}Calendar{$ELSE}ComCtrls{$ENDIF}, Grids
   {$IFDEF DELPHI}, Windows{$ENDIF};
 
 type
@@ -36,6 +36,7 @@ type
 
   {$IFDEF DELPHI}
   TRect = Windows.TRect;
+  TCustomDrawGrid = TDrawGrid;
   {$ENDIF}
 
   {$IFDEF FPC}

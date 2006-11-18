@@ -388,7 +388,7 @@ type
     {$ENDIF}
     FViewDrawCellEvent: TDrawCellEvent;
     FViewSelectCellEvent: TSelectCellEvent;
-    function GetControl: TDrawGrid;
+    function GetControl: TCustomDrawGrid;
     procedure ViewDrawCellEvent(Sender: TObject; ACol, ARow: Longint; ARect: TRect; State: TGridDrawState);
     procedure ViewSelectCellEvent(Sender: TObject; ACol, ARow: Longint; var CanSelect: Boolean);
   protected
@@ -404,7 +404,7 @@ type
   public
     procedure AlignColumns;
     class function Apply(AControl: TControl): Boolean; override;
-    property Control: TDrawGrid read GetControl;
+    property Control: TCustomDrawGrid read GetControl;
     {$IFDEF PressViewDirectEvent}
     property OnDrawCell: TPressDrawCellEvent read FOnDrawCell write FOnDrawCell;
     property OnSelectCell: TSelectCellEvent read FOnSelectCell write FOnSelectCell;
@@ -1263,12 +1263,12 @@ end;
 
 class function TPressMVPGridView.Apply(AControl: TControl): Boolean;
 begin
-  Result := AControl is TDrawGrid;
+  Result := AControl is TCustomDrawGrid;
 end;
 
-function TPressMVPGridView.GetControl: TDrawGrid;
+function TPressMVPGridView.GetControl: TCustomDrawGrid;
 begin
-  Result := inherited Control as TDrawGrid;
+  Result := inherited Control as TCustomDrawGrid;
 end;
 
 procedure TPressMVPGridView.InitView;
@@ -1287,7 +1287,7 @@ end;
 
 procedure TPressMVPGridView.InternalAlignColumns;
 var
-  VControl: TDrawGrid;
+  VControl: TCustomDrawGrid;
   VColCount, VClientWidth, VTotalWidth, VWidth, VDiff, VDelta: Integer;
   I: Integer;
 begin
