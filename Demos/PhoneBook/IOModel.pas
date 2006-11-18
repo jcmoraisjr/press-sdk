@@ -1,5 +1,7 @@
 unit IOModel;
 
+{$I PhoneBook.inc}
+
 interface
 
 uses

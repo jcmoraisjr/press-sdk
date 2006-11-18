@@ -1,18 +1,17 @@
 unit CompanyEdit;
 
+{$I PhoneBook.inc}
+
 interface
 
 uses
+  {$IFDEF FPC}LResources,{$ENDIF}
   Classes, Controls, StdCtrls, ExtCtrls, Grids, ContactEdit;
 
 type
   TCompanyEditForm = class(TContactEditForm)
     ContactLabel: TLabel;
     ContactComboBox: TComboBox;
-  private
-    { Private declarations }
-  public
-    { Public declarations }
   end;
 
 var
@@ -20,6 +19,11 @@ var
 
 implementation
 
+{$IFNDEF FPC}
 {$R *.DFM}
+{$ELSE}
+initialization
+  {$i CompanyEdit.lrs}
+{$ENDIF}
 
 end.

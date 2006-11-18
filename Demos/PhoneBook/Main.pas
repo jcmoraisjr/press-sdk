@@ -1,8 +1,11 @@
 unit Main;
 
+{$I PhoneBook.inc}
+
 interface
 
 uses
+  {$IFDEF FPC}LResources,{$ENDIF}
   Classes, Controls, StdCtrls, ExtCtrls, Menus, Buttons, Grids, Forms;
 
 type
@@ -22,6 +25,11 @@ var
 
 implementation
 
+{$IFNDEF FPC}
 {$R *.DFM}
+{$ELSE}
+initialization
+  {$i Main.lrs}
+{$ENDIF}
 
 end.

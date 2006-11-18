@@ -1,5 +1,7 @@
 unit CompanyEditPresenter;
 
+{$I PhoneBook.inc}
+
 interface
 
 uses

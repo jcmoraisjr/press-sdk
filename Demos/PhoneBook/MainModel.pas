@@ -1,5 +1,7 @@
 unit MainModel;
 
+{$I PhoneBook.inc}
+
 interface
 
 uses

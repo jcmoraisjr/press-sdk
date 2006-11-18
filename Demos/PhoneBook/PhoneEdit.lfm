@@ -1,0 +1,62 @@
+inherited PhoneEditForm: TPhoneEditForm
+  Height = 154
+  Width = 172
+  HorzScrollBar.Page = 171
+  VertScrollBar.Page = 153
+  Caption = 'Phone'
+  inherited ClientPanel: TPanel
+    Height = 113
+    Width = 172
+    object NumberLabel: TLabel[0]
+      Left = 16
+      Height = 14
+      Top = 56
+      Width = 42
+      Caption = 'Number:'
+      Color = clNone
+      FocusControl = NumberEdit
+      ParentColor = False
+    end
+    object PhoneTypeLabel: TLabel[1]
+      Left = 16
+      Height = 14
+      Top = 8
+      Width = 59
+      Caption = 'PhoneType:'
+      Color = clNone
+      FocusControl = PhoneTypeComboBox
+      ParentColor = False
+    end
+    inherited LinePanel: TPanel
+      Top = 111
+      Width = 172
+    end
+    object NumberEdit: TEdit
+      Left = 16
+      Height = 21
+      Top = 72
+      Width = 121
+      TabOrder = 2
+      Text = 'NumberEdit'
+    end
+    object PhoneTypeComboBox: TComboBox
+      Left = 16
+      Height = 21
+      Top = 24
+      Width = 121
+      AutoCompleteText = [cbactEndOfLineComplete, cbactSearchAscending]
+      ItemHeight = 13
+      MaxLength = 0
+      TabOrder = 1
+      Text = 'PhoneTypeComboBox'
+    end
+  end
+  inherited BottomPanel: TPanel
+    Top = 113
+    Width = 172
+    inherited OkButton: TButton
+    end
+    inherited CancelButton: TButton
+    end
+  end
+end

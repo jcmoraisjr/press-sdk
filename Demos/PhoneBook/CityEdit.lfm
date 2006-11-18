@@ -1,0 +1,59 @@
+inherited CityEditForm: TCityEditForm
+  Height = 156
+  Width = 239
+  HorzScrollBar.Page = 238
+  VertScrollBar.Page = 155
+  Caption = 'City'
+  inherited ClientPanel: TPanel
+    Height = 115
+    Width = 239
+    object NameLabel: TLabel[0]
+      Left = 24
+      Height = 14
+      Top = 8
+      Width = 32
+      Caption = 'Name:'
+      Color = clNone
+      FocusControl = NameEdit
+      ParentColor = False
+    end
+    object StateLabel: TLabel[1]
+      Left = 24
+      Height = 14
+      Top = 56
+      Width = 31
+      Caption = 'State:'
+      Color = clNone
+      FocusControl = StateEdit
+      ParentColor = False
+    end
+    inherited LinePanel: TPanel
+      Top = 113
+      Width = 239
+    end
+    object NameEdit: TEdit
+      Left = 24
+      Height = 21
+      Top = 24
+      Width = 185
+      TabOrder = 1
+      Text = 'NameEdit'
+    end
+    object StateEdit: TEdit
+      Left = 24
+      Height = 21
+      Top = 72
+      Width = 65
+      TabOrder = 2
+      Text = 'StateEdit'
+    end
+  end
+  inherited BottomPanel: TPanel
+    Top = 115
+    Width = 239
+    inherited OkButton: TButton
+    end
+    inherited CancelButton: TButton
+    end
+  end
+end

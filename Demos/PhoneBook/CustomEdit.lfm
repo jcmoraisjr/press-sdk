@@ -1,0 +1,55 @@
+object CustomEditForm: TCustomEditForm
+  Left = 250
+  Height = 196
+  Top = 143
+  Width = 297
+  HorzScrollBar.Page = 296
+  VertScrollBar.Page = 195
+  ActiveControl = OkButton
+  BorderStyle = bsDialog
+  Caption = 'CustomEditForm'
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  object ClientPanel: TPanel
+    Height = 155
+    Width = 297
+    Align = alClient
+    BevelOuter = bvNone
+    TabOrder = 0
+    object LinePanel: TPanel
+      Height = 2
+      Top = 153
+      Width = 297
+      Align = alBottom
+      BevelOuter = bvLowered
+      TabOrder = 0
+    end
+  end
+  object BottomPanel: TPanel
+    Height = 41
+    Top = 155
+    Width = 297
+    Align = alBottom
+    BevelOuter = bvNone
+    TabOrder = 1
+    object OkButton: TButton
+      Left = 8
+      Height = 25
+      Top = 8
+      Width = 75
+      BorderSpacing.InnerBorder = 4
+      Caption = 'OK'
+      TabOrder = 0
+    end
+    object CancelButton: TButton
+      Left = 88
+      Height = 25
+      Top = 8
+      Width = 75
+      BorderSpacing.InnerBorder = 4
+      Cancel = True
+      Caption = 'Cancel'
+      TabOrder = 1
+    end
+  end
+end

@@ -1,5 +1,7 @@
 unit MainCommand;
 
+{$I PhoneBook.inc}
+
 interface
 
 uses

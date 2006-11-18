@@ -1,9 +1,12 @@
 unit CustomEdit;
 
+{$I PhoneBook.inc}
+
 interface
 
 uses
-  Classes, Controls, StdCtrls, ExtCtrls, Forms;
+  {$IFDEF FPC}LResources,{$ENDIF}
+  Classes, Controls, StdCtrls, ExtCtrls, Forms, Buttons;
 
 type
   TCustomEditForm = class(TForm)
@@ -16,6 +19,11 @@ type
 
 implementation
 
+{$IFNDEF FPC}
 {$R *.DFM}
+{$ELSE}
+initialization
+  {$i CustomEdit.lrs}
+{$ENDIF}
 
 end.
