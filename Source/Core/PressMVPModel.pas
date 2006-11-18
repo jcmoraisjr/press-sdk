@@ -260,9 +260,11 @@ type
     function GetQuery: TPressMVPReferenceQuery;
     function GetSubject: TPressReference;
   protected
+    function CreateReferenceQuery: TPressMVPReferenceQuery; virtual;
     function GetAsString: string; override;
     procedure InitCommands; override;
     procedure InternalAssignDisplayNames(const ADisplayNames: string); override;
+    procedure InternalUpdateQueryMetadata(const AQueryString: string); virtual;
     procedure Notify(AEvent: TPressEvent); override;
     property Metadata: TPressQueryMetadata read GetMetadata;
   public
@@ -891,8 +893,7 @@ end;
 function TPressMVPReferenceModel.CreateQueryIterator(
   const AQueryString: string): TPressQueryIterator;
 begin
-  Query._Name.Metadata.PersistentName := FReferencedAttribute;
-  Query.Name := AQueryString;
+  InternalUpdateQueryMetadata(AQueryString);
   Query.UpdateReferenceList;
   if Query.Count > SPressMaxItemCount then
   begin
@@ -901,6 +902,11 @@ begin
     Query.Clear;
   end;
   Result := Query.CreateIterator;
+end;
+
+function TPressMVPReferenceModel.CreateReferenceQuery: TPressMVPReferenceQuery;
+begin
+  Result := TPressMVPReferenceQuery.Create(Metadata);
 end;
 
 destructor TPressMVPReferenceModel.Destroy;
@@ -940,7 +946,7 @@ end;
 function TPressMVPReferenceModel.GetQuery: TPressMVPReferenceQuery;
 begin
   if not Assigned(FQuery) then
-    FQuery := TPressMVPReferenceQuery.Create(Metadata);
+    FQuery := CreateReferenceQuery;
   Result := FQuery;
 end;
 
@@ -968,6 +974,13 @@ begin
      Copy(ADisplayNames, VPos + 1, Length(ADisplayNames) - VPos - 1));
   end else
     FReferencedAttribute := ADisplayNames;
+end;
+
+procedure TPressMVPReferenceModel.InternalUpdateQueryMetadata(
+  const AQueryString: string);
+begin
+  Query._Name.Metadata.PersistentName := FReferencedAttribute;
+  Query.Name := AQueryString;
 end;
 
 procedure TPressMVPReferenceModel.Notify(AEvent: TPressEvent);
