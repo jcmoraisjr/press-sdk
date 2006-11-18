@@ -27,6 +27,7 @@ interface
 
 uses
   PressApplication,
+  PressClasses,
   PressNotifier,
   PressSubject,
   PressQuery,
@@ -65,25 +66,26 @@ type
     function GetHasUser: Boolean;
     function GetOIDGenerator: TPressOIDGenerator;
     function GetUserQuery: TPressUserQuery;
+    function UnsuportedFeatureError(const AFeatureName: string): EPressError;
   protected
     procedure DoneService; override;
     function GetIdentifierQuotes: string; virtual;
     function GetStrQuote: Char; virtual;
     procedure InternalCommitTransaction; virtual;
-    procedure InternalDispose(AObject: TPressObject); virtual; abstract;
+    procedure InternalDispose(AObject: TPressObject); virtual;
     procedure InternalConnect; virtual;
     procedure InternalExecuteStatement(const AStatement: string); virtual;
     function InternalLogon(const AUserID, APassword: string): Boolean; virtual;
     function InternalOIDGeneratorClass: TPressOIDGeneratorClass; virtual;
     function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; virtual;
-    function InternalRetrieve(const AClass, AId: string): TPressObject; virtual; abstract;
-    function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; virtual; abstract;
+    function InternalRetrieve(const AClass, AId: string): TPressObject; virtual;
+    function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; virtual;
     procedure InternalRollbackTransaction; virtual;
     function InternalSQLQuery(const ASQLStatement: string): TPressProxyList; virtual;
     function InternalUserQueryClass: TPressUserQueryClass;
     class function InternalServiceType: TPressServiceType; override;
     procedure InternalStartTransaction; virtual;
-    procedure InternalStore(AObject: TPressObject); virtual; abstract;
+    procedure InternalStore(AObject: TPressObject); virtual;
     property OIDGenerator: TPressOIDGenerator read GetOIDGenerator;
     property UserQuery: TPressUserQuery read GetUserQuery;
   public
@@ -117,7 +119,6 @@ implementation
 uses
   SysUtils,
   PressCompatibility,
-  PressClasses,
   PressConsts
   {$IFDEF PressLog},PressLog{$ENDIF};
 
@@ -129,7 +130,12 @@ type
 
 function PressDefaultPersistence: TPressPersistence;
 begin
-  Result := PressApp.DefaultService(stPersistence) as TPressPersistence;
+  with PressApp.Registry[stPersistence] do
+  begin
+    if not HasDefaultService then
+      RegisterService(TPressPersistence, False);
+    Result := DefaultService as TPressPersistence;
+  end;
 end;
 
 { TPressOIDGenerator }
@@ -273,15 +279,22 @@ end;
 
 procedure TPressPersistence.InternalCommitTransaction;
 begin
+  raise UnsuportedFeatureError('Commit transaction');
 end;
 
 procedure TPressPersistence.InternalConnect;
 begin
+  raise UnsuportedFeatureError('Connect');
 end;
 
-procedure TPressPersistence.InternalExecuteStatement(
-  const AStatement: string);
+procedure TPressPersistence.InternalDispose(AObject: TPressObject);
 begin
+  raise UnsuportedFeatureError('Dispose object');
+end;
+
+procedure TPressPersistence.InternalExecuteStatement(const AStatement: string);
+begin
+  raise UnsuportedFeatureError('Execute statement');
 end;
 
 function TPressPersistence.InternalLogon(
@@ -304,17 +317,31 @@ end;
 
 function TPressPersistence.InternalOIDGeneratorClass: TPressOIDGeneratorClass;
 begin
-  Result := TPressOIDGeneratorClass(PressApp.DefaultServiceClass(stOIDGenerator));
+  Result :=
+   TPressOIDGeneratorClass(PressApp.DefaultServiceClass(stOIDGenerator));
 end;
 
 function TPressPersistence.InternalOQLQuery(
   const AOQLStatement: string): TPressProxyList;
 begin
-  raise EPressError.CreateFmt(SUnsupportedFeature, ['OQL Query']);
+  raise UnsuportedFeatureError('OQL Query');
+end;
+
+function TPressPersistence.InternalRetrieve(const AClass,
+  AId: string): TPressObject;
+begin
+  raise UnsuportedFeatureError('Retrieve object');
+end;
+
+function TPressPersistence.InternalRetrieveProxyList(
+  AQuery: TPressQuery): TPressProxyList;
+begin
+  raise UnsuportedFeatureError('Retrieve proxy list');
 end;
 
 procedure TPressPersistence.InternalRollbackTransaction;
 begin
+  raise UnsuportedFeatureError('Rollback transaction');
 end;
 
 class function TPressPersistence.InternalServiceType: TPressServiceType;
@@ -325,11 +352,17 @@ end;
 function TPressPersistence.InternalSQLQuery(
   const ASQLStatement: string): TPressProxyList;
 begin
-  raise EPressError.CreateFmt(SUnsupportedFeature, ['SQL Query']);
+  raise UnsuportedFeatureError('SQL Query');
 end;
 
 procedure TPressPersistence.InternalStartTransaction;
 begin
+  raise UnsuportedFeatureError('Start transaction');
+end;
+
+procedure TPressPersistence.InternalStore(AObject: TPressObject);
+begin
+  raise UnsuportedFeatureError('Store object');
 end;
 
 function TPressPersistence.InternalUserQueryClass: TPressUserQueryClass;
@@ -415,6 +448,12 @@ begin
       AObject.EnableChanges;
     end;
   end;
+end;
+
+function TPressPersistence.UnsuportedFeatureError(
+  const AFeatureName: string): EPressError;
+begin
+  Result := EPressError.CreateFmt(SUnsupportedFeature, [AFeatureName]);
 end;
 
 initialization
