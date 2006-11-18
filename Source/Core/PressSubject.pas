@@ -4794,6 +4794,9 @@ end;
 function TPressEnum.GetValue: Integer;
 begin
   VerifyCalcAttribute;
+  if (FValue < 0) or
+   (Assigned(Metadata) and (FValue >= Metadata.EnumMetadata.Items.Count)) then
+    raise EPressError.CreateFmt(SEnumOutOfBounds, [Name, FValue]);
   Result := FValue;
 end;
 

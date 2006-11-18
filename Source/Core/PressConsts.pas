@@ -58,6 +58,7 @@ resourcestring
   SDialogClassIsAssigned = 'Classe do objeto de diálogo já está associado';
   SEnumItemNotFound = 'Enumeration ''%s'' não encontrado';
   SEnumMetadataNotFound = 'Enumeration metadata %s não encontrado';
+  SEnumOutOfBounds = 'Enumeration ''%s'' fora do limite (%d)';
   SInstanceNotFound = 'Instance not found: %s(%s)';
   SInvalidAttributeClass = 'O atributo %s(''%s'') requer objetos da classe %s';
   SInvalidAttributeValue = 'Valor ''%s'' inválido para %s(''%s'')';
