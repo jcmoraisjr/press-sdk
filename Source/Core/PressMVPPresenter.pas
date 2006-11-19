@@ -621,8 +621,9 @@ end;
 class function TPressMVPValuePresenter.Apply(AModel: TPressMVPModel;
   AView: TPressMVPView): Boolean;
 begin
-  { TODO : Improve }
-  Result := (AModel.ClassType = TPressMVPValueModel) and
+  { TODO : Improve factory }
+  Result := ((AModel.ClassType = TPressMVPValueModel) or
+   (AModel.ClassType = TPressMVPDateModel)) and
    (AView is TPressMVPAttributeView);
 end;
 
