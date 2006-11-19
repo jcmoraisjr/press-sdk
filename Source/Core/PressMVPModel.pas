@@ -710,32 +710,18 @@ begin
 end;
 
 procedure TPressMVPColumnItem.SetAttributeName(const Value: string);
-
-  function DefaultHeaderName: string;
-  var
-    I: Integer;
-  begin
-    I := Length(Value);
-    while (I > 0) and (Value[I] <> SPressAttributeSeparator) do
-      Dec(I);
-    if I = 0 then
-      Result := Value
-    else
-      Result := Copy(Value, 1, I - 1);
-  end;
-
 var
   VMetadata: TPressAttributeMetadata;
 begin
   VMetadata := FOwner.Map.FindMetadata(Value);
   if not Assigned(VMetadata) then
     raise EPressMVPError.CreateFmt(SAttributeNotFound,
-     [FOwner.Map.ObjectClass.ClassName, Value]);
+     [FOwner.Map.ObjectMetadata.ObjectClass.ClassName, Value]);
   if not VMetadata.AttributeClass.InheritsFrom(TPressValue) then
     raise EPressMVPError.CreateFmt(SAttributeIsNotValue,
-     [FOwner.Map.ObjectClass.ClassName, Value]);
+     [FOwner.Map.ObjectMetadata.ObjectClass.ClassName, Value]);
   FAttributeName := Value;
-  FHeaderCaption := DefaultHeaderName;
+  FHeaderCaption := Value;
   if VMetadata.AttributeClass.InheritsFrom(TPressBoolean) then
     FAttributeAlignment := taCenter
   else if VMetadata.AttributeClass.InheritsFrom(TPressNumeric) then
