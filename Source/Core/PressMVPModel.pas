@@ -1007,7 +1007,7 @@ begin
   begin
     FReferencedAttribute := Copy(ADisplayNames, 1, VPos - 1);
     AssignColumnData(
-     Copy(ADisplayNames, VPos + 1, Length(ADisplayNames) - VPos - 1));
+     Copy(ADisplayNames, VPos + 1, Length(ADisplayNames) - VPos));
   end else
     FReferencedAttribute := ADisplayNames;
 end;

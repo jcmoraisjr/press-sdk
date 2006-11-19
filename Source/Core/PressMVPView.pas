@@ -1333,7 +1333,7 @@ begin
     ColCount := VColumnData.ColumnCount + 1;
     for I := 0 to Pred(VColumnData.ColumnCount) do
       ColWidths[I + 1] := VColumnData[I].Width;
-    if ColCount > 0 then
+    if ColCount > 1 then
     begin
       ColWidths[0] := 24;
       FixedCols := 1;
