@@ -632,7 +632,7 @@ procedure TPressReportGroupItem.LoadMetadatas;
     {$ENDIF}
     if not Assigned(AObjectClass) then
       Exit;
-    with AObjectClass.CreateAttributeMapIterator do
+    with AObjectClass.ClassMap.CreateIterator do
     { TODO : Fix loop with circular references }
     try
       BeforeFirstItem;

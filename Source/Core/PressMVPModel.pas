@@ -158,6 +158,8 @@ type
     property Objects[Index: Integer]: TPressObject read GetObjects; default;
   end;
 
+  TPressMVPColumnData = class;
+
   TPressMVPColumnItem = class(TPressStreamable)
   { TODO : Collection item }
   private
@@ -165,12 +167,14 @@ type
     FAttributeAlignment: TAlignment;
     FHeaderAlignment: TAlignment;
     FHeaderCaption: string;
+    FOwner: TPressMVPColumnData;
     FWidth: Integer;
+    procedure SetAttributeName(const Value: string);
   public
-    constructor Create;
+    constructor Create(AOwner: TPressMVPColumnData);
     procedure ReadColumnItem(const AColumnItem: string);
   published
-    property AttributeName: string read FAttributeName write FAttributeName;
+    property AttributeName: string read FAttributeName write SetAttributeName;
     property AttributeAlignment: TAlignment read FAttributeAlignment write FAttributeAlignment;
     property HeaderAlignment: TAlignment read FHeaderAlignment write FHeaderAlignment;
     property HeaderCaption: string read FHeaderCaption write FHeaderCaption;
@@ -208,15 +212,18 @@ type
   { TODO : Collection }
   private
     FColumnList: TPressMVPColumnList;
+    FMap: TPressMap;
     function GetColumnList: TPressMVPColumnList;
     function GetColumns(AIndex: Integer): TPressMVPColumnItem;
   protected
     property ColumnList: TPressMVPColumnList read GetColumnList;
   public
+    constructor Create(AMap: TPressMap);
     destructor Destroy; override;
     function AddColumn: TPressMVPColumnItem;
     function ColumnCount: Integer;
     property Columns[AIndex: Integer]: TPressMVPColumnItem read GetColumns; default;
+    property Map: TPressMap read FMap;
   end;
 
   TPressMVPStructureModel = class(TPressMVPAttributeModel)
@@ -676,9 +683,10 @@ end;
 
 { TPressMVPColumnItem }
 
-constructor TPressMVPColumnItem.Create;
+constructor TPressMVPColumnItem.Create(AOwner: TPressMVPColumnData);
 begin
   inherited Create;
+  FOwner := AOwner;
   FAttributeAlignment := taLeftJustify;
   FHeaderAlignment := taCenter;
   FWidth := 64;
@@ -699,6 +707,42 @@ begin
     end;
   end;
   { TODO : Implement alignments, caption }
+end;
+
+procedure TPressMVPColumnItem.SetAttributeName(const Value: string);
+
+  function DefaultHeaderName: string;
+  var
+    I: Integer;
+  begin
+    I := Length(Value);
+    while (I > 0) and (Value[I] <> SPressAttributeSeparator) do
+      Dec(I);
+    if I = 0 then
+      Result := Value
+    else
+      Result := Copy(Value, 1, I - 1);
+  end;
+
+var
+  VMetadata: TPressAttributeMetadata;
+begin
+  VMetadata := FOwner.Map.FindMetadata(Value);
+  if not Assigned(VMetadata) then
+    raise EPressMVPError.CreateFmt(SAttributeNotFound,
+     [FOwner.Map.ObjectClass.ClassName, Value]);
+  if not VMetadata.AttributeClass.InheritsFrom(TPressValue) then
+    raise EPressMVPError.CreateFmt(SAttributeIsNotValue,
+     [FOwner.Map.ObjectClass.ClassName, Value]);
+  FAttributeName := Value;
+  FHeaderCaption := DefaultHeaderName;
+  if VMetadata.AttributeClass.InheritsFrom(TPressBoolean) then
+    FAttributeAlignment := taCenter
+  else if VMetadata.AttributeClass.InheritsFrom(TPressNumeric) then
+    FAttributeAlignment := taRightJustify
+  else
+    FAttributeAlignment := taLeftJustify;
+  FWidth := 8 * VMetadata.Size;
 end;
 
 { TPressMVPColumnList }
@@ -772,7 +816,7 @@ end;
 
 function TPressMVPColumnData.AddColumn: TPressMVPColumnItem;
 begin
-  Result := TPressMVPColumnItem.Create;
+  Result := TPressMVPColumnItem.Create(Self);
   ColumnList.Add(Result);
 end;
 
@@ -782,6 +826,12 @@ begin
     Result := FColumnList.Count
   else
     Result := 0;
+end;
+
+constructor TPressMVPColumnData.Create(AMap: TPressMap);
+begin
+  inherited Create;
+  FMap := AMap;
 end;
 
 destructor TPressMVPColumnData.Destroy;
@@ -856,7 +906,7 @@ end;
 function TPressMVPStructureModel.GetColumnData: TPressMVPColumnData;
 begin
   if not Assigned(FColumnData) then
-    FColumnData := TPressMVPColumnData.Create;
+    FColumnData := TPressMVPColumnData.Create(Subject.ObjectClass.ClassMap);
   Result := FColumnData;
 end;
 
@@ -1012,6 +1062,7 @@ end;
 function TPressMVPObjectItem.AddAttribute(
   AAttribute: TPressAttribute): Integer;
 begin
+  { TODO : Assert AAttribute is TPressValue }
   Result := Attributes.Add(AAttribute);
   if Assigned(AAttribute) then
     AAttribute.AddRef;
@@ -1094,15 +1145,11 @@ end;
 procedure TPressMVPObjectList.CreateAttributes(
   AObjectItem: TPressMVPObjectItem);
 var
-  VAttr: TPressAttribute;
   I: Integer;
 begin
   for I := 0 to Pred(FColumnData.ColumnCount) do
-  begin
-    VAttr :=
-     AObjectItem.Instance.FindPathAttribute(FColumnData[I].AttributeName);
-    AObjectItem.AddAttribute(VAttr);
-  end;
+    AObjectItem.AddAttribute(AObjectItem.Instance.
+     FindPathAttribute(FColumnData[I].AttributeName, False));
 end;
 
 function TPressMVPObjectList.CreateIterator: TPressMVPObjectIterator;
