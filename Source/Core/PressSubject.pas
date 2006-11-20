@@ -1617,15 +1617,12 @@ end;
 
 procedure PressUnregisterMetadata(AMetadata: TPressObjectMetadata);
 var
-  I: Integer;
+  VIndex: Integer;
 begin
-  if Assigned(AMetadata) then
-    for I := Pred(PressObjectMetadatas.Count) downto 0 do
-      if PressObjectMetadatas[I] = AMetadata then
-      begin
-        PressObjectMetadatas.Delete(I);
-        Exit;
-      end;
+  VIndex := PressMaps.IndexOfObjectMetadata(AMetadata);
+  if VIndex >= 0 then
+    PressMaps.Delete(VIndex);
+  PressObjectMetadatas.Remove(AMetadata);
 end;
 
 function PressRegisterEnumMetadata(
