@@ -4914,7 +4914,10 @@ end;
 procedure TPressEnum.Assign(Source: TPersistent);
 begin
   if Source is TPressEnum then
-    Value := TPressEnum(Source).Value
+    if TPressEnum(Source).IsNull then
+      Clear
+    else
+      Value := TPressEnum(Source).Value
   else
     inherited;
 end;
