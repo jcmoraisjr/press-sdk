@@ -9,7 +9,9 @@ uses
 
 type
   TAddress = class;
+  {$M+}
   TPhoneParts = class;
+  {$M-}
 
   TContact = class(TPressObject)
     _Name: TPressString;
