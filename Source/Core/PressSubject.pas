@@ -1332,6 +1332,7 @@ type
     procedure Assign(Source: TPersistent); override;
     procedure AssignReference(const AClassName, AId: string);
     function HasInstance: Boolean;
+    procedure Reset; override;
     property ObjectClassName: string read GetObjectClassName;
     property ObjectId: string read GetObjectId;
     property Value: TPressObject read GetValue write SetValue;
@@ -1410,6 +1411,7 @@ type
     function AddReference(const AClassName, AId: string): Integer;
     procedure Assign(Source: TPersistent); override;
     procedure AssignProxyList(AProxyList: TPressProxyList);
+    { TODO : Refactor Clear, move to virtual Reset }
     procedure Clear;
     function Count: Integer;
     function CreateIterator: TPressProxyIterator;
@@ -6273,6 +6275,12 @@ procedure TPressItem.InternalUnassignObject(AObject: TPressObject);
 begin
   if Proxy.SameReference(AObject) then
     Proxy.ClearInstance;
+end;
+
+procedure TPressItem.Reset;
+begin
+  if Assigned(FProxy) then
+    FProxy.Instance := nil;
 end;
 
 procedure TPressItem.SetValue(Value: TPressObject);
