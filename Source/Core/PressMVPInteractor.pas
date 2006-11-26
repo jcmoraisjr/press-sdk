@@ -105,16 +105,6 @@ type
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
   end;
 
-  TPressMVPEnumUpdaterInteractor = class(TPressMVPExitUpdaterInteractor)
-  private
-    function GetOwner: TPressMVPEnumPresenter;
-  protected
-    procedure InternalUpdateModel; override;
-  public
-    class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
-    property Owner: TPressMVPEnumPresenter read GetOwner;
-  end;
-
   TPressMVPDateTimeUpdaterInteractor = class(TPressMVPExitUpdaterInteractor)
   protected
     procedure InternalUpdateModel; override;
@@ -122,12 +112,36 @@ type
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
   end;
 
-  TPressMVPReferenceUpdaterInteractor = class(TPressMVPExitUpdaterInteractor)
+  TPressMVPPointerUpdaterInteractor = class(TPressMVPExitUpdaterInteractor)
+  private
+    function GetOwner: TPressMVPPointerPresenter;
+  protected
+    procedure InitInteractor; override;
+    procedure InternalAssignSubject(VIndex: Integer); virtual; abstract;
+    function InternalReferenceCount: Integer; virtual; abstract;
+    procedure InternalUpdateModel; override;
+  public
+    property Owner: TPressMVPPointerPresenter read GetOwner;
+  end;
+
+  TPressMVPEnumUpdaterInteractor = class(TPressMVPPointerUpdaterInteractor)
+  private
+    function GetOwner: TPressMVPEnumPresenter;
+  protected
+    procedure InternalAssignSubject(VIndex: Integer); override;
+    function InternalReferenceCount: Integer; override;
+  public
+    class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
+    property Owner: TPressMVPEnumPresenter read GetOwner;
+  end;
+
+  TPressMVPReferenceUpdaterInteractor = class(TPressMVPPointerUpdaterInteractor)
   private
     function GetOwner: TPressMVPReferencePresenter;
     function GetSubject: TPressReference;
   protected
-    procedure InternalUpdateModel; override;
+    procedure InternalAssignSubject(VIndex: Integer); override;
+    function InternalReferenceCount: Integer; override;
   public
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
     property Owner: TPressMVPReferencePresenter read GetOwner;
@@ -196,18 +210,37 @@ type
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
   end;
 
-  TPressMVPDrawItemsInteractor = class(TPressMVPInteractor)
-  private
-    function GetOwner: TPressMVPItemsPresenter;
+  TPressMVPCustomDrawInteractor = class(TPressMVPInteractor)
   protected
     procedure DrawTextRect(ACanvas: TCanvas; ARect: TRect; const AText: string; AAlignment: TAlignment);
+  end;
+
+  TPressMVPDrawItemInteractor = class(TPressMVPCustomDrawInteractor)
+  private
+    function GetOwner: TPressMVPReferencePresenter;
+  public
+    property Owner: TPressMVPReferencePresenter read GetOwner;
+  end;
+
+  TPressMVPDrawComboBoxInteractor = class(TPressMVPDrawItemInteractor)
+  protected
+    procedure DrawItem(Sender: TPressMVPView; ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState); virtual;
+    procedure InitInteractor; override;
+    procedure Notify(AEvent: TPressEvent); override;
+  public
+    class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
+  end;
+
+  TPressMVPDrawItemsInteractor = class(TPressMVPCustomDrawInteractor)
+  private
+    function GetOwner: TPressMVPItemsPresenter;
   public
     property Owner: TPressMVPItemsPresenter read GetOwner;
   end;
 
   TPressMVPDrawListBoxInteractor = class(TPressMVPDrawItemsInteractor)
   protected
-    procedure DrawItem(Sender: TPressMVPListBoxView; ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState); virtual;
+    procedure DrawItem(Sender: TPressMVPView; ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState); virtual;
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
   public
@@ -377,19 +410,28 @@ end;
 procedure TPressMVPUpdateComboInteractor.DoPressEnter;
 var
   VView: TPressMVPComboBoxView;
+
+  procedure UpdateData;
+  begin
+    VView.HideReferences;
+    Owner.Model.UpdateData;
+    VView.SelectAll;
+  end;
+
 begin
   VView := View;
-  if (VView.AsString = '') or
-   (VView.ReferencesVisible and (VView.AsInteger >= 0)) then
+  if VView.AsString = '' then
     inherited
-  else if VView.Changed then
+  else if VView.Changed and (VView.AsInteger = -1) then
   begin
     case Owner.UpdateReferences(VView.AsString) of
       0: VView.SelectAll;
-      1: inherited;
+      1: UpdateData;
       else VView.ShowReferences;
     end;
-  end else
+  end else if VView.ReferencesVisible then
+    UpdateData
+  else
     inherited;
 end;
 
@@ -530,6 +572,50 @@ begin
   Subject.AsString := View.AsString;
 end;
 
+{ TPressMVPDateTimeUpdaterInteractor }
+
+class function TPressMVPDateTimeUpdaterInteractor.Apply(
+  APresenter: TPressMVPPresenter): Boolean;
+begin
+  Result := APresenter.View is TPressMVPDateTimeView;
+end;
+
+procedure TPressMVPDateTimeUpdaterInteractor.InternalUpdateModel;
+begin
+  Subject.AsDateTime := (View as TPressMVPDateTimeView).AsDateTime;
+end;
+
+{ TPressMVPPointerUpdaterInteractor }
+
+function TPressMVPPointerUpdaterInteractor.GetOwner: TPressMVPPointerPresenter;
+begin
+  Result := inherited Owner as TPressMVPPointerPresenter;
+end;
+
+procedure TPressMVPPointerUpdaterInteractor.InitInteractor;
+begin
+  inherited;
+  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewClickEvent]);
+end;
+
+procedure TPressMVPPointerUpdaterInteractor.InternalUpdateModel;
+var
+  VIndex: Integer;
+begin
+  if Owner.View.ReferencesVisible then
+    Exit;
+  if View.AsString = '' then
+    Subject.Clear
+  else
+  begin
+    VIndex := View.AsInteger;
+    if (VIndex = -1) and (InternalReferenceCount = 1) then
+      VIndex := 0;
+    if VIndex >= 0 then
+      InternalAssignSubject(VIndex);
+  end;
+end;
+
 { TPressMVPEnumUpdaterInteractor }
 
 class function TPressMVPEnumUpdaterInteractor.Apply(
@@ -544,35 +630,15 @@ begin
   Result := inherited Owner as TPressMVPEnumPresenter;
 end;
 
-procedure TPressMVPEnumUpdaterInteractor.InternalUpdateModel;
-var
-  VIndex: Integer;
-  VModel: TPressMVPEnumModel;
+procedure TPressMVPEnumUpdaterInteractor.InternalAssignSubject(
+  VIndex: Integer);
 begin
-  VModel := Owner.Model;
-  if (View.AsString = '') or (View.AsInteger >= VModel.EnumValueCount) then
-    Subject.Clear
-  else
-  begin
-    VIndex := View.AsInteger;
-    if (VIndex = -1) and (VModel.EnumValueCount = 1) then
-      VIndex := 0;
-    if VIndex >= 0 then
-      Subject.AsInteger := VModel.EnumOf(VIndex);
-  end;
+  Subject.AsInteger := Owner.Model.EnumOf(VIndex);
 end;
 
-{ TPressMVPDateTimeUpdaterInteractor }
-
-class function TPressMVPDateTimeUpdaterInteractor.Apply(
-  APresenter: TPressMVPPresenter): Boolean;
+function TPressMVPEnumUpdaterInteractor.InternalReferenceCount: Integer;
 begin
-  Result := APresenter.View is TPressMVPDateTimeView;
-end;
-
-procedure TPressMVPDateTimeUpdaterInteractor.InternalUpdateModel;
-begin
-  Subject.AsDateTime := (View as TPressMVPDateTimeView).AsDateTime;
+  Result := Owner.Model.EnumValueCount;
 end;
 
 { TPressMVPReferenceUpdaterInteractor }
@@ -594,22 +660,15 @@ begin
   Result := inherited Subject as TPressReference;
 end;
 
-procedure TPressMVPReferenceUpdaterInteractor.InternalUpdateModel;
-var
-  VIndex: Integer;
-  VModel: TPressMVPReferenceModel;
+procedure TPressMVPReferenceUpdaterInteractor.InternalAssignSubject(
+  VIndex: Integer);
 begin
-  VModel := Owner.Model;
-  if (View.AsString = '') or (View.AsInteger >= VModel.Query.Count) then
-    Subject.Value := nil
-  else
-  begin
-    VIndex := View.AsInteger;
-    if (VIndex = -1) and (VModel.Query.Count = 1) then
-      VIndex := 0;
-    if VIndex >= 0 then
-      Subject.Value := VModel.ObjectOf(VIndex);
-  end;
+  Subject.Value := Owner.Model.ObjectOf(VIndex);
+end;
+
+function TPressMVPReferenceUpdaterInteractor.InternalReferenceCount: Integer;
+begin
+  Result := Owner.Model.Query.Count;
 end;
 
 { TPressMVPClickUpdaterInteractor }
@@ -750,9 +809,9 @@ begin
   { TODO : Implement }
 end;
 
-{ TPressMVPDrawItemsInteractor }
+{ TPressMVPCustomDrawInteractor }
 
-procedure TPressMVPDrawItemsInteractor.DrawTextRect(
+procedure TPressMVPCustomDrawInteractor.DrawTextRect(
   ACanvas: TCanvas; ARect: TRect; const AText: string; AAlignment: TAlignment);
 var
   VTop: Integer;
@@ -770,6 +829,51 @@ begin
   ACanvas.TextRect(ARect, VLeft, VTop, AText);
 end;
 
+{ TPressMVPDrawItemInteractor }
+
+function TPressMVPDrawItemInteractor.GetOwner: TPressMVPReferencePresenter;
+begin
+  Result := inherited Owner as TPressMVPReferencePresenter;
+end;
+
+{ TPressMVPDrawComboBoxInteractor }
+
+class function TPressMVPDrawComboBoxInteractor.Apply(
+  APresenter: TPressMVPPresenter): Boolean;
+begin
+  Result := APresenter is TPressMVPReferencePresenter;
+end;
+
+procedure TPressMVPDrawComboBoxInteractor.DrawItem(
+  Sender: TPressMVPView; ACanvas: TCanvas; AIndex: Integer;
+  ARect: TRect; State: TOwnerDrawState);
+begin
+  DrawTextRect(ACanvas, ARect,
+   Owner.Model.DisplayText(0, AIndex), Owner.Model.TextAlignment(0));
+end;
+
+procedure TPressMVPDrawComboBoxInteractor.InitInteractor;
+begin
+  inherited;
+  {$IFDEF PressViewNotification}
+  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewDrawItemEvent]);
+  {$ELSE}{$IFDEF PressViewDirectEvent}
+  (Owner.View as TPressMVPComboBoxView).OnDrawItem := DrawItem;
+  {$ENDIF}{$ENDIF}
+end;
+
+procedure TPressMVPDrawComboBoxInteractor.Notify(AEvent: TPressEvent);
+begin
+  inherited;
+  {$IFDEF PressViewNotification}
+  if AEvent is TPressMVPViewDrawItemEvent then
+    with TPressMVPViewDrawItemEvent(AEvent) do
+      DrawItem(Owner, Canvas, ItemIndex, Rect, State);
+  {$ENDIF}
+end;
+
+{ TPressMVPDrawItemsInteractor }
+
 function TPressMVPDrawItemsInteractor.GetOwner: TPressMVPItemsPresenter;
 begin
   Result := inherited Owner as TPressMVPItemsPresenter;
@@ -784,7 +888,7 @@ begin
 end;
 
 procedure TPressMVPDrawListBoxInteractor.DrawItem(
-  Sender: TPressMVPListBoxView; ACanvas: TCanvas; AIndex: Integer;
+  Sender: TPressMVPView; ACanvas: TCanvas; AIndex: Integer;
   ARect: TRect; State: TOwnerDrawState);
 begin
   DrawTextRect(ACanvas, ARect,
@@ -1146,6 +1250,7 @@ begin
   TPressMVPIntegerInteractor.RegisterInteractor;
   TPressMVPFloatInteractor.RegisterInteractor;
   TPressMVPDateTimeInteractor.RegisterInteractor;
+  TPressMVPDrawComboBoxInteractor.RegisterInteractor;
   TPressMVPDrawListBoxInteractor.RegisterInteractor;
   TPressMVPDrawGridInteractor.RegisterInteractor;
   TPressMVPSelectListBoxInteractor.RegisterInteractor;

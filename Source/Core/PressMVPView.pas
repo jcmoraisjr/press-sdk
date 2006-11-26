@@ -100,7 +100,6 @@ type
   TPressMVPViewDropDownEvent = class(TPressMVPViewEvent)
   end;
 
-  TPressMVPListBoxView = class;
   TPressMVPGridView = class;
 
   {$IFDEF PressViewNotification}
@@ -110,10 +109,8 @@ type
     FItemIndex: Integer;
     FState: TOwnerDrawState;
     FRect: TRect;
-    function GetOwner: TPressMVPListBoxView;
   public
-    constructor Create(AOwner: TPressMVPListBoxView; ACanvas: TCanvas; AItemIndex: Integer; ARect: TRect; State: TOwnerDrawState);
-    property Owner: TPressMVPListBoxView read GetOwner;
+    constructor Create(AOwner: TPressMVPView; ACanvas: TCanvas; AItemIndex: Integer; ARect: TRect; State: TOwnerDrawState);
     property Canvas: TCanvas read FCanvas;
     property ItemIndex: Integer read FItemIndex;
     property Rect: TRect read FRect;
@@ -288,34 +285,44 @@ type
     property Control: TCustomCheckBox read GetControl;
   end;
 
+  TPressDrawItemEvent = procedure(Sender: TPressMVPView;
+   ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState) of object;
+
   TPressMVPItemView = class(TPressMVPWinView)
   protected
+    procedure ViewEnterEvent(Sender: TObject); override;
+    procedure ViewExitEvent(Sender: TObject); override;
+  protected
+    function GetReferencesVisible: Boolean; virtual;
     procedure InternalAddReference(const ACaption: string); virtual; abstract;
     procedure InternalClearReferences; virtual; abstract;
-    procedure InternalUpdate; override;
   public
     procedure AddReference(const ACaption: string);
     procedure AssignReferences(AItems: TStrings);
     procedure ClearReferences;
+    property ReferencesVisible: Boolean read GetReferencesVisible;
   end;
 
   TPressMVPComboBoxView = class(TPressMVPItemView)
   private
     FChanged: Boolean;
+    {$IFDEF PressViewDirectEvent}
+    FOnDrawItem: TPressDrawItemEvent;
+    {$ENDIF}
     FViewChangeEvent: TNotifyEvent;
+    FViewDrawItemEvent: TDrawItemEvent;
     FViewDropDownEvent: TNotifyEvent;
-    function GetComboStyle: TComboBoxStyle;
     function GetControl: TCustomComboBox;
-    function GetReferencesVisible: Boolean;
-    procedure SetComboStyle(Value: TComboBoxStyle);
   protected
     procedure ViewChangeEvent(Sender: TObject); virtual;
+    procedure ViewDrawItemEvent(AControl: TWinControl; AIndex: Integer; ARect: TRect; AState: TOwnerDrawState); virtual;
     procedure ViewDropDownEvent(Sender: TObject); virtual;
     procedure ViewEnterEvent(Sender: TObject); override;
   protected
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetIsClear: Boolean; override;
+    function GetReferencesVisible: Boolean; override;
     procedure InitView; override;
     procedure InternalAddReference(const ACaption: string); override;
     procedure InternalClear; override;
@@ -324,12 +331,14 @@ type
     procedure SetSize(Value: Integer); override;
   public
     class function Apply(AControl: TControl): Boolean; override;
+    procedure HideReferences;
     procedure SelectAll;
     procedure ShowReferences;
     property Changed: Boolean read FChanged;
-    property ComboStyle: TComboBoxStyle read GetComboStyle write SetComboStyle;
     property Control: TCustomComboBox read GetControl;
-    property ReferencesVisible: Boolean read GetReferencesVisible;
+    {$IFDEF PressViewDirectEvent}
+    property OnDrawItem: TPressDrawItemEvent read FOnDrawItem write FOnDrawItem;
+    {$ENDIF}
   end;
 
   TPressMVPItemsView = class(TPressMVPWinView)
@@ -352,16 +361,13 @@ type
     property Model: TPressMVPItemsModel read GetModel;
   end;
 
-  TPressDrawItemEvent = procedure(Sender: TPressMVPListBoxView;
-   ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState) of object;
-
   TPressMVPListBoxView = class(TPressMVPItemsView)
   private
     {$IFDEF PressViewDirectEvent}
     FOnDrawItem: TPressDrawItemEvent;
     {$ENDIF}
     FViewDrawItemEvent: TDrawItemEvent;
-    procedure ViewDrawItemEvent(AControl: TWinControl; AIndex: Integer; ARect: TRect; State: TOwnerDrawState);
+    procedure ViewDrawItemEvent(AControl: TWinControl; AIndex: Integer; ARect: TRect; AState: TOwnerDrawState);
     function GetControl: TCustomListBox;
   protected
     procedure InitView; override;
@@ -470,6 +476,7 @@ type
 implementation
 
 uses
+  SysUtils,
   PressConsts,
   PressMVPFactory;
 
@@ -546,7 +553,7 @@ end;
 { TPressMVPViewDrawItemEvent }
 
 constructor TPressMVPViewDrawItemEvent.Create(
-  AOwner: TPressMVPListBoxView; ACanvas: TCanvas;
+  AOwner: TPressMVPView; ACanvas: TCanvas;
   AItemIndex: Integer; ARect: TRect; State: TOwnerDrawState);
 begin
   inherited Create(AOwner);
@@ -554,11 +561,6 @@ begin
   FItemIndex := AItemIndex;
   FRect := ARect;
   FState := State;
-end;
-
-function TPressMVPViewDrawItemEvent.GetOwner: TPressMVPListBoxView;
-begin
-  Result := inherited Owner as TPressMVPListBoxView;
 end;
 
 { TPressMVPViewDrawCellEvent }
@@ -1000,10 +1002,21 @@ begin
   InternalClearReferences;
 end;
 
-procedure TPressMVPItemView.InternalUpdate;
+function TPressMVPItemView.GetReferencesVisible: Boolean;
 begin
+  Result := False;
+end;
+
+procedure TPressMVPItemView.ViewEnterEvent(Sender: TObject);
+begin
+  InternalClearReferences;
   inherited;
-  ClearReferences;
+end;
+
+procedure TPressMVPItemView.ViewExitEvent(Sender: TObject);
+begin
+  InternalClearReferences;
+  inherited;
 end;
 
 { TPressMVPComboBoxView }
@@ -1015,17 +1028,15 @@ end;
 
 function TPressMVPComboBoxView.GetAsInteger: Integer;
 begin
-  Result := Control.ItemIndex;
+  if Control.Items.Count = 0 then
+    Result := -1
+  else
+    Result := Control.ItemIndex;
 end;
 
 function TPressMVPComboBoxView.GetAsString: string;
 begin
   Result := TPressMVPViewCustomComboBoxFriend(Control).Text;
-end;
-
-function TPressMVPComboBoxView.GetComboStyle: TComboBoxStyle;
-begin
-  Result := TPressMVPViewCustomComboBoxFriend(Control).Style;
 end;
 
 function TPressMVPComboBoxView.GetControl: TCustomComboBox;
@@ -1043,16 +1054,22 @@ begin
   Result := Control.DroppedDown;
 end;
 
+procedure TPressMVPComboBoxView.HideReferences;
+begin
+  Control.DroppedDown := False;
+end;
+
 procedure TPressMVPComboBoxView.InitView;
 begin
   inherited;
   with TPressMVPViewCustomComboBoxFriend(Control) do
   begin
     FViewChangeEvent := OnChange;
+    FViewDrawItemEvent := OnDrawItem;
     FViewDropDownEvent := OnDropDown;
     OnChange := ViewChangeEvent;
+    OnDrawItem := ViewDrawItemEvent;
     OnDropDown := ViewDropDownEvent;
-    Style := csDropDown;
   end;
 end;
 
@@ -1065,6 +1082,7 @@ procedure TPressMVPComboBoxView.InternalClear;
 begin
   ClearReferences;
   TPressMVPViewCustomComboBoxFriend(Control).Text := '';
+  { TODO : FChanged := True ? }
   FChanged := True;
 end;
 
@@ -1077,16 +1095,12 @@ procedure TPressMVPComboBoxView.InternalUpdate;
 begin
   inherited;
   TPressMVPViewCustomComboBoxFriend(Control).Text := Model.AsString;
+  FChanged := False;
 end;
 
 procedure TPressMVPComboBoxView.SelectAll;
 begin
   Control.SelectAll;
-end;
-
-procedure TPressMVPComboBoxView.SetComboStyle(Value: TComboBoxStyle);
-begin
-  TPressMVPViewCustomComboBoxFriend(Control).Style := Value;
 end;
 
 procedure TPressMVPComboBoxView.SetSize(Value: Integer);
@@ -1101,6 +1115,7 @@ begin
     Control.DroppedDown := False;
     Control.DroppedDown := True;
     Control.SelectAll;
+    FChanged := False;
   finally
     EnableEvents;
   end;
@@ -1113,6 +1128,23 @@ begin
   FChanged := True;
   if Assigned(FViewChangeEvent) then
     FViewChangeEvent(Sender);
+end;
+
+procedure TPressMVPComboBoxView.ViewDrawItemEvent(AControl: TWinControl;
+  AIndex: Integer; ARect: TRect; AState: TOwnerDrawState);
+begin
+  if EventsDisabled then
+    Exit;
+  {$IFDEF PressViewNotification}
+  TPressMVPViewDrawItemEvent.Create(
+   Self, Control.Canvas, AIndex, ARect, State).Notify;
+  {$ENDIF}
+  {$IFDEF PressViewDirectEvent}
+  if Assigned(FOnDrawItem) then
+    FOnDrawItem(Self, Control.Canvas, AIndex, ARect, AState);
+  {$ENDIF}
+  if Assigned(FViewDrawItemEvent) then
+    FViewDrawItemEvent(Control, AIndex, ARect, AState);
 end;
 
 procedure TPressMVPComboBoxView.ViewDropDownEvent(Sender: TObject);
@@ -1238,7 +1270,7 @@ begin
 end;
 
 procedure TPressMVPListBoxView.ViewDrawItemEvent(AControl: TWinControl;
-  AIndex: Integer; ARect: TRect; State: TOwnerDrawState);
+  AIndex: Integer; ARect: TRect; AState: TOwnerDrawState);
 begin
   if EventsDisabled then
     Exit;
@@ -1248,10 +1280,10 @@ begin
   {$ENDIF}
   {$IFDEF PressViewDirectEvent}
   if Assigned(FOnDrawItem) then
-    FOnDrawItem(Self, Control.Canvas, AIndex, ARect, State);
+    FOnDrawItem(Self, Control.Canvas, AIndex, ARect, AState);
   {$ENDIF}
   if Assigned(FViewDrawItemEvent) then
-    FViewDrawItemEvent(Control, AIndex, ARect, State);
+    FViewDrawItemEvent(Control, AIndex, ARect, AState);
 end;
 
 { TPressMVPGridView }

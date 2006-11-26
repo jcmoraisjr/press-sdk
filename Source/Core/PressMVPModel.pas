@@ -277,8 +277,10 @@ type
     destructor Destroy; override;
     class function Apply: TPressSubjectClass; override;
     function CreateQueryIterator(const AQueryString: string): TPressQueryIterator;
+    function DisplayText(ACol, ARow: Integer): string;
     function ObjectOf(AIndex: Integer): TPressObject;
     function ReferencedValue(AObject: TPressObject): TPressValue;
+    function TextAlignment(ACol: Integer): TAlignment;
     property Query: TPressMVPReferenceQuery read GetQuery;
     property Subject: TPressReference read GetSubject;
   end;
@@ -950,6 +952,11 @@ begin
   inherited;
 end;
 
+function TPressMVPReferenceModel.DisplayText(ACol, ARow: Integer): string;
+begin
+  Result := InternalObjectAsString(Query[ARow], ACol);
+end;
+
 function TPressMVPReferenceModel.GetAsString: string;
 begin
   Result := InternalObjectAsString(Subject.Value, -1);
@@ -996,7 +1003,10 @@ begin
     AssignColumnData(
      Copy(ADisplayNames, VPos + 1, Length(ADisplayNames) - VPos));
   end else
+  begin
     FReferencedAttribute := ADisplayNames;
+    AssignColumnData(ADisplayNames);
+  end;
 end;
 
 function TPressMVPReferenceModel.InternalObjectAsString(
@@ -1046,6 +1056,11 @@ begin
     raise EPressMVPError.CreateFmt(SAttributeIsNotValue,
      [AObject.ClassName, VAttribute.Name]);
   Result := TPressValue(VAttribute);
+end;
+
+function TPressMVPReferenceModel.TextAlignment(ACol: Integer): TAlignment;
+begin
+  Result := ColumnData[ACol].AttributeAlignment;
 end;
 
 { TPressMVPObjectItem }

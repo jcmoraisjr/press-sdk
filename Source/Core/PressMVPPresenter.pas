@@ -166,7 +166,8 @@ type
   private
     function GetView: TPressMVPItemView;
   protected
-    function InternalUpdateReferences(const ASearchString: string): Integer; virtual; abstract;
+    function InternalCreateIterator(const ASearchString: string): TPressIterator; virtual; abstract;
+    function InternalCurrentItem(AIterator: TPressIterator): string; virtual; abstract;
   public
     function UpdateReferences(const ASearchString: string): Integer;
     property View: TPressMVPItemView read GetView;
@@ -176,8 +177,8 @@ type
   private
     function GetModel: TPressMVPEnumModel;
   protected
-    procedure InitPresenter; override;
-    function InternalUpdateReferences(const ASearchString: string): Integer; override;
+    function InternalCreateIterator(const ASearchString: string): TPressIterator; override;
+    function InternalCurrentItem(AIterator: TPressIterator): string; override;
   public
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
     property Model: TPressMVPEnumModel read GetModel;
@@ -187,7 +188,8 @@ type
   private
     function GetModel: TPressMVPReferenceModel;
   protected
-    function InternalUpdateReferences(const ASearchString: string): Integer; override;
+    function InternalCreateIterator(const ASearchString: string): TPressIterator; override;
+    function InternalCurrentItem(AIterator: TPressIterator): string; override;
   public
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
     property Model: TPressMVPReferenceModel read GetModel;
@@ -653,8 +655,20 @@ end;
 
 function TPressMVPPointerPresenter.UpdateReferences(
   const ASearchString: string): Integer;
+var
+  VIterator: TPressIterator;
 begin
-  Result := InternalUpdateReferences(ASearchString);
+  View.ClearReferences;
+  VIterator := InternalCreateIterator(ASearchString);
+  with VIterator do
+  try
+    Result := Count;
+    BeforeFirstItem;
+    while NextItem do
+      View.AddReference(InternalCurrentItem(VIterator));
+  finally
+    Free;
+  end;
 end;
 
 { TPressMVPEnumPresenter }
@@ -671,25 +685,16 @@ begin
   Result := inherited Model as TPressMVPEnumModel;
 end;
 
-procedure TPressMVPEnumPresenter.InitPresenter;
+function TPressMVPEnumPresenter.InternalCreateIterator(
+  const ASearchString: string): TPressIterator;
 begin
-  inherited;
-  //View.AssignReferences(Model.Subject.Metadata.EnumMetadata.Items);
+  Result := Model.CreateEnumValueIterator(ASearchString);
 end;
 
-function TPressMVPEnumPresenter.InternalUpdateReferences(
-  const ASearchString: string): Integer;
+function TPressMVPEnumPresenter.InternalCurrentItem(
+  AIterator: TPressIterator): string;
 begin
-  View.ClearReferences;
-  with Model.CreateEnumValueIterator(ASearchString) do
-  try
-    Result := Count;
-    BeforeFirstItem;
-    while NextItem do
-      View.AddReference(CurrentItem.EnumName);
-  finally
-    Free;
-  end;
+  Result := (AIterator as TPressMVPEnumValueIterator).CurrentItem.EnumName;
 end;
 
 { TPressMVPReferencePresenter }
@@ -706,20 +711,16 @@ begin
   Result := inherited Model as TPressMVPReferenceModel;
 end;
 
-function TPressMVPReferencePresenter.InternalUpdateReferences(
-  const ASearchString: string): Integer;
+function TPressMVPReferencePresenter.InternalCreateIterator(
+  const ASearchString: string): TPressIterator;
 begin
-  View.ClearReferences;
-  with Model.CreateQueryIterator(ASearchString) do
-  try
-    Result := Count;
-    BeforeFirstItem;
-    while NextItem do
-      View.AddReference(
-       Model.ReferencedValue(CurrentItem.Instance).DisplayText);
-  finally
-    Free;
-  end;
+  Result := Model.CreateQueryIterator(ASearchString);
+end;
+
+function TPressMVPReferencePresenter.InternalCurrentItem(
+  AIterator: TPressIterator): string;
+begin
+  Result := Model.DisplayText(0, AIterator.CurrentPosition);
 end;
 
 { TPressMVPItemsPresenter }
