@@ -1296,6 +1296,7 @@ type
     procedure BindProxy(AProxy: TPressProxy);
     procedure InternalAssignItem(AProxy: TPressProxy); virtual; abstract;
     procedure InternalAssignObject(AObject: TPressObject); virtual; abstract;
+    function InternalProxyType: TPressProxyType; virtual; abstract;
     procedure InternalUnassignObject(AObject: TPressObject); virtual; abstract;
     procedure Notify(AEvent: TPressEvent); override;
     procedure NotifyReferenceChange;
@@ -1307,6 +1308,7 @@ type
   public
     procedure AssignItem(AProxy: TPressProxy);
     procedure AssignObject(AObject: TPressObject);
+    function ProxyType: TPressProxyType;
     procedure UnassignObject(AObject: TPressObject);
     property ObjectClass: TPressObjectClass read GetObjectClass;
   end;
@@ -1320,7 +1322,6 @@ type
     function GetValue: TPressObject;
     procedure SetValue(Value: TPressObject);
   protected
-    function CreateProxy: TPressProxy; virtual; abstract;
     procedure Finit; override;
     function GetIsEmpty: Boolean; override;
     function GetSignature: string; override;
@@ -1345,8 +1346,8 @@ type
     procedure BeforeChangeItem(AItem: TPressObject); override;
     procedure BeforeRetrieveInstance(Sender: TPressProxy); override;
     procedure BindInstance(AInstance: TPressObject); override;
-    function CreateProxy: TPressProxy; override;
     procedure InternalAssignItem(AProxy: TPressProxy); override;
+    function InternalProxyType: TPressProxyType; override;
     procedure ReleaseInstance(AInstance: TPressObject); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
@@ -1356,8 +1357,8 @@ type
   TPressReference = class(TPressItem)
   protected
     procedure AfterChangeItem(AItem: TPressObject); override;
-    function CreateProxy: TPressProxy; override;
     procedure InternalAssignItem(AProxy: TPressProxy); override;
+    function InternalProxyType: TPressProxyType; override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
@@ -1399,7 +1400,6 @@ type
     function GetIsEmpty: Boolean; override;
     procedure InternalAssignObject(AObject: TPressObject); override;
     function InternalCreateMemento: TPressAttributeMemento; override;
-    function InternalCreateProxyList: TPressProxyList; virtual; abstract;
     procedure InternalUnassignObject(AObject: TPressObject); override;
     procedure NotifyMementos(AProxy: TPressProxy; AItemState: TPressItemState; AOldIndex: Integer = -1);
     procedure NotifyRebuild;
@@ -1433,7 +1433,7 @@ type
     procedure BeforeRetrieveInstance(Sender: TPressProxy); override;
     procedure BindInstance(AInstance: TPressObject); override;
     procedure InternalAssignItem(AProxy: TPressProxy); override;
-    function InternalCreateProxyList: TPressProxyList; override;
+    function InternalProxyType: TPressProxyType; override;
     procedure ReleaseInstance(AInstance: TPressObject); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
@@ -1444,7 +1444,7 @@ type
   protected
     procedure AfterChangeItem(AItem: TPressObject); override;
     procedure InternalAssignItem(AProxy: TPressProxy); override;
-    function InternalCreateProxyList: TPressProxyList; override;
+    function InternalProxyType: TPressProxyType; override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
@@ -6147,6 +6147,11 @@ begin
     Owner.NotifyInvalidate;  // friend class
 end;
 
+function TPressStructure.ProxyType: TPressProxyType;
+begin
+  Result := InternalProxyType;
+end;
+
 procedure TPressStructure.ReleaseInstance(AInstance: TPressObject);
 begin
   if Assigned(AInstance) then
@@ -6231,7 +6236,7 @@ function TPressItem.GetProxy: TPressProxy;
 begin
   if not Assigned(FProxy) then
   begin
-    FProxy := CreateProxy;
+    FProxy := TPressProxy.Create(InternalProxyType);
     BindProxy(FProxy);
   end;
   Result := FProxy;
@@ -6340,14 +6345,14 @@ begin
   AInstance.SetOwnerContext(Self);  // friend class
 end;
 
-function TPressPart.CreateProxy: TPressProxy;
-begin
-  Result := TPressProxy.Create(ptOwned);
-end;
-
 procedure TPressPart.InternalAssignItem(AProxy: TPressProxy);
 begin
   Value := AProxy.Instance.Clone;
+end;
+
+function TPressPart.InternalProxyType: TPressProxyType;
+begin
+  Result := ptOwned;
 end;
 
 procedure TPressPart.ReleaseInstance(AInstance: TPressObject);
@@ -6374,14 +6379,14 @@ begin
   Result := 'Reference';
 end;
 
-function TPressReference.CreateProxy: TPressProxy;
-begin
-  Result := TPressProxy.Create(ptShared);
-end;
-
 procedure TPressReference.InternalAssignItem(AProxy: TPressProxy);
 begin
   Value := AProxy.Instance;
+end;
+
+function TPressReference.InternalProxyType: TPressProxyType;
+begin
+  Result := ptShared;
 end;
 
 { TPressItemsChangedEvent }
@@ -6638,14 +6643,14 @@ end;
 function TPressItems.GetProxyDeletedList: TPressProxyList;
 begin
   if not Assigned(FProxyDeletedList) then
-    FProxyDeletedList := InternalCreateProxyList;
+    FProxyDeletedList := TPressProxyList.Create(True, InternalProxyType);
   Result := FProxyDeletedList;
 end;
 
 function TPressItems.GetProxyList: TPressProxyList;
 begin
   if not Assigned(FProxyList) then
-    AssignProxyList(InternalCreateProxyList);
+    AssignProxyList(TPressProxyList.Create(True, InternalProxyType));
   Result := FProxyList;
 end;
 
@@ -6780,9 +6785,9 @@ begin
   Add(AProxy.Instance.Clone);
 end;
 
-function TPressParts.InternalCreateProxyList: TPressProxyList;
+function TPressParts.InternalProxyType: TPressProxyType;
 begin
-  Result := TPressProxyList.Create(True, ptOwned);
+  Result := ptOwned;
 end;
 
 procedure TPressParts.ReleaseInstance(AInstance: TPressObject);
@@ -6815,9 +6820,9 @@ begin
   Add(AProxy.Instance);
 end;
 
-function TPressReferences.InternalCreateProxyList: TPressProxyList;
+function TPressReferences.InternalProxyType: TPressProxyType;
 begin
-  Result := TPressProxyList.Create(True, ptShared);
+  Result := ptShared;
 end;
 
 { Initialization routines }
