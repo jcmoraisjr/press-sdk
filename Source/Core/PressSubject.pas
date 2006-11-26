@@ -1407,7 +1407,7 @@ type
     property ProxyDeletedList: TPressProxyList read GetProxyDeletedList;
     property ProxyList: TPressProxyList read GetProxyList;
   public
-    function Add(AObject: TPressObject; AShareInstance: Boolean = True): Integer;
+    function Add(AObject: TPressObject): Integer;
     function AddReference(const AClassName, AId: string): Integer;
     procedure Assign(Source: TPersistent); override;
     procedure AssignProxyList(AProxyList: TPressProxyList);
@@ -1417,7 +1417,7 @@ type
     function CreateIterator: TPressProxyIterator;
     procedure Delete(AIndex: Integer);
     function IndexOf(AObject: TPressObject): Integer;
-    procedure Insert(AIndex: Integer; AObject: TPressObject; AShareInstance: Boolean = True);
+    procedure Insert(AIndex: Integer; AObject: TPressObject);
     function Remove(AObject: TPressObject): Integer;
     property HasAddedItem: Boolean read GetHasAddedItem;
     property HasDeletedItem: Boolean read GetHasDeletedItem;
@@ -6403,11 +6403,9 @@ end;
 
 { TPressItems }
 
-function TPressItems.Add(AObject: TPressObject; AShareInstance: Boolean): Integer;
+function TPressItems.Add(AObject: TPressObject): Integer;
 begin
   Result := ProxyList.AddInstance(AObject);
-  if not AShareInstance and (ProxyList.ProxyType = ptShared) then
-    AObject.Release;
 end;
 
 function TPressItems.AddReference(const AClassName, AId: string): Integer;
@@ -6659,12 +6657,9 @@ begin
   Result := ProxyList.IndexOfInstance(AObject);
 end;
 
-procedure TPressItems.Insert(
-  AIndex: Integer; AObject: TPressObject; AShareInstance: Boolean);
+procedure TPressItems.Insert(AIndex: Integer; AObject: TPressObject);
 begin
   ProxyList.InsertInstance(AIndex, AObject);
-  if not AShareInstance and (ProxyList.ProxyType = ptShared) then
-    AObject.Release;
 end;
 
 procedure TPressItems.InternalAssignObject(AObject: TPressObject);

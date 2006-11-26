@@ -593,7 +593,12 @@ var
 begin
   VObject := InternalCreateObject;
   try
-    Model.Subject.Add(VObject, False);
+    with Model.Subject do
+    begin
+      Add(VObject);
+      if ProxyType = ptShared then
+        VObject.Release;
+    end;
   except
     VObject.Free;
     raise;
