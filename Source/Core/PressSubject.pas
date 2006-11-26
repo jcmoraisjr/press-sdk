@@ -1334,6 +1334,8 @@ type
     procedure AssignReference(const AClassName, AId: string);
     function HasInstance: Boolean;
     procedure Reset; override;
+    function SameReference(AObject: TPressObject): Boolean; overload;
+    function SameReference(const ARefClass, ARefID: string): Boolean; overload;
     property ObjectClassName: string read GetObjectClassName;
     property ObjectId: string read GetObjectId;
     property Value: TPressObject read GetValue write SetValue;
@@ -6286,6 +6288,17 @@ procedure TPressItem.Reset;
 begin
   if Assigned(FProxy) then
     FProxy.Instance := nil;
+end;
+
+function TPressItem.SameReference(AObject: TPressObject): Boolean;
+begin
+  Result := (not Assigned(AObject) and not Assigned(FProxy)) or
+   (Assigned(FProxy) and FProxy.SameReference(AObject));
+end;
+
+function TPressItem.SameReference(const ARefClass, ARefID: string): Boolean;
+begin
+  Result := Proxy.SameReference(ARefClass, ARefID);
 end;
 
 procedure TPressItem.SetValue(Value: TPressObject);
