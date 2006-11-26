@@ -6509,21 +6509,6 @@ end;
 procedure TPressItems.ChangedList(
   Sender: TPressProxyList; Item: TPressProxy; Action: TListNotification);
 
-  procedure VerifyNewItem;
-  begin
-    try
-      ValidateProxy(Item);
-    except
-      Sender.DisableNotification;
-      try
-        Sender.Remove(Item);
-      finally
-        Sender.EnableNotification;
-      end;
-      raise;
-    end;
-  end;
-
   procedure DoChanges;
   var
     VEventType: TPressItemsEventType;
@@ -6533,7 +6518,7 @@ procedure TPressItems.ChangedList(
     case Action of
       lnAdded:
         begin
-          VerifyNewItem;
+          ValidateProxy(Item);
           if Sender[Sender.Count - 1] = Item then
           begin
             VEventType := ietAdd;
@@ -6564,7 +6549,7 @@ procedure TPressItems.ChangedList(
   begin
     if Action = lnAdded then
     begin
-      VerifyNewItem;
+      ValidateProxy(Item);
       BindProxy(Item);
     end else {lnExtracted, lnDeleted}
       if Item.HasInstance then
