@@ -3650,20 +3650,20 @@ begin
     if HasInstance then
       Result := AObject = FInstance
     else
-      Result := AObject.IsPersistent and (AObject.PersistentId = ObjectId) and
-       ((ObjectClassName = '') or (SameText(AObject.ClassName, ObjectClassName)))
+      Result := AObject.IsPersistent and (AObject.PersistentId = FRefID) and
+       ((FRefClass = '') or (SameText(AObject.ClassName, FRefClass)))
   else
     Result := IsEmpty;
 end;
 
-function TPressProxy.SameReference(
-  const ARefClass, ARefID: string): Boolean;
+function TPressProxy.SameReference(const ARefClass, ARefID: string): Boolean;
 begin
   if HasInstance then
-    Result :=
-     (FInstance.ClassName = ARefClass) and (FInstance.PersistentId = ARefID)
+    Result := FInstance.IsPersistent and (FInstance.PersistentId = ARefID) and
+     ((ARefClass = '') or SameText(FInstance.ClassName, ARefClass))
   else if HasReference then
-    Result := (FRefClass = ARefClass) and (FRefID = ARefID)
+    Result := (FRefID = ARefID) and
+     ((ARefClass = '') or SameText(FRefClass, ARefClass))
   else
     Result := IsEmptyReference(ARefClass, ARefID);
 end;
