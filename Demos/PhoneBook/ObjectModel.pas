@@ -9,11 +9,12 @@ uses
 
 type
   TAddress = class;
+  TPhoneParts = class;
 
   TContact = class(TPressObject)
     _Name: TPressString;
     _Address: TPressPart;
-    _Phones: TPressParts;
+    _Phones: TPhoneParts;
   private
     function GetAddress: TAddress;
     function GetName: string;
@@ -22,7 +23,7 @@ type
   protected
     class function InternalMetadataStr: string; override;
   public
-    property Phones: TPressParts read _Phones;
+    property Phones: TPhoneParts read _Phones;
   published
     property Name: string read GetName write SetName;
     property Address: TAddress read GetAddress write SetAddress;
@@ -65,6 +66,31 @@ type
   published
     property PhoneType: TPhoneType read GetPhoneType write SetPhoneType;
     property Number: string read GetNumber write SetNumber;
+  end;
+
+  TPhoneIterator = class;
+
+  TPhoneParts = class(TPressParts)
+  private
+    function GetObjects(AIndex: Integer): TPhone;
+    procedure SetObjects(AIndex: Integer; const Value: TPhone);
+  protected
+    function InternalCreateIterator: TPressItemsIterator; override;
+  public
+    function Add(AObject: TPhone): Integer;
+    function CreateIterator: TPhoneIterator;
+    function IndexOf(AObject: TPhone): Integer;
+    procedure Insert(AIndex: Integer; AObject: TPhone);
+    function Remove(AObject: TPhone): Integer;
+    class function ValidObjectClass: TPressObjectClass; override;
+    property Objects[AIndex: Integer]: TPhone read GetObjects write SetObjects; default;
+  end;
+
+  TPhoneIterator = class(TPressItemsIterator)
+  private
+    function GetCurrentItem: TPhone;
+  public
+    property CurrentItem: TPhone read GetCurrentItem;
   end;
 
   TCity = class;
@@ -134,7 +160,7 @@ begin
    'TContact (' +
    'Name: String(40);' +
    'Address: Part(TAddress);' +
-   'Phones: Parts(TPhone))';
+   'Phones: TPhoneParts)';
 end;
 
 procedure TContact.SetAddress(Value: TAddress);
@@ -213,6 +239,60 @@ end;
 procedure TPhone.SetPhoneType(Value: TPhoneType);
 begin
   _PhoneType.Value := Ord(Value);
+end;
+
+{ TPhoneParts }
+
+function TPhoneParts.Add(AObject: TPhone): Integer;
+begin
+  Result := inherited Add(AObject);
+end;
+
+function TPhoneParts.CreateIterator: TPhoneIterator;
+begin
+  Result := TPhoneIterator.Create(ProxyList);
+end;
+
+function TPhoneParts.GetObjects(AIndex: Integer): TPhone;
+begin
+  Result := inherited Objects[AIndex] as TPhone;
+end;
+
+function TPhoneParts.IndexOf(AObject: TPhone): Integer;
+begin
+  Result := inherited IndexOf(AObject);
+end;
+
+procedure TPhoneParts.Insert(AIndex: Integer; AObject: TPhone);
+begin
+  inherited Insert(AIndex, AObject);
+end;
+
+function TPhoneParts.InternalCreateIterator: TPressItemsIterator;
+begin
+  Result := CreateIterator;
+end;
+
+function TPhoneParts.Remove(AObject: TPhone): Integer;
+begin
+  Result := inherited Remove(AObject);
+end;
+
+procedure TPhoneParts.SetObjects(AIndex: Integer; const Value: TPhone);
+begin
+  inherited Objects[AIndex] := Value;
+end;
+
+class function TPhoneParts.ValidObjectClass: TPressObjectClass;
+begin
+  Result := TPhone;
+end;
+
+{ TPhoneIterator }
+
+function TPhoneIterator.GetCurrentItem: TPhone;
+begin
+  Result := inherited CurrentItem.Instance as TPhone;
 end;
 
 { TAddress }
@@ -305,6 +385,11 @@ begin
   _Name.Value := Value;
 end;
 
+procedure RegisterAttributes;
+begin
+  TPhoneParts.RegisterAttribute;
+end;
+
 procedure RegisterClasses;
 begin
   TContact.RegisterClass;
@@ -322,6 +407,7 @@ begin
 end;
 
 initialization
+  RegisterAttributes;
   RegisterClasses;
   RegisterTypes;
 

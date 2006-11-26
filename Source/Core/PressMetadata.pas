@@ -437,11 +437,34 @@ end;
 
 procedure TPressMetaParserStructure.InternalRead(
   Reader: TPressParserReader);
+var
+  Token: string;
+  VValidObjectClass: TPressObjectClass;
 begin
   inherited;
-  Reader.ReadMatch('(');
-  Metadata.ObjectClassName := Reader.ReadToken;
-  Reader.ReadMatch(')');
+  if not Metadata.AttributeClass.InheritsFrom(TPressStructure) then
+    raise EPressError.CreateFmt(SInvalidClassInheritance,
+     [Metadata.AttributeClass.ClassName, TPressStructure.ClassName]);
+  VValidObjectClass :=
+   TPressStructureClass(Metadata.AttributeClass).ValidObjectClass;
+  if VValidObjectClass = TPressObject then
+  begin
+    Reader.ReadMatch('(');
+    Metadata.ObjectClassName := Reader.ReadToken;
+    Reader.ReadMatch(')');
+  end else
+  begin
+    Token := Reader.ReadToken;
+    if Token <> '(' then
+    begin
+      Reader.UnreadToken;
+      Metadata.ObjectClass := VValidObjectClass;
+    end else
+    begin
+      Metadata.ObjectClassName := Reader.ReadToken;
+      Reader.ReadMatch(')');
+    end;
+  end;
 end;
 
 { TPressMetaParserProperties }

@@ -1311,8 +1311,8 @@ type
     procedure AssignItem(AProxy: TPressProxy);
     procedure AssignObject(AObject: TPressObject);
     function ProxyType: TPressProxyType;
-    class function ValidObjectClass: TPressObjectClass; virtual;
     procedure UnassignObject(AObject: TPressObject);
+    class function ValidObjectClass: TPressObjectClass; virtual;
     property ObjectClass: TPressObjectClass read GetObjectClass;
   end;
 
@@ -1384,6 +1384,8 @@ type
     property Proxy: TPressProxy read FProxy;
   end;
 
+  TPressItemsIterator = class;
+
   TPressItems = class(TPressStructure)
   private
     FMementos: TPressItemsMementoList;
@@ -1404,6 +1406,7 @@ type
     procedure Finit; override;
     function GetIsEmpty: Boolean; override;
     procedure InternalAssignObject(AObject: TPressObject); override;
+    function InternalCreateIterator: TPressItemsIterator; virtual;
     function InternalCreateMemento: TPressAttributeMemento; override;
     procedure InternalUnassignObject(AObject: TPressObject); override;
     procedure NotifyMementos(AProxy: TPressProxy; AItemState: TPressItemState; AOldIndex: Integer = -1);
@@ -1411,6 +1414,9 @@ type
     property Mementos: TPressItemsMementoList read GetMementos;
     property ProxyDeletedList: TPressProxyList read GetProxyDeletedList;
     property ProxyList: TPressProxyList read GetProxyList;
+    (*
+    function InternalCreateIterator: TPressItemsIterator; override;
+    *)
   public
     function Add(AObject: TPressObject): Integer;
     function AddReference(const AClassName, AId: string): Integer;
@@ -1419,7 +1425,7 @@ type
     { TODO : Refactor Clear, move to virtual Reset }
     procedure Clear;
     function Count: Integer;
-    function CreateIterator: TPressProxyIterator;
+    function CreateIterator: TPressItemsIterator;
     procedure Delete(AIndex: Integer);
     function IndexOf(AObject: TPressObject): Integer;
     procedure Insert(AIndex: Integer; AObject: TPressObject);
@@ -1428,6 +1434,22 @@ type
     property HasDeletedItem: Boolean read GetHasDeletedItem;
     property Objects[AIndex: Integer]: TPressObject read GetObjects write SetObjects; default;
     property Proxies[AIndex: Integer]: TPressProxy read GetProxies;
+    (*
+    function Add(AObject: TPressObject): Integer;
+    function CreateIterator: TPressItemsIterator;
+    function IndexOf(AObject: TPressObject): Integer;
+    procedure Insert(AIndex: Integer; AObject: TPressObject);
+    function Remove(AObject: TPressObject): Integer;
+    class function ValidObjectClass: TPressObjectClass; override;
+    property Objects[AIndex: Integer]: TPressObject read GetObjects write SetObjects; default;
+    *)
+  end;
+
+  TPressItemsIterator = class(TPressProxyIterator)
+  public
+    (*
+    property CurrentItem: TPressProxy read GetCurrentItem;
+    *)
   end;
 
   TPressParts = class(TPressItems)
@@ -6602,9 +6624,9 @@ begin
     Result := 0;
 end;
 
-function TPressItems.CreateIterator: TPressProxyIterator;
+function TPressItems.CreateIterator: TPressItemsIterator;
 begin
-  Result := ProxyList.CreateIterator;
+  Result := InternalCreateIterator;
 end;
 
 procedure TPressItems.Delete(AIndex: Integer);
@@ -6682,6 +6704,11 @@ begin
   Add(AObject);
 end;
 
+function TPressItems.InternalCreateIterator: TPressItemsIterator;
+begin
+  Result := TPressItemsIterator.Create(ProxyList);
+end;
+
 function TPressItems.InternalCreateMemento: TPressAttributeMemento;
 begin
   Result := TPressItemsMemento.Create(Self);
@@ -6746,7 +6773,10 @@ end;
 
 class function TPressParts.AttributeName: string;
 begin
-  Result := 'Parts';
+  if Self = TPressParts then
+    Result := 'Parts'
+  else
+    Result := ClassName;
 end;
 
 procedure TPressParts.BeforeChangeInstance(Sender: TPressProxy;
@@ -6822,7 +6852,10 @@ end;
 
 class function TPressReferences.AttributeName: string;
 begin
-  Result := 'References';
+  if Self = TPressReferences then
+    Result := 'References'
+  else
+    Result := ClassName;
 end;
 
 procedure TPressReferences.InternalAssignItem(AProxy: TPressProxy);
