@@ -1281,6 +1281,8 @@ type
     property UnassignedObject: TPressObject read FUnassignedObject;
   end;
 
+  TPressStructureClass = class of TPressStructure;
+
   TPressStructure = class(TPressAttribute)
   private
     function GetObjectClass: TPressObjectClass;
@@ -1309,6 +1311,7 @@ type
     procedure AssignItem(AProxy: TPressProxy);
     procedure AssignObject(AObject: TPressObject);
     function ProxyType: TPressProxyType;
+    class function ValidObjectClass: TPressObjectClass; virtual;
     procedure UnassignObject(AObject: TPressObject);
     property ObjectClass: TPressObjectClass read GetObjectClass;
   end;
@@ -1891,6 +1894,15 @@ end;
 
 procedure TPressAttributeMetadata.SetObjectClass(Value: TPressObjectClass);
 begin
+  { TODO : Assert }
+  if not Assigned(Value) or not Assigned(FAttributeClass) or
+   not FAttributeClass.InheritsFrom(TPressStructure) then
+    Exit;
+
+  if not Value.InheritsFrom(
+   TPressStructureClass(FAttributeClass).ValidObjectClass) then
+    raise EPressError.CreateFmt(SInvalidClassInheritance, [Value.ClassName,
+     TPressStructureClass(FAttributeClass).ValidObjectClass.ClassName]);
   FObjectClass := Value;
 end;
 
@@ -6196,6 +6208,11 @@ begin
     ValidateObject(AProxy.Instance)
   else if AProxy.HasReference then
     ValidateObjectClass(AProxy.ObjectClassName);
+end;
+
+class function TPressStructure.ValidObjectClass: TPressObjectClass;
+begin
+  Result := TPressObject;
 end;
 
 { TPressItem }
