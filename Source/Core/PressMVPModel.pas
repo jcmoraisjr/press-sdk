@@ -55,9 +55,6 @@ type
   TPressMVPModelCloseFormEvent = class(TPressMVPModelEvent)
   end;
 
-  TPressMVPModelUpdateDataEvent = class(TPressMVPModelEvent)
-  end;
-
   { Base Attribute Models }
 
   TPressMVPAttributeModel = class(TPressMVPModel)
@@ -1543,7 +1540,7 @@ begin
   try
     BeforeFirstItem;
     while NextItem do
-      TPressMVPModelUpdateDataEvent.Create(CurrentItem).Notify;
+      (CurrentItem as TPressMVPModel).UpdateData;
   finally
     Free;
   end;

@@ -299,6 +299,9 @@ type
     {$ENDIF}
   end;
 
+  TPressMVPModelUpdateDataEvent = class(TPressMVPModelEvent)
+  end;
+
   TPressMVPChangeType = (ctSubject, ctDisplay);
 
   TPressMVPModelNotifyEvent =
@@ -344,6 +347,7 @@ type
     function HasCommands: Boolean;
     function RegisterCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     class procedure RegisterModel;
+    procedure UpdateData;
     property HasParent: Boolean read GetHasParent;
     property HasSubject: Boolean read GetHasSubject;
     property Parent: TPressMVPModel read FParent;
@@ -1276,6 +1280,11 @@ end;
 procedure TPressMVPModel.SetChangeEvent(Value: TPressMVPModelNotifyEvent);
 begin
   FOnChange := Value;
+end;
+
+procedure TPressMVPModel.UpdateData;
+begin
+  TPressMVPModelUpdateDataEvent.Create(Self).Notify;
 end;
 
 { TPressMVPModelList }
