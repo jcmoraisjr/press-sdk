@@ -268,6 +268,7 @@ type
     function GetAsString: string; override;
     procedure InitCommands; override;
     procedure InternalAssignDisplayNames(const ADisplayNames: string); override;
+    function InternalObjectAsString(AObject: TPressObject; ACol: Integer): string; virtual;
     procedure InternalUpdateQueryMetadata(const AQueryString: string); virtual;
     procedure Notify(AEvent: TPressEvent); override;
     property Metadata: TPressQueryMetadata read GetMetadata;
@@ -950,19 +951,8 @@ begin
 end;
 
 function TPressMVPReferenceModel.GetAsString: string;
-var
-  VObject: TPressObject;
-  VAttribute: TPressAttribute;
 begin
-  VObject := Subject.Value;
-  if Assigned(VObject) then
-    VAttribute := VObject.FindPathAttribute(FReferencedAttribute, False)
-  else
-    VAttribute := nil;
-  if Assigned(VAttribute) then
-    Result := VAttribute.DisplayText
-  else
-    Result := '';
+  Result := InternalObjectAsString(Subject.Value, -1);
 end;
 
 function TPressMVPReferenceModel.GetMetadata: TPressQueryMetadata;
@@ -1007,6 +997,24 @@ begin
      Copy(ADisplayNames, VPos + 1, Length(ADisplayNames) - VPos));
   end else
     FReferencedAttribute := ADisplayNames;
+end;
+
+function TPressMVPReferenceModel.InternalObjectAsString(
+  AObject: TPressObject; ACol: Integer): string;
+var
+  VAttributeName: string;
+  VAttribute: TPressAttribute;
+begin
+  Result := '';
+  if not Assigned(AObject) then
+    Exit;
+  if ACol = -1 then
+    VAttributeName := FReferencedAttribute
+  else
+    VAttributeName := ColumnData[ACol].AttributeName;
+  VAttribute := AObject.FindPathAttribute(VAttributeName, False);
+  if Assigned(VAttribute) then
+    Result := VAttribute.DisplayText;
 end;
 
 procedure TPressMVPReferenceModel.InternalUpdateQueryMetadata(
