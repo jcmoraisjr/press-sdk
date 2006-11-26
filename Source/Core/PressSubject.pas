@@ -6144,7 +6144,7 @@ begin
   if Assigned(Metadata) then
     Result := Metadata.ObjectClass
   else
-    Result := TPressObject;
+    Result := ValidObjectClass;
 end;
 
 procedure TPressStructure.Notify(AEvent: TPressEvent);
