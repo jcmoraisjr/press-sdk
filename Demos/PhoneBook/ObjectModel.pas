@@ -294,7 +294,7 @@ end;
 
 function TPhoneIterator.GetCurrentItem: TPhone;
 begin
-  Result := inherited CurrentItem.Instance as TPhone;
+  Result := inherited CurrentItem as TPhone;
 end;
 
 { TAddress }

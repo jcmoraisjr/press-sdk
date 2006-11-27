@@ -1426,6 +1426,7 @@ type
     procedure Clear;
     function Count: Integer;
     function CreateIterator: TPressItemsIterator;
+    function CreateProxyIterator: TPressProxyIterator;
     procedure Delete(AIndex: Integer);
     function IndexOf(AObject: TPressObject): Integer;
     procedure Insert(AIndex: Integer; AObject: TPressObject);
@@ -1446,9 +1447,12 @@ type
   end;
 
   TPressItemsIterator = class(TPressProxyIterator)
+  private
+    function GetCurrentItem: TPressObject;
   public
+    property CurrentItem: TPressObject read GetCurrentItem;
     (*
-    property CurrentItem: TPressProxy read GetCurrentItem;
+    property CurrentItem: TPressObject read GetCurrentItem;
     *)
   end;
 
@@ -6484,7 +6488,7 @@ begin
     try
       if Assigned(FProxyList) then
         FProxyList.Clear;
-      with TPressItems(Source).CreateIterator do
+      with TPressItems(Source).CreateProxyIterator do
       try
         BeforeFirstItem;
         while NextItem do
@@ -6629,6 +6633,11 @@ begin
   Result := InternalCreateIterator;
 end;
 
+function TPressItems.CreateProxyIterator: TPressProxyIterator;
+begin
+  Result := TPressProxyIterator.Create(ProxyList);
+end;
+
 procedure TPressItems.Delete(AIndex: Integer);
 begin
   ProxyList.Delete(AIndex);
@@ -6756,6 +6765,13 @@ end;
 procedure TPressItems.SetObjects(AIndex: Integer; AValue: TPressObject);
 begin
   ProxyList[AIndex].Instance := AValue;
+end;
+
+{ TPressItemsIterator }
+
+function TPressItemsIterator.GetCurrentItem: TPressObject;
+begin
+  Result := inherited CurrentItem.Instance;
 end;
 
 { TPressParts }
