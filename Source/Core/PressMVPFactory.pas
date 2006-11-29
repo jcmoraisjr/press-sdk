@@ -390,7 +390,7 @@ begin
       if Assigned(VCandidateClass) then
         raise EPressMVPError.CreateFmt(SAmbiguousConcreteClass,
          [VCandidateClass.ClassName, VPresenterClass.ClassName,
-         TPressMVPPresenter.ClassName, AModel.ClassName + ', ' + AView.ClassName]);
+         AModel.ClassName + ', ' + AView.ClassName]);
       VCandidateClass := VPresenterClass;
     end;
   end;
