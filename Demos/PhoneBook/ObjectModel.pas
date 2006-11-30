@@ -13,7 +13,12 @@ type
   TPhoneParts = class;
   {$M-}
 
-  TContact = class(TPressObject)
+  TCustomObject = class(TPressObject)
+  protected
+    procedure InternalSave; override;
+  end;
+
+  TContact = class(TCustomObject)
     _Name: TPressString;
     _Address: TPressPart;
     _Phones: TPhoneParts;
@@ -55,7 +60,7 @@ type
 
   TPhoneType = (ptPhone, ptFax, ptMobile);
 
-  TPhone = class(TPressObject)
+  TPhone = class(TCustomObject)
     _PhoneType: TPressEnum;
     _Number: TPressString;
   private
@@ -97,7 +102,7 @@ type
 
   TCity = class;
 
-  TAddress = class(TPressObject)
+  TAddress = class(TCustomObject)
     _Street: TPressString;
     _Zip: TPressString;
     _City: TPressReference;
@@ -116,7 +121,7 @@ type
     property City: TCity read GetCity write SetCity;
   end;
 
-  TCity = class(TPressObject)
+  TCity = class(TCustomObject)
     _Name: TPressString;
     _State: TPressString;
   private
@@ -143,6 +148,17 @@ type
   end;
 
 implementation
+
+uses
+  PressPersistence;
+
+{ TCustomObject }
+
+procedure TCustomObject.InternalSave;
+begin
+  if PressDefaultPersistence.ClassType <> TPressPersistence then
+    inherited;
+end;
 
 { TContact }
 
