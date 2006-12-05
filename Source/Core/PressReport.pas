@@ -35,7 +35,8 @@ uses
 
 type
   TPressReportNeedValueEvent = procedure(
-   const ADataSetName, AFieldName: string; var AValue: Variant) of object;
+   const ADataSetName, AFieldName: string; var AValue: Variant;
+   AForceData: Boolean) of object;
 
   TPressReportDataSet = class;
 
@@ -176,7 +177,7 @@ type
     procedure LoadFields;
     procedure LoadMetadatas;
     procedure LoadReport;
-    procedure ReportNeedValue(const ADataSetName, AFieldName: string; var AValue: Variant);
+    procedure ReportNeedValue(const ADataSetName, AFieldName: string; var AValue: Variant; AForceData: Boolean);
     procedure SaveReport;
   protected
     procedure Finalize; override;
@@ -671,7 +672,8 @@ begin
 end;
 
 procedure TPressReportGroupItem.ReportNeedValue(
-  const ADataSetName, AFieldName: string; var AValue: Variant);
+  const ADataSetName, AFieldName: string; var AValue: Variant;
+  AForceData: Boolean);
 var
   VAttribute: TPressAttribute;
   VIndex: Integer;
@@ -679,15 +681,13 @@ begin
   VIndex := DataSources.IndexOfDataSetName(ADataSetName);
   if VIndex <> -1 then
   begin
-    VAttribute := DataSources[VIndex].CurrentItem.FindPathAttribute(AFieldName);
-    { TODO : if VAttribute is nil and there is at least one reference(s)
-      attribute in the path, an empty string must be returned, otherwise
-      an error string should be there }
+    VAttribute :=
+     DataSources[VIndex].CurrentItem.FindPathAttribute(AFieldName, False);
     if Assigned(VAttribute) then
       AValue := VAttribute.AsVariant
-    else
+    else if AForceData then 
       AValue := '';
-  end else
+  end else if AForceData then
     AValue := SPressReportErrorString;
 end;
 

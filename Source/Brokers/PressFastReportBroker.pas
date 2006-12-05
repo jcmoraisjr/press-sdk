@@ -142,7 +142,7 @@ begin
       VDataSetName := '';
       VFieldName := ParName;
     end;
-    OnNeedValue(VDataSetName, VFieldName, ParValue);
+    OnNeedValue(VDataSetName, VFieldName, ParValue, False);
   end;
 end;
 
