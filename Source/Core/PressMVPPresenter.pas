@@ -464,9 +464,15 @@ end;
 
 procedure TPressMVPPresenter.BindCommand(
   ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString);
+var
+  VComponent: TComponent;
 begin
-  //if Assigned(FParent) then
-  //  FParent.BindCommand(ACommandClass, AComponentName);
+  if not Assigned(FParent) then
+    Exit;
+  VComponent := FParent.View.ComponentByName(AComponentName);
+  if not Assigned(ACommandClass) then
+    ACommandClass := TPressMVPNullCommand;
+  Model.RegisterCommand(ACommandClass).AddComponent(VComponent);
 end;
 
 constructor TPressMVPPresenter.Create(
