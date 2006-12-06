@@ -17,7 +17,7 @@ type
 implementation
 
 uses
-  PressPersistence, PressMVPCommand, ObjectModel, Main, MainModel;
+  PressPersistence, PressMVPCommand, MainCommand, ObjectModel, Main, MainModel;
 
 { TMainPresenter }
 
@@ -27,6 +27,8 @@ begin
   CreateQueryItemsPresenter(
    'ItemsStringGrid', 'Name(240);Address.City.Name(160)', TMainModel);
   BindCommand(TPressMVPExecuteQueryCommand, 'QuerySpeedButton');
+  BindCommand(TMainConnectorCommand, 'ConnectorMenuItem');
+  BindCommand(TPressMVPCloseApplicationCommand, 'CloseMenuItem');
   CreateSubPresenter('Name', 'NameQueryEdit');
 end;
 

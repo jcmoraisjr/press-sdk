@@ -17,7 +17,13 @@ type
     QuerySpeedButtonPanel: TPanel;
     QuerySpeedButton: TSpeedButton;
     ItemsStringGrid: TStringGrid;
-    LinePanel: TPanel;
+    BottomLinePanel: TPanel;
+    MainMenu: TMainMenu;
+    FileMenuGroup: TMenuItem;
+    ConnectorMenuItem: TMenuItem;
+    N1: TMenuItem;
+    CloseMenuItem: TMenuItem;
+    TopLinePanel: TPanel;
   end;
 
 var

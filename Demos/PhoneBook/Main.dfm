@@ -10,6 +10,7 @@ object MainForm: TMainForm
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
+  Menu = MainMenu
   OldCreateOrder = False
   PixelsPerInch = 96
   TextHeight = 13
@@ -39,9 +40,9 @@ object MainForm: TMainForm
     end
     object QuerySpeedButtonPanel: TPanel
       Left = 288
-      Top = 0
+      Top = 2
       Width = 80
-      Height = 71
+      Height = 69
       Align = alRight
       BevelOuter = bvNone
       TabOrder = 1
@@ -53,7 +54,7 @@ object MainForm: TMainForm
         Caption = 'Query'
       end
     end
-    object LinePanel: TPanel
+    object BottomLinePanel: TPanel
       Left = 0
       Top = 71
       Width = 368
@@ -62,12 +63,21 @@ object MainForm: TMainForm
       BevelOuter = bvLowered
       TabOrder = 2
     end
+    object TopLinePanel: TPanel
+      Left = 0
+      Top = 0
+      Width = 368
+      Height = 2
+      Align = alTop
+      BevelOuter = bvLowered
+      TabOrder = 3
+    end
   end
   object ItemsPanel: TPanel
     Left = 0
     Top = 73
     Width = 368
-    Height = 214
+    Height = 195
     Align = alClient
     BevelOuter = bvNone
     BorderWidth = 8
@@ -76,9 +86,25 @@ object MainForm: TMainForm
       Left = 8
       Top = 8
       Width = 352
-      Height = 198
+      Height = 179
       Align = alClient
       TabOrder = 0
+    end
+  end
+  object MainMenu: TMainMenu
+    Left = 256
+    Top = 16
+    object FileMenuGroup: TMenuItem
+      Caption = '&File'
+      object ConnectorMenuItem: TMenuItem
+        Caption = 'Co&nnector'
+      end
+      object N1: TMenuItem
+        Caption = '-'
+      end
+      object CloseMenuItem: TMenuItem
+        Caption = '&Close'
+      end
     end
   end
 end

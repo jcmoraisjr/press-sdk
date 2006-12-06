@@ -5,7 +5,7 @@ unit MainCommand;
 interface
 
 uses
-  Classes, PressSubject, PressMVPCommand;
+  Classes, PressSubject, PressMVP, PressMVPCommand;
 
 type
   TMainAddPersonCommand = class(TPressMVPCustomAddItemsCommand)
@@ -22,10 +22,16 @@ type
     function InternalCreateObject: TPressObject; override;
   end;
 
+  TMainConnectorCommand = class(TPressMVPCommand)
+  protected
+    procedure InternalExecute; override;
+  end;
+
 implementation
 
 uses
-  {$IFDEF FPC}LCLType{$ELSE}Windows{$ENDIF}, Menus, ObjectModel;
+  {$IFDEF FPC}LCLType{$ELSE}Windows{$ENDIF}, Menus,
+  PressPersistence, ObjectModel;
 
 { TMainAddPersonCommand }
 
@@ -59,6 +65,13 @@ end;
 function TMainAddCompanyCommand.InternalCreateObject: TPressObject;
 begin
   Result := TCompany.Create;
+end;
+
+{ TMainConnectorCommand }
+
+procedure TMainConnectorCommand.InternalExecute;
+begin
+  PressDefaultPersistence.Connect;
 end;
 
 end.
