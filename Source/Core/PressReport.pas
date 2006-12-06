@@ -674,18 +674,39 @@ end;
 procedure TPressReportGroupItem.ReportNeedValue(
   const ADataSetName, AFieldName: string; var AValue: Variant;
   AForceData: Boolean);
+type
+  TSuffixType = (stNative, stFormated);
 var
   VAttribute: TPressAttribute;
-  VIndex: Integer;
+  VIndex, VPos: Integer;
+  VFieldName, VSuffix: string;
+  VSuffixType: TSuffixType;
 begin
   VIndex := DataSources.IndexOfDataSetName(ADataSetName);
   if VIndex <> -1 then
   begin
+    VPos := LastDelimiter('.', AFieldName);
+    VSuffix := Copy(AFieldName, VPos + 1, Length(AFieldName) - VPos);
+    if SameText(VSuffix, SPressReportNativeValueSuffix) then
+      VSuffixType := stNative
+    else if SameText(VSuffix, SPressReportDisplayTextSuffix) then
+      VSuffixType := stFormated
+    else
+    begin
+      VSuffix := '';
+      VSuffixType := stNative;
+      VPos := Length(AFieldName) + 1;
+    end;
+    VFieldName := Copy(AFieldName, 1, VPos - 1);
     VAttribute :=
-     DataSources[VIndex].CurrentItem.FindPathAttribute(AFieldName, False);
+     DataSources[VIndex].CurrentItem.FindPathAttribute(VFieldName, False);
     if Assigned(VAttribute) then
-      AValue := VAttribute.AsVariant
-    else if AForceData then 
+    begin
+      case VSuffixType of
+        stNative: AValue := VAttribute.AsVariant;
+        stFormated: AValue := VAttribute.DisplayText;
+      end;
+    end else
       AValue := '';
   end else if AForceData then
     AValue := SPressReportErrorString;

@@ -42,6 +42,8 @@ const
   SPressIntegerString = 'Integer';
   SPressLiteralString = 'Literal';
   SPressQueryItemsString = 'QueryItems';
+  SPressReportNativeValueSuffix = 'Value';
+  SPressReportDisplayTextSuffix = 'DisplayText';
   SPressEofString = 'final de arquivo';
 
 resourcestring
