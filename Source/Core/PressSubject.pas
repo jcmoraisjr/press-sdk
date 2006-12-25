@@ -203,40 +203,14 @@ type
     property ObjectMetadata: TPressObjectMetadata read FObjectMetadata;
   end;
 
-  TPressMapIterator = class;
-
-  TPressMapList = class(TPressList)
-  private
-    function GetItems(AIndex: Integer): TPressMap;
-    procedure SetItems(AIndex: Integer; const Value: TPressMap);
-  protected
-    function InternalCreateIterator: TPressCustomIterator; override;
-  public
-    function Add(AObject: TPressMap): Integer;
-    function CreateIterator: TPressMapIterator;
-    function Extract(AObject: TPressMap): TPressMap;
-    function First: TPressMap;
-    function IndexOf(AObject: TPressMap): Integer;
-    function IndexOfObjectMetadata(AObjectMetadata: TPressObjectMetadata): Integer;
-    procedure Insert(AIndex: Integer; AObject: TPressMap);
-    function Last: TPressMap;
-    function Remove(AObject: TPressMap): Integer;
-    property Items[AIndex: Integer]: TPressMap read GetItems write SetItems; default;
-  end;
-
-  TPressMapIterator = class(TPressIterator)
-  private
-    function GetCurrentItem: TPressMap;
-  public
-    property CurrentItem: TPressMap read GetCurrentItem;
-  end;
-
   TPressObjectMetadataClass = class of TPressObjectMetadata;
 
   TPressObjectMetadata = class(TPressStreamable)
   private
     FAttributeMetadatas: TPressAttributeMetadataList;
+    FMap: TPressMap;
     FObjectClass: TPressObjectClass;
+    FParent: TPressObjectMetadata;
     FPersistentName: string;
     function GetAttributeMetadatas: TPressAttributeMetadataList;
     function GetMap: TPressMap;
@@ -246,10 +220,10 @@ type
     constructor Create(AObjectClass: TPressObjectClass);
     destructor Destroy; override;
     function CreateAttributeMetadata: TPressAttributeMetadata;
-    function ParentMetadata: TPressObjectMetadata;
     property AttributeMetadatas: TPressAttributeMetadataList read GetAttributeMetadatas;
     property Map: TPressMap read GetMap;
     property ObjectClass: TPressObjectClass read FObjectClass;
+    property Parent: TPressObjectMetadata read FParent;
   published
     property PersistentName: string read FPersistentName write FPersistentName;
   end;
@@ -1512,7 +1486,6 @@ var
   _PressSingletonIDs: TStrings;
   _PressObjectMetadatas: TPressObjectMetadataList;
   _PressEnumMetadatas: TPressEnumMetadataList;
-  _PressMaps: TPressMapList;
   _PressObjectStore: TPressObjectStore;
 
 function PressRegisteredClasses: TClassList;
@@ -1563,16 +1536,6 @@ begin
     PressRegisterSingleObject(_PressEnumMetadatas);
   end;
   Result := _PressEnumMetadatas;
-end;
-
-function PressMaps: TPressMapList;
-begin
-  if not Assigned(_PressMaps) then
-  begin
-    _PressMaps := TPressMapList.Create(True);
-    PressRegisterSingleObject(_PressMaps);
-  end;
-  Result := _PressMaps;
 end;
 
 function PressObjectStore: TPressObjectStore;
@@ -1649,12 +1612,8 @@ begin
 end;
 
 procedure PressUnregisterMetadata(AMetadata: TPressObjectMetadata);
-var
-  VIndex: Integer;
 begin
-  VIndex := PressMaps.IndexOfObjectMetadata(AMetadata);
-  if VIndex >= 0 then
-    PressMaps.Delete(VIndex);
+  { TODO : Verify metadatas whose parent is AMetadata }
   PressObjectMetadatas.Remove(AMetadata);
 end;
 
@@ -2008,7 +1967,6 @@ begin
   inherited Create(False);
   FObjectMetadata := AObjectMetadata;
   ReadMetadatas(AObjectMetadata);
-  PressMaps.Add(Self);
 end;
 
 function TPressMap.FindMetadata(const APath: string): TPressAttributeMetadata;
@@ -2048,7 +2006,7 @@ var
 begin
   if not Assigned(AObjectMetadata) then
     Exit;
-  ReadMetadatas(AObjectMetadata.ParentMetadata);
+  ReadMetadatas(AObjectMetadata.Parent);
   with AObjectMetadata.AttributeMetadatas.CreateIterator do
   try
     BeforeFirstItem;
@@ -2066,85 +2024,16 @@ begin
   end;
 end;
 
-{ TPressMapList }
-
-function TPressMapList.Add(AObject: TPressMap): Integer;
-begin
-  Result := inherited Add(AObject);
-end;
-
-function TPressMapList.CreateIterator: TPressMapIterator;
-begin
-  Result := TPressMapIterator.Create(Self);
-end;
-
-function TPressMapList.Extract(AObject: TPressMap): TPressMap;
-begin
-  Result := inherited Extract(AObject) as TPressMap;
-end;
-
-function TPressMapList.First: TPressMap;
-begin
-  Result := inherited First as TPressMap;
-end;
-
-function TPressMapList.GetItems(AIndex: Integer): TPressMap;
-begin
-  Result := inherited Items[AIndex] as TPressMap;
-end;
-
-function TPressMapList.IndexOf(AObject: TPressMap): Integer;
-begin
-  Result := inherited IndexOf(AObject);
-end;
-
-function TPressMapList.IndexOfObjectMetadata(
-  AObjectMetadata: TPressObjectMetadata): Integer;
-begin
-  for Result := 0 to Pred(Count) do
-    if Items[Result].ObjectMetadata = AObjectMetadata then
-      Exit;
-  Result := -1;
-end;
-
-procedure TPressMapList.Insert(AIndex: Integer; AObject: TPressMap);
-begin
-  inherited Insert(AIndex, AObject);
-end;
-
-function TPressMapList.InternalCreateIterator: TPressCustomIterator;
-begin
-  Result := CreateIterator;
-end;
-
-function TPressMapList.Last: TPressMap;
-begin
-  Result := inherited Last as TPressMap;
-end;
-
-function TPressMapList.Remove(AObject: TPressMap): Integer;
-begin
-  Result := inherited Remove(AObject);
-end;
-
-procedure TPressMapList.SetItems(AIndex: Integer; const Value: TPressMap);
-begin
-  inherited Items[AIndex] := Value;
-end;
-
-{ TPressMapIterator }
-
-function TPressMapIterator.GetCurrentItem: TPressMap;
-begin
-  Result := inherited CurrentItem as TPressMap;
-end;
-
 { TPressObjectMetadata }
 
 constructor TPressObjectMetadata.Create(AObjectClass: TPressObjectClass);
 begin
   inherited Create;
   FObjectClass := AObjectClass;
+  if ObjectClass = TPressObject then
+    FParent := nil
+  else
+    FParent := TPressObjectClass(ObjectClass.ClassParent).ClassMetadata;
   FPersistentName := FObjectClass.ClassName;
   PressObjectMetadatas.Add(Self);
 end;
@@ -2156,6 +2045,7 @@ end;
 
 destructor TPressObjectMetadata.Destroy;
 begin
+  FMap.Free;
   FAttributeMetadatas.Free;
   inherited;
 end;
@@ -2168,27 +2058,15 @@ begin
 end;
 
 function TPressObjectMetadata.GetMap: TPressMap;
-var
-  VIndex: Integer;
 begin
-  VIndex := PressMaps.IndexOfObjectMetadata(Self);
-  if VIndex > 0 then
-    Result := PressMaps[VIndex]
-  else
-    Result := TPressMap.Create(Self);
+  if not Assigned(FMap) then
+    FMap := TPressMap.Create(Self);
+  Result := FMap;
 end;
 
 function TPressObjectMetadata.InternalAttributeMetadataClass: TPressAttributeMetadataClass;
 begin
   Result := TPressAttributeMetadata;
-end;
-
-function TPressObjectMetadata.ParentMetadata: TPressObjectMetadata;
-begin
-  if ObjectClass = TPressObject then
-    Result := nil
-  else
-    Result := TPressObjectClass(ObjectClass.ClassParent).ClassMetadata;
 end;
 
 { TPressObjectMetadataList }
@@ -2976,16 +2854,8 @@ begin
 end;
 
 class function TPressObject.ClassMap: TPressMap;
-var
-  VMetadata: TPressObjectMetadata;
-  VIndex: Integer;
 begin
-  VMetadata := ClassMetadata;
-  VIndex := PressMaps.IndexOfObjectMetadata(VMetadata);
-  if VIndex >= 0 then
-    Result := PressMaps[VIndex]
-  else
-    Result := TPressMap.Create(VMetadata);
+  Result := ClassMetadata.Map;
 end;
 
 class function TPressObject.ClassMetadata: TPressObjectMetadata;
@@ -3496,7 +3366,7 @@ begin
   for I := 0 to Pred(ObjectList.Count) do
   begin
     Result := ObjectList[I];
-    if (Result.Id = AId) and
+    if (Result.PersistentId = AId) and
      ((AClass = '') or SameText(Result.ClassName, AClass)) then
       Exit;
   end;
