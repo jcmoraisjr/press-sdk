@@ -683,7 +683,8 @@ begin
         try
           BeforeFirstItem;
           while NextItem do
-            if CurrentItem.ObservedObject = AEvent.Owner then
+            if not Assigned(CurrentItem.ObservedObject) or
+             (CurrentItem.ObservedObject = AEvent.Owner) then
               with CurrentItem.Notifiers.CreateIterator do
               try
                 BeforeFirstItem;
