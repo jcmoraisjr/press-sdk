@@ -31,7 +31,8 @@ uses
   Menus,
   PressClasses,
   PressNotifier,
-  PressSubject;
+  PressSubject,
+  PressUser;
 
 type
   EPressMVPError = class(EPressError);
@@ -134,7 +135,9 @@ type
     FNotifier: TPressNotifier;
     FShortCut: TShortCut;
     FVisible: Boolean;
+    function CurrentUser: TPressUser;
     function GetComponentList: TPressMVPCommandComponentList;
+    function HasUser: Boolean;
     procedure Notify(AEvent: TPressEvent);
     procedure VerifyAccess;
     function VerifyEnabled: Boolean;
@@ -386,7 +389,7 @@ uses
   SysUtils,
   PressConsts,
   {$IFDEF PressLog}PressLog,{$ENDIF}
-  PressUser,
+  PressApplication,
   PressPersistence,
   PressMVPFactory,
   PressMVPCommand;
@@ -657,6 +660,14 @@ begin
   InitNotifier;
 end;
 
+function TPressMVPCommand.CurrentUser: TPressUser;
+begin
+  if HasUser then
+    Result := PressDefaultPersistence.CurrentUser
+  else
+    Result := nil;
+end;
+
 destructor TPressMVPCommand.Destroy;
 begin
   FComponentList.Free;
@@ -689,14 +700,22 @@ begin
   Result := FShortCut;
 end;
 
+function TPressMVPCommand.HasUser: Boolean;
+begin
+  with PressApp.Registry[stPersistence] do
+    if HasDefaultService then
+      Result := (DefaultService as TPressPersistence).HasUser
+    else
+      Result := False;
+end;
+
 procedure TPressMVPCommand.InitNotifier;
 begin
   Notifier.AddNotificationItem(
    Model.Selection, [TPressMVPSelectionChangedEvent]);
   if Model.HasSubject and (Model.Subject is TPressObject) then
     Notifier.AddNotificationItem(Model.Subject, [TPressObjectChangedEvent]);
-  Notifier.AddNotificationItem(
-   PressDefaultPersistence, [TPressPersistenceEvent]);
+  Notifier.AddNotificationItem(nil, [TPressPersistenceEvent]);
 end;
 
 function TPressMVPCommand.InternalIsEnabled: Boolean;
@@ -744,12 +763,11 @@ begin
     VCommandReg := PressRegisteredCommands[VIndex]
   else
     VCommandReg := nil;
-  if PressDefaultPersistence.HasUser then
+  if HasUser then
   begin
     if Assigned(VCommandReg) and not VCommandReg.AlwaysEnabled and
      (VCommandReg.AccessID <> -1) then
-      VAccessMode :=
-       PressDefaultPersistence.CurrentUser.AccessMode(VCommandReg.AccessID)
+      VAccessMode := CurrentUser.AccessMode(VCommandReg.AccessID)
     else
       VAccessMode := amWritable;
   end else if Assigned(VCommandReg) and
