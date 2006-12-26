@@ -26,9 +26,6 @@ unit PressSubject;
 interface
 
 uses
-{$IFDEF USE_INSTANTOBJECTS}
-  InstantPersistence;
-{$ELSE}
   SysUtils,
   {$IFDEF D6+}Variants,{$ENDIF}
   Classes,
@@ -36,34 +33,8 @@ uses
   PressCompatibility,
   PressClasses,
   PressNotifier;
-{$ENDIF}
 
 type
-{$IFDEF USE_INSTANTOBJECTS}
-  TPressSubject = TObject;
-  TPressSubjectClass = TClass;
-  TPressObject = TInstantObject;
-
-  TPressValue = TInstantSimple;
-  TPressString = TInstantString;
-  TPressInteger = TInstantInteger;
-  TPressFloat = TInstantFloat;
-  TPressCurrency = TInstantCurrency;
-  TPressBoolean = TInstantBoolean;
-  TPressDate = TInstantDateTime;
-  TPressTime = TInstantDateTime;
-  TPressDateTime = TInstantDateTime;
-  //TPressVariant
-  TPressMemo = TInstantMemo;
-  TPressPicture = TInstantGraphic;
-
-  TPressStructure = TInstantComplex;
-  TPressPart = TInstantPart;
-  TPressReference = TInstantReference;
-  TPressItems = TInstantContainer;
-  TPressParts = TInstantParts;
-  TPressReferences = TInstantReferences;
-{$ELSE}
   { Metadata declarations }
 
   TPressEnumMetadata = class(TObject)
@@ -1466,11 +1437,7 @@ function PressRegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: strin
 function PressRegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string; AEnumValues: array of string): TPressEnumMetadata; overload;
 function PressEnumMetadataByName(const AEnumName: string): TPressEnumMetadata;
 
-{$ENDIF}
-
 implementation
-
-{$IFNDEF USE_INSTANTOBJECTS}
 
 uses
   TypInfo,
@@ -6790,7 +6757,5 @@ initialization
     An ApplicationContext instance holding and destroying SingleObjects
     solves this issue. }
   PressObjectStore;
-
-{$ENDIF}
 
 end.

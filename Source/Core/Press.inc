@@ -32,9 +32,6 @@
 // Generate units with cross-reference information (only Delphi)
 {$DEFINE PressCrossReferenceInfo}
 
-// Use InstantObjects business objects (experimental)
-{.$DEFINE USE_INSTANTOBJECTS}
-
 
 (************ Do not change directives below this line ************)
 
