@@ -222,14 +222,11 @@ type
     function GetEof: Boolean;
     procedure SetCurrentPos(const Value: TPressTextPos);
   protected
-    function IsLiteralChar(Ch: Char; First: Boolean): Boolean;
-    function IsNumericChar(Ch: Char; First: Boolean): Boolean;
-    function IsStringDelimiter(Ch: Char): Boolean;
+    procedure CheckEof(const AErrorMsg: string);
+    function InternalReadToken: string; virtual; abstract;
     function ReadChar: Char;
-    function ReadLiteral: string;
-    function ReadNumber: string;
-    function ReadString: string;
     procedure Reset;
+    procedure ResetTokenPos;
     procedure SkipSpaces;
     property Position: TPressTextPos read FCurrentPos write SetCurrentPos;
   public
@@ -238,14 +235,10 @@ type
     destructor Destroy; override;
     procedure ErrorExpected(const AExpectedToken, AToken: string);
     procedure ErrorFmt(const AMsg: string; const AParams: array of const);
-    function ReadBoolean: Boolean;
-    function ReadIdentifier: string;
-    function ReadInteger: Integer;
     procedure ReadMatch(const AToken: string);
     procedure ReadMatchEof;
     procedure ReadMatchText(const AToken: string);
     function ReadNextToken: string;
-    function ReadPath: string;
     function ReadToken: string;
     procedure UnreadChar;
     procedure UnreadToken;
@@ -306,11 +299,6 @@ implementation
 
 uses
   PressConsts;
-
-const
-  { TODO : Remove these constants}
-  CBooleanValueName = 'Valor lógico';
-  CIntegerValueName = 'Valor inteiro';
 
 var
   _PressSingletons: TPressSingletonList;
@@ -522,6 +510,13 @@ end;
 
 { TPressTextReader }
 
+procedure TPressTextReader.CheckEof(const AErrorMsg: string);
+begin
+  SkipSpaces;
+  if Eof then
+    ErrorExpected(AErrorMsg, '');
+end;
+
 constructor TPressTextReader.Create(AStream: TStream; AOwnsStream: Boolean);
 begin
   inherited Create;
@@ -552,7 +547,7 @@ var
   VToken: string;
 begin
   if AToken = '' then
-    VToken := SPressEofString
+    VToken := SPressEofMsg
   else
     VToken := AToken;
   raise EPressParseError.CreateFmt(TokenPos, STokenExpected, [AExpectedToken, VToken]);
@@ -569,39 +564,11 @@ begin
   Result := FCurrentPos.Position = FSize;
 end;
 
-function TPressTextReader.IsLiteralChar(Ch: Char; First: Boolean): Boolean;
-begin
-  Result :=
-   (Ch in ['A'..'Z', 'a'..'z', '_']) or (not First and (Ch in ['0'..'9']));
-end;
-
-function TPressTextReader.IsNumericChar(Ch: Char; First: Boolean): Boolean;
-begin
-  Result := (Ch in ['0'..'9', '.']) or (First and (Ch in ['-']));
-end;
-
-function TPressTextReader.IsStringDelimiter(Ch: Char): Boolean;
-begin
-  Result := Ch in ['''', '"'];
-end;
-
-function TPressTextReader.ReadBoolean: Boolean;
-var
-  Token: string;
-begin
-  Token := ReadToken;
-  Result := False;
-  if SameText(Token, SPressTrueString) then
-    Result := True
-  else if not SameText(Token, SPressFalseString) then
-    ErrorExpected(CBooleanValueName, Token);
-end;
-
 function TPressTextReader.ReadChar: Char;
 begin
   Result := #0;
   if Eof then
-    Exit;
+    ErrorFmt(SUnexpectedEof, []);
   FStream.Read(Result, SizeOf(Result));
   if Result = #10 then
   begin
@@ -610,57 +577,6 @@ begin
   end else if Result <> #13 then
     Inc(FCurrentPos.Column);
   Inc(FCurrentPos.Position);
-end;
-
-function TPressTextReader.ReadIdentifier: string;
-var
-  Ch: Char;
-begin
-  Result := '';
-  SkipSpaces;
-  if Eof then
-    ErrorExpected(SPressIdentifierString, '');
-  Ch := ReadChar;
-  UnreadChar;
-  if IsLiteralChar(Ch, True) then
-    Result := ReadLiteral
-  else
-    ErrorExpected(SPressIdentifierString, ReadToken);
-end;
-
-function TPressTextReader.ReadInteger: Integer;
-var
-  Token: string;
-begin
-  Token := ReadToken;
-  if Token = '' then
-    ErrorExpected(SPressIntegerString, '');
-  try
-    Result := StrtoInt(Token);
-  except
-    Result := 0;
-    ErrorExpected(CIntegerValueName, Token);
-  end;
-end;
-
-function TPressTextReader.ReadLiteral: string;
-var
-  Ch: Char;
-begin
-  Result := '';
-  Ch := ReadChar;
-  if Ch = #0 then
-    ErrorExpected(SPressLiteralString, '');
-  if IsLiteralChar(Ch, True) then
-  begin
-    repeat
-      Result := Result + Ch;
-      if Eof then
-        Exit;
-      Ch := ReadChar;
-    until not IsLiteralChar(Ch, False);
-  end;
-  UnreadChar;
 end;
 
 procedure TPressTextReader.ReadMatch(const AToken: string);
@@ -675,7 +591,7 @@ end;
 procedure TPressTextReader.ReadMatchEof;
 begin
   if not Eof then
-    ErrorExpected(SPressEofString, ReadNextToken);
+    ErrorExpected(SPressEofMsg, ReadNextToken);
 end;
 
 procedure TPressTextReader.ReadMatchText(const AToken: string);
@@ -689,91 +605,13 @@ end;
 
 function TPressTextReader.ReadNextToken: string;
 begin
-  Result := ReadToken;
+  Result := InternalReadToken;
   UnreadToken;
 end;
 
-function TPressTextReader.ReadNumber: string;
-var
-  Ch: Char;
-begin
-  { TODO : 1.5.6 will result as a Number }
-  Result := '';
-  Ch := ReadChar;
-  if IsNumericChar(Ch, True) then
-  begin
-    repeat
-      Result := Result + Ch;
-      if Eof then
-        Exit;
-      Ch := ReadChar;
-    until not IsNumericChar(Ch, False);
-  end;
-  UnreadChar;
-end;
-
-function TPressTextReader.ReadPath: string;
-begin
-  { TODO : Implement }
-  Result := ReadToken;
-end;
-
-function TPressTextReader.ReadString: string;
-var
-  Ch, Delimiter: Char;
-begin
-  { TODO : Implement 'smart' eof check }
-  Result := '';
-  Ch := ReadChar;
-  if IsStringDelimiter(Ch) then
-  begin
-    Delimiter := Ch;
-    Ch := ReadChar;
-    while not Eof do
-    begin
-      if Ch = Delimiter then
-      begin
-        Ch := ReadChar;
-        if Ch <> Delimiter then
-          Break;
-      end;
-      Result := Result + Ch;
-      Ch := ReadChar;
-      { TODO : Implement - if IsLineBreak then raise an exception }
-    end;
-  end;
-  UnreadChar;
-end;
-
 function TPressTextReader.ReadToken: string;
-var
-  Ch: Char;
 begin
-  Result := '';
-  SkipSpaces;
-  FTokenPos := Position;
-  if Eof then
-    Exit;
-  Ch := ReadChar;
-  if Eof then
-  begin
-    Result := Ch;
-    Exit;
-  end;
-  if IsStringDelimiter(Ch) then
-  begin
-    UnreadChar;
-    Result := ReadString;
-  end else if IsNumericChar(Ch, True) then
-  begin
-    UnreadChar;
-    Result := ReadNumber;
-  end else if IsLiteralChar(Ch, True) then
-  begin
-    UnreadChar;
-    Result := ReadLiteral;
-  end else { TODO : what about operators whose len > 1 (like '<>')? }
-    Result := Ch;
+  Result := InternalReadToken;
 end;
 
 procedure TPressTextReader.Reset;
@@ -785,6 +623,11 @@ begin
   FCurrentPos.Position := 0;
 end;
 
+procedure TPressTextReader.ResetTokenPos;
+begin
+  FTokenPos := Position;
+end;
+
 procedure TPressTextReader.SetCurrentPos(const Value: TPressTextPos);
 begin
   FCurrentPos := Value;
@@ -793,10 +636,13 @@ end;
 
 procedure TPressTextReader.SkipSpaces;
 begin
-  while ReadChar in [' ', #0, #9, #10, #13] do
-    if Eof then
-      Exit;
-  UnreadChar;
+  if not Eof then
+  begin
+    while ReadChar in [' ', #0, #9, #10, #13] do
+      if Eof then
+        Exit;
+    UnreadChar;
+  end;
 end;
 
 procedure TPressTextReader.UnreadChar;

@@ -142,12 +142,6 @@ uses
   PressConsts,
   PressClasses;
 
-const
-  CClassName = 'class name';
-  CAttributeName = 'attribute name';
-  CPropertyName = 'property name';
-  CCalcString = 'Calc';
-
 { TPressMetaParser }
 
 function TPressMetaParser.GetMetadata: TPressObjectMetadata;
@@ -164,7 +158,7 @@ begin
   FObject := Parse(Reader, [
    TPressMetaParserQuery, TPressMetaParserObject]) as TPressMetaParserObject;
   if not Assigned(FObject) then
-    Reader.ErrorExpected(CClassName, Reader.ReadToken);
+    Reader.ErrorExpected(SPressClassNameMsg, Reader.ReadToken);
   if Reader.ReadToken = '(' then
   begin
     FAttributes := Parse(Reader, [
@@ -214,7 +208,7 @@ begin
   Token := Reader.ReadIdentifier;
   VObjClass := PressFindObjectClass(Token);
   if not Assigned(VObjClass) then
-    Reader.ErrorExpected(CClassName, Token);
+    Reader.ErrorExpected(SPressClassNameMsg, Token);
   Result := VObjClass.ObjectMetadataClass.Create(VObjClass);
 end;
 
@@ -296,7 +290,7 @@ begin
    TPressMetaParserEnum, TPressMetaParserStructure,
    TPressMetaParserAttributeType]) as TPressMetaParserAttributeType;
   if not Assigned(FAttributeType) then
-    Reader.ErrorExpected(CAttributeName, Reader.ReadToken);
+    Reader.ErrorExpected(SPressAttributeNameMsg, Reader.ReadToken);
   FAttributeType.Metadata.Name := Token;
   FCalcMetadata := Parse(Reader, [
    TPressMetaParserCalculated]) as TPressMetaParserCalculated;
@@ -320,7 +314,7 @@ end;
 class function TPressMetaParserCalculated.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := SameText(Reader.ReadToken, CCalcString);
+  Result := SameText(Reader.ReadToken, SPressCalcString);
 end;
 
 procedure TPressMetaParserCalculated.InternalRead(Reader: TPressParserReader);
@@ -328,7 +322,7 @@ var
   Token: string;
 begin
   inherited;
-  Reader.ReadMatchText(CCalcString);
+  Reader.ReadMatchText(SPressCalcString);
   FCalcMetadata := TPressCalcMetadata.Create;
   try
     if Reader.ReadToken = '(' then
@@ -495,9 +489,15 @@ begin
     end else
       VValue := SPressTrueString;
     if not Assigned(GetPropInfo(FTarget, VPropertyName)) then
-      Reader.ErrorExpected(CPropertyName, VPropertyName);
+      Reader.ErrorExpected(SPressPropertyNameMsg, VPropertyName);
     { TODO : Implement FPC RTTI routines }
     {$IFNDEF FPC}
+
+      // Workaround
+      if (VValue <> '') and (VValue[1] = VValue[Length(VValue)]) and
+       (VValue[1] in ['''', '"']) then
+        VValue := Copy(VValue, 2, Length(VValue) - 2);
+
     SetPropValue(FTarget, VPropertyName, VValue);
     {$ENDIF}
   end;

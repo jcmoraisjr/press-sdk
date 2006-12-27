@@ -38,13 +38,10 @@ const
   SPressFalseString = 'False';
   SPressNilString = 'nil';
   SPressIdString = 'Id';
-  SPressIdentifierString = 'Identifier';
-  SPressIntegerString = 'Integer';
-  SPressLiteralString = 'Literal';
+  SPressCalcString = 'Calc';
   SPressQueryItemsString = 'QueryItems';
   SPressReportNativeValueSuffix = 'Value';
   SPressReportDisplayTextSuffix = 'DisplayText';
-  SPressEofString = 'final de arquivo';
 
 resourcestring
   SAmbiguousConcreteClass = 'Classe concreta ambígua (%s e %s) para o objeto %s';
@@ -84,6 +81,7 @@ resourcestring
   SUnassignedPersistenceConnector = 'Conector de persistência não foi associado';
   SUnassignedServiceType = 'Nenhum serviço %s foi associado ou registrado';
   SUnassignedSubject = 'Subject não foi associado';
+  SUnexpectedEof = 'Final de arquivo inesperado';
   SUnexpectedMVPClassParam = 'Classe MVP %s inicializada com parâmetros inesperados';
   SUnsupportedAttribute = 'O atributo %s(''%s'') não é suportado';
   SUnsupportedAttributeType = 'O tipo de atributo %s não é suportado';
@@ -110,7 +108,19 @@ resourcestring
   SPressCloseFormCommand = 'Fechar';
   SPressExecuteQueryCommand = 'Executar';
   SPressAssignSelectionQueryCommand = 'Selecionar';
-  SPressReportErrorString = ' ##Erro## ';
+
+  SPressAttributeNameMsg = 'attribute name';
+  SPressBooleanValueMsg = 'Valor lógico';
+  SPressClassNameMsg = 'class name';
+  SPressEofMsg = 'Final de arquivo';
+  SPressIdentifierMsg = 'Identificador';
+  SPressIntegerValueMsg = 'Inteiro';
+  SPressLineBreakMsg = 'Quebra de linha';
+  SPressNumberValueMsg = 'Número';
+  SPressPropertyNameMsg = 'property name';
+  SPressReportErrorMsg = ' ##Erro## ';
+  SPressStringValueMsg = 'String';
+  SPressStringDelimiterMsg = 'Delimitador de string';
 
   SPressCancelChangesDialog = 'Cancelar alterações?';
   SPressConfirmRemoveOneItemDialog = 'Um item selecionado. Confirma remoção?';

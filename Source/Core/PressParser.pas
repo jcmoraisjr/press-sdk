@@ -30,6 +30,21 @@ uses
 
 type
   TPressParserReader = class(TPressTextReader)
+  protected
+    function InternalReadIdentifier: string;
+    function InternalReadNumber: string;
+    function InternalReadString: string;
+    function InternalReadToken: string; override;
+    function IsIdentifierChar(Ch: Char; First: Boolean): Boolean;
+    function IsNumericChar(Ch: Char; First: Boolean): Boolean;
+    function IsStringDelimiter(Ch: Char): Boolean;
+  public
+    function ReadBoolean: Boolean;
+    function ReadIdentifier: string;
+    function ReadInteger: Integer;
+    function ReadNumber: string;
+    function ReadPath: string;
+    function ReadString: string;
   end;
 
   TPressParserList = class;
@@ -81,6 +96,175 @@ type
   end;
 
 implementation
+
+uses
+  SysUtils,
+  PressConsts;
+
+{ TPressParserReader }
+
+function TPressParserReader.InternalReadIdentifier: string;
+var
+  Ch: Char;
+begin
+  Ch := ReadChar;
+  repeat
+    Result := Result + Ch;
+    if Eof then
+      Exit;
+    Ch := ReadChar;
+  until not IsIdentifierChar(Ch, False);
+  UnreadChar;
+end;
+
+function TPressParserReader.InternalReadNumber: string;
+var
+  Ch: Char;
+begin
+  { TODO : 1.5.6 will result as a Number }
+  Ch := ReadChar;
+  repeat
+    Result := Result + Ch;
+    if Eof then
+      Exit;
+    Ch := ReadChar;
+  until not IsNumericChar(Ch, False);
+  UnreadChar;
+end;
+
+function TPressParserReader.InternalReadString: string;
+var
+  Ch, Delimiter: Char;
+begin
+  Delimiter := ReadChar;
+  Result := Delimiter;
+  while True do
+  begin
+    Ch := ReadChar;
+    if Ch in [#10, #13] then
+      ErrorExpected(SPressStringDelimiterMsg, SPressLineBreakMsg);
+    Result := Result + Ch;
+    if Ch = Delimiter then
+    begin
+      Ch := ReadChar;
+      if Ch <> Delimiter then
+      begin
+        UnreadChar;
+        Exit;
+      end;
+    end;
+  end;
+end;
+
+function TPressParserReader.InternalReadToken: string;
+var
+  Ch: Char;
+begin
+  Result := '';
+  SkipSpaces;
+  ResetTokenPos;
+  if Eof then
+    Exit;
+  Ch := ReadChar;
+  if Eof then
+  begin
+    Result := Ch;
+    Exit;
+  end;
+  if IsStringDelimiter(Ch) then
+  begin
+    UnreadChar;
+    Result := InternalReadString;
+  end else if IsNumericChar(Ch, True) then
+  begin
+    UnreadChar;
+    Result := InternalReadNumber;
+  end else if IsIdentifierChar(Ch, True) then
+  begin
+    UnreadChar;
+    Result := InternalReadIdentifier;
+  end else { TODO : fix operator reading whose len > 1 (like '<>') }
+    Result := Ch;
+end;
+
+function TPressParserReader.IsIdentifierChar(Ch: Char; First: Boolean): Boolean;
+begin
+  Result :=
+   (Ch in ['A'..'Z', 'a'..'z', '_']) or (not First and (Ch in ['0'..'9']));
+end;
+
+function TPressParserReader.IsNumericChar(Ch: Char; First: Boolean): Boolean;
+begin
+  Result := (Ch in ['0'..'9', '.']) or (First and (Ch in ['-']));
+end;
+
+function TPressParserReader.IsStringDelimiter(Ch: Char): Boolean;
+begin
+  Result := Ch in ['''', '"'];
+end;
+
+function TPressParserReader.ReadBoolean: Boolean;
+var
+  Token: string;
+begin
+  Token := ReadToken;
+  Result := False;
+  if SameText(Token, SPressTrueString) then
+    Result := True
+  else if not SameText(Token, SPressFalseString) then
+    ErrorExpected(SPressBooleanValueMsg, Token);
+end;
+
+function TPressParserReader.ReadIdentifier: string;
+begin
+  CheckEof(SPressIdentifierMsg);
+  Result := ReadToken;
+  if not IsIdentifierChar(Result[1], True) then
+    ErrorExpected(SPressIdentifierMsg, Result);
+end;
+
+function TPressParserReader.ReadInteger: Integer;
+var
+  Token: string;
+begin
+  Token := ReadToken;
+  if Token = '' then
+    ErrorExpected(SPressIntegerValueMsg, '');
+  try
+    Result := StrtoInt(Token);
+  except
+    on E: EConvertError do
+    begin
+      Result := 0;
+      ErrorExpected(SPressIntegerValueMsg, Token);
+    end else
+      raise;
+  end;
+end;
+
+function TPressParserReader.ReadNumber: string;
+begin
+  CheckEof(SPressNumberValueMsg);
+  Result := ReadToken;
+  if not IsNumericChar(Result[1], True) then
+    ErrorExpected(SPressNumberValueMsg, Result);
+end;
+
+function TPressParserReader.ReadPath: string;
+begin
+  { TODO : Implement }
+  Result := ReadToken;
+end;
+
+function TPressParserReader.ReadString: string;
+begin
+  CheckEof(SPressStringValueMsg);
+  Result := ReadToken;
+  if (Length(Result) < 2) or (Result[1] <> Result[Length(Result)]) or
+   not IsStringDelimiter(Result[1]) then
+    ErrorExpected(SPressStringValueMsg, Result);
+  Result := Copy(Result, 2, Length(Result) - 2);
+end;
 
 { TPressParserObject }
 

@@ -709,7 +709,7 @@ begin
     end else
       AValue := '';
   end else if AForceData then
-    AValue := SPressReportErrorString;
+    AValue := SPressReportErrorMsg;
 end;
 
 procedure TPressReportGroupItem.SaveReport;
