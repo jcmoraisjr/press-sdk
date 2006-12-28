@@ -93,7 +93,9 @@ type
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalRead(Reader: TPressParserReader); override;
-  end;  
+  public
+    property CalcMetadata: TPressCalcMetadata read FCalcMetadata;
+  end;
 
   TPressMetaParserAttributeType = class(TPressParserObject)
   private
@@ -294,6 +296,8 @@ begin
   FAttributeType.Metadata.Name := Token;
   FCalcMetadata := Parse(Reader, [
    TPressMetaParserCalculated]) as TPressMetaParserCalculated;
+  if Assigned(FCalcMetadata) then
+    AttributeType.Metadata.CalcMetadata := FCalcMetadata.CalcMetadata;
   if TPressMetaParserProperties.Apply(Reader) then
     with TPressMetaParserProperties.Create(Self) do
     try
@@ -339,8 +343,6 @@ begin
       end;
     end else
       Reader.UnreadToken;
-    (Owner as TPressMetaParserAttributes).
-     AttributeType.Metadata.CalcMetadata := FCalcMetadata;
   except
     FCalcMetadata.Free;
     raise;
