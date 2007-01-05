@@ -21,10 +21,10 @@
 
 unit PressInstantObjectsBroker;
 
-interface
-
 {.$DEFINE IO2.1.x}
 {$I Press.inc}
+
+interface
 
 uses
   PressSubject,

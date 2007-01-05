@@ -21,6 +21,8 @@
 
 unit PressFastReportBroker;
 
+{$I Press.inc}
+
 interface
 
 uses
