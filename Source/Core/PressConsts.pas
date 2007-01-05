@@ -70,8 +70,10 @@ resourcestring
   SPathReferencesNil = 'O caminho %s(''%s'') possui atributo(s) Reference apontando para nil';
   SPersistentClassNotFound = 'Classe persistente %s não encontrada';
   SSingletonClassNotFound = 'Classe Singleton %s não encontrada';
+  SStringLengthOutOfBounds = 'String muito grande';
   SStringOverflow = 'String overflow: %s(%s)';
   STokenExpected = '''%s'' esperado, mas ''%s'' foi encontrado';
+  STokenLengthOutOfBounds = 'Token muito grande';
   SUnassignedAttributeType = 'Tipo de atributo não associado para %s(''%s'')';
   SUnassignedCandidateClasses = 'Classes candidata não estão associadas';
   SUnassignedTargetClass = 'Classe alvo não está associada';
@@ -119,8 +121,8 @@ resourcestring
   SPressNumberValueMsg = 'Número';
   SPressPropertyNameMsg = 'property name';
   SPressReportErrorMsg = ' ##Erro## ';
-  SPressStringValueMsg = 'String';
   SPressStringDelimiterMsg = 'Delimitador de string';
+  SPressStringValueMsg = 'String';
 
   SPressCancelChangesDialog = 'Cancelar alterações?';
   SPressConfirmRemoveOneItemDialog = 'Um item selecionado. Confirma remoção?';

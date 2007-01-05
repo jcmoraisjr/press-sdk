@@ -30,10 +30,14 @@ uses
 
 type
   TPressParserReader = class(TPressTextReader)
+  private
+    procedure CheckEof(const AErrorMsg: string);
   protected
+    procedure InternalCheckComment(var AToken: string); virtual;
     function InternalReadIdentifier: string;
     function InternalReadNumber: string;
     function InternalReadString: string;
+    function InternalReadSymbol: string; virtual;
     function InternalReadToken: string; override;
     function IsIdentifierChar(Ch: Char; First: Boolean): Boolean;
     function IsNumericChar(Ch: Char; First: Boolean): Boolean;
@@ -42,9 +46,12 @@ type
     function ReadBoolean: Boolean;
     function ReadIdentifier: string;
     function ReadInteger: Integer;
+    function ReadNext(const AToken: string; AInclude: Boolean): string; overload;
+    function ReadNext(const ATokens: array of string; AInclude: Boolean): string; overload;
     function ReadNumber: string;
     function ReadPath: string;
     function ReadString: string;
+    function ReadUnquotedString: string;
   end;
 
   TPressParserList = class;
@@ -54,20 +61,23 @@ type
 
   TPressParserObject = class(TObject)
   private
-    FParserObjects: TPressParserList;
+    FItemList: TPressParserList;
     FOwner: TPressParserObject;
-    function GetParserObjects: TPressParserList;
+    function GetItemList: TPressParserList;
+    function GetItems(AIndex: Integer): TPressParserObject;
   protected
     function FindRule(Reader: TPressParserReader; AClasses: array of TPressParserClass): TPressParserClass;
     class function InternalApply(Reader: TPressParserReader): Boolean; virtual;
     procedure InternalRead(Reader: TPressParserReader); virtual;
-    function Parse(Reader: TPressParserReader; AParserClasses: array of TPressParserClass; AOwner: TPressParserObject = nil): TPressParserObject;
-    property ParserObjects: TPressParserList read GetParserObjects;
+    function Parse(Reader: TPressParserReader; AParserClasses: array of TPressParserClass; AOwner: TPressParserObject = nil; ANecessary: Boolean = False; const AErrorExpectedMsg: string = ''): TPressParserObject;
+    property ItemList: TPressParserList read GetItemList;
   public
     constructor Create(AOwner: TPressParserObject);
     destructor Destroy; override;
     class function Apply(Reader: TPressParserReader): Boolean;
+    function ItemCount: Integer;
     procedure Read(Reader: TPressParserReader);
+    property Items[AIndex: Integer]: TPressParserObject read GetItems; default;
     property Owner: TPressParserObject read FOwner;
   end;
 
@@ -103,57 +113,115 @@ uses
 
 { TPressParserReader }
 
+procedure TPressParserReader.CheckEof(const AErrorMsg: string);
+begin
+  SkipSpaces;
+  if Eof then
+    ErrorExpected(AErrorMsg, '');
+end;
+
+procedure TPressParserReader.InternalCheckComment(var AToken: string);
+begin
+end;
+
 function TPressParserReader.InternalReadIdentifier: string;
 var
   Ch: Char;
+  VIdent: ShortString;
+  VLen: Byte;
 begin
+  VLen := 0;
   Ch := ReadChar;
   repeat
-    Result := Result + Ch;
+    Inc(VLen);
+    if VLen = Pred(High(VLen)) then
+      ErrorMsg(STokenLengthOutOfBounds);
+    VIdent[VLen] := Ch;
     if Eof then
+    begin
+      VIdent[0] := Char(VLen);
+      Result := VIdent;
       Exit;
+    end;
     Ch := ReadChar;
   until not IsIdentifierChar(Ch, False);
   UnreadChar;
+  VIdent[0] := Char(VLen);
+  Result := VIdent;
 end;
 
 function TPressParserReader.InternalReadNumber: string;
 var
   Ch: Char;
+  VNumStr: ShortString;
+  VLen: Byte;
 begin
   { TODO : 1.5.6 will result as a Number }
+  VLen := 0;
   Ch := ReadChar;
   repeat
-    Result := Result + Ch;
+    Inc(VLen);
+    if VLen = Pred(High(VLen)) then
+      ErrorMsg(STokenLengthOutOfBounds);
+    VNumStr[VLen] := Ch;
     if Eof then
+    begin
+      VNumStr[0] := Char(VLen);
+      Result := VNumStr;
       Exit;
+    end;
     Ch := ReadChar;
   until not IsNumericChar(Ch, False);
   UnreadChar;
+  VNumStr[0] := Char(VLen);
+  Result := VNumStr;
 end;
 
 function TPressParserReader.InternalReadString: string;
+
+  procedure SafeInc(var AVar: Byte);
+  begin
+    Inc(AVar);
+    if AVar = Pred(High(AVar)) then
+      ErrorMsg(SStringLengthOutOfBounds);
+  end;
+
 var
   Ch, Delimiter: Char;
+  VStr: ShortString;
+  VLen: Byte;
 begin
   Delimiter := ReadChar;
-  Result := Delimiter;
+  VStr[1] := Delimiter;
+  VLen := 1;
   while True do
   begin
     Ch := ReadChar;
     if Ch in [#10, #13] then
       ErrorExpected(SPressStringDelimiterMsg, SPressLineBreakMsg);
-    Result := Result + Ch;
+    SafeInc(VLen);
+    VStr[VLen] := Ch;
     if Ch = Delimiter then
     begin
       Ch := ReadChar;
       if Ch <> Delimiter then
       begin
         UnreadChar;
-        Exit;
+        Break;
+      end else
+      begin
+        SafeInc(VLen);
+        VStr[VLen] := Ch;
       end;
     end;
   end;
+  VStr[0] := Char(VLen);
+  Result := VStr;
+end;
+
+function TPressParserReader.InternalReadSymbol: string;
+begin
+  Result := ReadChar;
 end;
 
 function TPressParserReader.InternalReadToken: string;
@@ -161,30 +229,22 @@ var
   Ch: Char;
 begin
   Result := '';
-  SkipSpaces;
-  ResetTokenPos;
-  if Eof then
-    Exit;
   Ch := ReadChar;
   if Eof then
+    Result := Ch
+  else
   begin
-    Result := Ch;
-    Exit;
+    UnreadChar;
+    if IsStringDelimiter(Ch) then
+      Result := InternalReadString
+    else if IsNumericChar(Ch, True) then
+      Result := InternalReadNumber
+    else if IsIdentifierChar(Ch, True) then
+      Result := InternalReadIdentifier
+    else
+      Result := InternalReadSymbol;
+    InternalCheckComment(Result);
   end;
-  if IsStringDelimiter(Ch) then
-  begin
-    UnreadChar;
-    Result := InternalReadString;
-  end else if IsNumericChar(Ch, True) then
-  begin
-    UnreadChar;
-    Result := InternalReadNumber;
-  end else if IsIdentifierChar(Ch, True) then
-  begin
-    UnreadChar;
-    Result := InternalReadIdentifier;
-  end else { TODO : fix operator reading whose len > 1 (like '<>') }
-    Result := Ch;
 end;
 
 function TPressParserReader.IsIdentifierChar(Ch: Char; First: Boolean): Boolean;
@@ -242,6 +302,51 @@ begin
   end;
 end;
 
+function TPressParserReader.ReadNext(const ATokens: array of string;
+  AInclude: Boolean): string;
+
+  function MatchToken(const AToken: string): Boolean;
+  var
+    I: Integer;
+  begin
+    Result := True;
+    for I := Low(ATokens) to High(ATokens) do
+      if SameText(ATokens[I], AToken) then
+        Exit;
+    Result := False;
+  end;
+
+var
+  Token: string;
+  VOldPos, VNewPos: TPressTextPos;
+  VSize, VRealSize: Integer;
+begin
+  VOldPos := Position;
+  repeat
+    Token := ReadToken;
+    if Token = '' then
+    begin
+      Position := VOldPos;
+      ErrorFmt(SUnexpectedEof, []);
+    end;
+  until MatchToken(Token);
+  if not AInclude then
+    UnreadToken;
+  VNewPos := Position;
+  VSize := VNewPos.Position - VOldPos.Position;
+  SetLength(Result, VSize);
+  Position := VOldPos;
+  VRealSize := Stream.Read(Result[1], VSize);
+  SetLength(Result, VRealSize);
+  Position := VNewPos;
+end;
+
+function TPressParserReader.ReadNext(const AToken: string;
+  AInclude: Boolean): string;
+begin
+  Result := ReadNext([AToken], AInclude);
+end;
+
 function TPressParserReader.ReadNumber: string;
 begin
   CheckEof(SPressNumberValueMsg);
@@ -251,9 +356,20 @@ begin
 end;
 
 function TPressParserReader.ReadPath: string;
+var
+  VPos: TPressTextPos;
+  Ch: Char;
 begin
-  { TODO : Implement }
-  Result := ReadToken;
+  Result := ReadIdentifier;
+  VPos := Position;
+  Ch := ReadChar;
+  while (Ch = '.') and IsIdentifierChar(NextChar, True) do
+  begin
+    Result := Result + '.' + ReadIdentifier;
+    VPos := Position;
+    Ch := ReadChar;
+  end;
+  Position := VPos;
 end;
 
 function TPressParserReader.ReadString: string;
@@ -263,7 +379,16 @@ begin
   if (Length(Result) < 2) or (Result[1] <> Result[Length(Result)]) or
    not IsStringDelimiter(Result[1]) then
     ErrorExpected(SPressStringValueMsg, Result);
-  Result := Copy(Result, 2, Length(Result) - 2);
+end;
+
+function TPressParserReader.ReadUnquotedString: string;
+var
+  VStr: string;
+  VPStr: PChar;
+begin
+  VStr := ReadString;
+  VPStr := PChar(VStr);
+  Result := AnsiExtractQuotedStr(VPStr, VStr[1]);
 end;
 
 { TPressParserObject }
@@ -285,14 +410,14 @@ begin
   inherited Create;
   FOwner := AOwner;
   if Assigned(FOwner) then
-    FOwner.ParserObjects.Add(Self);
+    FOwner.ItemList.Add(Self);
 end;
 
 destructor TPressParserObject.Destroy;
 begin
   if Assigned(FOwner) then
-    FOwner.ParserObjects.Extract(Self);
-  FParserObjects.Free;
+    FOwner.ItemList.Extract(Self);
+  FItemList.Free;
   inherited;
 end;
 
@@ -310,27 +435,42 @@ begin
   Result := nil;
 end;
 
-function TPressParserObject.GetParserObjects: TPressParserList;
+function TPressParserObject.GetItemList: TPressParserList;
 begin
-  if not Assigned(FParserObjects) then
-    FParserObjects := TPressParserList.Create(True);
-  Result := FParserObjects;
+  if not Assigned(FItemList) then
+    FItemList := TPressParserList.Create(True);
+  Result := FItemList;
+end;
+
+function TPressParserObject.GetItems(AIndex: Integer): TPressParserObject;
+begin
+  Result := ItemList[AIndex];
 end;
 
 class function TPressParserObject.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := False;
+  Result := True;
 end;
 
 procedure TPressParserObject.InternalRead(Reader: TPressParserReader);
 begin
 end;
 
+function TPressParserObject.ItemCount: Integer;
+begin
+  if Assigned(FItemList) then
+    Result := FItemList.Count
+  else
+    Result := 0;
+end;
+
 function TPressParserObject.Parse(
   Reader: TPressParserReader;
   AParserClasses: array of TPressParserClass;
-  AOwner: TPressParserObject): TPressParserObject;
+  AOwner: TPressParserObject;
+  ANecessary: Boolean;
+  const AErrorExpectedMsg: string): TPressParserObject;
 var
   VRule: TPressParserClass;
 begin
@@ -342,7 +482,11 @@ begin
     Result := VRule.Create(AOwner);
     Result.Read(Reader);
   end else
+  begin
     Result := nil;
+    if ANecessary then
+      Reader.ErrorExpected(AErrorExpectedMsg, Reader.ReadToken);
+  end;
 end;
 
 procedure TPressParserObject.Read(Reader: TPressParserReader);

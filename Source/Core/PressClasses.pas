@@ -213,8 +213,10 @@ type
   end;
 
   TPressTextReader = class(TObject)
+  { TODO : Refactor class -- move Token implementation to the ParserReader }
   private
     FCurrentPos: TPressTextPos;
+    FCurrentToken: string;
     FOwnsStream: Boolean;
     FSize: Integer;
     FStream: TStream;
@@ -222,27 +224,28 @@ type
     function GetEof: Boolean;
     procedure SetCurrentPos(const Value: TPressTextPos);
   protected
-    procedure CheckEof(const AErrorMsg: string);
     function InternalReadToken: string; virtual; abstract;
-    function ReadChar: Char;
     procedure Reset;
-    procedure ResetTokenPos;
-    procedure SkipSpaces;
-    property Position: TPressTextPos read FCurrentPos write SetCurrentPos;
+    property Stream: TStream read FStream;
   public
     constructor Create(AStream: TStream; AOwnsStream: Boolean = False); overload;
     constructor Create(const AString: string); overload;
     destructor Destroy; override;
     procedure ErrorExpected(const AExpectedToken, AToken: string);
     procedure ErrorFmt(const AMsg: string; const AParams: array of const);
+    procedure ErrorMsg(const AMsg: string);
+    function NextChar: Char;
+    function ReadChar(GoForward: Boolean = True): Char;
     procedure ReadMatch(const AToken: string);
     procedure ReadMatchEof;
     procedure ReadMatchText(const AToken: string);
     function ReadNextToken: string;
     function ReadToken: string;
+    procedure SkipSpaces;
     procedure UnreadChar;
     procedure UnreadToken;
     property Eof: Boolean read GetEof;
+    property Position: TPressTextPos read FCurrentPos write SetCurrentPos;
     property TokenPos: TPressTextPos read FTokenPos;
   end;
 
@@ -510,13 +513,6 @@ end;
 
 { TPressTextReader }
 
-procedure TPressTextReader.CheckEof(const AErrorMsg: string);
-begin
-  SkipSpaces;
-  if Eof then
-    ErrorExpected(AErrorMsg, '');
-end;
-
 constructor TPressTextReader.Create(AStream: TStream; AOwnsStream: Boolean);
 begin
   inherited Create;
@@ -559,24 +555,38 @@ begin
   raise EPressParseError.CreateFmt(TokenPos, AMsg, AParams);
 end;
 
+procedure TPressTextReader.ErrorMsg(const AMsg: string);
+begin
+  ErrorFmt(AMsg, []);
+end;
+
 function TPressTextReader.GetEof: Boolean;
 begin
   Result := FCurrentPos.Position = FSize;
 end;
 
-function TPressTextReader.ReadChar: Char;
+function TPressTextReader.NextChar: Char;
+begin
+  Result := ReadChar(False);
+end;
+
+function TPressTextReader.ReadChar(GoForward: Boolean): Char;
 begin
   Result := #0;
   if Eof then
-    ErrorFmt(SUnexpectedEof, []);
+    ErrorMsg(SUnexpectedEof);
   FStream.Read(Result, SizeOf(Result));
-  if Result = #10 then
+  if GoForward then
   begin
-    Inc(FCurrentPos.Line);
-    FCurrentPos.Column := 1;
-  end else if Result <> #13 then
-    Inc(FCurrentPos.Column);
-  Inc(FCurrentPos.Position);
+    if Result = #10 then
+    begin
+      Inc(FCurrentPos.Line);
+      FCurrentPos.Column := 1;
+    end else if Result <> #13 then
+      Inc(FCurrentPos.Column);
+    Inc(FCurrentPos.Position);
+  end else
+    FStream.Position := FCurrentPos.Position;
 end;
 
 procedure TPressTextReader.ReadMatch(const AToken: string);
@@ -605,13 +615,31 @@ end;
 
 function TPressTextReader.ReadNextToken: string;
 begin
-  Result := InternalReadToken;
+  Result := ReadToken;
   UnreadToken;
 end;
 
 function TPressTextReader.ReadToken: string;
 begin
-  Result := InternalReadToken;
+  if (FCurrentToken <> '') and (FTokenPos.Position = FCurrentPos.Position) then
+  begin
+    Result := FCurrentToken;
+
+    { TODO : Improve }
+    Inc(FCurrentPos.Position, Length(FCurrentToken));
+    Inc(FCurrentPos.Column, Length(FCurrentToken));
+    Stream.Position := FCurrentPos.Position;
+
+    FCurrentToken := '';
+  end else
+  begin
+    SkipSpaces;
+    FTokenPos := Position;
+    if Eof then
+      Exit;
+    FCurrentToken := InternalReadToken;
+    Result := FCurrentToken;
+  end;
 end;
 
 procedure TPressTextReader.Reset;
@@ -621,11 +649,6 @@ begin
   FCurrentPos.Line := 1;
   FCurrentPos.Column := 1;
   FCurrentPos.Position := 0;
-end;
-
-procedure TPressTextReader.ResetTokenPos;
-begin
-  FTokenPos := Position;
 end;
 
 procedure TPressTextReader.SetCurrentPos(const Value: TPressTextPos);
