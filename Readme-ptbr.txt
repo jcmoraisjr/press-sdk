@@ -1,11 +1,10 @@
-PressObjects versão 0.1.1
+PressObjects Framework, Versão 0.1.1
 Copyright (C) 2006 Laserpress Ltda.
 
 http://www.pressobjects.org
 
-PressObjects é distribuído sob a Lesser General Public License,
-versão 2.1 ou superior. Vide http://www.gnu.org/licenses/lgpl.html para
-maiores informações.
+Vide arquivo LICENSE.txt, incluso nesta distribuição,
+para detalhes do copyright.
 
 == Introdução
 =============
