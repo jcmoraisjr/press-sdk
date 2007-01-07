@@ -555,7 +555,7 @@ end;
 
 function TPressTextReader.GetEof: Boolean;
 begin
-  Result := FCurrentPos.Position = FSize;
+  Result := FCurrentPos.Position >= FSize;
 end;
 
 function TPressTextReader.NextChar: Char;
@@ -593,6 +593,7 @@ end;
 
 procedure TPressTextReader.ReadMatchEof;
 begin
+  SkipSpaces;
   if not Eof then
     ErrorExpected(SPressEofMsg, ReadNextToken);
 end;
@@ -614,6 +615,7 @@ end;
 
 function TPressTextReader.ReadToken: string;
 begin
+  SkipSpaces;
   if (FCurrentToken <> '') and (FTokenPos.Position = FCurrentPos.Position) then
   begin
     Result := FCurrentToken;
@@ -626,12 +628,13 @@ begin
     FCurrentToken := '';
   end else
   begin
-    SkipSpaces;
     FTokenPos := Position;
-    if Eof then
-      Exit;
-    FCurrentToken := InternalReadToken;
-    Result := FCurrentToken;
+    if not Eof then
+    begin
+      FCurrentToken := InternalReadToken;
+      Result := FCurrentToken;
+    end else
+      Result := '';
   end;
 end;
 
