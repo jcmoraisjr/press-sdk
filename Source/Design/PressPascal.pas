@@ -381,9 +381,7 @@ begin
   Parse(Reader, [TPressPascalFinalizationSection]);
   Reader.ReadMatchText('end');
   Reader.ReadMatch('.');
-  Token := Reader.ReadToken;
-  if Token <> '' then
-    Reader.ErrorExpected(SPressEofMsg, Token);
+  Reader.ReadMatchEof;
 end;
 
 { TPressPascalSection }
