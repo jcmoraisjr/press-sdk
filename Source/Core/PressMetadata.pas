@@ -201,7 +201,7 @@ var
   VObjClass: TPressObjectClass;
 begin
   Token := Reader.ReadIdentifier;
-  VObjClass := PressFindObjectClass(Token);
+  VObjClass := PressModel.FindClass(Token);
   if not Assigned(VObjClass) then
     Reader.ErrorExpected(SPressClassNameMsg, Token);
   Result := VObjClass.ObjectMetadataClass.Create(VObjClass);
@@ -210,7 +210,7 @@ end;
 class function TPressMetaParserObject.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := Assigned(PressFindObjectClass(Reader.ReadToken));
+  Result := Assigned(PressModel.FindClass(Reader.ReadToken));
 end;
 
 procedure TPressMetaParserObject.InternalRead(Reader: TPressParserReader);
@@ -245,7 +245,7 @@ class function TPressMetaParserQuery.InternalApply(
 var
   VObjectClass: TPressObjectClass;
 begin
-  VObjectClass := PressFindObjectClass(Reader.ReadToken);
+  VObjectClass := PressModel.FindClass(Reader.ReadToken);
   Result := Assigned(VObjectClass) and VObjectClass.InheritsFrom(TPressQuery);
 end;
 
@@ -411,7 +411,8 @@ procedure TPressMetaParserEnum.InternalRead(
 begin
   inherited;
   Reader.ReadMatch('(');
-  Metadata.EnumMetadata := PressEnumMetadataByName(Reader.ReadIdentifier);
+  Metadata.EnumMetadata :=
+   PressModel.EnumMetadataByName(Reader.ReadIdentifier);
   Reader.ReadMatch(')');
 end;
 

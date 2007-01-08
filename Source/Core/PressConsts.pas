@@ -1,6 +1,6 @@
 (*
   PressObjects, Consts unit
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -43,6 +43,7 @@ resourcestring
   SAttributeIsNotItem = 'O atributo %s(''%s'') não é Part ou Reference';
   SAttributeIsNotValue = 'O atributo %s(''%s'') não é Value';
   SAttributeNotFound = 'O atributo %s(''%s'') não foi encontrado';
+  SAttributeTypeNotFound = 'O atributo %s não foi encontrado';
   SClassNotFound = 'Classe %s não encontrada';
   SColumnDataParseError = 'Erro ao interpretar dados da coluna %s(''%s''): "%s"';
   SComponentIsNotAControl = 'O componente %s(''%s'') não é um controle';

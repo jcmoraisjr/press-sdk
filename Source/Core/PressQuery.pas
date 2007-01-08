@@ -145,7 +145,7 @@ end;
 procedure TPressQueryMetadata.SetItemObjectClassName(const Value: string);
 begin
   if ItemObjectClassName <> Value then
-    ItemObjectClass := PressObjectClassByName(Value);
+    ItemObjectClass := PressModel.ClassByName(Value);
 end;
 
 { TPressQuery }
@@ -311,13 +311,5 @@ procedure TPressQuery.UpdateReferenceList;
 begin
   InternalUpdateReferenceList;
 end;
-
-procedure RegisterClasses;
-begin
-  TPressQuery.RegisterClass;
-end;
-
-initialization
-  RegisterClasses;
 
 end.

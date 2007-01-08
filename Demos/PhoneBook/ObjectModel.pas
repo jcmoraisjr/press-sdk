@@ -421,7 +421,7 @@ end;
 
 procedure RegisterTypes;
 begin
-  PressRegisterEnumMetadata(TypeInfo(TPhoneType), 'TPhoneType');
+  PressModel.RegisterEnumMetadata(TypeInfo(TPhoneType), 'TPhoneType');
 end;
 
 initialization

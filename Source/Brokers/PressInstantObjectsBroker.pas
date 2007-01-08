@@ -165,7 +165,7 @@ var
   VObjectClass: TPressObjectClass;
 begin
   if Assigned(AObject) then
-    VObjectClass := PressObjectClassByPersistentName(AObject.ClassName)
+    VObjectClass := PressModel.ClassByPersistentName(AObject.ClassName)
   else
     VObjectClass := nil;
   Id := GenerateOID(VObjectClass);
@@ -244,7 +244,7 @@ var
   VPressObjectClass: TPressObjectClass;
   VInstantObject: TInstantObject;
 begin
-  VPressObjectClass := PressObjectClassByName(AClass);
+  VPressObjectClass := PressModel.ClassByName(AClass);
   VInstantObject := InstantFindClass(
    VPressObjectClass.ClassMetadata.PersistentName).Retrieve(AId, False);
   if Assigned(VInstantObject) then
@@ -323,8 +323,8 @@ procedure TPressInstantObjectsPersistence.ReadInstantObject(
        AInstantReference.ObjectClassName, AInstantReference.ObjectId);
     end else if AInstantReference.HasValue then
     begin
-      VObject :=
-       PressObjectClassByPersistentName(AInstantReference.Value.ClassName).Create;
+      VObject := PressModel.
+       ClassByPersistentName(AInstantReference.Value.ClassName).Create;
       ReadInstantObject(AInstantReference.Value, VObject);
       try
         APressReference.Value := VObject;
@@ -364,8 +364,8 @@ procedure TPressInstantObjectsPersistence.ReadInstantObject(
          VReference.ObjectClassName, VReference.ObjectId);
       end else
       begin
-        VObject :=
-         PressObjectClassByPersistentName(AInstantParts[I].ClassName).Create;
+        VObject := PressModel.
+         ClassByPersistentName(AInstantParts[I].ClassName).Create;
         ReadInstantObject(AInstantParts[I], VObject);
         try
           APressParts.Add(VObject);
@@ -394,8 +394,8 @@ procedure TPressInstantObjectsPersistence.ReadInstantObject(
          VReference.ObjectClassName, VReference.ObjectId);
       end else if VReference.HasInstance then
       begin
-        VObject :=
-         PressObjectClassByPersistentName(VReference.Instance.ClassName).Create;
+        VObject := PressModel.
+         ClassByPersistentName(VReference.Instance.ClassName).Create;
         ReadInstantObject(VReference.Instance, VObject);
         try
           APressReferences.Add(VObject);
