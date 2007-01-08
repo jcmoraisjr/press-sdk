@@ -364,8 +364,6 @@ end;
 { TPressPascalUnit }
 
 procedure TPressPascalUnit.InternalRead(Reader: TPressParserReader);
-var
-  Token: string;
 begin
   inherited;
   Reader.ReadMatchText('unit');
