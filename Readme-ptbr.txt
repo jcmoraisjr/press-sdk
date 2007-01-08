@@ -1,5 +1,5 @@
 PressObjects Framework, Versão 0.1.1
-Copyright (C) 2006 Laserpress Ltda.
+Copyright (C) 2006-2007 Laserpress Ltda.
 
 http://www.pressobjects.org
 
