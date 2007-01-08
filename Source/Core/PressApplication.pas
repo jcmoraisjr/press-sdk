@@ -1,6 +1,6 @@
 (*
   PressObjects, Application Context Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -122,11 +122,9 @@ type
   private
     FDefaultService: TPressService;
     FDefaultServiceClass: TPressServiceClass;
-    FOwnedService: TPressService;
     FServiceClasses: TPressServiceClassList;
     FServices: TPressServiceList;
     FServiceType: TPressServiceType;
-    function CreateOwnedService(AServiceClass: TPressServiceClass): TPressService;
     function GetDefaultService: TPressService;
     function GetDefaultServiceClass: TPressServiceClass;
     function GetServiceTypeName: string;
@@ -404,20 +402,11 @@ begin
   inherited Create;
   FServiceType := AServiceType;
   FServiceClasses := TPressServiceClassList.Create;
-  FServices := TPressServiceList.Create(False);
-end;
-
-function TPressRegistry.CreateOwnedService(
-  AServiceClass: TPressServiceClass): TPressService;
-begin
-  FOwnedService.Free;
-  FOwnedService := AServiceClass.Create;
-  Result := FOwnedService;
+  FServices := TPressServiceList.Create(True);
 end;
 
 destructor TPressRegistry.Destroy;
 begin
-  FOwnedService.Free;
   FServiceClasses.Free;
   FServices.Free;
   inherited;
@@ -425,6 +414,7 @@ end;
 
 procedure TPressRegistry.DoneServices;
 begin
+  { TODO : Replicate DoneServices call }
   with Services.CreateIterator do
   try
     BeforeFirstItem;
@@ -438,12 +428,10 @@ end;
 function TPressRegistry.GetDefaultService: TPressService;
 begin
   if not Assigned(FDefaultService) then
-    if Assigned(FOwnedService) then
-      FDefaultService := FOwnedService
-    else if Services.Count > 0 then
+    if Services.Count > 0 then
       FDefaultService := Services.Last
     else
-      FDefaultService := CreateOwnedService(DefaultServiceClass);
+      FDefaultService := DefaultServiceClass.Create;
   Result := FDefaultService;
 end;
 
@@ -464,9 +452,8 @@ end;
 
 function TPressRegistry.HasDefaultService: Boolean;
 begin
-  Result := Assigned(FDefaultService) or Assigned(FOwnedService) or
-   (Services.Count > 0) or Assigned(FDefaultServiceClass) or
-   (ServiceClasses.Count > 0);
+  Result := Assigned(FDefaultService) or (Services.Count > 0) or
+   Assigned(FDefaultServiceClass) or (ServiceClasses.Count > 0);
 end;
 
 procedure TPressRegistry.InsertService(AService: TPressService);
