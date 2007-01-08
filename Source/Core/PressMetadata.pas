@@ -1,6 +1,6 @@
 (*
   PressObjects, Metadata Parser
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -26,6 +26,10 @@ uses
 
 type
   TPressMetaParserReader = class(TPressParserReader)
+  private
+    FModel: TPressModel;
+  public
+    property Model: TPressModel read FModel write FModel;
   end;
 
   TPressMetaParserObject = class;
@@ -137,6 +141,17 @@ uses
   PressConsts,
   PressClasses;
 
+{ Local routines }
+
+function ReadModel(Reader: TPressParserReader): TPressModel;
+begin
+  if (Reader is TPressMetaParserReader) and
+   Assigned(TPressMetaParserReader(Reader).Model) then
+    Result := TPressMetaParserReader(Reader).Model
+  else
+    Result := PressModel;
+end;
+
 { TPressMetaParser }
 
 function TPressMetaParser.GetMetadata: TPressObjectMetadata;
@@ -201,16 +216,16 @@ var
   VObjClass: TPressObjectClass;
 begin
   Token := Reader.ReadIdentifier;
-  VObjClass := PressModel.FindClass(Token);
+  VObjClass := ReadModel(Reader).FindClass(Token);
   if not Assigned(VObjClass) then
     Reader.ErrorExpected(SPressClassNameMsg, Token);
-  Result := VObjClass.ObjectMetadataClass.Create(VObjClass);
+  Result := VObjClass.ObjectMetadataClass.Create(VObjClass, ReadModel(Reader));
 end;
 
 class function TPressMetaParserObject.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := Assigned(PressModel.FindClass(Reader.ReadToken));
+  Result := Assigned(ReadModel(Reader).FindClass(Reader.ReadToken));
 end;
 
 procedure TPressMetaParserObject.InternalRead(Reader: TPressParserReader);
@@ -245,7 +260,7 @@ class function TPressMetaParserQuery.InternalApply(
 var
   VObjectClass: TPressObjectClass;
 begin
-  VObjectClass := PressModel.FindClass(Reader.ReadToken);
+  VObjectClass := ReadModel(Reader).FindClass(Reader.ReadToken);
   Result := Assigned(VObjectClass) and VObjectClass.InheritsFrom(TPressQuery);
 end;
 
@@ -412,7 +427,7 @@ begin
   inherited;
   Reader.ReadMatch('(');
   Metadata.EnumMetadata :=
-   PressModel.EnumMetadataByName(Reader.ReadIdentifier);
+   ReadModel(Reader).EnumMetadataByName(Reader.ReadIdentifier);
   Reader.ReadMatch(')');
 end;
 

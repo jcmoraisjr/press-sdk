@@ -169,6 +169,8 @@ type
     property ObjectMetadata: TPressObjectMetadata read FObjectMetadata;
   end;
 
+  TPressModel = class;
+
   TPressObjectMetadataClass = class of TPressObjectMetadata;
 
   TPressObjectMetadata = class(TPressStreamable)
@@ -186,7 +188,7 @@ type
   protected
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; virtual;
   public
-    constructor Create(AObjectClass: TPressObjectClass);
+    constructor Create(AObjectClass: TPressObjectClass; AModel: TPressModel);
     destructor Destroy; override;
     function CreateAttributeMetadata: TPressAttributeMetadata;
     property AttributeMetadatas: TPressAttributeMetadataList read GetAttributeMetadatas;
@@ -1506,7 +1508,7 @@ end;
 function PressModel: TPressModel;
 begin
   if not Assigned(_PressModel) then
-    _PressModel := TPressModel(PressApp.DefaultService(stBusinessModel));
+    _PressModel := TPressModel(PressApp.CreateDefaultService(stBusinessModel));
   Result := _PressModel;
 end;
 
@@ -1917,7 +1919,8 @@ end;
 
 { TPressObjectMetadata }
 
-constructor TPressObjectMetadata.Create(AObjectClass: TPressObjectClass);
+constructor TPressObjectMetadata.Create(
+  AObjectClass: TPressObjectClass; AModel: TPressModel);
 begin
   inherited Create;
   FObjectClass := AObjectClass;
@@ -1927,7 +1930,7 @@ begin
     FParent := TPressObjectClass(ObjectClass.ClassParent).ClassMetadata;
   FPersistentName := FObjectClass.ClassName;
   KeyName := SPressIdString;
-  PressModel.FMetadatas.Add(Self);  // friend class
+  AModel.FMetadatas.Add(Self);  // friend class
 end;
 
 function TPressObjectMetadata.CreateAttributeMetadata: TPressAttributeMetadata;
@@ -1954,7 +1957,7 @@ function TPressObjectMetadata.GetIdMetadata: TPressAttributeMetadata;
 begin
   if not Assigned(FIdMetadata) then
   begin
-    FIdMetadata := TPressAttributeMetadata.Create(nil);
+    FIdMetadata := InternalAttributeMetadataClass.Create(nil);
     FIdMetadata.Name := KeyName;
     FIdMetadata.AttributeName := PressModel.KeyType;
   end;
@@ -2651,7 +2654,7 @@ begin
   FMetadatas := TPressObjectMetadataList.Create(True);
   FEnumMetadatas := TPressEnumMetadataList.Create(True);
   FKeyType := TPressString.AttributeName;
-  TPressObjectMetadata.Create(TPressObject);
+  TPressObjectMetadata.Create(TPressObject, Self);
 end;
 
 destructor TPressModel.Destroy;
