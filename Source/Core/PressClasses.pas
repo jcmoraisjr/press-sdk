@@ -1,6 +1,6 @@
 (*
   PressObjects, Base Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -208,27 +208,24 @@ type
   TPressTextReader = class(TObject)
   { TODO : Refactor class -- move Token implementation to the ParserReader }
   private
+    FBuffer: string;
+    FBufferBasePos: Integer;
     FCurrentPos: TPressTextPos;
     FCurrentToken: string;
-    FOwnsStream: Boolean;
     FSize: Integer;
-    FStream: TStream;
     FTokenPos: TPressTextPos;
     function GetEof: Boolean;
-    procedure SetCurrentPos(const Value: TPressTextPos);
   protected
     function InternalReadToken: string; virtual; abstract;
-    procedure Reset;
-    property Stream: TStream read FStream;
   public
     constructor Create(AStream: TStream; AOwnsStream: Boolean = False); overload;
     constructor Create(const AString: string); overload;
-    destructor Destroy; override;
     procedure ErrorExpected(const AExpectedToken, AToken: string);
     procedure ErrorFmt(const AMsg: string; const AParams: array of const);
     procedure ErrorMsg(const AMsg: string);
     function NextChar: Char;
     function ReadChar(GoForward: Boolean = True): Char;
+    function ReadChars(ACount: Integer): string;
     procedure ReadMatch(const AToken: string);
     procedure ReadMatchEof;
     procedure ReadMatchText(const AToken: string);
@@ -238,7 +235,7 @@ type
     procedure UnreadChar;
     procedure UnreadToken;
     property Eof: Boolean read GetEof;
-    property Position: TPressTextPos read FCurrentPos write SetCurrentPos;
+    property Position: TPressTextPos read FCurrentPos write FCurrentPos;
     property TokenPos: TPressTextPos read FTokenPos;
   end;
 
@@ -294,7 +291,7 @@ procedure PressRegisterSingleObject(AObject: TObject);
 implementation
 
 uses
-  PressConsts;
+  Math, PressConsts;
 
 var
   _PressSingletons: TPressSingletonList;
@@ -507,28 +504,28 @@ end;
 { TPressTextReader }
 
 constructor TPressTextReader.Create(AStream: TStream; AOwnsStream: Boolean);
+var
+  VBuffer: string;
+  VSize: Integer;
 begin
-  inherited Create;
-  FStream := AStream;
-  FOwnsStream := AOwnsStream;
-  Reset;
+  VSize := AStream.Size;
+  SetLength(VBuffer, VSize);
+  AStream.Read(VBuffer[1], VSize);
+  if AOwnsStream then
+    AStream.Free;
+  Create(VBuffer);
 end;
 
 constructor TPressTextReader.Create(const AString: string);
-var
-  VStream: TMemoryStream;
 begin
-  VStream := TMemoryStream.Create;
-  if AString <> '' then
-    VStream.Write(AString[1], Length(AString));
-  Create(VStream, True);
-end;
-
-destructor TPressTextReader.Destroy;
-begin
-  if FOwnsStream then
-    FStream.Free;
-  inherited;
+  inherited Create;
+  FBufferBasePos := 1;
+  FBuffer := AString;
+  FSize := Length(FBuffer);
+  FCurrentPos.Line := 1;
+  FCurrentPos.Column := 1;
+  FCurrentPos.Position := FBufferBasePos;
+  FTokenPos := FCurrentPos;
 end;
 
 procedure TPressTextReader.ErrorExpected(const AExpectedToken, AToken: string);
@@ -555,7 +552,7 @@ end;
 
 function TPressTextReader.GetEof: Boolean;
 begin
-  Result := FCurrentPos.Position >= FSize;
+  Result := FCurrentPos.Position >= FSize + FBufferBasePos;
 end;
 
 function TPressTextReader.NextChar: Char;
@@ -565,10 +562,9 @@ end;
 
 function TPressTextReader.ReadChar(GoForward: Boolean): Char;
 begin
-  Result := #0;
   if Eof then
     ErrorMsg(SUnexpectedEof);
-  FStream.Read(Result, SizeOf(Result));
+  Result := FBuffer[FCurrentPos.Position];
   if GoForward then
   begin
     if Result = #10 then
@@ -578,8 +574,17 @@ begin
     end else if Result <> #13 then
       Inc(FCurrentPos.Column);
     Inc(FCurrentPos.Position);
-  end else
-    FStream.Position := FCurrentPos.Position;
+  end;
+end;
+
+function TPressTextReader.ReadChars(ACount: Integer): string;
+var
+  VCount, I: Integer;
+begin
+  VCount := Min(ACount, FSize - FCurrentPos.Position + FBufferBasePos);
+  SetLength(Result, VCount);
+  for I := 1 to VCount do
+    Result[I] := ReadChar;
 end;
 
 procedure TPressTextReader.ReadMatch(const AToken: string);
@@ -623,7 +628,6 @@ begin
     { TODO : Improve }
     Inc(FCurrentPos.Position, Length(FCurrentToken));
     Inc(FCurrentPos.Column, Length(FCurrentToken));
-    Stream.Position := FCurrentPos.Position;
 
     FCurrentToken := '';
   end else
@@ -636,21 +640,6 @@ begin
     end else
       Result := '';
   end;
-end;
-
-procedure TPressTextReader.Reset;
-begin
-  FSize := FStream.Size;
-  FStream.Position := 0;
-  FCurrentPos.Line := 1;
-  FCurrentPos.Column := 1;
-  FCurrentPos.Position := 0;
-end;
-
-procedure TPressTextReader.SetCurrentPos(const Value: TPressTextPos);
-begin
-  FCurrentPos := Value;
-  FStream.Position := FCurrentPos.Position;
 end;
 
 procedure TPressTextReader.SkipSpaces;

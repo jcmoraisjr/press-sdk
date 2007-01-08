@@ -312,7 +312,6 @@ function TPressParserReader.ReadNext(const ATokens: array of string;
 var
   Token: string;
   VOldPos, VNewPos: TPressTextPos;
-  VSize, VRealSize: Integer;
 begin
   VOldPos := Position;
   repeat
@@ -326,12 +325,8 @@ begin
   if not AInclude then
     UnreadToken;
   VNewPos := Position;
-  VSize := VNewPos.Position - VOldPos.Position;
-  SetLength(Result, VSize);
   Position := VOldPos;
-  VRealSize := Stream.Read(Result[1], VSize);
-  SetLength(Result, VRealSize);
-  Position := VNewPos;
+  Result := ReadChars(VNewPos.Position - VOldPos.Position);
 end;
 
 function TPressParserReader.ReadNext(const AToken: string;
