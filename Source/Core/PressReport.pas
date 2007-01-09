@@ -24,6 +24,7 @@ uses
   PressApplication,
   PressClasses,
   PressSubject,
+  PressAttributes,
   PressQuery;
 
 type

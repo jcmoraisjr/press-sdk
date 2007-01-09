@@ -65,6 +65,7 @@ uses
   PressClasses,
   PressConsts,
   {$IFDEF PressLog}PressLog,{$ENDIF}
+  PressAttributes,
   {$IFDEF IO2.1.x}InstantBrokers,{$ENDIF}
   InstantClasses;
 

@@ -24,6 +24,7 @@ uses
   PressClasses,
   PressNotifier,
   PressSubject,
+  PressAttributes,
   PressQuery,
   PressMVP;
 

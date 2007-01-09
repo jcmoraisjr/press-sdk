@@ -26,6 +26,7 @@ uses
   PressCompatibility,
   PressNotifier,
   PressSubject,
+  PressAttributes,
   PressMVP,
   PressMVPModel,
   PressMVPView,

@@ -5,7 +5,7 @@ unit ObjectModel;
 interface
 
 uses
-  PressSubject, PressQuery;
+  PressSubject, PressAttributes, PressQuery;
 
 type
   TAddress = class;

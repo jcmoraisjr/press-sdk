@@ -19,7 +19,8 @@ unit PressQuery;
 interface
 
 uses
-  PressSubject;
+  PressSubject,
+  PressAttributes;
 
 type
   TPressQueryAttributeCategory = (acMatch,

@@ -24,6 +24,7 @@ uses
   Menus,
   PressNotifier,
   PressSubject,
+  PressAttributes,
   PressMVP,
   PressMVPModel;
 

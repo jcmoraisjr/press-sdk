@@ -139,7 +139,8 @@ uses
   SysUtils,
   TypInfo,
   PressConsts,
-  PressClasses;
+  PressClasses,
+  PressAttributes;
 
 { Local routines }
 
