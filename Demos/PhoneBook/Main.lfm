@@ -1,14 +1,15 @@
 object MainForm: TMainForm
-  Left = 265
+  Left = 269
   Height = 314
-  Top = 133
+  Top = 137
   Width = 376
   HorzScrollBar.Page = 375
-  VertScrollBar.Page = 313
+  VertScrollBar.Page = 294
   ActiveControl = NameQueryEdit
   Caption = 'PhoneBook'
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
+  Menu = MainMenu
   object QueryPanel: TPanel
     Height = 73
     Width = 376
@@ -35,7 +36,8 @@ object MainForm: TMainForm
     end
     object QuerySpeedButtonPanel: TPanel
       Left = 296
-      Height = 71
+      Height = 69
+      Top = 2
       Width = 80
       Align = alRight
       BevelOuter = bvNone
@@ -50,7 +52,7 @@ object MainForm: TMainForm
         NumGlyphs = 0
       end
     end
-    object LinePanel: TPanel
+    object BottomLinePanel: TPanel
       Height = 2
       Top = 71
       Width = 376
@@ -58,9 +60,16 @@ object MainForm: TMainForm
       BevelOuter = bvLowered
       TabOrder = 2
     end
+    object TopLinePanel: TPanel
+      Height = 2
+      Width = 376
+      Align = alTop
+      BevelOuter = bvLowered
+      TabOrder = 3
+    end
   end
   object ItemsPanel: TPanel
-    Height = 241
+    Height = 222
     Top = 73
     Width = 376
     Align = alClient
@@ -69,7 +78,7 @@ object MainForm: TMainForm
     TabOrder = 1
     object ItemsStringGrid: TStringGrid
       Left = 8
-      Height = 225
+      Height = 206
       Top = 8
       Width = 360
       Align = alClient
@@ -81,6 +90,22 @@ object MainForm: TMainForm
       ScrollBars = ssAutoBoth
       TabOrder = 0
       TabStop = True
+    end
+  end
+  object MainMenu: TMainMenu
+    left = 256
+    top = 16
+    object FileMenuGroup: TMenuItem
+      Caption = '&File'
+      object ConnectorMenuItem: TMenuItem
+        Caption = 'Co&nnector'
+      end
+      object N1: TMenuItem
+        Caption = '-'
+      end
+      object CloseMenuItem: TMenuItem
+        Caption = '&Close'
+      end
     end
   end
 end
