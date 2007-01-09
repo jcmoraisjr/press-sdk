@@ -858,11 +858,8 @@ end;
 
 class function TPressPascalPlainStatement.InternalApply(
   Reader: TPressParserReader): Boolean;
-var
-  Token: string;
 begin
-  Token := Reader.ReadToken;
-  Result := not SameText(Token, 'end') and not SameText(Token, ';');
+  Result := not SameText(Reader.ReadToken, 'end');
 end;
 
 procedure TPressPascalPlainStatement.InternalRead(
@@ -871,8 +868,8 @@ begin
   inherited;
   FStatementStr := Reader.ReadNext([
    'begin', 'case', 'try', 'asm', 'end', ';'], False);
-  if Reader.ReadToken <> ';' then
-    Reader.UnreadToken;
+  while Reader.ReadToken = ';' do ;
+  Reader.UnreadToken;
 end;
 
 { TPressPascalBlockStatement }

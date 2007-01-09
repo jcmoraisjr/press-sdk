@@ -599,7 +599,7 @@ end;
 procedure TPressTextReader.ReadMatchEof;
 begin
   SkipSpaces;
-  if not Eof then
+  if ReadNextToken <> '' then
     ErrorExpected(SPressEofMsg, ReadNextToken);
 end;
 
