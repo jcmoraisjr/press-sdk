@@ -326,6 +326,7 @@ type
     FMetadatas: TPressObjectMetadataList;
   protected
     class function InternalServiceType: TPressServiceType; override;
+    property Metadatas: TPressObjectMetadataList read FMetadatas;
   public
     constructor Create; override;
     destructor Destroy; override;
@@ -1667,8 +1668,8 @@ var
   I: Integer;
 begin
   // first pass -- by instantiated metadatas
-  for I := 0 to Pred(FMetadatas.Count) do
-    with FMetadatas[I] do
+  for I := 0 to Pred(Metadatas.Count) do
+    with Metadatas[I] do
       if SameText(PersistentName, APersistentName) then
       begin
         Result := ObjectClass;
@@ -1747,9 +1748,9 @@ function TPressModel.FindMetadata(
 var
   I: Integer;
 begin
-  for I := 0 to Pred(FMetadatas.Count) do
+  for I := 0 to Pred(Metadatas.Count) do
   begin
-    Result := FMetadatas[I];
+    Result := Metadatas[I];
     if Result.ObjectClass = AClass then
       Exit;
   end;
@@ -1787,7 +1788,7 @@ end;
 procedure TPressModel.UnregisterMetadata(AMetadata: TPressObjectMetadata);
 begin
   { TODO : Verify metadatas whose parent is AMetadata }
-  FMetadatas.Remove(AMetadata);
+  Metadatas.Remove(AMetadata);
 end;
 
 { TPressSubjectEvent }
