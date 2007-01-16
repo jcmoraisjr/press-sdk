@@ -138,6 +138,7 @@ type
     destructor Destroy; override;
     procedure DoneServices;
     function HasDefaultService: Boolean;
+    function HasDefaultServiceClass: Boolean;
     procedure InsertService(AService: TPressService);
     procedure RegisterService(AServiceClass: TPressServiceClass; AIsDefault: Boolean);
     procedure RemoveService(AService: TPressService);
@@ -454,6 +455,11 @@ function TPressRegistry.HasDefaultService: Boolean;
 begin
   Result := Assigned(FDefaultService) or (Services.Count > 0) or
    Assigned(FDefaultServiceClass) or (ServiceClasses.Count > 0);
+end;
+
+function TPressRegistry.HasDefaultServiceClass: Boolean;
+begin
+  Result := Assigned(FDefaultServiceClass) or (ServiceClasses.Count > 0);
 end;
 
 procedure TPressRegistry.InsertService(AService: TPressService);
