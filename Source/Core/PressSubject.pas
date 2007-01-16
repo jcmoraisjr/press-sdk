@@ -179,7 +179,7 @@ type
     FIdMetadata: TPressAttributeMetadata;
     FKeyName: string;
     FMap: TPressMap;
-    FObjectClass: TPressObjectClass;
+    FObjectClassName: string;
     FParent: TPressObjectMetadata;
     FPersistentName: string;
     function GetAttributeMetadatas: TPressAttributeMetadataList;
@@ -188,13 +188,13 @@ type
   protected
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; virtual;
   public
-    constructor Create(AObjectClass: TPressObjectClass; AModel: TPressModel);
+    constructor Create(AObjectClassName: string; AParent: TPressObjectMetadata; AModel: TPressModel);
     destructor Destroy; override;
     function CreateAttributeMetadata: TPressAttributeMetadata;
     property AttributeMetadatas: TPressAttributeMetadataList read GetAttributeMetadatas;
     property IdMetadata: TPressAttributeMetadata read GetIdMetadata;
     property Map: TPressMap read GetMap;
-    property ObjectClass: TPressObjectClass read FObjectClass;
+    property ObjectClassName: string read FObjectClassName;
     property Parent: TPressObjectMetadata read FParent;
   published
     property KeyName: string read FKeyName write FKeyName;
@@ -213,7 +213,6 @@ type
     function Add(AObject: TPressObjectMetadata): Integer;
     function CreateIterator: TPressObjectMetadataIterator;
     function IndexOf(AObject: TPressObjectMetadata): Integer;
-    function IndexOfObjectClass(AObjectClass: TPressObjectClass): Integer;
     procedure Insert(Index: Integer; AObject: TPressObjectMetadata);
     function Remove(AObject: TPressObjectMetadata): Integer;
     property Items[AIndex: Integer]: TPressObjectMetadata read GetItems write SetItems; default;
@@ -437,6 +436,7 @@ type
   protected
     procedure AfterCreateAttributes; virtual;
     procedure AfterRetrieve; virtual;
+    function AttributeAddress(const AAttributeName: string): PPressAttribute; virtual;
     procedure BeforeCreateAttributes; virtual;
     procedure ClearOwnerContext;
     procedure Finalize; virtual;
@@ -455,7 +455,6 @@ type
     constructor Create(AMetadata: TPressObjectMetadata = nil);
     constructor Retrieve(const AId: string; AMetadata: TPressObjectMetadata = nil);
     procedure Assign(Source: TPersistent); override;
-    function AttributeAddress(const AAttributeName: string): PPressAttribute;
     function AttributeByName(const AAttributeName: string): TPressAttribute;
     function AttributeByPath(const APath: string): TPressAttribute;
     function AttributeCount: Integer;
@@ -463,6 +462,7 @@ type
     procedure Changing(AAttribute: TPressAttribute);
     class function ClassMap: TPressMap;
     class function ClassMetadata: TPressObjectMetadata;
+    class function ClassMetadataParent: TPressObjectMetadata;
     {$IFDEF FPC}class{$ENDIF} function ClassType: TPressObjectClass;
     function Clone: TPressObject;
     function CreateAttributeIterator: TPressAttributeIterator;
@@ -890,7 +890,11 @@ end;
 function PressModel: TPressModel;
 begin
   if not Assigned(_PressModel) then
-    _PressModel := TPressModel(PressApp.CreateDefaultService(stBusinessModel));
+    with PressApp.Registry[stBusinessModel] do
+      if HasDefaultServiceClass then
+        _PressModel := DefaultServiceClass.Create
+      else
+        _PressModel := TPressModel.Create;
   Result := _PressModel;
 end;
 
@@ -1301,18 +1305,15 @@ end;
 
 { TPressObjectMetadata }
 
-constructor TPressObjectMetadata.Create(
-  AObjectClass: TPressObjectClass; AModel: TPressModel);
+constructor TPressObjectMetadata.Create(AObjectClassName: string;
+  AParent: TPressObjectMetadata; AModel: TPressModel);
 begin
   inherited Create;
-  FObjectClass := AObjectClass;
-  if ObjectClass = TPressObject then
-    FParent := nil
-  else
-    FParent := TPressObjectClass(ObjectClass.ClassParent).ClassMetadata;
-  FPersistentName := FObjectClass.ClassName;
-  KeyName := SPressIdString;
-  AModel.FMetadatas.Add(Self);  // friend class
+  FObjectClassName := AObjectClassName;
+  FPersistentName := FObjectClassName;
+  FParent := AParent;
+  FKeyName := SPressIdString;
+  AModel.Metadatas.Add(Self);
 end;
 
 function TPressObjectMetadata.CreateAttributeMetadata: TPressAttributeMetadata;
@@ -1381,15 +1382,6 @@ function TPressObjectMetadataList.IndexOf(
   AObject: TPressObjectMetadata): Integer;
 begin
   Result := inherited IndexOf(AObject);
-end;
-
-function TPressObjectMetadataList.IndexOfObjectClass(
-  AObjectClass: TPressObjectClass): Integer;
-begin
-  for Result := 0 to Pred(Count) do
-    if Items[Result].ObjectClass = AObjectClass then
-      Exit;
-  Result := -1;
 end;
 
 procedure TPressObjectMetadataList.Insert(Index: Integer;
@@ -1672,7 +1664,7 @@ begin
     with Metadatas[I] do
       if SameText(PersistentName, APersistentName) then
       begin
-        Result := ObjectClass;
+        Result := ClassByName(ObjectClassName);
         Exit;
       end;
 
@@ -1681,7 +1673,7 @@ begin
     with TPressObjectClass(FClasses[I]).ClassMetadata do
       if SameText(PersistentName, APersistentName) then
       begin
-        Result := ObjectClass;
+        Result := ClassByName(ObjectClassName);
         Exit;
       end;
 
@@ -1696,7 +1688,7 @@ begin
   FMetadatas := TPressObjectMetadataList.Create(True);
   FEnumMetadatas := TPressEnumMetadataList.Create(True);
   FKeyType := TPressString.AttributeName;
-  TPressObjectMetadata.Create(TPressObject, Self);
+  TPressObjectMetadata.Create(TPressObject.ClassName, nil, Self);
 end;
 
 destructor TPressModel.Destroy;
@@ -1751,7 +1743,8 @@ begin
   for I := 0 to Pred(Metadatas.Count) do
   begin
     Result := Metadatas[I];
-    if Result.ObjectClass = AClass then
+    { TODO : Improve search }
+    if SameText(Result.ObjectClassName, AClass.ClassName) then
       Exit;
   end;
   Result := nil;
@@ -1958,17 +1951,20 @@ begin
   Result := PressModel.FindMetadata(Self);
   if not Assigned(Result) then
   begin
-    { TODO : Verify InternalMetadataStr implementation }
-    // if InternalMetadataStr is implemented then
+    { TODO : Verify if the current class has an InternalMetadataStr method implementation }
     VMetadataStr := InternalMetadataStr;
-    // else return the Parent ClassMetadata;
-    if VMetadataStr <> '' then
-      Result := PressModel.RegisterMetadata(VMetadataStr)
-    else
-      // TPressObject class will always be found by FindMetadata,
-      // so this is a safe cast
-      Result := TPressObjectClass(ClassParent).ClassMetadata;
+    if VMetadataStr = '' then // should be "wasn't InternalMetadataStr implemented?"
+      VMetadataStr := ClassName;
+    Result := PressModel.RegisterMetadata(VMetadataStr)
   end;
+end;
+
+class function TPressObject.ClassMetadataParent: TPressObjectMetadata;
+begin
+  if Self <> TPressObject then
+    Result := TPressObjectClass(ClassParent).ClassMetadata
+  else
+    Result := nil;
 end;
 
 {$IFDEF FPC}class{$ENDIF} function TPressObject.ClassType: TPressObjectClass;
@@ -2023,7 +2019,7 @@ begin
         end;
       end else
         raise EPressError.CreateFmt(SAttributeNotFound,
-         [VMetadata.Owner.ObjectClass.ClassName, VMetadata.Name]);
+         [VMetadata.Owner.ObjectClassName, VMetadata.Name]);
     end;
   finally
     Free;
@@ -3475,8 +3471,14 @@ begin
   Result := TPressObject;
 end;
 
+procedure RegisterClasses;
+begin
+  TPressObject.RegisterClass;
+  TPressSingletonObject.RegisterClass;
+end;
+
 initialization
-  TPressModel.RegisterService;
+  RegisterClasses;
   { TODO : Forcing premature ObjectStore initialization to avoid AVs
     due to SingleObjects destruction order.
     An ApplicationContext instance holding and destroying SingleObjects

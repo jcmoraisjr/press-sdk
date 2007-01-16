@@ -220,7 +220,8 @@ begin
   VObjClass := ReadModel(Reader).FindClass(Token);
   if not Assigned(VObjClass) then
     Reader.ErrorExpected(SPressClassNameMsg, Token);
-  Result := VObjClass.ObjectMetadataClass.Create(VObjClass, ReadModel(Reader));
+  Result := VObjClass.ObjectMetadataClass.Create(
+   VObjClass.ClassName, VObjClass.ClassMetadataParent, ReadModel(Reader));
 end;
 
 class function TPressMetaParserObject.InternalApply(

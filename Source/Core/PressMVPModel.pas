@@ -710,10 +710,10 @@ begin
   VMetadata := FOwner.Map.FindMetadata(Value);
   if not Assigned(VMetadata) then
     raise EPressMVPError.CreateFmt(SAttributeNotFound,
-     [FOwner.Map.ObjectMetadata.ObjectClass.ClassName, Value]);
+     [FOwner.Map.ObjectMetadata.ObjectClassName, Value]);
   if not VMetadata.AttributeClass.InheritsFrom(TPressValue) then
     raise EPressMVPError.CreateFmt(SAttributeIsNotValue,
-     [FOwner.Map.ObjectMetadata.ObjectClass.ClassName, Value]);
+     [FOwner.Map.ObjectMetadata.ObjectClassName, Value]);
   FAttributeName := Value;
   FHeaderCaption := Value;
   if VMetadata.AttributeClass.InheritsFrom(TPressBoolean) then

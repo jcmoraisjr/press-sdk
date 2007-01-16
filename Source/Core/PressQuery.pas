@@ -313,4 +313,12 @@ begin
   InternalUpdateReferenceList;
 end;
 
+procedure RegisterClasses;
+begin
+  TPressQuery.RegisterClass;
+end;
+
+initialization
+  RegisterClasses;
+
 end.

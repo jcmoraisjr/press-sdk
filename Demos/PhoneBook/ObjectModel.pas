@@ -410,6 +410,7 @@ end;
 
 procedure RegisterClasses;
 begin
+  TCustomObject.RegisterClass;
   TContact.RegisterClass;
   TPerson.RegisterClass;
   TCompany.RegisterClass;

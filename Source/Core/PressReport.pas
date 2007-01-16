@@ -24,8 +24,7 @@ uses
   PressApplication,
   PressClasses,
   PressSubject,
-  PressAttributes,
-  PressQuery;
+  PressAttributes;
 
 type
   TPressReportNeedValueEvent = procedure(
@@ -200,7 +199,8 @@ implementation
 uses
   SysUtils,
   {$IFDEF PressLog}PressLog,{$ENDIF}
-  PressConsts;
+  PressConsts,
+  PressQuery;
 
 { Global routines }
 
@@ -739,5 +739,14 @@ end;
 procedure TPressReportGroupItem.SetReportData(AStream: TStream);
 begin
 end;
+
+procedure RegisterClasses;
+begin
+  TPressReportGroup.RegisterClass;
+  TPressReportGroupItem.RegisterClass;
+end;
+
+initialization
+  RegisterClasses;
 
 end.

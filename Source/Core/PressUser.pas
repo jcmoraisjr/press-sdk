@@ -113,7 +113,19 @@ begin
   Result := InternalUserQueryClass;
 end;
 
-initialization
+procedure RegisterServices;
+begin
   TPressUserData.RegisterService;
+end;
+
+procedure RegisterClasses;
+begin
+  TPressUser.RegisterClass;
+  TPressUserQuery.RegisterClass;
+end;
+
+initialization
+  RegisterServices;
+  RegisterClasses;
 
 end.
