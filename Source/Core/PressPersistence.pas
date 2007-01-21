@@ -123,7 +123,7 @@ type
 
 function PressDefaultPersistence: TPressPersistence;
 begin
-  Result := PressApp.DefaultService(TPressPersistence) as TPressPersistence;
+  Result := TPressPersistence(PressApp.DefaultService(TPressPersistence));
 end;
 
 { TPressOIDGenerator }

@@ -890,11 +890,7 @@ end;
 function PressModel: TPressModel;
 begin
   if not Assigned(_PressModel) then
-    with PressApp.Registry[stBusinessModel] do
-      if HasDefaultServiceClass then
-        _PressModel := DefaultServiceClass.Create as TPressModel
-      else
-        _PressModel := TPressModel.Create;
+    _PressModel := TPressModel(PressApp.CreateService(TPressModel));
   Result := _PressModel;
 end;
 
