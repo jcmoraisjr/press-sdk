@@ -136,12 +136,13 @@ type
   public
     constructor Create(AServiceType: TPressServiceType);
     destructor Destroy; override;
+    function CreateService(ADefaultServiceClass: TPressServiceClass): TPressService;
     procedure DoneServices;
+    procedure ExtractService(AService: TPressService);
     function HasDefaultService: Boolean;
     function HasDefaultServiceClass: Boolean;
     procedure InsertService(AService: TPressService);
     procedure RegisterService(AServiceClass: TPressServiceClass; AIsDefault: Boolean);
-    procedure RemoveService(AService: TPressService);
     property DefaultService: TPressService read GetDefaultService write SetDefaultService;
     property DefaultServiceClass: TPressServiceClass read GetDefaultServiceClass write SetDefaultServiceClass;
     property ServiceType: TPressServiceType read FServiceType;
@@ -195,7 +196,9 @@ type
     constructor Create;
     destructor Destroy; override;
     function CreateDefaultService(AServiceType: TPressServiceType): TPressService;
-    function DefaultService(AServiceType: TPressServiceType): TPressService;
+    function CreateService(ADefaultServiceClass: TPressServiceClass): TPressService;
+    function DefaultService(AServiceType: TPressServiceType): TPressService; overload;
+    function DefaultService(ADefaultServiceClass: TPressServiceClass): TPressService; overload;
     function DefaultServiceClass(AServiceType: TPressServiceType): TPressServiceClass;
     procedure RegisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass; AIsDefault: Boolean);
     procedure Run;
@@ -234,7 +237,7 @@ end;
 destructor TPressService.Destroy;
 begin
   IsDefault := False;
-  Registry.RemoveService(Self);
+  Registry.ExtractService(Self);
   inherited;
 end;
 
@@ -406,6 +409,15 @@ begin
   FServices := TPressServiceList.Create(True);
 end;
 
+function TPressRegistry.CreateService(
+  ADefaultServiceClass: TPressServiceClass): TPressService;
+begin
+  if HasDefaultServiceClass then
+    Result := DefaultServiceClass.Create
+  else
+    Result := ADefaultServiceClass.Create;
+end;
+
 destructor TPressRegistry.Destroy;
 begin
   FServiceClasses.Free;
@@ -424,6 +436,11 @@ begin
   finally
     Free;
   end;
+end;
+
+procedure TPressRegistry.ExtractService(AService: TPressService);
+begin
+  Services.Extract(AService);
 end;
 
 function TPressRegistry.GetDefaultService: TPressService;
@@ -473,11 +490,6 @@ begin
   ServiceClasses.Add(AServiceClass);
   if AIsDefault or not Assigned(FDefaultServiceClass) then
     FDefaultServiceClass := AServiceClass;
-end;
-
-procedure TPressRegistry.RemoveService(AService: TPressService);
-begin
-  Services.Remove(AService);
 end;
 
 procedure TPressRegistry.SetDefaultService(Value: TPressService);
@@ -598,10 +610,28 @@ begin
   Result := DefaultServiceClass(AServiceType).Create;
 end;
 
+function TPressApplication.CreateService(
+  ADefaultServiceClass: TPressServiceClass): TPressService;
+begin
+  Result := Registry[ADefaultServiceClass.InternalServiceType].
+   CreateService(ADefaultServiceClass);
+end;
+
 function TPressApplication.DefaultService(
   AServiceType: TPressServiceType): TPressService;
 begin
   Result := Registry[AServiceType].DefaultService;
+end;
+
+function TPressApplication.DefaultService(
+  ADefaultServiceClass: TPressServiceClass): TPressService;
+begin
+  with Registry[ADefaultServiceClass.InternalServiceType] do
+  begin
+    if not HasDefaultService then
+      RegisterService(ADefaultServiceClass, True);
+    Result := DefaultService;
+  end;
 end;
 
 function TPressApplication.DefaultServiceClass(

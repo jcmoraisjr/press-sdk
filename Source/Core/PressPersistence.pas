@@ -123,12 +123,7 @@ type
 
 function PressDefaultPersistence: TPressPersistence;
 begin
-  with PressApp.Registry[stPersistence] do
-  begin
-    if not HasDefaultService then
-      RegisterService(TPressPersistence, False);
-    Result := DefaultService as TPressPersistence;
-  end;
+  Result := PressApp.DefaultService(TPressPersistence) as TPressPersistence;
 end;
 
 { TPressOIDGenerator }
