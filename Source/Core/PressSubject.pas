@@ -319,6 +319,7 @@ type
 
   TPressModel = class(TPressService)
   private
+    FAttributes: TClassList;
     FClasses: TClassList;
     FEnumMetadatas: TPressEnumMetadataList;
     FKeyType: string;
@@ -329,10 +330,13 @@ type
   public
     constructor Create; override;
     destructor Destroy; override;
+    procedure AddAttribute(AAttributeClass: TPressAttributeClass);
     procedure AddClass(AClass: TPressObjectClass);
+    function AttributeByName(const AAttributeName: string): TPressAttributeClass;
     function ClassByName(const AClassName: string): TPressObjectClass;
     function ClassByPersistentName(const APersistentName: string): TPressObjectClass;
     function EnumMetadataByName(const AEnumName: string): TPressEnumMetadata;
+    function FindAttribute(const AAttributeName: string): TPressAttributeClass;
     function FindClass(const AClassName: string): TPressObjectClass;
     function FindEnumMetadata(const AEnumName: string): TPressEnumMetadata;
     function FindMetadata(AClass: TPressObjectClass): TPressObjectMetadata;
@@ -834,7 +838,6 @@ type
   end;
 
 procedure PressAssignPersistentId(AObject: TPressObject; const AId: string);
-function PressFindAttributeClass(const AAttributeName: string): TPressAttributeClass;
 function PressFindObject(const AClass, AId: string): TPressObject;
 
 function PressModel: TPressModel;
@@ -850,20 +853,9 @@ uses
   PressPersistence;
 
 var
-  _PressRegisteredAttributes: TClassList;
   _PressSingletonIDs: TStrings;
   _PressObjectStore: TPressObjectStore;
   _PressModel: TPressModel;
-
-function PressRegisteredAttributes: TClassList;
-begin
-  if not Assigned(_PressRegisteredAttributes) then
-  begin
-    _PressRegisteredAttributes := TClassList.Create;
-    PressRegisterSingleObject(_PressRegisteredAttributes);
-  end;
-  Result := _PressRegisteredAttributes;
-end;
 
 function PressSingletonIDs: TStrings;
 begin
@@ -901,20 +893,6 @@ begin
     AObject.FId.AsString := AId;  // friend class
     AObject.FPersistentId := AId;  // friend class
   end;
-end;
-
-function PressFindAttributeClass(
-  const AAttributeName: string): TPressAttributeClass;
-var
-  I: Integer;
-begin
-  for I := 0 to Pred(PressRegisteredAttributes.Count) do
-  begin
-    Result := TPressAttributeClass(PressRegisteredAttributes[I]);
-    if Result.AttributeName = AAttributeName then
-      Exit;
-  end;
-  Result := nil;
 end;
 
 function PressFindObject(const AClass, AId: string): TPressObject;
@@ -1122,7 +1100,7 @@ procedure TPressAttributeMetadata.SetAttributeName(const Value: string);
 var
   VAttributeClass: TPressAttributeClass;
 begin
-  VAttributeClass := PressFindAttributeClass(Value);
+  VAttributeClass := PressModel.FindAttribute(Value);
   if not Assigned(VAttributeClass) then
     raise EPressError.CreateFmt(SUnsupportedAttributeType, [Value]);
   FAttributeClass := VAttributeClass;
@@ -1637,9 +1615,22 @@ end;
 
 { TPressModel }
 
+procedure TPressModel.AddAttribute(AAttributeClass: TPressAttributeClass);
+begin
+  FAttributes.Add(AAttributeClass);
+end;
+
 procedure TPressModel.AddClass(AClass: TPressObjectClass);
 begin
   FClasses.Add(AClass);
+end;
+
+function TPressModel.AttributeByName(
+  const AAttributeName: string): TPressAttributeClass;
+begin
+  Result := FindAttribute(AAttributeName);
+  if not Assigned(Result) then
+    raise EPressError.CreateFmt(SAttributeTypeNotFound, [AAttributeName]);
 end;
 
 function TPressModel.ClassByName(
@@ -1680,6 +1671,7 @@ end;
 constructor TPressModel.Create;
 begin
   inherited Create;
+  FAttributes := TClassList.Create;
   FClasses := TClassList.Create;
   FMetadatas := TPressObjectMetadataList.Create(True);
   FEnumMetadatas := TPressEnumMetadataList.Create(True);
@@ -1689,6 +1681,7 @@ end;
 
 destructor TPressModel.Destroy;
 begin
+  FAttributes.Free;
   FClasses.Free;
   FMetadatas.Free;
   FEnumMetadatas.Free;
@@ -1701,6 +1694,20 @@ begin
   Result := FindEnumMetadata(AEnumName);
   if not Assigned(Result) then
     raise EPressError.CreateFmt(SEnumMetadataNotFound, [AEnumName]);
+end;
+
+function TPressModel.FindAttribute(
+  const AAttributeName: string): TPressAttributeClass;
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(FAttributes.Count) do
+  begin
+    Result := TPressAttributeClass(FAttributes[I]);
+    if SameText(Result.AttributeName, AAttributeName) then
+      Exit;
+  end;
+  Result := nil;
 end;
 
 function TPressModel.FindClass(
@@ -3148,7 +3155,7 @@ end;
 class procedure TPressAttribute.RegisterAttribute;
 begin
   { TODO : Check duplicated attribute name }
-  PressRegisteredAttributes.Add(Self);
+  PressModel.AddAttribute(Self);
 end;
 
 procedure TPressAttribute.ReleaseCalcNotification(AInstance: TPressObject);

@@ -98,7 +98,7 @@ type
   private
     FMetadata: TPressAttributeMetadata;
   protected
-    class function AttributeInheritsFrom(const AAttributeName: string; AAttributeClassList: array of TPressAttributeClass): Boolean;
+    class function AttributeInheritsFrom(Reader: TPressParserReader; const AAttributeName: string; AAttributeClassList: array of TPressAttributeClass): Boolean;
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalRead(Reader: TPressParserReader); override;
   public
@@ -362,14 +362,14 @@ end;
 { TPressMetaParserAttributeType }
 
 class function TPressMetaParserAttributeType.AttributeInheritsFrom(
-  const AAttributeName: string;
+  Reader: TPressParserReader; const AAttributeName: string;
   AAttributeClassList: array of TPressAttributeClass): Boolean;
 var
   I: Integer;
   VAttributeClassItem: TPressAttributeClass;
 begin
   Result := True;
-  VAttributeClassItem := PressFindAttributeClass(AAttributeName);
+  VAttributeClassItem := ReadModel(Reader).FindAttribute(AAttributeName);
   if Assigned(VAttributeClassItem) then
     for I := Low(AAttributeClassList) to High(AAttributeClassList) do
       if VAttributeClassItem.InheritsFrom(AAttributeClassList[I]) then
@@ -380,7 +380,7 @@ end;
 class function TPressMetaParserAttributeType.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := Assigned(PressFindAttributeClass(Reader.ReadToken));
+  Result := Assigned(ReadModel(Reader).FindAttribute(Reader.ReadToken));
 end;
 
 procedure TPressMetaParserAttributeType.InternalRead(
@@ -397,7 +397,7 @@ end;
 class function TPressMetaParserSizeable.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := AttributeInheritsFrom(Reader.ReadToken, [TPressString]);
+  Result := AttributeInheritsFrom(Reader, Reader.ReadToken, [TPressString]);
 end;
 
 procedure TPressMetaParserSizeable.InternalRead(
@@ -420,7 +420,7 @@ end;
 class function TPressMetaParserEnum.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := AttributeInheritsFrom(Reader.ReadToken, [TPressEnum]);
+  Result := AttributeInheritsFrom(Reader, Reader.ReadToken, [TPressEnum]);
 end;
 
 procedure TPressMetaParserEnum.InternalRead(
@@ -438,7 +438,7 @@ end;
 class function TPressMetaParserStructure.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := AttributeInheritsFrom(Reader.ReadToken,
+  Result := AttributeInheritsFrom(Reader, Reader.ReadToken,
    [TPressPart, TPressReference, TPressParts, TPressReferences]);
 end;
 
