@@ -1093,7 +1093,7 @@ end;
 
 function TPressMVPCreateFormInteractor.GetModel: TPressMVPStructureModel;
 begin
-  Result := Owner.Model as TPRessMVPStructureModel;
+  Result := Owner.Model as TPressMVPStructureModel;
 end;
 
 procedure TPressMVPCreateFormInteractor.RunPresenter(
