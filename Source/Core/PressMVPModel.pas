@@ -243,6 +243,7 @@ type
     function GetName: string;
     procedure SetName(const Value: string);
   protected
+    function AttributeAddress(const AAttributeName: string): PPressAttribute; override;
     function InternalBuildWhereClause: string; override;
     class function InternalMetadataStr: string; override;
   published
@@ -623,6 +624,15 @@ end;
 
 { TPressMVPReferenceQuery }
 
+function TPressMVPReferenceQuery.AttributeAddress(
+  const AAttributeName: string): PPressAttribute;
+begin
+  Result := inherited AttributeAddress(AAttributeName);
+  if not Assigned(Result) and
+   (Metadata.AttributeMetadatas.IndexOfName(AAttributeName) >= 0) then
+    Result := Addr(_Name);
+end;
+
 function TPressMVPReferenceQuery.GetName: string;
 begin
   Result := _Name.Value;
@@ -639,7 +649,7 @@ end;
 
 class function TPressMVPReferenceQuery.InternalMetadataStr: string;
 begin
-  Result := 'TPressMVPReferenceQuery(TPressObject)';
+  raise EPressError.CreateFmt(SUnsupportedFeature, [ClassName]);
 end;
 
 procedure TPressMVPReferenceQuery.SetName(const Value: string);
@@ -958,12 +968,13 @@ end;
 
 function TPressMVPReferenceModel.GetMetadata: TPressQueryMetadata;
 const
-  CQueryMetadata = '%s(%s) Any Order=Name (Name: String)';
+  CQueryMetadata = '%s(%s) Any Order=%s (%2:s: String)';
 begin
   if not Assigned(FMetadata) then
     FMetadata := TPressMetaParser.ParseMetadata(Format(
      CQueryMetadata, [TPressMVPReferenceQuery.ClassName,
-     Subject.ObjectClass.ClassMetadata.PersistentName])) as TPressQueryMetadata;
+     Subject.ObjectClass.ClassName,
+     FReferencedAttribute])) as TPressQueryMetadata;
   Result := FMetadata;
 end;
 
@@ -1024,7 +1035,6 @@ end;
 procedure TPressMVPReferenceModel.InternalUpdateQueryMetadata(
   const AQueryString: string);
 begin
-  Query._Name.Metadata.PersistentName := FReferencedAttribute;
   Query.Name := AQueryString;
 end;
 

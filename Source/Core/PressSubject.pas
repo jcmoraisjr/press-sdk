@@ -111,9 +111,10 @@ type
     procedure SetAttributeName(const Value: string);
     procedure SetCalcMetadata(Value: TPressCalcMetadata);
     procedure SetEnumMetadata(Value: TPressEnumMetadata);
-    procedure SetName(const Value: string);
     procedure SetObjectClass(Value: TPressObjectClass);
     procedure SetObjectClassName(const Value: string);
+  protected
+    procedure SetName(const Value: string); virtual;
   public
     constructor Create(AOwner: TPressObjectMetadata); virtual;
     destructor Destroy; override;
@@ -166,6 +167,7 @@ type
   public
     constructor Create(AObjectMetadata: TPressObjectMetadata);
     function FindMetadata(const APath: string): TPressAttributeMetadata;
+    function MetadataByPath(const APath: string): TPressAttributeMetadata;
     property ObjectMetadata: TPressObjectMetadata read FObjectMetadata;
   end;
 
@@ -1252,6 +1254,15 @@ begin
   end;
 end;
 
+function TPressMap.MetadataByPath(
+  const APath: string): TPressAttributeMetadata;
+begin
+  Result := FindMetadata(APath);
+  if not Assigned(Result) then
+    raise EPressError.CreateFmt(
+     SAttributeNotFound, [FObjectMetadata.ObjectClassName, APath]);
+end;
+
 procedure TPressMap.ReadMetadatas(AObjectMetadata: TPressObjectMetadata);
 var
   VCurrentMetadata: TPressAttributeMetadata;
@@ -1270,6 +1281,7 @@ begin
       if VIndex = -1 then
         Add(VCurrentMetadata)
       else
+        { TODO : Merge with the inherited metadata }
         Items[VIndex] := VCurrentMetadata;
     end;
   finally

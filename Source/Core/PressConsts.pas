@@ -70,13 +70,14 @@ resourcestring
   STokenLengthOutOfBounds = 'Token muito grande';
   SUnassignedAttributeType = 'Tipo de atributo não associado para %s(''%s'')';
   SUnassignedCandidateClasses = 'Classes candidata não estão associadas';
-  SUnassignedTargetClass = 'Classe alvo não está associada';
+  SUnassignedItemObjectClass = 'Classe de negócio dos itens da Query ''%s'' não está associado';
   SUnassignedMainForm = 'Formulário principal não está associado';
   SUnassignedMainPresenter = 'Presenter principal não está associado';
   SUnassignedModel = 'Model não está associado';
   SUnassignedPersistenceConnector = 'Conector de persistência não foi associado';
   SUnassignedServiceType = 'Nenhum serviço %s foi associado ou registrado';
   SUnassignedSubject = 'Subject não foi associado';
+  SUnassignedTargetClass = 'Classe alvo não está associada';
   SUnexpectedEof = 'Final de arquivo inesperado';
   SUnexpectedMVPClassParam = 'Classe MVP %s inicializada com parâmetros inesperados';
   SUnsupportedAttribute = 'O atributo %s(''%s'') não é suportado';

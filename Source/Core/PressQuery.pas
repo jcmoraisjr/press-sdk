@@ -1,6 +1,6 @@
 (*
   PressObjects, Query Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -23,7 +23,8 @@ uses
   PressAttributes;
 
 type
-  TPressQueryAttributeCategory = (acMatch,
+  TPressQueryAttributeCategory = (
+   acNone, acMatch,
    acStarting, acFinishing, acPartial,
    acGreaterThan, acGreaterEqualThan,
    acLesserThan, acLesserEqualThan);
@@ -33,11 +34,15 @@ type
   TPressQueryAttributeMetadata = class(TPressAttributeMetadata)
   private
     FCategory: TPressQueryAttributeCategory;
+    FDataName: string;
     FIncludeIfEmpty: Boolean;
+  protected
+    procedure SetName(const Value: string); override;
   public
     constructor Create(AOwner: TPressObjectMetadata); override;
   published
     property Category: TPressQueryAttributeCategory read FCategory write FCategory default acMatch;
+    property DataName: string read FDataName write FDataName;
     property IncludeIfEmpty: Boolean read FIncludeIfEmpty write FIncludeIfEmpty default False;
   end;
 
@@ -46,6 +51,7 @@ type
     FIncludeSubClasses: Boolean;
     FItemObjectClass: TPressObjectClass;
     FOrderFieldName: string;
+    function GetItemObjectClass: TPressObjectClass;
     function GetItemObjectClassName: string;
     procedure SetItemObjectClass(Value: TPressObjectClass);
     procedure SetItemObjectClassName(const Value: string);
@@ -53,7 +59,7 @@ type
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; override;
   public
     property IncludeSubClasses: Boolean read FIncludeSubClasses;
-    property ItemObjectClass: TPressObjectClass read FItemObjectClass write SetItemObjectClass;
+    property ItemObjectClass: TPressObjectClass read GetItemObjectClass write SetItemObjectClass;
     property ItemObjectClassName: string read GetItemObjectClassName write SetItemObjectClassName;
     property OrderFieldName: string read FOrderFieldName;
   published
@@ -75,6 +81,7 @@ type
     function GetWhereClause: string;
   protected
     function InternalBuildOrderByClause: string; virtual;
+    function InternalBuildStatement(AAttribute: TPressAttribute): string; virtual;
     function InternalBuildWhereClause: string; virtual;
     procedure InternalUpdateReferenceList; virtual;
   public
@@ -96,6 +103,7 @@ implementation
 
 uses
   SysUtils,
+  PressClasses,
   PressConsts,
   PressPersistence;
 
@@ -105,17 +113,29 @@ constructor TPressQueryAttributeMetadata.Create(
   AOwner: TPressObjectMetadata);
 begin
   inherited Create(AOwner);
-  FCategory := acMatch;
+  FCategory := acNone;
+  FIncludeIfEmpty := False;
+end;
+
+procedure TPressQueryAttributeMetadata.SetName(const Value: string);
+begin
+  inherited;
+  if FDataName = '' then
+    FDataName := Value;
 end;
 
 { TPressQueryMetadata }
 
+function TPressQueryMetadata.GetItemObjectClass: TPressObjectClass;
+begin
+  if not Assigned(FItemObjectClass) then
+    raise EPressError.CreateFmt(SUnassignedItemObjectClass, [ClassName]);
+  Result := FItemObjectClass;
+end;
+
 function TPressQueryMetadata.GetItemObjectClassName: string;
 begin
-  if Assigned(FItemObjectClass) then
-    Result := FItemObjectClass.ClassName
-  else
-    Result := '';
+  Result := ItemObjectClass.ClassName;
 end;
 
 function TPressQueryMetadata.InternalAttributeMetadataClass: TPressAttributeMetadataClass;
@@ -145,7 +165,8 @@ end;
 
 procedure TPressQueryMetadata.SetItemObjectClassName(const Value: string);
 begin
-  if ItemObjectClassName <> Value then
+  if not Assigned(FItemObjectClass) or
+   (FItemObjectClass.ClassName <> Value) then
     ItemObjectClass := PressModel.ClassByName(Value);
 end;
 
@@ -219,40 +240,70 @@ end;
 
 function TPressQuery.InternalBuildOrderByClause: string;
 var
-  VAttribute: TPressAttribute;
+  VAttributeName: string;
 begin
-  Result := Metadata.OrderFieldName;
-  VAttribute := FindAttribute(Result);
-  if Assigned(VAttribute) then
-    Result := VAttribute.PersistentName;
+  VAttributeName := Metadata.OrderFieldName;
+  if VAttributeName = '' then
+    Result := ''
+  else
+    Result := Metadata.ItemObjectClass.ClassMetadata.Map.
+     MetadataByPath(VAttributeName).PersistentName;
+end;
+
+function TPressQuery.InternalBuildStatement(
+  AAttribute: TPressAttribute): string;
+var
+  VMetadata: TPressQueryAttributeMetadata;
+
+  { TODO : Find DataName in the BO metadata - use the PersistentName }
+
+  function FormatStringItem(const AMask: string): string;
+  begin
+    { TODO : Escape quotes into the AAttribute.AsString }
+    Result := Format(AMask, [VMetadata.DataName,
+     PressDefaultPersistence.StrQuote, AAttribute.AsString]);
+  end;
+
+  function FormatValueItem(const AMask: string): string;
+  begin
+    Result := Format(AMask, [VMetadata.DataName, AttributeToSQL(AAttribute)]);
+  end;
+
+begin
+  Result := '';
+  if not (AAttribute.Metadata is TPressQueryAttributeMetadata) then
+    Exit;
+  VMetadata := TPressQueryAttributeMetadata(AAttribute.Metadata);
+  if not AAttribute.IsEmpty or VMetadata.IncludeIfEmpty then
+    case VMetadata.Category of
+      acMatch:
+        Result := FormatValueItem('%s = %s');
+      acStarting:
+        Result := FormatStringItem('%s LIKE %s%%%s%1:s');
+      acFinishing:
+        Result := FormatStringItem('%s LIKE %s%s%%%1:s');
+      acPartial:
+        Result := FormatStringItem('%s LIKE %s%%%s%%%1:s');
+      acGreaterThan:
+        Result := FormatValueItem('%s > %s');
+      acGreaterEqualThan:
+        Result := FormatValueItem('%s >= %s');
+      acLesserThan:
+        Result := FormatValueItem('%s < %s');
+      acLesserEqualThan:
+        Result := FormatValueItem('%s <= %s');
+    end;
 end;
 
 function TPressQuery.InternalBuildWhereClause: string;
 
-  procedure ReadItem(
-    const AFilterMask: string; const AParams: array of const;
-    var AResult: string);
+  procedure ConcatStatements(
+    const AStatementStr, AConnectorToken: string; var ABuffer: string);
   begin
-    if AResult <> '' then
-      AResult := AResult + ' AND ';
-    AResult := AResult + Format(AFilterMask, AParams);
-  end;
-
-  procedure ReadStringItem(
-    const AFilterMask: string; AAttribute: TPressAttribute;
-    var AResult: string);
-  begin
-    { TODO : Escape quotes into AsString, via AnsiQuotedStr }
-    ReadItem(AFilterMask, [AAttribute.PersistentName,
-     PressDefaultPersistence.StrQuote, AAttribute.AsString], AResult);
-  end;
-
-  procedure ReadValueItem(
-    const AFilterMask: string; AAttribute: TPressAttribute;
-    var AResult: string);
-  begin
-    ReadItem(AFilterMask,
-     [AAttribute.PersistentName, AttributeToSQL(AAttribute)], AResult);
+    if ABuffer = '' then
+      ABuffer := AStatementStr
+    else if AStatementStr <> '' then
+      ABuffer := ABuffer + ' ' + AConnectorToken + ' ' + AStatementStr
   end;
 
 begin
@@ -262,27 +313,8 @@ begin
     First;
     Next;  // skip Id and QueryItems attributes
     while NextItem do
-      if (CurrentItem.Metadata is TPressQueryAttributeMetadata) and
-       (TPressQueryAttributeMetadata(CurrentItem.Metadata).IncludeIfEmpty or
-       not CurrentItem.IsEmpty) then
-        case TPressQueryAttributeMetadata(CurrentItem.Metadata).Category of
-          acMatch:
-            ReadValueItem('%s = %s', CurrentItem, Result);
-          acStarting:
-            ReadStringItem('%s LIKE %s%%%s%1:s', CurrentItem, Result);
-          acFinishing:
-            ReadStringItem('%s LIKE %s%s%%%1:s', CurrentItem, Result);
-          acPartial:
-            ReadStringItem('%s LIKE %s%%%s%%%1:s', CurrentItem, Result);
-          acGreaterThan:
-            ReadValueItem('%s > %s', CurrentItem, Result);
-          acGreaterEqualThan:
-            ReadValueItem('%s >= %s', CurrentItem, Result);
-          acLesserThan:
-            ReadValueItem('%s < %s', CurrentItem, Result);
-          acLesserEqualThan:
-            ReadValueItem('%s <= %s', CurrentItem, Result);
-        end;
+      { TODO : Improve connector token storage }
+      ConcatStatements(InternalBuildStatement(CurrentItem), 'AND', Result);
   finally
     Free;
   end;
