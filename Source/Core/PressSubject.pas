@@ -682,6 +682,7 @@ type
   TPressAttribute = class(TPressSubject)
   private
     FCalcUpdated: Boolean;
+    FDisableChangesCount: Integer;
     FIsCalculating: Boolean;
     FIsChanged: Boolean;
     FIsNull: Boolean;
@@ -1457,6 +1458,7 @@ var
   I: Integer;
 begin
   {$IFDEF PressLogSubjectMemento}PressLogMsg(Self, 'Restoring ' + Owner.Signature, []);{$ENDIF}
+  { TODO : Retrieve under ChangesDisabled state }
   if Assigned(FAttributes) then
     for I := Pred(FAttributes.Count) downto 0 do
       FAttributes[I].Restore;
@@ -2958,12 +2960,14 @@ end;
 function TPressAttribute.Clone: TPressAttribute;
 begin
   Result := ClassType.Create(nil, nil);
+  Result.DisableChanges;
   try
     Result.Assign(Self);
   except
     Result.Free;
     raise;
   end;
+  Result.EnableChanges;
 end;
 
 function TPressAttribute.ConversionError(
@@ -2994,14 +2998,12 @@ end;
 
 procedure TPressAttribute.DisableChanges;
 begin
-  if Assigned(FOwner) then
-    FOwner.DisableChanges;
+  Inc(FDisableChangesCount);
 end;
 
 procedure TPressAttribute.EnableChanges;
 begin
-  if Assigned(FOwner) then
-    FOwner.EnableChanges;
+  Dec(FDisableChangesCount);
 end;
 
 procedure TPressAttribute.Finit;
@@ -3057,10 +3059,8 @@ end;
 
 function TPressAttribute.GetChangesDisabled: Boolean;
 begin
-  if Assigned(FOwner) then
-    Result := FOwner.ChangesDisabled
-  else
-    Result := False;
+  Result := (FDisableChangesCount > 0) or
+   (Assigned(FOwner) and FOwner.ChangesDisabled);
 end;
 
 function TPressAttribute.GetDefaultValue: string;
