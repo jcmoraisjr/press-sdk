@@ -42,12 +42,12 @@ type
 
   TPressOIDGenerator = class(TPressService)
   protected
-    function InternalGenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass): string; virtual;
-    procedure InternalReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AOID: string); virtual;
+    function InternalGenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string; virtual;
+    procedure InternalReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName, AOID: string); virtual;
     class function InternalServiceType: TPressServiceType; override;
   public
-    function GenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass = nil): string;
-    procedure ReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AOID: string);
+    function GenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+    procedure ReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
   end;
 
   TPressPersistence = class(TPressService)
@@ -89,7 +89,7 @@ type
     procedure Dispose(AObject: TPressObject); overload;
     procedure Dispose(AProxy: TPressProxy); overload;
     procedure ExecuteStatement(const AStatement: string);
-    function GenerateOID(AObjectClass: TPressObjectClass): string;
+    function GenerateOID(AObjectClass: TPressObjectClass; const AAttributeName: string = ''): string;
     procedure Logoff;
     function Logon(const AUserID: string = ''; const APassword: string = ''): Boolean;
     function OQLQuery(const AOQLStatement: string): TPressProxyList;
@@ -129,13 +129,15 @@ end;
 { TPressOIDGenerator }
 
 function TPressOIDGenerator.GenerateOID(
-  Sender: TPressPersistence; AObjectClass: TPressObjectClass): string;
+  Sender: TPressPersistence; AObjectClass: TPressObjectClass;
+  const AAttributeName: string): string;
 begin
-  Result := InternalGenerateOID(Sender, AObjectClass);
+  Result := InternalGenerateOID(Sender, AObjectClass, AAttributeName);
 end;
 
 function TPressOIDGenerator.InternalGenerateOID(
-  Sender: TPressPersistence; AObjectClass: TPressObjectClass): string;
+  Sender: TPressPersistence; AObjectClass: TPressObjectClass;
+  const AAttributeName: string): string;
 var
   VId: array[0..15] of Byte;
   I: Integer;
@@ -147,7 +149,7 @@ begin
 end;
 
 procedure TPressOIDGenerator.InternalReleaseOID(Sender: TPressPersistence;
-  AObjectClass: TPressObjectClass; const AOID: string);
+  AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
 begin
 end;
 
@@ -157,9 +159,9 @@ begin
 end;
 
 procedure TPressOIDGenerator.ReleaseOID(Sender: TPressPersistence;
-  AObjectClass: TPressObjectClass; const AOID: string);
+  AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
 begin
-  InternalReleaseOID(Sender, AObjectClass, AOID);
+  InternalReleaseOID(Sender, AObjectClass, AAttributeName, AOID);
 end;
 
 { TPressPersistence }
@@ -224,9 +226,9 @@ begin
 end;
 
 function TPressPersistence.GenerateOID(
-  AObjectClass: TPressObjectClass): string;
+  AObjectClass: TPressObjectClass; const AAttributeName: string): string;
 begin
-  Result := OIDGenerator.GenerateOID(Self, AObjectClass);
+  Result := OIDGenerator.GenerateOID(Self, AObjectClass, AAttributeName);
 end;
 
 function TPressPersistence.GetCurrentUser: TPressUser;
