@@ -442,8 +442,10 @@ type
   protected
     procedure AfterCreateAttributes; virtual;
     procedure AfterRetrieve; virtual;
+    procedure AfterStore(AIsUpdating: Boolean); virtual;
     function AttributeAddress(const AAttributeName: string): PPressAttribute; virtual;
     procedure BeforeCreateAttributes; virtual;
+    procedure BeforeStore; virtual;
     procedure ClearOwnerContext;
     procedure Finalize; virtual;
     function GetOwner: TPersistent; override;
@@ -1893,6 +1895,10 @@ procedure TPressObject.AfterRetrieve;
 begin
 end;
 
+procedure TPressObject.AfterStore(AIsUpdating: Boolean);
+begin
+end;
+
 procedure TPressObject.Assign(Source: TPersistent);
 begin
   if Source is ClassType then
@@ -1934,6 +1940,10 @@ begin
 end;
 
 procedure TPressObject.BeforeCreateAttributes;
+begin
+end;
+
+procedure TPressObject.BeforeStore;
 begin
 end;
 

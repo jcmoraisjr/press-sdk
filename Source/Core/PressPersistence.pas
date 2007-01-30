@@ -426,9 +426,13 @@ begin
 end;
 
 procedure TPressPersistence.Store(AObject: TPressObject);
+var
+  VIsUpdating: Boolean;
 begin
   if Assigned(AObject) and not AObject.IsOwned and not AObject.IsUpdated then
   begin
+    VIsUpdating := AObject.IsPersistent;
+    TPressObjectFriend(AObject).BeforeStore;
     AObject.DisableChanges;
     try
       {$IFDEF PressLogOPF}PressLogMsg(Self, 'Storing', [AObject]);{$ENDIF}
@@ -437,6 +441,7 @@ begin
     finally
       AObject.EnableChanges;
     end;
+    TPressObjectFriend(AObject).AfterStore(VIsUpdating);
   end;
 end;
 
