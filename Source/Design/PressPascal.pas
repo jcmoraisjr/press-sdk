@@ -19,6 +19,7 @@ unit PressPascal;
 interface
 
 uses
+  PressClasses,
   PressParser;
 
 type
@@ -33,11 +34,16 @@ type
   TPressPascalObjectClass = class of TPressPascalObject;
 
   TPressPascalObject = class(TPressParserObject)
+  private
+    FStartPos: TPressTextPos;
   protected
     class function Identifier: string; virtual;
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     class function InternalApplyIdentifier(Reader: TPressParserReader): Boolean; virtual;
+    procedure InternalRead(Reader: TPressParserReader); override;
     function IsFinished(Reader: TPressParserReader): Boolean; virtual;
+  public
+    property StartPos: TPressTextPos read FStartPos;
   end;
 
   TPressPascalInterfaceSection = class;
@@ -251,7 +257,6 @@ implementation
 uses
   SysUtils,
   TypInfo,
-  PressClasses,
   PressConsts,
   PressDesignConsts;
 
@@ -354,6 +359,12 @@ class function TPressPascalObject.InternalApplyIdentifier(
   Reader: TPressParserReader): Boolean;
 begin
   Result := (Identifier <> '') and SameText(Reader.ReadToken, Identifier);
+end;
+
+procedure TPressPascalObject.InternalRead(Reader: TPressParserReader);
+begin
+  inherited;
+  FStartPos := Reader.Position;
 end;
 
 function TPressPascalObject.IsFinished(Reader: TPressParserReader): Boolean;
