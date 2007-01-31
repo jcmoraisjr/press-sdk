@@ -231,14 +231,16 @@ begin
 end;
 
 procedure PressProcessEventQueue;
+var
+  VEvent: TPressEvent;
 begin
   if Assigned(_PressEventQueue) then
     while _PressEventQueue.Count > 0 do
-      try
-        _PressEventQueue[0].Notify;
-      finally
-        _PressEventQueue.Delete(0);
-      end;
+    begin
+      VEvent := _PressEventQueue[0];
+      _PressEventQueue.Extract(VEvent);
+      VEvent.Notify;
+    end;
 end;
 
 { TPressEvent }
