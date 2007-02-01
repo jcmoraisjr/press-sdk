@@ -337,6 +337,7 @@ type
     function AttributeByName(const AAttributeName: string): TPressAttributeClass;
     function ClassByName(const AClassName: string): TPressObjectClass;
     function ClassByPersistentName(const APersistentName: string): TPressObjectClass;
+    function CreateMetadataIterator: TPressObjectMetadataIterator;
     function EnumMetadataByName(const AEnumName: string): TPressEnumMetadata;
     function FindAttribute(const AAttributeName: string): TPressAttributeClass;
     function FindClass(const AClassName: string): TPressObjectClass;
@@ -1693,6 +1694,11 @@ begin
   FEnumMetadatas := TPressEnumMetadataList.Create(True);
   FKeyType := TPressString.AttributeName;
   TPressObjectMetadata.Create(TPressObject.ClassName, nil, Self);
+end;
+
+function TPressModel.CreateMetadataIterator: TPressObjectMetadataIterator;
+begin
+  Result := Metadatas.CreateIterator;
 end;
 
 destructor TPressModel.Destroy;
