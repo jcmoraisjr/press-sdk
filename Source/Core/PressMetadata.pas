@@ -44,7 +44,7 @@ type
     procedure InternalRead(Reader: TPressParserReader); override;
   public
     property Metadata: TPressObjectMetadata read GetMetadata;
-    class function ParseMetadata(const AMetadataStr: string): TPressObjectMetadata;
+    class function ParseMetadata(const AMetadataStr: string; AModel: TPressModel = nil): TPressObjectMetadata;
   end;
 
   TPressMetaParserObject = class(TPressParserObject)
@@ -183,12 +183,13 @@ begin
 end;
 
 class function TPressMetaParser.ParseMetadata(
-  const AMetadataStr: string): TPressObjectMetadata;
+  const AMetadataStr: string; AModel: TPressModel): TPressObjectMetadata;
 var
   VParser: TPressMetaParser;
   VReader: TPressMetaParserReader;
 begin
   VReader := TPressMetaParserReader.Create(AMetadataStr);
+  VReader.Model := AModel;
   VParser := TPressMetaParser.Create(nil);
   Result := nil;
   try

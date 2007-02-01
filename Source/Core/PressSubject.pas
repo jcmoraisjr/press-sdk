@@ -1800,7 +1800,7 @@ end;
 function TPressModel.RegisterMetadata(
   const AMetadataStr: string): TPressObjectMetadata;
 begin
-  Result := TPressMetaParser.ParseMetadata(AMetadataStr);
+  Result := TPressMetaParser.ParseMetadata(AMetadataStr, Self);
 end;
 
 procedure TPressModel.UnregisterMetadata(AMetadata: TPressObjectMetadata);
