@@ -1965,7 +1965,7 @@ end;
 
 procedure TPressObject.Changing(AAttribute: TPressAttribute);
 begin
-  if ChangesDisabled then
+  if AAttribute.ChangesDisabled or ChangesDisabled then
     Exit;
   if Assigned(FOwnerAttribute) then
     FOwnerAttribute.BeforeChangeItem(Self);  // friend class
