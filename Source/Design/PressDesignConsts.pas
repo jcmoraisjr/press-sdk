@@ -16,7 +16,14 @@ unit PressDesignConsts;
 
 interface
 
+const
+  SPressMetadataMethodName = 'InternalMetadataStr';
+  SPressResultStr = 'Result';
+
 resourcestring
+  SInterfaceAlreadyInstalled = 'Interface %s já está instalada';
+  SUninstalledIDEInterface = 'Nenhuma interface para a IDE foi instalada';
+
   SPressDataTypeDeclarationMsg = 'Declaração de tipo de dado';
   SPressProcMethodDeclMsg = 'Declaração de procedimento, função ou método';
   SPressStringConstMsg = 'Constante string';

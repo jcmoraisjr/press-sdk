@@ -1,0 +1,83 @@
+(*
+  PressObjects, IDE Interfaces
+  Copyright (C) 2007 Laserpress Ltda.
+
+  http://www.pressobjects.org
+
+  See the file LICENSE.txt, included in this distribution,
+  for details about the copyright.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+*)
+
+unit PressIDEIntf;
+
+{$I Press.inc}
+
+interface
+
+uses
+  Classes,
+  PressClasses,
+  PressNotifier;
+
+type
+  TPressIDEEvent = class(TPressEvent)
+  end;
+
+  TPressIDEBeforeCompileEvent = class(TPressIDEEvent)
+  end;
+
+  TPressIDEOnSaveEvent = class(TPressIDEEvent)
+  end;
+
+  IPressIDEModule = interface(IUnknown)
+  ['{B4DF6D97-A048-4ADD-9A90-9A773691F2D4}']
+    procedure DeleteText(ACount: Integer);
+    function FullSourceCode: string;
+    function GetName: string;
+    function GetPosition: TPressTextPos;
+    procedure InsertText(const AText: string);
+    function Read(AChars: Integer): string;
+    procedure SetPosition(Value: TPressTextPos);
+    property Name: string read GetName;
+    property Position: TPressTextPos read GetPosition write SetPosition;
+  end;
+
+  IPressIDEInterface = interface(IUnknown)
+  ['{0369D063-F29D-4C2C-9F4C-B80736B31F67}']
+    function GetName: string;
+    function ProjectModuleByName(const AName: string): IPressIDEModule;
+    procedure ProjectModuleNames(AList: TStrings);
+    property Name: string read GetName;
+  end;
+
+function PressIDEInterface: IPressIDEInterface;
+procedure PressInstallIDEInterface(AIDEIntf: IPressIDEInterface);
+
+implementation
+
+uses
+  PressDesignConsts;
+
+var
+  _PressIDEIntf: IPressIDEInterface;
+
+function PressIDEInterface: IPressIDEInterface;
+begin
+  if not Assigned(_PressIDEIntf) then
+    raise EPressError.Create(SUninstalledIDEInterface);
+  Result := _PressIDEIntf;
+end;
+
+procedure PressInstallIDEInterface(AIDEIntf: IPressIDEInterface);
+begin
+  if Assigned(_PressIDEIntf) then
+    raise EPressError.CreateFmt(
+     SInterfaceAlreadyInstalled, [_PressIDEIntf.Name]);
+  _PressIDEIntf := AIDEIntf;
+end;
+
+end.
