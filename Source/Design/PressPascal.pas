@@ -339,7 +339,6 @@ begin
     Result := ReadStrings('+');
   end else
     ErrorExpected(SPressStringConstMsg, NextToken);
-  ReadMatch(';');
 end;
 
 { TPressPascalObject }
