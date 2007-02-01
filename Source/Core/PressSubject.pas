@@ -3353,7 +3353,8 @@ procedure TPressStructure.AfterChangeInstance(
   Sender: TPressProxy; Instance: TPressObject;
   ChangeType: TPressProxyChangeType);
 begin
-  BindInstance(Instance);
+  if Assigned(Instance) then
+    BindInstance(Instance);
   if ChangeType = pctAssigning then
     Changed;
 end;
@@ -3408,11 +3409,8 @@ end;
 
 procedure TPressStructure.BindInstance(AInstance: TPressObject);
 begin
-  if Assigned(AInstance) then
-  begin
-    Notifier.AddNotificationItem(AInstance, [TPressObjectChangedEvent]);
-    { TODO : Bind owner's attributes calc notifications }
-  end;
+  Notifier.AddNotificationItem(AInstance, [TPressObjectChangedEvent]);
+  { TODO : Bind owner's attributes calc notifications }
 end;
 
 procedure TPressStructure.BindProxy(AProxy: TPressProxy);

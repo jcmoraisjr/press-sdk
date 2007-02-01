@@ -2897,8 +2897,7 @@ end;
 procedure TPressPart.BindInstance(AInstance: TPressObject);
 begin
   inherited;
-  if Assigned(AInstance) then
-    TPressObjectFriend(AInstance).SetOwnerContext(Self);
+  TPressObjectFriend(AInstance).SetOwnerContext(Self);
 end;
 
 procedure TPressPart.InternalAssignItem(AProxy: TPressProxy);
@@ -3333,8 +3332,7 @@ end;
 procedure TPressParts.BindInstance(AInstance: TPressObject);
 begin
   inherited;
-  if Assigned(AInstance) then
-    TPressObjectFriend(AInstance).SetOwnerContext(Self);
+  TPressObjectFriend(AInstance).SetOwnerContext(Self);
 end;
 
 procedure TPressParts.InternalAssignItem(AProxy: TPressProxy);
@@ -3350,7 +3348,7 @@ end;
 procedure TPressParts.ReleaseInstance(AInstance: TPressObject);
 begin
   inherited;
-  TPressObjectFriend(AInstance).ClearOwnerContext;  // friend class
+  TPressObjectFriend(AInstance).ClearOwnerContext;
 end;
 
 { TPressReferences }
