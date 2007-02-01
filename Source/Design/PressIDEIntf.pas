@@ -20,6 +20,7 @@ interface
 
 uses
   Classes,
+  PressCompatibility,
   PressClasses,
   PressNotifier;
 
@@ -33,20 +34,20 @@ type
   TPressIDEOnSaveEvent = class(TPressIDEEvent)
   end;
 
-  IPressIDEModule = interface(IUnknown)
+  IPressIDEModule = interface(IInterface)
   ['{B4DF6D97-A048-4ADD-9A90-9A773691F2D4}']
     procedure DeleteText(ACount: Integer);
-    function FullSourceCode: string;
     function GetName: string;
     function GetPosition: TPressTextPos;
     procedure InsertText(const AText: string);
     function Read(AChars: Integer): string;
     procedure SetPosition(Value: TPressTextPos);
+    function SourceCode: string;
     property Name: string read GetName;
     property Position: TPressTextPos read GetPosition write SetPosition;
   end;
 
-  IPressIDEInterface = interface(IUnknown)
+  IPressIDEInterface = interface(IInterface)
   ['{0369D063-F29D-4C2C-9F4C-B80736B31F67}']
     function GetName: string;
     function ProjectModuleByName(const AName: string): IPressIDEModule;

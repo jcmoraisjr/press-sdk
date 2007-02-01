@@ -20,7 +20,7 @@ interface
 
 uses
   Classes,
-  PressPascal;
+  PressIDEIntf;
 
 type
   TPressClassType = (ctBusiness, ctMVP);
@@ -32,22 +32,22 @@ type
     FCodeMetadatas: TStrings;
   protected
     function ModuleImplements(AModule: IPressIDEModule; AClassTypes: TPressClassTypes): Boolean;
-    property CodeMetadatas: TStrings read FCodeMetadatas;
   public
     constructor Create;
     destructor Destroy; override;
-    procedure Parse(AModule: IPressIDEModule);
+    procedure Parse(AModule: IPressIDEModule; AClassTypes: TPressClassTypes = [ctBusiness, ctMVP]);
     procedure ParseBusinessClasses;
     procedure ParseMVPClasses;
     procedure ParseProject(AClassTypes: TPressClassTypes);
+    property CodeMetadatas: TStrings read FCodeMetadatas;
   end;
 
 implementation
 
 uses
   SysUtils,
-  PressDesignConsts,
-  PressIDEIntf;
+  PressPascal,
+  PressDesignConsts;
 
 { TPressCodeUpdater }
 
@@ -70,9 +70,10 @@ begin
   Result := True;
 end;
 
-procedure TPressCodeUpdater.Parse(AModule: IPressIDEModule);
+procedure TPressCodeUpdater.Parse(
+  AModule: IPressIDEModule; AClassTypes: TPressClassTypes);
 
-   procedure ExtractMetadata(
+   procedure ExtractBOMetadata(
      Reader: TPressPascalReader; ABlock: TPressPascalBlockStatement);
    var
      VLastStatement: TPressPascalStatement;
@@ -87,7 +88,7 @@ procedure TPressCodeUpdater.Parse(AModule: IPressIDEModule);
      end;
    end;
 
-   procedure ExtractMVP(
+   procedure ExtractMVPMetadata(
      Reader: TPressPascalReader; ABlock: TPressPascalBlockStatement);
    begin
      { TODO : Implement }
@@ -100,7 +101,7 @@ var
   I: Integer;
 begin
   { TODO : Detect if unit type matches with AClassTypes parameter }
-  VReader := TPressPascalReader.Create(ASource);
+  VReader := TPressPascalReader.Create(AModule.SourceCode);
   VUnit := TPressPascalUnit.Create(nil);
   try
     VUnit.Read(VReader);
@@ -111,11 +112,11 @@ begin
           if Assigned(Header) and Assigned(Body) and Assigned(Body.Block) then
             if (ctBusiness in AClassTypes) and
              SameText(Header.ClassMethodName, SPressMetadataMethodName) then
-              ExtractMetadata(VReader, Body.Block)
+              ExtractBOMetadata(VReader, Body.Block)
             else if (ctMVP in AClassTypes) and
             { TODO : Fix method name }
              SameText(Header.ClassMethodName, 'SomeMethodName') then
-              ExtractMVP(VReader, Body.Block);
+              ExtractMVPMetadata(VReader, Body.Block);
   finally
     VUnit.Free;
     VReader.Free;
@@ -147,7 +148,7 @@ begin
     begin
       VModule := PressIDEInterface.ProjectModuleByName(VModuleNames[I]);
       if ModuleImplements(VModule, AClassTypes) then
-        Parse(VModule);
+        Parse(VModule, AClassTypes);
     end;
   finally
     VModuleNames.Free;
