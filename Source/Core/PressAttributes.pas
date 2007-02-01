@@ -3333,7 +3333,8 @@ end;
 procedure TPressParts.BindInstance(AInstance: TPressObject);
 begin
   inherited;
-  TPressObjectFriend(AInstance).SetOwnerContext(Self);  // friend class
+  if Assigned(AInstance) then
+    TPressObjectFriend(AInstance).SetOwnerContext(Self);
 end;
 
 procedure TPressParts.InternalAssignItem(AProxy: TPressProxy);
