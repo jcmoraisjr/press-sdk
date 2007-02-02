@@ -331,7 +331,7 @@ type
     FKeyType: string;
     FMetadatas: TPressObjectMetadataList;
   protected
-    function InternalParentMetadataOf(AMetadata: TPressObjectMetadata): TPressObjectMetadata;
+    function InternalParentMetadataOf(AMetadata: TPressObjectMetadata): TPressObjectMetadata; virtual;
     class function InternalServiceType: TPressServiceType; override;
     property Metadatas: TPressObjectMetadataList read FMetadatas;
   public
