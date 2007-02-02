@@ -93,6 +93,8 @@ type
 
   TPressAttributeMetadataClass = class of TPressAttributeMetadata;
 
+  TPressModel = class;
+
   TPressAttributeMetadata = class(TPressStreamable)
   private
     FAttributeClass: TPressAttributeClass;
@@ -107,6 +109,7 @@ type
     FOwner: TPressObjectMetadata;
     FPersistentName: string;
     FSize: Integer;
+    function GetModel: TPressModel;
     function GetObjectClassName: string;
     procedure SetAttributeName(const Value: string);
     procedure SetCalcMetadata(Value: TPressCalcMetadata);
@@ -115,6 +118,7 @@ type
     procedure SetObjectClassName(const Value: string);
   protected
     procedure SetName(const Value: string); virtual;
+    property Model: TPressModel read GetModel;
   public
     constructor Create(AOwner: TPressObjectMetadata); virtual;
     destructor Destroy; override;
@@ -171,8 +175,6 @@ type
     property ObjectMetadata: TPressObjectMetadata read FObjectMetadata;
   end;
 
-  TPressModel = class;
-
   TPressObjectMetadataClass = class of TPressObjectMetadata;
 
   TPressObjectMetadata = class(TPressStreamable)
@@ -181,6 +183,7 @@ type
     FIdMetadata: TPressAttributeMetadata;
     FKeyName: string;
     FMap: TPressMap;
+    FModel: TPressModel;
     FObjectClassName: string;
     FParent: TPressObjectMetadata;
     FPersistentName: string;
@@ -189,8 +192,9 @@ type
     function GetMap: TPressMap;
   protected
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; virtual;
+    property Model: TPressModel read FModel;
   public
-    constructor Create(AObjectClassName: string; AParent: TPressObjectMetadata; AModel: TPressModel);
+    constructor Create(AObjectClassName: string; AModel: TPressModel);
     destructor Destroy; override;
     function CreateAttributeMetadata: TPressAttributeMetadata;
     property AttributeMetadatas: TPressAttributeMetadataList read GetAttributeMetadatas;
@@ -327,6 +331,7 @@ type
     FKeyType: string;
     FMetadatas: TPressObjectMetadataList;
   protected
+    function InternalParentMetadataOf(AMetadata: TPressObjectMetadata): TPressObjectMetadata;
     class function InternalServiceType: TPressServiceType; override;
     property Metadatas: TPressObjectMetadataList read FMetadatas;
   public
@@ -343,6 +348,7 @@ type
     function FindClass(const AClassName: string): TPressObjectClass;
     function FindEnumMetadata(const AEnumName: string): TPressEnumMetadata;
     function FindMetadata(AClass: TPressObjectClass): TPressObjectMetadata;
+    function ParentMetadataOf(AMetadata: TPressObjectMetadata): TPressObjectMetadata;
     function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string): TPressEnumMetadata; overload;
     function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string; AEnumValues: array of string): TPressEnumMetadata; overload;
     function RegisterMetadata(const AMetadataStr: string): TPressObjectMetadata;
@@ -471,7 +477,6 @@ type
     procedure Changing(AAttribute: TPressAttribute);
     class function ClassMap: TPressMap;
     class function ClassMetadata: TPressObjectMetadata;
-    class function ClassMetadataParent: TPressObjectMetadata;
     {$IFDEF FPC}class{$ENDIF} function ClassType: TPressObjectClass;
     function Clone: TPressObject;
     function CreateAttributeIterator: TPressAttributeIterator;
@@ -1094,6 +1099,14 @@ begin
   inherited;
 end;
 
+function TPressAttributeMetadata.GetModel: TPressModel;
+begin
+  if Assigned(FOwner) then
+    Result := FOwner.Model
+  else
+    Result := PressModel;
+end;
+
 function TPressAttributeMetadata.GetObjectClassName: string;
 begin
   if Assigned(FObjectClass) then
@@ -1106,7 +1119,7 @@ procedure TPressAttributeMetadata.SetAttributeName(const Value: string);
 var
   VAttributeClass: TPressAttributeClass;
 begin
-  VAttributeClass := PressModel.FindAttribute(Value);
+  VAttributeClass := Model.FindAttribute(Value);
   if not Assigned(VAttributeClass) then
     raise EPressError.CreateFmt(SUnsupportedAttributeType, [Value]);
   FAttributeClass := VAttributeClass;
@@ -1153,7 +1166,7 @@ end;
 procedure TPressAttributeMetadata.SetObjectClassName(const Value: string);
 begin
   if ObjectClassName <> Value then
-    ObjectClass := PressModel.ClassByName(Value);
+    ObjectClass := Model.ClassByName(Value);
 end;
 
 { TPressAttributeMetadataList }
@@ -1295,15 +1308,16 @@ end;
 
 { TPressObjectMetadata }
 
-constructor TPressObjectMetadata.Create(AObjectClassName: string;
-  AParent: TPressObjectMetadata; AModel: TPressModel);
+constructor TPressObjectMetadata.Create(
+  AObjectClassName: string; AModel: TPressModel);
 begin
   inherited Create;
   FObjectClassName := AObjectClassName;
   FPersistentName := FObjectClassName;
-  FParent := AParent;
+  FModel := AModel;
+  FParent := FModel.ParentMetadataOf(Self);
   FKeyName := SPressIdString;
-  AModel.Metadatas.Add(Self);
+  FModel.Metadatas.Add(Self);
 end;
 
 function TPressObjectMetadata.CreateAttributeMetadata: TPressAttributeMetadata;
@@ -1332,7 +1346,7 @@ begin
   begin
     FIdMetadata := InternalAttributeMetadataClass.Create(nil);
     FIdMetadata.Name := KeyName;
-    FIdMetadata.AttributeName := PressModel.KeyType;
+    FIdMetadata.AttributeName := Model.KeyType;
   end;
   Result := FIdMetadata;
 end;
@@ -1693,7 +1707,6 @@ begin
   FMetadatas := TPressObjectMetadataList.Create(True);
   FEnumMetadatas := TPressEnumMetadataList.Create(True);
   FKeyType := TPressString.AttributeName;
-  TPressObjectMetadata.Create(TPressObject.ClassName, nil, Self);
 end;
 
 function TPressModel.CreateMetadataIterator: TPressObjectMetadataIterator;
@@ -1775,9 +1788,27 @@ begin
   Result := nil;
 end;
 
+function TPressModel.InternalParentMetadataOf(
+  AMetadata: TPressObjectMetadata): TPressObjectMetadata;
+var
+  VObjectClass: TPressObjectClass;
+begin
+  VObjectClass := ClassByName(AMetadata.ObjectClassName);
+  if VObjectClass <> TPressObject then
+    Result := TPressObjectClass(VObjectClass.ClassParent).ClassMetadata
+  else
+    Result := nil;
+end;
+
 class function TPressModel.InternalServiceType: TPressServiceType;
 begin
   Result := stBusinessModel;
+end;
+
+function TPressModel.ParentMetadataOf(
+  AMetadata: TPressObjectMetadata): TPressObjectMetadata;
+begin
+  Result := InternalParentMetadataOf(AMetadata);
 end;
 
 function TPressModel.RegisterEnumMetadata(AEnumAddress: Pointer;
@@ -1990,14 +2021,6 @@ begin
       VMetadataStr := ClassName;
     Result := PressModel.RegisterMetadata(VMetadataStr)
   end;
-end;
-
-class function TPressObject.ClassMetadataParent: TPressObjectMetadata;
-begin
-  if Self <> TPressObject then
-    Result := TPressObjectClass(ClassParent).ClassMetadata
-  else
-    Result := nil;
 end;
 
 {$IFDEF FPC}class{$ENDIF} function TPressObject.ClassType: TPressObjectClass;

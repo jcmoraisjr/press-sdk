@@ -167,7 +167,7 @@ procedure TPressQueryMetadata.SetItemObjectClassName(const Value: string);
 begin
   if not Assigned(FItemObjectClass) or
    (FItemObjectClass.ClassName <> Value) then
-    ItemObjectClass := PressModel.ClassByName(Value);
+    ItemObjectClass := Model.ClassByName(Value);
 end;
 
 { TPressQuery }
