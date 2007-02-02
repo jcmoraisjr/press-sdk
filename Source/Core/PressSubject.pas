@@ -335,8 +335,12 @@ type
     procedure Notify(AEvent: TPressEvent);
     {$ENDIF}
   protected
+    function InternalFindAttribute(const AAttributeName: string): TPressAttributeClass; virtual;
+    function InternalFindClass(const AClassName: string): TPressObjectClass; virtual;
     function InternalParentMetadataOf(AMetadata: TPressObjectMetadata): TPressObjectMetadata; virtual;
     class function InternalServiceType: TPressServiceType; override;
+    property Attributes: TClassList read FAttributes;
+    property EnumMetadatas: TPressEnumMetadataList read FEnumMetadatas;
     property Metadatas: TPressObjectMetadataList read FMetadatas;
   public
     constructor Create; override;
@@ -1744,30 +1748,14 @@ end;
 
 function TPressModel.FindAttribute(
   const AAttributeName: string): TPressAttributeClass;
-var
-  I: Integer;
 begin
-  for I := 0 to Pred(FAttributes.Count) do
-  begin
-    Result := TPressAttributeClass(FAttributes[I]);
-    if SameText(Result.AttributeName, AAttributeName) then
-      Exit;
-  end;
-  Result := nil;
+  Result := InternalFindAttribute(AAttributeName);
 end;
 
 function TPressModel.FindClass(
   const AClassName: string): TPressObjectClass;
-var
-  I: Integer;
 begin
-  for I := 0 to Pred(FClasses.Count) do
-  begin
-    Result := TPressObjectClass(FClasses[I]);
-    if SameText(Result.ClassName, AClassName) then
-      Exit;
-  end;
-  Result := nil;
+  Result := InternalFindClass(AClassName);
 end;
 
 function TPressModel.FindEnumMetadata(
@@ -1794,6 +1782,34 @@ begin
     Result := Metadatas[I];
     { TODO : Improve search }
     if SameText(Result.ObjectClassName, AClass.ClassName) then
+      Exit;
+  end;
+  Result := nil;
+end;
+
+function TPressModel.InternalFindAttribute(
+  const AAttributeName: string): TPressAttributeClass;
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(FAttributes.Count) do
+  begin
+    Result := TPressAttributeClass(FAttributes[I]);
+    if SameText(Result.AttributeName, AAttributeName) then
+      Exit;
+  end;
+  Result := nil;
+end;
+
+function TPressModel.InternalFindClass(
+  const AClassName: string): TPressObjectClass;
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(FClasses.Count) do
+  begin
+    Result := TPressObjectClass(FClasses[I]);
+    if SameText(Result.ClassName, AClassName) then
       Exit;
   end;
   Result := nil;
