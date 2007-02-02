@@ -185,16 +185,24 @@ type
   end;
 
   TPressPascalType = class(TPressPascalObject)
+  private
+    FName: string;
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalRead(Reader: TPressParserReader); override;
+  public
+    property Name: string read FName;
   end;
 
   TPressPascalClassType = class(TPressPascalType)
+  private
+    FParentName: string;
   protected
     class function Identifier: string; override;
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalRead(Reader: TPressParserReader); override;
+  public
+    property ParentName: string read FParentName;
   end;
 
   TPressPascalInterfaceType = class(TPressPascalType)
@@ -735,7 +743,7 @@ end;
 procedure TPressPascalType.InternalRead(Reader: TPressParserReader);
 begin
   inherited;
-  Reader.ReadIdentifier;
+  FName := Reader.ReadIdentifier;
   Reader.ReadMatch('=');
 end;
 
@@ -763,8 +771,12 @@ procedure TPressPascalClassType.InternalRead(Reader: TPressParserReader);
 begin
   inherited;
   Reader.ReadToken;
-  if Reader.ReadNextToken = '(' then
+  if Reader.ReadToken = '(' then
+  begin
+    FParentName := Reader.ReadIdentifier;
     Reader.ReadNext(')', True);
+  end else
+    Reader.UnreadToken;
   if Reader.ReadToken <> ';' then
   begin
     Reader.UnreadToken;
