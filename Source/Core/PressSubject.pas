@@ -330,6 +330,10 @@ type
     FEnumMetadatas: TPressEnumMetadataList;
     FKeyType: string;
     FMetadatas: TPressObjectMetadataList;
+    {$IFNDEF PressRelease}
+    FNotifier: TPressNotifier;
+    procedure Notify(AEvent: TPressEvent);
+    {$ENDIF}
   protected
     function InternalParentMetadataOf(AMetadata: TPressObjectMetadata): TPressObjectMetadata; virtual;
     class function InternalServiceType: TPressServiceType; override;
@@ -1707,6 +1711,10 @@ begin
   FMetadatas := TPressObjectMetadataList.Create(True);
   FEnumMetadatas := TPressEnumMetadataList.Create(True);
   FKeyType := TPressString.AttributeName;
+  {$IFNDEF PressRelease}
+  FNotifier := TPressNotifier.Create(Notify);
+  FNotifier.AddNotificationItem(PressApp, [TPressApplicationRunningEvent]);
+  {$ENDIF}
 end;
 
 function TPressModel.CreateMetadataIterator: TPressObjectMetadataIterator;
@@ -1720,6 +1728,9 @@ begin
   FClasses.Free;
   FMetadatas.Free;
   FEnumMetadatas.Free;
+  {$IFNDEF PressRelease}
+  FNotifier.Free;
+  {$ENDIF}
   inherited;
 end;
 
@@ -1846,6 +1857,16 @@ end;
 function TPressSubjectEvent.AllowLog: Boolean;
 begin
   Result := False;
+end;
+{$ENDIF}
+
+{$IFNDEF PressRelease}
+procedure TPressModel.Notify(AEvent: TPressEvent);
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(FClasses.Count) do
+    TPressObjectClass(FClasses[I]).ClassMetadata;
 end;
 {$ENDIF}
 

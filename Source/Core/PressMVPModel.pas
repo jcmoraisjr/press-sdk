@@ -245,7 +245,6 @@ type
   protected
     function AttributeAddress(const AAttributeName: string): PPressAttribute; override;
     function InternalBuildWhereClause: string; override;
-    class function InternalMetadataStr: string; override;
   published
     property Name: string read GetName write SetName;
   end;
@@ -645,11 +644,6 @@ begin
      [_Name.PersistentName, Name])
   else
     Result := '';
-end;
-
-class function TPressMVPReferenceQuery.InternalMetadataStr: string;
-begin
-  raise EPressError.CreateFmt(SUnsupportedFeature, [ClassName]);
 end;
 
 procedure TPressMVPReferenceQuery.SetName(const Value: string);
