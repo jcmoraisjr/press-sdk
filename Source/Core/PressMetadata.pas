@@ -194,8 +194,13 @@ begin
   Result := nil;
   try
     try
-      VParser.Read(VReader);
-      Result := VParser.Metadata;
+      if Assigned(AModel) then
+        Result := AModel.FindMetadata(VReader.ReadNextToken);
+      if not Assigned(Result) then
+      begin
+        VParser.Read(VReader);
+        Result := VParser.Metadata;
+      end;
     except
       on E: EPressParseError do
         raise EPressError.CreateFmt(SMetadataParseError,

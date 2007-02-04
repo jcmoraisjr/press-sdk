@@ -355,7 +355,8 @@ type
     function FindAttributeClass(const AAttributeName: string): TPressAttributeClass;
     function FindClass(const AClassName: string): TPressObjectClass;
     function FindEnumMetadata(const AEnumName: string): TPressEnumMetadata;
-    function FindMetadata(AClass: TPressObjectClass): TPressObjectMetadata;
+    function FindMetadata(const AClassName: string): TPressObjectMetadata;
+    function MetadataByName(const AClassName: string): TPressObjectMetadata;
     function ParentMetadataOf(AMetadata: TPressObjectMetadata): TPressObjectMetadata;
     function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string): TPressEnumMetadata; overload;
     function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string; AEnumValues: array of string): TPressEnumMetadata; overload;
@@ -1787,15 +1788,14 @@ begin
 end;
 
 function TPressModel.FindMetadata(
-  AClass: TPressObjectClass): TPressObjectMetadata;
+  const AClassName: string): TPressObjectMetadata;
 var
   I: Integer;
 begin
   for I := 0 to Pred(Metadatas.Count) do
   begin
     Result := Metadatas[I];
-    { TODO : Improve search }
-    if SameText(Result.ObjectClassName, AClass.ClassName) then
+    if SameText(Result.ObjectClassName, AClassName) then
       Exit;
   end;
   Result := nil;
@@ -1844,6 +1844,14 @@ end;
 class function TPressModel.InternalServiceType: TPressServiceType;
 begin
   Result := stBusinessModel;
+end;
+
+function TPressModel.MetadataByName(
+  const AClassName: string): TPressObjectMetadata;
+begin
+  Result := FindMetadata(AClassName);
+  if not Assigned(Result) then
+    raise EPressError.CreateFmt(SMetadataNotFound, [AClassName]);
 end;
 
 {$IFNDEF PressRelease}
@@ -2063,7 +2071,7 @@ class function TPressObject.ClassMetadata: TPressObjectMetadata;
 var
   VMetadataStr: string;
 begin
-  Result := PressModel.FindMetadata(Self);
+  Result := PressModel.FindMetadata(ClassName);
   if not Assigned(Result) then
   begin
     { TODO : Verify if the current class has an InternalMetadataStr method implementation }

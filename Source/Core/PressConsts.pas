@@ -57,6 +57,7 @@ resourcestring
   SInvalidAttributeValue = 'Valor ''%s'' inválido para %s(''%s'')';
   SInvalidClassInheritance = 'Classe ''%s'' não é decendente de ''%s''';
   SMaxItemCountReached = 'A consulta retornou %d itens, o limite é %d';
+  SMetadataNotFound = 'Metadata ''%s'' não encontrado';
   SMetadataParseError = 'Erro ao interpretar metadata: "(%d,%d) %s"' + SPressLineBreak + '"%s"';
   SNonRelatedClasses = 'Classes %s e %s não são relacionadas';
   SNoLoggedUser = 'Não existe usuário logado';
