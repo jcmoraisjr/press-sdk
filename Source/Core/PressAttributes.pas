@@ -492,7 +492,7 @@ type
     function GetObjectId: string;
     function GetProxy: TPressProxy;
     function GetValue: TPressObject;
-    procedure SetValue(Value: TPressObject);
+    procedure SetValue(AValue: TPressObject);
   protected
     procedure Finit; override;
     function GetIsEmpty: Boolean; override;
@@ -2843,9 +2843,9 @@ begin
   Result := Proxy.SameReference(ARefClass, ARefID);
 end;
 
-procedure TPressItem.SetValue(Value: TPressObject);
+procedure TPressItem.SetValue(AValue: TPressObject);
 begin
-  Proxy.Instance := Value;
+  Proxy.Instance := AValue;
 end;
 
 { TPressPart }
