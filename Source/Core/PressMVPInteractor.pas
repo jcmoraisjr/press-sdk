@@ -1,6 +1,6 @@
 (*
   PressObjects, MVP-Interactor Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -76,14 +76,14 @@ type
 
   TPressMVPUpdaterInteractor = class(TPressMVPInteractor)
   private
-    function GetSubject: TPressAttribute;
+    function GetModel: TPressMVPAttributeModel;
     function GetView: TPressMVPAttributeView;
   protected
     procedure DoUpdateModel;
     procedure InternalUpdateModel; virtual; abstract;
     procedure Notify(AEvent: TPressEvent); override;
   public
-    property Subject: TPressAttribute read GetSubject;
+    property Model: TPressMVPAttributeModel read GetModel;
     property View: TPressMVPAttributeView read GetView;
   end;
 
@@ -132,14 +132,12 @@ type
   TPressMVPReferenceUpdaterInteractor = class(TPressMVPPointerUpdaterInteractor)
   private
     function GetOwner: TPressMVPReferencePresenter;
-    function GetSubject: TPressReference;
   protected
     procedure InternalAssignSubject(VIndex: Integer); override;
     function InternalReferenceCount: Integer; override;
   public
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
     property Owner: TPressMVPReferencePresenter read GetOwner;
-    property Subject: TPressReference read GetSubject;
   end;
 
   TPressMVPClickUpdaterInteractor = class(TPressMVPUpdaterInteractor)
@@ -416,7 +414,7 @@ begin
   VView := View;
   if VView.AsString = '' then
     inherited
-  else if VView.Changed and (VView.AsInteger = -1) then
+  else if VView.IsChanged and (VView.AsInteger = -1) then
   begin
     case Owner.UpdateReferences(VView.AsString) of
       0: VView.SelectAll;
@@ -506,6 +504,7 @@ begin
   try
     { TODO : Test behavior with exceptions from ModelUpdate event }
     //try
+    if View.IsChanged then
       InternalUpdateModel;
     //except
     //  on E: Exception do
@@ -527,9 +526,9 @@ begin
   end;
 end;
 
-function TPressMVPUpdaterInteractor.GetSubject: TPressAttribute;
+function TPressMVPUpdaterInteractor.GetModel: TPressMVPAttributeModel;
 begin
-  Result := Owner.Model.Subject as TPressAttribute;
+  Result := Owner.Model as TPressMVPAttributeModel;
 end;
 
 function TPressMVPUpdaterInteractor.GetView: TPressMVPAttributeView;
@@ -563,7 +562,7 @@ end;
 
 procedure TPressMVPEditUpdaterInteractor.InternalUpdateModel;
 begin
-  Subject.AsString := View.AsString;
+  Model.Subject.AsString := View.AsString;
 end;
 
 { TPressMVPDateTimeUpdaterInteractor }
@@ -576,7 +575,7 @@ end;
 
 procedure TPressMVPDateTimeUpdaterInteractor.InternalUpdateModel;
 begin
-  Subject.AsDateTime := (View as TPressMVPDateTimeView).AsDateTime;
+  Model.Subject.AsDateTime := (View as TPressMVPDateTimeView).AsDateTime;
 end;
 
 { TPressMVPPointerUpdaterInteractor }
@@ -599,7 +598,7 @@ begin
   if Owner.View.ReferencesVisible then
     Exit;
   if View.AsString = '' then
-    Subject.Clear
+    Model.Subject.Clear
   else
   begin
     VIndex := View.AsInteger;
@@ -627,7 +626,7 @@ end;
 procedure TPressMVPEnumUpdaterInteractor.InternalAssignSubject(
   VIndex: Integer);
 begin
-  Subject.AsInteger := Owner.Model.EnumOf(VIndex);
+  Model.Subject.AsInteger := Owner.Model.EnumOf(VIndex);
 end;
 
 function TPressMVPEnumUpdaterInteractor.InternalReferenceCount: Integer;
@@ -649,15 +648,10 @@ begin
   Result := inherited Owner as TPressMVPReferencePresenter;
 end;
 
-function TPressMVPReferenceUpdaterInteractor.GetSubject: TPressReference;
-begin
-  Result := inherited Subject as TPressReference;
-end;
-
 procedure TPressMVPReferenceUpdaterInteractor.InternalAssignSubject(
   VIndex: Integer);
 begin
-  Subject.Value := Owner.Model.ObjectOf(VIndex);
+  (Model.Subject as TPressReference).PubValue := Owner.Model.ObjectOf(VIndex);
 end;
 
 function TPressMVPReferenceUpdaterInteractor.InternalReferenceCount: Integer;
@@ -684,9 +678,9 @@ end;
 procedure TPressMVPBooleanUpdaterInteractor.InternalUpdateModel;
 begin
   if View.IsClear then
-    Subject.Clear
+    Model.Subject.Clear
   else
-    Subject.AsBoolean := View.AsBoolean;
+    Model.Subject.AsBoolean := View.AsBoolean;
 end;
 
 { TPressMVPDblClickSelectableInteractor }

@@ -1,6 +1,6 @@
 (*
   PressObjects, MVP-View Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -157,6 +157,7 @@ type
   TPressMVPView = class(TPressMVPObject)
   private
     FControl: TControl;
+    FIsChanged: Boolean;
     FModel: TPressMVPModel;
     FOwnsControl: Boolean;
     FViewClickEvent: TNotifyEvent;
@@ -166,11 +167,13 @@ type
     procedure ViewClickEvent(Sender: TObject); virtual;
     procedure ViewDblClickEvent(Sender: TObject); virtual;
   protected
+    procedure Changed;
     procedure InitView; virtual;
     procedure InternalReset; virtual;
     procedure InternalUpdate; virtual;
     procedure ModelChanged(AChangeType: TPressMVPChangeType); virtual;
     procedure SetModel(Value: TPressMVPModel);
+    procedure Unchanged;
     property Model: TPressMVPModel read GetModel;
   public
     constructor Create(AControl: TControl; AOwnsControl: Boolean = False);
@@ -181,6 +184,7 @@ type
     class procedure RegisterView;
     procedure Update;
     property Control: TControl read FControl;
+    property IsChanged: Boolean read FIsChanged;
     property OwnsControl: Boolean read FOwnsControl write FOwnsControl;
   end;
 
@@ -224,12 +228,11 @@ type
     procedure InitView; override;
   public
     procedure SelectNext; virtual;
-    procedure SetFocus; 
+    procedure SetFocus;
   end;
 
   TPressMVPEditView = class(TPressMVPWinView)
   private
-    FChanged: Boolean;
     FViewChangeEvent: TNotifyEvent;
     function GetControl: TCustomEdit;
   protected
@@ -244,13 +247,14 @@ type
     procedure SetSize(Value: Integer); override;
   public
     class function Apply(AControl: TControl): Boolean; override;
-    property Changed: Boolean read FChanged;
     property Control: TCustomEdit read GetControl;
   end;
 
   TPressMVPDateTimeView = class(TPressMVPWinView)
   private
     function GetControl: TCustomCalendar;
+  protected
+    procedure ViewClickEvent(Sender: TObject); override;
   protected
     function GetAsDateTime: TDateTime; override;
     function GetAsString: string; override;
@@ -263,6 +267,8 @@ type
   end;
 
   TPressMVPBooleanView = class(TPressMVPWinView)
+  protected
+    procedure ViewClickEvent(Sender: TObject); override;
   end;
 
   TPressMVPCheckBoxView = class(TPressMVPBooleanView)
@@ -298,7 +304,6 @@ type
 
   TPressMVPComboBoxView = class(TPressMVPItemView)
   private
-    FChanged: Boolean;
     {$IFDEF PressViewDirectEvent}
     FOnDrawItem: TPressDrawItemEvent;
     {$ENDIF}
@@ -310,7 +315,6 @@ type
     procedure ViewChangeEvent(Sender: TObject); virtual;
     procedure ViewDrawItemEvent(AControl: TWinControl; AIndex: Integer; ARect: TRect; AState: TOwnerDrawState); virtual;
     procedure ViewDropDownEvent(Sender: TObject); virtual;
-    procedure ViewEnterEvent(Sender: TObject); override;
   protected
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
@@ -327,7 +331,6 @@ type
     procedure HideReferences;
     procedure SelectAll;
     procedure ShowReferences;
-    property Changed: Boolean read FChanged;
     property Control: TCustomComboBox read GetControl;
     {$IFDEF PressViewDirectEvent}
     property OnDrawItem: TPressDrawItemEvent read FOnDrawItem write FOnDrawItem;
@@ -600,6 +603,11 @@ end;
 
 { TPressMVPView }
 
+procedure TPressMVPView.Changed;
+begin
+  FIsChanged := True;
+end;
+
 constructor TPressMVPView.Create(AControl: TControl; AOwnsControl: Boolean);
 begin
   CheckClass(Apply(AControl));
@@ -664,6 +672,11 @@ end;
 procedure TPressMVPView.SetModel(Value: TPressMVPModel);
 begin
   FModel := Value;
+end;
+
+procedure TPressMVPView.Unchanged;
+begin
+  FIsChanged := False;
 end;
 
 procedure TPressMVPView.Update;
@@ -782,6 +795,7 @@ end;
 
 procedure TPressMVPWinView.ViewEnterEvent(Sender: TObject);
 begin
+  Unchanged;
   if EventsDisabled then
     Exit;
   TPressMVPViewEnterEvent.Create(Self).Notify;
@@ -865,12 +879,8 @@ end;
 procedure TPressMVPEditView.InternalUpdate;
 begin
   inherited;
-  if Control.Focused then
-  begin
-    TPressMVPViewCustomEditFriend(Control).Text := Model.Subject.AsString;
-    Control.SelectAll;
-  end else
-    TPressMVPViewCustomEditFriend(Control).Text := Model.AsString;
+  TPressMVPViewCustomEditFriend(Control).Text := Model.AsString;
+  Unchanged;
 end;
 
 procedure TPressMVPEditView.SetSize(Value: Integer);
@@ -882,7 +892,7 @@ procedure TPressMVPEditView.ViewChangeEvent(Sender: TObject);
 begin
   if EventsDisabled then
     Exit;
-  FChanged := True;
+  Changed;
   if Assigned(FViewChangeEvent) then
     FViewChangeEvent(Sender);
 end;
@@ -890,7 +900,6 @@ end;
 procedure TPressMVPEditView.ViewEnterEvent(Sender: TObject);
 begin
   inherited;
-  FChanged := False;
   Control.SelectAll;
 end;
 
@@ -931,6 +940,25 @@ begin
   inherited;
   TPressMVPViewCustomCalendarFriend(Control).DateTime :=
    Model.Subject.AsDateTime;
+  Unchanged;
+end;
+
+procedure TPressMVPDateTimeView.ViewClickEvent(Sender: TObject);
+begin
+  if EventsDisabled then
+    Exit;
+  Changed;
+  inherited;
+end;
+
+{ TPressMVPBooleanView }
+
+procedure TPressMVPBooleanView.ViewClickEvent(Sender: TObject);
+begin
+  if EventsDisabled then
+    Exit;
+  Changed;
+  inherited;
 end;
 
 { TPressMVPCheckBoxView }
@@ -972,6 +1000,7 @@ begin
     TPressMVPViewCustomCheckBoxFriend(Control).State := cbChecked
   else
     TPressMVPViewCustomCheckBoxFriend(Control).State := cbUnchecked;
+  Unchanged;
 end;
 
 { TPressMVPItemView }
@@ -1075,8 +1104,7 @@ procedure TPressMVPComboBoxView.InternalClear;
 begin
   ClearReferences;
   TPressMVPViewCustomComboBoxFriend(Control).Text := '';
-  { TODO : FChanged := True ? }
-  FChanged := True;
+  Changed;
 end;
 
 procedure TPressMVPComboBoxView.InternalClearReferences;
@@ -1088,7 +1116,7 @@ procedure TPressMVPComboBoxView.InternalUpdate;
 begin
   inherited;
   TPressMVPViewCustomComboBoxFriend(Control).Text := Model.AsString;
-  FChanged := False;
+  Unchanged;
 end;
 
 procedure TPressMVPComboBoxView.SelectAll;
@@ -1108,7 +1136,7 @@ begin
     Control.DroppedDown := False;
     Control.DroppedDown := True;
     Control.SelectAll;
-    FChanged := False;
+    Unchanged;
   finally
     EnableEvents;
   end;
@@ -1118,7 +1146,7 @@ procedure TPressMVPComboBoxView.ViewChangeEvent(Sender: TObject);
 begin
   if EventsDisabled then
     Exit;
-  FChanged := True;
+  Changed;
   if Assigned(FViewChangeEvent) then
     FViewChangeEvent(Sender);
 end;
@@ -1147,14 +1175,6 @@ begin
   TPressMVPViewDropDownEvent.Create(Self).Notify;
   if Assigned(FViewDropDownEvent) then
     FViewDropDownEvent(Sender);
-end;
-
-procedure TPressMVPComboBoxView.ViewEnterEvent(Sender: TObject);
-begin
-  if EventsDisabled then
-    Exit;
-  inherited;
-  FChanged := False;
 end;
 
 { TPressMVPItemsView }
