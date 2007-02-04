@@ -710,6 +710,7 @@ end;
 procedure TPressMVPColumnItem.SetAttributeName(const Value: string);
 var
   VMetadata: TPressAttributeMetadata;
+  VPos: Integer;
 begin
   VMetadata := FOwner.Map.FindMetadata(Value);
   if not Assigned(VMetadata) then
@@ -719,7 +720,13 @@ begin
     raise EPressMVPError.CreateFmt(SAttributeIsNotValue,
      [FOwner.Map.ObjectMetadata.ObjectClassName, Value]);
   FAttributeName := Value;
-  FHeaderCaption := Value;
+  VPos := Length(Value);
+  while (VPos > 0) and (Value[VPos] <> SPressAttributeSeparator) do
+    Dec(VPos);
+  if VPos > 0 then
+    FHeaderCaption := Copy(Value, 1, VPos - 1)
+  else
+    FHeaderCaption := Value;
   if VMetadata.AttributeClass.InheritsFrom(TPressBoolean) then
     FAttributeAlignment := taCenter
   else if VMetadata.AttributeClass.InheritsFrom(TPressNumeric) then
