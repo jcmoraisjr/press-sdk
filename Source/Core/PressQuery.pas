@@ -274,25 +274,28 @@ begin
   if not (AAttribute.Metadata is TPressQueryAttributeMetadata) then
     Exit;
   VMetadata := TPressQueryAttributeMetadata(AAttribute.Metadata);
-  if not AAttribute.IsEmpty or VMetadata.IncludeIfEmpty then
-    case VMetadata.Category of
-      acMatch:
-        Result := FormatValueItem('%s = %s');
-      acStarting:
-        Result := FormatStringItem('%s LIKE %s%%%s%1:s');
-      acFinishing:
-        Result := FormatStringItem('%s LIKE %s%s%%%1:s');
-      acPartial:
-        Result := FormatStringItem('%s LIKE %s%%%s%%%1:s');
-      acGreaterThan:
-        Result := FormatValueItem('%s > %s');
-      acGreaterEqualThan:
-        Result := FormatValueItem('%s >= %s');
-      acLesserThan:
-        Result := FormatValueItem('%s < %s');
-      acLesserEqualThan:
-        Result := FormatValueItem('%s <= %s');
-    end;
+  if VMetadata.IncludeIfEmpty then
+    if not AAttribute.IsEmpty then
+      case VMetadata.Category of
+        acMatch:
+          Result := FormatValueItem('%s = %s');
+        acStarting:
+          Result := FormatStringItem('%s LIKE %s%%%s%1:s');
+        acFinishing:
+          Result := FormatStringItem('%s LIKE %s%s%%%1:s');
+        acPartial:
+          Result := FormatStringItem('%s LIKE %s%%%s%%%1:s');
+        acGreaterThan:
+          Result := FormatValueItem('%s > %s');
+        acGreaterEqualThan:
+          Result := FormatValueItem('%s >= %s');
+        acLesserThan:
+          Result := FormatValueItem('%s < %s');
+        acLesserEqualThan:
+          Result := FormatValueItem('%s <= %s');
+      end
+    else
+      Result := VMetadata.DataName + ' is Null';
 end;
 
 function TPressQuery.InternalBuildWhereClause: string;
@@ -303,7 +306,7 @@ function TPressQuery.InternalBuildWhereClause: string;
     if ABuffer = '' then
       ABuffer := AStatementStr
     else if AStatementStr <> '' then
-      ABuffer := ABuffer + ' ' + AConnectorToken + ' ' + AStatementStr
+      ABuffer := ABuffer + ' ' + AConnectorToken + ' ' + AStatementStr;
   end;
 
 begin
