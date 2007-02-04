@@ -1,6 +1,6 @@
 (*
   PressObjects, Base MVP Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
