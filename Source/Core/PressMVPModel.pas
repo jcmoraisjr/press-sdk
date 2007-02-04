@@ -1,6 +1,6 @@
 (*
   PressObjects, MVP-Model Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -53,11 +53,13 @@ type
 
   TPressMVPAttributeModel = class(TPressMVPModel)
   private
+    function GetIsSelected: Boolean;
     function GetSubject: TPressAttribute;
   protected
     function GetAsString: string; virtual;
   public
     property AsString: string read GetAsString;
+    property IsSelected: Boolean read GetIsSelected;
     property Subject: TPressAttribute read GetSubject;
   end;
 
@@ -443,7 +445,15 @@ uses
 
 function TPressMVPAttributeModel.GetAsString: string;
 begin
-  Result := Subject.DisplayText;
+  if IsSelected then
+    Result := Subject.AsString
+  else
+    Result := Subject.DisplayText;
+end;
+
+function TPressMVPAttributeModel.GetIsSelected: Boolean;
+begin
+  Result := Parent.Selection.IndexOf(Self) >= 0;
 end;
 
 function TPressMVPAttributeModel.GetSubject: TPressAttribute;
