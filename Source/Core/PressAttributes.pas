@@ -20,6 +20,7 @@ interface
 
 uses
   Classes,
+  TypInfo,
   PressClasses,
   PressSubject,
   Graphics;
@@ -149,6 +150,8 @@ type
   TPressString = class(TPressValue)
   private
     FValue: string;
+    function GetPubValue: string;
+    procedure SetPubValue(const AValue: string);
   protected
     function GetAsBoolean: Boolean; override;
     function GetAsDate: TDate; override;
@@ -160,6 +163,7 @@ type
     function GetAsVariant: Variant; override;
     function GetIsEmpty: Boolean; override;
     function GetValue: string; virtual;
+    function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
@@ -174,6 +178,7 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Reset; override;
+    property PubValue: string read GetPubValue write SetPubValue;
     property Value: string read GetValue write SetValue;
   end;
 
@@ -193,6 +198,8 @@ type
   TPressInteger = class(TPressNumeric)
   private
     FValue: Integer;
+    function GetPubValue: Integer;
+    procedure SetPubValue(AValue: Integer);
   protected
     function GetAsFloat: Double; override;
     function GetAsInteger: Integer; override;
@@ -200,6 +207,7 @@ type
     function GetAsVariant: Variant; override;
     function GetIsEmpty: Boolean; override;
     function GetValue: Integer; virtual;
+    function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsFloat(AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
@@ -210,12 +218,15 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Reset; override;
+    property PubValue: Integer read GetPubValue write SetPubValue;
     property Value: Integer read GetValue write SetValue;
   end;
 
   TPressFloat = class(TPressNumeric)
   private
     FValue: Double;
+    function GetPubValue: Double;
+    procedure SetPubValue(AValue: Double);
   protected
     function GetAsFloat: Double; override;
     function GetAsInteger: Integer; override;
@@ -223,6 +234,7 @@ type
     function GetAsVariant: Variant; override;
     function GetIsEmpty: Boolean; override;
     function GetValue: Double; virtual;
+    function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsFloat(AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
@@ -233,12 +245,15 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Reset; override;
+    property PubValue: Double read GetPubValue write SetPubValue;
     property Value: Double read GetValue write SetValue;
   end;
 
   TPressCurrency = class(TPressNumeric)
   private
     FValue: Currency;
+    function GetPubValue: Currency;
+    procedure SetPubValue(AValue: Currency);
   protected
     function GetAsCurrency: Currency; override;
     function GetAsFloat: Double; override;
@@ -248,6 +263,7 @@ type
     function GetIsEmpty: Boolean; override;
     function GetDisplayText: string; override;
     function GetValue: Currency; virtual;
+    function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsCurrency(AValue: Currency); override;
     procedure SetAsFloat(AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
@@ -259,12 +275,15 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Reset; override;
+    property PubValue: Currency read GetPubValue write SetPubValue;
     property Value: Currency read GetValue write SetValue;
   end;
 
   TPressEnum = class(TPressValue)
   private
     FValue: Integer;
+    function GetPubValue: Integer;
+    procedure SetPubValue(AValue: Integer);
   protected
     function GetAsBoolean: Boolean; override;
     function GetAsDate: TDate; override;
@@ -276,6 +295,7 @@ type
     function GetAsVariant: Variant; override;
     function GetIsEmpty: Boolean; override;
     function GetValue: Integer; virtual;
+    function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
@@ -290,6 +310,7 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Reset; override;
+    property PubValue: Integer read GetPubValue write SetPubValue;
     property Value: Integer read GetValue write SetValue;
   end;
 
@@ -297,6 +318,8 @@ type
   private
     FValue: Boolean;
     FValues: array[Boolean] of string;
+    function GetPubValue: Boolean;
+    procedure SetPubValue(AValue: Boolean);
   protected
     function GetAsBoolean: Boolean; override;
     function GetAsFloat: Double; override;
@@ -306,6 +329,7 @@ type
     function GetDisplayText: string; override;
     function GetValue: Boolean; virtual;
     procedure Initialize; override;
+    function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsFloat(AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
@@ -317,12 +341,15 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Reset; override;
+    property PubValue: Boolean read GetPubValue write SetPubValue;
     property Value: Boolean read GetValue write SetValue;
   end;
 
   TPressDate = class(TPressValue)
   private
     FValue: TDate;
+    function GetPubValue: TDate;
+    procedure SetPubValue(AValue: TDate);
   protected
     function GetAsDate: TDate; override;
     function GetAsDateTime: TDateTime; override;
@@ -333,6 +360,7 @@ type
     function GetDisplayText: string; override;
     function GetValue: TDate; virtual;
     procedure Initialize; override;
+    function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
     procedure SetAsFloat(AValue: Double); override;
@@ -345,12 +373,15 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Reset; override;
+    property PubValue: TDate read GetPubValue write SetPubValue;
     property Value: TDate read GetValue write SetValue;
   end;
 
   TPressTime = class(TPressValue)
   private
     FValue: TTime;
+    function GetPubValue: TTime;
+    procedure SetPubValue(AValue: TTime);
   protected
     function GetAsDate: TDate; override;
     function GetAsDateTime: TDateTime; override;
@@ -361,6 +392,7 @@ type
     function GetDisplayText: string; override;
     function GetValue: TTime; virtual;
     procedure Initialize; override;
+    function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
     procedure SetAsFloat(AValue: Double); override;
@@ -373,12 +405,15 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Reset; override;
+    property PubValue: TTime read GetPubValue write SetPubValue;
     property Value: TTime read GetValue write SetValue;
   end;
 
   TPressDateTime = class(TPressValue)
   private
     FValue: TDateTime;
+    function GetPubValue: TDateTime;
+    procedure SetPubValue(AValue: TDateTime);
   protected
     function GetAsDate: TDate; override;
     function GetAsDateTime: TDateTime; override;
@@ -389,6 +424,7 @@ type
     function GetDisplayText: string; override;
     function GetValue: TDateTime; virtual;
     procedure Initialize; override;
+    function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
     procedure SetAsFloat(AValue: Double); override;
@@ -401,12 +437,15 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Reset; override;
+    property PubValue: TDateTime read GetPubValue write SetPubValue;
     property Value: TDateTime read GetValue write SetValue;
   end;
 
   TPressVariant = class(TPressValue)
   private
     FValue: Variant;
+    function GetPubValue: Variant;
+    procedure SetPubValue(AValue: Variant);
   protected
     function GetAsBoolean: Boolean; override;
     function GetAsDate: TDate; override;
@@ -417,6 +456,7 @@ type
     function GetAsTime: TTime; override;
     function GetAsVariant: Variant; override;
     function GetValue: Variant; virtual;
+    function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
@@ -431,6 +471,7 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Reset; override;
+    property PubValue: Variant read GetPubValue write SetPubValue;
     property Value: Variant read GetValue write SetValue;
   end;
 
@@ -439,14 +480,8 @@ type
     FStream: TMemoryStream;
     function GetSize: Integer;
     function GetStream: TMemoryStream;
-    function GetValue: string;
-    procedure SetValue(const AValue: string);
   protected
     procedure Finit; override;
-    function GetAsString: string; override;
-    function GetAsVariant: Variant; override;
-    procedure SetAsString(const AValue: string); override;
-    procedure SetAsVariant(AValue: Variant); override;
     property Stream: TMemoryStream read GetStream;
   public
     procedure Assign(Source: TPersistent); override;
@@ -456,13 +491,25 @@ type
     procedure SaveToStream(AStream: TStream);
     function WriteBuffer(const ABuffer; ACount: Integer): Boolean;
     property Size: Integer read GetSize;
-    property Value: string read GetValue write SetValue;
   end;
 
   TPressMemo = class(TPressBlob)
+  private
+    function GetPubValue: string;
+    function GetValue: string;
+    procedure SetPubValue(const AValue: string);
+    procedure SetValue(const AValue: string);
+  protected
+    function GetAsString: string; override;
+    function GetAsVariant: Variant; override;
+    function InternalTypeKinds: TTypeKinds; override;
+    procedure SetAsString(const AValue: string); override;
+    procedure SetAsVariant(AValue: Variant); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    property PubValue: string read GetPubValue write SetPubValue;
+    property Value: string read GetValue write SetValue;
   end;
 
   TPressBinary = class(TPressBlob)
@@ -491,7 +538,9 @@ type
     function GetObjectClassName: string;
     function GetObjectId: string;
     function GetProxy: TPressProxy;
+    function GetPubValue: TPressObject;
     function GetValue: TPressObject;
+    procedure SetPubValue(AValue: TPressObject);
     procedure SetValue(AValue: TPressObject);
   protected
     procedure Finit; override;
@@ -499,6 +548,7 @@ type
     function GetSignature: string; override;
     procedure InternalAssignObject(AObject: TPressObject); override;
     function InternalCreateMemento: TPressAttributeMemento; override;
+    function InternalTypeKinds: TTypeKinds; override;
     procedure InternalUnassignObject(AObject: TPressObject); override;
     property Proxy: TPressProxy read GetProxy;
   public
@@ -510,6 +560,7 @@ type
     function SameReference(const ARefClass, ARefID: string): Boolean; overload;
     property ObjectClassName: string read GetObjectClassName;
     property ObjectId: string read GetObjectId;
+    property PubValue: TPressObject read GetPubValue write SetPubValue;
     property Value: TPressObject read GetValue write SetValue;
   end;
 
@@ -1042,7 +1093,7 @@ end;
 procedure TPressString.Assign(Source: TPersistent);
 begin
   if Source is TPressString then
-    Value := TPressString(Source).Value
+    PubValue := TPressString(Source).PubValue
   else
     inherited;
 end;
@@ -1058,10 +1109,13 @@ begin
 end;
 
 function TPressString.GetAsBoolean: Boolean;
+var
+  VValue: string;
 begin
-  if SameText(Value, SPressTrueString) then
+  VValue := PubValue;
+  if SameText(VValue, SPressTrueString) then
     Result := True
-  else if SameText(Value, SPressFalseString) then
+  else if SameText(VValue, SPressFalseString) then
     Result := False
   else
     raise ConversionError(nil);
@@ -1070,7 +1124,7 @@ end;
 function TPressString.GetAsDate: TDate;
 begin
   try
-    Result := StrToDate(Value);
+    Result := StrToDate(PubValue);
   except
     on E: EConvertError do
       raise ConversionError(E);
@@ -1082,7 +1136,7 @@ end;
 function TPressString.GetAsDateTime: TDateTime;
 begin
   try
-    Result := StrToDateTime(Value);
+    Result := StrToDateTime(PubValue);
   except
     on E: EConvertError do
       raise ConversionError(E);
@@ -1094,7 +1148,7 @@ end;
 function TPressString.GetAsFloat: Double;
 begin
   try
-    Result := StrToFloat(Value);
+    Result := StrToFloat(PubValue);
   except
     on E: EConvertError do
       raise ConversionError(E);
@@ -1106,7 +1160,7 @@ end;
 function TPressString.GetAsInteger: Integer;
 begin
   try
-    Result := StrToInt(Value);
+    Result := StrToInt(PubValue);
   except
     on E: EConvertError do
       raise ConversionError(E);
@@ -1117,13 +1171,13 @@ end;
 
 function TPressString.GetAsString: string;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressString.GetAsTime: TTime;
 begin
   try
-    Result := StrToTime(Value);
+    Result := StrToTime(PubValue);
   except
     on E: EConvertError do
       raise ConversionError(E);
@@ -1134,18 +1188,31 @@ end;
 
 function TPressString.GetAsVariant: Variant;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressString.GetIsEmpty: Boolean;
 begin
-  Result := Value = '';
+  Result := PubValue = '';
+end;
+
+function TPressString.GetPubValue: string;
+begin
+  if HasPubGetter then
+    Result := GetStrProp(Owner, Metadata.Name)
+  else
+    Result := Value;
 end;
 
 function TPressString.GetValue: string;
 begin
   VerifyCalcAttribute;
   Result := FValue;
+end;
+
+function TPressString.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkString, tkLString, tkWString];
 end;
 
 procedure TPressString.Reset;
@@ -1157,51 +1224,59 @@ end;
 procedure TPressString.SetAsBoolean(AValue: Boolean);
 begin
   if AValue then
-    Value := SPressTrueString
+    PubValue := SPressTrueString
   else
-    Value := SPressFalseString;
+    PubValue := SPressFalseString;
 end;
 
 procedure TPressString.SetAsDate(AValue: TDate);
 begin
-  Value := DateToStr(AValue);
+  PubValue := DateToStr(AValue);
 end;
 
 procedure TPressString.SetAsDateTime(AValue: TDateTime);
 begin
-  Value := DateTimeToStr(AValue);
+  PubValue := DateTimeToStr(AValue);
 end;
 
 procedure TPressString.SetAsFloat(AValue: Double);
 begin
-  Value := FloatToStr(AValue);
+  PubValue := FloatToStr(AValue);
 end;
 
 procedure TPressString.SetAsInteger(AValue: Integer);
 begin
-  Value := IntToStr(AValue);
+  PubValue := IntToStr(AValue);
 end;
 
 procedure TPressString.SetAsString(const AValue: string);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressString.SetAsTime(AValue: TTime);
 begin
-  Value := TimeToStr(AValue);
+  PubValue := TimeToStr(AValue);
 end;
 
 procedure TPressString.SetAsVariant(AValue: Variant);
 begin
   try
-    Value := AValue;
+    PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
     else
       raise;
   end;
+end;
+
+procedure TPressString.SetPubValue(const AValue: string);
+begin
+  if HasPubSetter then
+    SetStrProp(Owner, Metadata.Name, AValue)
+  else
+    Value := AValue;
 end;
 
 procedure TPressString.SetValue(const AValue: string);
@@ -1286,7 +1361,7 @@ end;
 procedure TPressInteger.Assign(Source: TPersistent);
 begin
   if Source is TPressInteger then
-    Value := TPressInteger(Source).Value
+    PubValue := TPressInteger(Source).PubValue
   else
     inherited;
 end;
@@ -1303,12 +1378,12 @@ end;
 
 function TPressInteger.GetAsFloat: Double;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressInteger.GetAsInteger: Integer;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressInteger.GetAsString: string;
@@ -1316,23 +1391,36 @@ begin
   if IsNull then
     Result := ''
   else
-    Result := IntToStr(Value);
+    Result := IntToStr(PubValue);
 end;
 
 function TPressInteger.GetAsVariant: Variant;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressInteger.GetIsEmpty: Boolean;
 begin
-  Result := Value = 0;
+  Result := PubValue = 0;
+end;
+
+function TPressInteger.GetPubValue: Integer;
+begin
+  if HasPubGetter then
+    Result := GetOrdProp(Owner, Metadata.Name)
+  else
+    Result := Value;
 end;
 
 function TPressInteger.GetValue: Integer;
 begin
   VerifyCalcAttribute;
   Result := FValue;
+end;
+
+function TPressInteger.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkInteger];
 end;
 
 procedure TPressInteger.Reset;
@@ -1343,12 +1431,12 @@ end;
 
 procedure TPressInteger.SetAsFloat(AValue: Double);
 begin
-  Value := Round(AValue);
+  PubValue := Round(AValue);
 end;
 
 procedure TPressInteger.SetAsInteger(AValue: Integer);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressInteger.SetAsString(const AValue: string);
@@ -1357,7 +1445,7 @@ begin
     if AValue = '' then
       Clear
     else
-      Value := StrToInt(AValue);
+      PubValue := StrToInt(AValue);
   except
     on E: EConvertError do
       raise ConversionError(E);
@@ -1369,13 +1457,21 @@ end;
 procedure TPressInteger.SetAsVariant(AValue: Variant);
 begin
   try
-    Value := AValue;
+    PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
     else
       raise;
   end;
+end;
+
+procedure TPressInteger.SetPubValue(AValue: Integer);
+begin
+  if HasPubSetter then
+    SetOrdProp(Owner, Metadata.Name, AValue)
+  else
+    Value := AValue;
 end;
 
 procedure TPressInteger.SetValue(AValue: Integer);
@@ -1393,7 +1489,7 @@ end;
 procedure TPressFloat.Assign(Source: TPersistent);
 begin
   if Source is TPressFloat then
-    Value := TPressFloat(Source).Value
+    PubValue := TPressFloat(Source).PubValue
   else
     inherited;
 end;
@@ -1410,12 +1506,12 @@ end;
 
 function TPressFloat.GetAsFloat: Double;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressFloat.GetAsInteger: Integer;
 begin
-  Result := Round(Value);
+  Result := Round(PubValue);
 end;
 
 function TPressFloat.GetAsString: string;
@@ -1423,23 +1519,36 @@ begin
   if IsNull then
     Result := ''
   else
-    Result := FloatToStr(Value);
+    Result := FloatToStr(PubValue);
 end;
 
 function TPressFloat.GetAsVariant: Variant;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressFloat.GetIsEmpty: Boolean;
 begin
-  Result := Value = 0;
+  Result := PubValue = 0;
+end;
+
+function TPressFloat.GetPubValue: Double;
+begin
+  if HasPubGetter then
+    Result := GetFloatProp(Owner, Metadata.Name)
+  else
+    Result := Value;
 end;
 
 function TPressFloat.GetValue: Double;
 begin
   VerifyCalcAttribute;
   Result := FValue;
+end;
+
+function TPressFloat.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkFloat];
 end;
 
 procedure TPressFloat.Reset;
@@ -1450,12 +1559,12 @@ end;
 
 procedure TPressFloat.SetAsFloat(AValue: Double);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressFloat.SetAsInteger(AValue: Integer);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressFloat.SetAsString(const AValue: string);
@@ -1464,7 +1573,7 @@ begin
     if AValue = '' then
       Clear
     else
-      Value := StrToFloat(AValue)
+      PubValue := StrToFloat(AValue)
   except
     on E: EConvertError do
       raise ConversionError(E);
@@ -1476,13 +1585,21 @@ end;
 procedure TPressFloat.SetAsVariant(AValue: Variant);
 begin
   try
-    Value := AValue;
+    PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
     else
       raise;
   end;
+end;
+
+procedure TPressFloat.SetPubValue(AValue: Double);
+begin
+  if HasPubSetter then
+    SetFloatProp(Owner, Metadata.Name, AValue)
+  else
+    Value := AValue;
 end;
 
 procedure TPressFloat.SetValue(AValue: Double);
@@ -1500,7 +1617,7 @@ end;
 procedure TPressCurrency.Assign(Source: TPersistent);
 begin
   if Source is TPressCurrency then
-    Value := TPressCurrency(Source).Value
+    PubValue := TPressCurrency(Source).PubValue
   else
     inherited;
 end;
@@ -1517,17 +1634,17 @@ end;
 
 function TPressCurrency.GetAsCurrency: Currency;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressCurrency.GetAsFloat: Double;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressCurrency.GetAsInteger: Integer;
 begin
-  Result := Round(Value);
+  Result := Round(PubValue);
 end;
 
 function TPressCurrency.GetAsString: string;
@@ -1535,12 +1652,12 @@ begin
   if IsNull then
     Result := ''
   else
-    Result := CurrToStr(Value);
+    Result := CurrToStr(PubValue);
 end;
 
 function TPressCurrency.GetAsVariant: Variant;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressCurrency.GetDisplayText: string;
@@ -1548,20 +1665,33 @@ begin
   if IsNull then
     Result := ''
   else if EditMask <> '' then
-    Result := FormatCurr(EditMask, Value)
+    Result := FormatCurr(EditMask, PubValue)
   else
-    Result := FormatCurr(',0.00', Value)
+    Result := FormatCurr(',0.00', PubValue)
 end;
 
 function TPressCurrency.GetIsEmpty: Boolean;
 begin
-  Result := Value = 0;
+  Result := PubValue = 0;
+end;
+
+function TPressCurrency.GetPubValue: Currency;
+begin
+  if HasPubGetter then
+    Result := GetFloatProp(Owner, Metadata.Name)
+  else
+    Result := Value;
 end;
 
 function TPressCurrency.GetValue: Currency;
 begin
   VerifyCalcAttribute;
   Result := FValue;
+end;
+
+function TPressCurrency.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkFloat];
 end;
 
 procedure TPressCurrency.Reset;
@@ -1572,17 +1702,17 @@ end;
 
 procedure TPressCurrency.SetAsCurrency(AValue: Currency);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressCurrency.SetAsFloat(AValue: Double);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressCurrency.SetAsInteger(AValue: Integer);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressCurrency.SetAsString(const AValue: string);
@@ -1591,7 +1721,7 @@ begin
     if AValue = '' then
       Clear
     else
-      Value := StrToCurr(AValue)
+      PubValue := StrToCurr(AValue)
   except
     on E: EConvertError do
       raise ConversionError(E);
@@ -1603,13 +1733,21 @@ end;
 procedure TPressCurrency.SetAsVariant(AValue: Variant);
 begin
   try
-    Value := AValue;
+    PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
     else
       raise;
   end;
+end;
+
+procedure TPressCurrency.SetPubValue(AValue: Currency);
+begin
+  if HasPubSetter then
+    SetFloatProp(Owner, Metadata.Name, AValue)
+  else
+    Value := AValue;
 end;
 
 procedure TPressCurrency.SetValue(AValue: Currency);
@@ -1630,7 +1768,7 @@ begin
     if TPressEnum(Source).IsNull then
       Clear
     else
-      Value := TPressEnum(Source).Value
+      PubValue := TPressEnum(Source).PubValue
   else
     inherited;
 end;
@@ -1652,22 +1790,22 @@ end;
 
 function TPressEnum.GetAsDate: TDate;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressEnum.GetAsDateTime: TDateTime;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressEnum.GetAsFloat: Double;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressEnum.GetAsInteger: Integer;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressEnum.GetAsString: string;
@@ -1675,7 +1813,7 @@ begin
   if IsNull then
     Result := ''
   else
-    Result := Metadata.EnumMetadata.Items[Value];
+    Result := Metadata.EnumMetadata.Items[PubValue];
 end;
 
 function TPressEnum.GetAsTime: TTime;
@@ -1685,12 +1823,20 @@ end;
 
 function TPressEnum.GetAsVariant: Variant;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressEnum.GetIsEmpty: Boolean;
 begin
   Result := IsNull;
+end;
+
+function TPressEnum.GetPubValue: Integer;
+begin
+  if HasPubGetter then
+    Result := GetOrdProp(Owner, Metadata.Name)
+  else
+    Result := Value;
 end;
 
 function TPressEnum.GetValue: Integer;
@@ -1702,6 +1848,11 @@ begin
   Result := FValue;
 end;
 
+function TPressEnum.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkEnumeration];
+end;
+
 procedure TPressEnum.Reset;
 begin
   FValue := -1;
@@ -1710,27 +1861,27 @@ end;
 
 procedure TPressEnum.SetAsBoolean(AValue: Boolean);
 begin
-  Value := Ord(AValue);
+  PubValue := Ord(AValue);
 end;
 
 procedure TPressEnum.SetAsDate(AValue: TDate);
 begin
-  Value := Trunc(AValue);
+  PubValue := Trunc(AValue);
 end;
 
 procedure TPressEnum.SetAsDateTime(AValue: TDateTime);
 begin
-  Value := Trunc(AValue);
+  PubValue := Trunc(AValue);
 end;
 
 procedure TPressEnum.SetAsFloat(AValue: Double);
 begin
-  Value := Round(AValue);
+  PubValue := Round(AValue);
 end;
 
 procedure TPressEnum.SetAsInteger(AValue: Integer);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressEnum.SetAsString(const AValue: string);
@@ -1743,7 +1894,7 @@ begin
   begin
     VIndex := Metadata.EnumMetadata.Items.IndexOf(AValue);
     if VIndex <> -1 then
-      Value := VIndex
+      PubValue := VIndex
     else
       raise EPressError.CreateFmt(SEnumItemNotFound, [AValue]);
   end;
@@ -1751,19 +1902,27 @@ end;
 
 procedure TPressEnum.SetAsTime(AValue: TTime);
 begin
-  Value := 0;
+  PubValue := 0;
 end;
 
 procedure TPressEnum.SetAsVariant(AValue: Variant);
 begin
   try
-    Value := AValue;
+    PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
     else
       raise;
   end;
+end;
+
+procedure TPressEnum.SetPubValue(AValue: Integer);
+begin
+  if HasPubSetter then
+    SetOrdProp(Owner, Metadata.Name, AValue)
+  else
+    Value := AValue;
 end;
 
 procedure TPressEnum.SetValue(AValue: Integer);
@@ -1783,7 +1942,7 @@ end;
 procedure TPressBoolean.Assign(Source: TPersistent);
 begin
   if Source is TPressBoolean then
-    Value := TPressBoolean(Source).Value
+    PubValue := TPressBoolean(Source).PubValue
   else
     inherited;
 end;
@@ -1800,7 +1959,7 @@ end;
 
 function TPressBoolean.GetAsBoolean: Boolean;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressBoolean.GetAsFloat: Double;
@@ -1810,7 +1969,7 @@ end;
 
 function TPressBoolean.GetAsInteger: Integer;
 begin
-  Result := Integer(Value);
+  Result := Integer(PubValue);
 end;
 
 function TPressBoolean.GetAsString: string;
@@ -1818,17 +1977,25 @@ begin
   if IsNull then
     Result := ''
   else
-    Result := FValues[FValue];
+    Result := FValues[PubValue];
 end;
 
 function TPressBoolean.GetAsVariant: Variant;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressBoolean.GetDisplayText: string;
 begin
   Result := AsString;
+end;
+
+function TPressBoolean.GetPubValue: Boolean;
+begin
+  if HasPubGetter then
+    Result := Boolean(GetOrdProp(Owner, Metadata.Name))
+  else
+    Result := Value;
 end;
 
 function TPressBoolean.GetValue: Boolean;
@@ -1860,6 +2027,11 @@ begin
     Value := False;
 end;
 
+function TPressBoolean.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkEnumeration];
+end;
+
 procedure TPressBoolean.Reset;
 begin
   FValue := False;
@@ -1868,7 +2040,7 @@ end;
 
 procedure TPressBoolean.SetAsBoolean(AValue: Boolean);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressBoolean.SetAsFloat(AValue: Double);
@@ -1878,7 +2050,7 @@ end;
 
 procedure TPressBoolean.SetAsInteger(AValue: Integer);
 begin
-  Value := Boolean(AValue);
+  PubValue := Boolean(AValue);
 end;
 
 procedure TPressBoolean.SetAsString(const AValue: string);
@@ -1886,9 +2058,9 @@ begin
   if AValue = '' then
     Clear
   else if SameText(AValue, SPressTrueString) then
-    Value := True
+    PubValue := True
   else if SameText(AValue, SPressFalseString) then
-    Value := False
+    PubValue := False
   else
     raise ConversionError(nil);
 end;
@@ -1896,13 +2068,21 @@ end;
 procedure TPressBoolean.SetAsVariant(AValue: Variant);
 begin
   try
-    Value := AValue;
+    PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
     else
       raise;
   end;
+end;
+
+procedure TPressBoolean.SetPubValue(AValue: Boolean);
+begin
+  if HasPubSetter then
+    SetOrdProp(Owner, Metadata.Name, Integer(AValue))
+  else
+    Value := AValue;
 end;
 
 procedure TPressBoolean.SetValue(AValue: Boolean);
@@ -1920,7 +2100,7 @@ end;
 procedure TPressDate.Assign(Source: TPersistent);
 begin
   if Source is TPressDate then
-    Value := TPressDate(Source).Value
+    PubValue := TPressDate(Source).PubValue
   else
     inherited;
 end;
@@ -1937,25 +2117,28 @@ end;
 
 function TPressDate.GetAsDate: TDate;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressDate.GetAsDateTime: TDateTime;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressDate.GetAsFloat: Double;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressDate.GetAsString: string;
+var
+  VValue: TDate;
 begin
-  if IsNull or (Value = 0) then
+  VValue := PubValue;
+  if IsNull or (VValue = 0) then
     Result := ''
   else
-    Result := DateToStr(Value);
+    Result := DateToStr(VValue);
 end;
 
 function TPressDate.GetAsTime: TTime;
@@ -1965,17 +2148,28 @@ end;
 
 function TPressDate.GetAsVariant: Variant;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressDate.GetDisplayText: string;
+var
+  VValue: TDate;
 begin
-  if IsNull or (Value = 0) then
+  VValue := PubValue;
+  if IsNull or (VValue = 0) then
     Result := ''
   else if EditMask <> '' then
-    Result := FormatDateTime(EditMask, Value)
+    Result := FormatDateTime(EditMask, VValue)
   else
-    Result := AsString;
+    Result := DateToStr(VValue);
+end;
+
+function TPressDate.GetPubValue: TDate;
+begin
+  if HasPubGetter then
+    Result := GetFloatProp(Owner, Metadata.Name)
+  else
+    Result := Value;
 end;
 
 function TPressDate.GetValue: TDate;
@@ -1992,6 +2186,11 @@ begin
     inherited;
 end;
 
+function TPressDate.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkFloat];
+end;
+
 procedure TPressDate.Reset;
 begin
   FValue := 0;
@@ -2000,17 +2199,17 @@ end;
 
 procedure TPressDate.SetAsDate(AValue: TDate);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressDate.SetAsDateTime(AValue: TDateTime);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressDate.SetAsFloat(AValue: Double);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressDate.SetAsString(const AValue: string);
@@ -2019,7 +2218,7 @@ begin
     if AValue = '' then
       Clear
     else
-      Value := StrToDate(AValue);
+      PubValue := StrToDate(AValue);
   except
     on E: EConvertError do
       raise ConversionError(E);
@@ -2030,19 +2229,27 @@ end;
 
 procedure TPressDate.SetAsTime(AValue: TTime);
 begin
-  Value := 0;
+  PubValue := 0;
 end;
 
 procedure TPressDate.SetAsVariant(AValue: Variant);
 begin
   try
-    Value := AValue;
+    PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
     else
       raise;
   end;
+end;
+
+procedure TPressDate.SetPubValue(AValue: TDate);
+begin
+  if HasPubSetter then
+    SetFloatProp(Owner, Metadata.Name, AValue)
+  else
+    Value := AValue;
 end;
 
 procedure TPressDate.SetValue(AValue: TDate);
@@ -2065,7 +2272,7 @@ end;
 procedure TPressTime.Assign(Source: TPersistent);
 begin
   if Source is TPressTime then
-    Value := TPressTime(Source).Value
+    PubValue := TPressTime(Source).PubValue
   else
     inherited;
 end;
@@ -2087,12 +2294,12 @@ end;
 
 function TPressTime.GetAsDateTime: TDateTime;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressTime.GetAsFloat: Double;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressTime.GetAsString: string;
@@ -2100,17 +2307,17 @@ begin
   if IsNull then
     Result := ''
   else
-    Result := TimeToStr(Value);
+    Result := TimeToStr(PubValue);
 end;
 
 function TPressTime.GetAsTime: TTime;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressTime.GetAsVariant: Variant;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressTime.GetDisplayText: string;
@@ -2118,9 +2325,17 @@ begin
   if IsNull then
     Result := ''
   else if EditMask <> '' then
-    Result := FormatDateTime(EditMask, Value)
+    Result := FormatDateTime(EditMask, PubValue)
   else
     Result := AsString;
+end;
+
+function TPressTime.GetPubValue: TTime;
+begin
+  if HasPubGetter then
+    Result := GetFloatProp(Owner, Metadata.Name)
+  else
+    Result := Value;
 end;
 
 function TPressTime.GetValue: TTime;
@@ -2137,6 +2352,11 @@ begin
     inherited;
 end;
 
+function TPressTime.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkFloat];
+end;
+
 procedure TPressTime.Reset;
 begin
   FValue := 0;
@@ -2145,17 +2365,17 @@ end;
 
 procedure TPressTime.SetAsDate(AValue: TDate);
 begin
-  Value := 0;
+  PubValue := 0;
 end;
 
 procedure TPressTime.SetAsDateTime(AValue: TDateTime);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressTime.SetAsFloat(AValue: Double);
 begin
-  Value := Value;
+  PubValue := AValue;
 end;
 
 procedure TPressTime.SetAsString(const AValue: string);
@@ -2164,7 +2384,7 @@ begin
     if AValue = '' then
       Clear
     else
-      Value := StrToTime(AValue);
+      PubValue := StrToTime(AValue);
   except
     on E: EConvertError do
       raise ConversionError(E);
@@ -2175,19 +2395,27 @@ end;
 
 procedure TPressTime.SetAsTime(AValue: TTime);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressTime.SetAsVariant(AValue: Variant);
 begin
   try
-    Value := AValue;
+    PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
     else
       raise;
   end;
+end;
+
+procedure TPressTime.SetPubValue(AValue: TTime);
+begin
+  if HasPubSetter then
+    SetFloatProp(Owner, Metadata.Name, AValue)
+  else
+    Value := AValue;
 end;
 
 procedure TPressTime.SetValue(AValue: TTime);
@@ -2205,7 +2433,7 @@ end;
 procedure TPressDateTime.Assign(Source: TPersistent);
 begin
   if Source is TPressDateTime then
-    Value := TPressDateTime(Source).Value
+    PubValue := TPressDateTime(Source).PubValue
   else
     inherited;
 end;
@@ -2222,47 +2450,63 @@ end;
 
 function TPressDateTime.GetAsDate: TDate;
 begin
-  Result := Int(Value);
+  Result := Int(PubValue);
 end;
 
 function TPressDateTime.GetAsDateTime: TDateTime;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressDateTime.GetAsFloat: Double;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressDateTime.GetAsString: string;
+var
+  VValue: TDateTime;
 begin
-  if Value = 0 then
+  VValue := PubValue;
+  if VValue = 0 then
     Result := ''
-  else if Value < 1 then
-    Result := TimeToStr(Value)
+  else if VValue < 1 then
+    Result := TimeToStr(VValue)
   else
-    Result := DateTimeToStr(Value);
+    Result := DateTimeToStr(VValue);
 end;
 
 function TPressDateTime.GetAsTime: TTime;
 begin
-  Result := Frac(Value);
+  Result := Frac(PubValue);
 end;
 
 function TPressDateTime.GetAsVariant: Variant;
 begin
-  Result := Value;
+  Result := PubValue;
 end;
 
 function TPressDateTime.GetDisplayText: string;
+var
+  VValue: TDateTime;
 begin
-  if AsDateTime = 0 then
+  VValue := PubValue;
+  if VValue = 0 then
     Result := ''
   else if EditMask <> '' then
-    Result := FormatDateTime(EditMask, Value)
+    Result := FormatDateTime(EditMask, VValue)
+  else if VValue < 1 then
+    Result := TimeToStr(VValue)
   else
-    Result := AsString;
+    Result := DateTimeToStr(VValue);
+end;
+
+function TPressDateTime.GetPubValue: TDateTime;
+begin
+  if HasPubGetter then
+    Result := GetFloatProp(Owner, Metadata.Name)
+  else
+    Result := Value;
 end;
 
 function TPressDateTime.GetValue: TDateTime;
@@ -2279,6 +2523,11 @@ begin
     inherited;
 end;
 
+function TPressDateTime.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkFloat];
+end;
+
 procedure TPressDateTime.Reset;
 begin
   FValue := 0;
@@ -2287,17 +2536,17 @@ end;
 
 procedure TPressDateTime.SetAsDate(AValue: TDate);
 begin
-  Value := Int(AValue);
+  PubValue := Int(AValue);
 end;
 
 procedure TPressDateTime.SetAsDateTime(AValue: TDateTime);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressDateTime.SetAsFloat(AValue: Double);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressDateTime.SetAsString(const AValue: string);
@@ -2306,7 +2555,7 @@ begin
     if AValue = '' then
       Clear
     else
-      Value := StrToDateTime(AValue);
+      PubValue := StrToDateTime(AValue);
   except
     on E: EConvertError do
       raise ConversionError(E);
@@ -2317,19 +2566,27 @@ end;
 
 procedure TPressDateTime.SetAsTime(AValue: TTime);
 begin
-  Value := Frac(AValue);
+  PubValue := Frac(AValue);
 end;
 
 procedure TPressDateTime.SetAsVariant(AValue: Variant);
 begin
   try
-    Value := AValue;
+    PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
     else
       raise;
   end;
+end;
+
+procedure TPressDateTime.SetPubValue(AValue: TDateTime);
+begin
+  if HasPubSetter then
+    SetFloatProp(Owner, Metadata.Name, AValue)
+  else
+    Value := AValue;
 end;
 
 procedure TPressDateTime.SetValue(AValue: TDateTime);
@@ -2352,7 +2609,7 @@ end;
 procedure TPressVariant.Assign(Source: TPersistent);
 begin
   if Source is TPressVariant then
-    Value := TPressVariant(Source).Value
+    PubValue := TPressVariant(Source).PubValue
   else
     inherited;
 end;
@@ -2368,87 +2625,108 @@ begin
 end;
 
 function TPressVariant.GetAsBoolean: Boolean;
+var
+  VValue: Variant;
 begin
+  VValue := PubValue;
   try
-    Result := Value;
+    Result := VValue;
   except
     on E: EVariantError do
-      raise InvalidValueError(Value, E);
+      raise InvalidValueError(VValue, E);
     else
       raise;
   end;
 end;
 
 function TPressVariant.GetAsDate: TDate;
+var
+  VValue: Variant;
 begin
+  VValue := PubValue;
   try
-    Result := Value;
+    Result := VValue;
   except
     on E: EVariantError do
-      raise InvalidValueError(Value, E);
+      raise InvalidValueError(VValue, E);
     else
       raise;
   end;
 end;
 
 function TPressVariant.GetAsDateTime: TDateTime;
+var
+  VValue: Variant;
 begin
+  VValue := PubValue;
   try
-    Result := Value;
+    Result := VValue;
   except
     on E: EVariantError do
-      raise InvalidValueError(Value, E);
+      raise InvalidValueError(VValue, E);
     else
       raise;
   end;
 end;
 
 function TPressVariant.GetAsFloat: Double;
+var
+  VValue: Variant;
 begin
+  VValue := PubValue;
   try
-    Result := Value;
+    Result := VValue;
   except
     on E: EVariantError do
-      raise InvalidValueError(Value, E);
+      raise InvalidValueError(VValue, E);
     else
       raise;
   end;
 end;
 
 function TPressVariant.GetAsInteger: Integer;
+var
+  VValue: Variant;
 begin
+  VValue := PubValue;
   try
-    Result := Value;
+    Result := VValue;
   except
     on E: EVariantError do
-      raise InvalidValueError(Value, E);
+      raise InvalidValueError(VValue, E);
     else
       raise;
   end;
 end;
 
 function TPressVariant.GetAsString: string;
+var
+  VValue: Variant;
 begin
+  VValue := PubValue;
   try
     if IsNull then
       Result := ''
     else
-      Result := Value;
+      Result := VValue;
   except
     on E: EVariantError do
-      raise InvalidValueError(Value, E);
+      raise InvalidValueError(VValue, E);
     else
       raise;
   end;
 end;
 
 function TPressVariant.GetAsTime: TTime;
+var
+  VValue: Variant;
 begin
+  VValue := PubValue;
   try
-    Result := Value;
+    Result := VValue;
   except
     on E: EVariantError do
-      raise InvalidValueError(Value, E);
+      raise InvalidValueError(VValue, E);
     else
       raise;
   end;
@@ -2456,13 +2734,26 @@ end;
 
 function TPressVariant.GetAsVariant: Variant;
 begin
-  Result := Value;
+  Result := PubValue;
+end;
+
+function TPressVariant.GetPubValue: Variant;
+begin
+  if HasPubGetter then
+    Result := GetVariantProp(Owner, Metadata.Name)
+  else
+    Result := Value;
 end;
 
 function TPressVariant.GetValue: Variant;
 begin
   VerifyCalcAttribute;
   Result := FValue;
+end;
+
+function TPressVariant.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkVariant];
 end;
 
 procedure TPressVariant.Reset;
@@ -2473,42 +2764,50 @@ end;
 
 procedure TPressVariant.SetAsBoolean(AValue: Boolean);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressVariant.SetAsDate(AValue: TDate);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressVariant.SetAsDateTime(AValue: TDateTime);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressVariant.SetAsFloat(AValue: Double);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressVariant.SetAsInteger(AValue: Integer);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressVariant.SetAsString(const AValue: string);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressVariant.SetAsTime(AValue: TTime);
 begin
-  Value := AValue;
+  PubValue := AValue;
 end;
 
 procedure TPressVariant.SetAsVariant(AValue: Variant);
 begin
-  Value := AValue;
+  PubValue := AValue;
+end;
+
+procedure TPressVariant.SetPubValue(AValue: Variant);
+begin
+  if HasPubSetter then
+    SetVariantProp(Owner, Metadata.Name, AValue)
+  else
+    Value := AValue;
 end;
 
 procedure TPressVariant.SetValue(AValue: Variant);
@@ -2552,16 +2851,6 @@ begin
   inherited;
 end;
 
-function TPressBlob.GetAsString: string;
-begin
-  Result := Value;
-end;
-
-function TPressBlob.GetAsVariant: Variant;
-begin
-  Result := Value;
-end;
-
 function TPressBlob.GetSize: Integer;
 begin
   if Assigned(FStream) then
@@ -2575,18 +2864,6 @@ begin
   if not Assigned(FStream) then
     FStream := TMemoryStream.Create;
   Result := FStream;
-end;
-
-function TPressBlob.GetValue: string;
-begin
-  VerifyCalcAttribute;
-  if Assigned(FStream) and (FStream.Size > 0) then
-  begin
-    SetLength(Result, FStream.Size);
-    FStream.Position := 0;
-    FStream.Read(Result[1], FStream.Size);
-  end else
-    Result := '';
 end;
 
 procedure TPressBlob.LoadFromStream(AStream: TStream);
@@ -2609,35 +2886,6 @@ begin
   VerifyCalcAttribute;
   if Assigned(AStream) then
     Stream.SaveToStream(AStream);
-end;
-
-procedure TPressBlob.SetAsString(const AValue: string);
-begin
-  Value := AValue;
-end;
-
-procedure TPressBlob.SetAsVariant(AValue: Variant);
-begin
-  try
-    Value := AValue;
-  except
-    on E: EVariantError do
-      raise InvalidValueError(AValue, E);
-    else
-      raise;
-  end;
-end;
-
-procedure TPressBlob.SetValue(const AValue: string);
-begin
-  if Length(AValue) > 0 then
-    WriteBuffer(AValue[1], Length(AValue))
-  else if IsNull then
-  begin
-    Changing;
-    Changed;
-  end else
-    ClearBuffer;
 end;
 
 function TPressBlob.WriteBuffer(const ABuffer; ACount: Integer): Boolean;
@@ -2685,6 +2933,78 @@ end;
 class function TPressMemo.AttributeName: string;
 begin
   Result := 'Memo';
+end;
+
+function TPressMemo.GetAsString: string;
+begin
+  Result := PubValue;
+end;
+
+function TPressMemo.GetAsVariant: Variant;
+begin
+  Result := PubValue;
+end;
+
+function TPressMemo.GetPubValue: string;
+begin
+  if HasPubGetter then
+    Result := GetStrProp(Owner, Metadata.Name)
+  else
+    Result := Value;
+end;
+
+function TPressMemo.GetValue: string;
+begin
+  VerifyCalcAttribute;
+  if Assigned(FStream) and (FStream.Size > 0) then
+  begin
+    SetLength(Result, FStream.Size);
+    FStream.Position := 0;
+    FStream.Read(Result[1], FStream.Size);
+  end else
+    Result := '';
+end;
+
+function TPressMemo.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkString, tkLString, tkWString];
+end;
+
+procedure TPressMemo.SetAsString(const AValue: string);
+begin
+  PubValue := AValue;
+end;
+
+procedure TPressMemo.SetAsVariant(AValue: Variant);
+begin
+  try
+    PubValue := AValue;
+  except
+    on E: EVariantError do
+      raise InvalidValueError(AValue, E);
+    else
+      raise;
+  end;
+end;
+
+procedure TPressMemo.SetPubValue(const AValue: string);
+begin
+  if HasPubSetter then
+    SetStrProp(Owner, Metadata.Name, AValue)
+  else
+    Value := AValue;
+end;
+
+procedure TPressMemo.SetValue(const AValue: string);
+begin
+  if AValue <> '' then
+    WriteBuffer(AValue[1], Length(AValue))
+  else if IsNull then
+  begin
+    Changing;
+    Changed;
+  end else
+    ClearBuffer;
 end;
 
 { TPressBinary }
@@ -2786,6 +3106,14 @@ begin
   Result := FProxy;
 end;
 
+function TPressItem.GetPubValue: TPressObject;
+begin
+  if HasPubGetter then
+    Result := TPressObject(GetObjectProp(Owner, Metadata.Name, TPressObject))
+  else
+    Result := Value;
+end;
+
 function TPressItem.GetSignature: string;
 begin
   if Assigned(FProxy) then
@@ -2812,12 +3140,17 @@ end;
 
 procedure TPressItem.InternalAssignObject(AObject: TPressObject);
 begin
-  Value := AObject;
+  PubValue := AObject;
 end;
 
 function TPressItem.InternalCreateMemento: TPressAttributeMemento;
 begin
   Result := TPressItemMemento.Create(Self, Proxy);
+end;
+
+function TPressItem.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkClass];
 end;
 
 procedure TPressItem.InternalUnassignObject(AObject: TPressObject);
@@ -2841,6 +3174,14 @@ end;
 function TPressItem.SameReference(const ARefClass, ARefID: string): Boolean;
 begin
   Result := Proxy.SameReference(ARefClass, ARefID);
+end;
+
+procedure TPressItem.SetPubValue(AValue: TPressObject);
+begin
+  if HasPubSetter then
+    SetObjectProp(Owner, Metadata.Name, AValue)
+  else
+    Value := AValue;
 end;
 
 procedure TPressItem.SetValue(AValue: TPressObject);
@@ -2902,7 +3243,7 @@ end;
 
 procedure TPressPart.InternalAssignItem(AProxy: TPressProxy);
 begin
-  Value := AProxy.Instance.Clone;
+  PubValue := AProxy.Instance.Clone;
 end;
 
 function TPressPart.InternalProxyType: TPressProxyType;
@@ -2936,7 +3277,7 @@ end;
 
 procedure TPressReference.InternalAssignItem(AProxy: TPressProxy);
 begin
-  Value := AProxy.Instance;
+  PubValue := AProxy.Instance;
 end;
 
 function TPressReference.InternalProxyType: TPressProxyType;
