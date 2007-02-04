@@ -280,6 +280,7 @@ type
     procedure Clear;
     function Count: Integer;
     function CreateIterator: TPressIterator;
+    function IndexOf(AObject: TObject): Integer;
     procedure RemoveObject(AObject: TObject);
     procedure SelectObject(AObject: TObject);
     property Objects[Index: Integer]: TObject read GetObjects; default;
@@ -1062,6 +1063,14 @@ end;
 function TPressMVPSelection.GetObjects(Index: Integer): TObject;
 begin
   Result := ObjectList[Index];
+end;
+
+function TPressMVPSelection.IndexOf(AObject: TObject): Integer;
+begin
+  if Assigned(FObjectList) then
+    Result := FObjectList.IndexOf(AObject)
+  else
+    Result := -1;
 end;
 
 procedure TPressMVPSelection.InternalAssignObject(AObject: TObject);
