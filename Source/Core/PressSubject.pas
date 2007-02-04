@@ -22,6 +22,7 @@ uses
   SysUtils,
   {$IFDEF D6+}Variants,{$ENDIF}
   Classes,
+  TypInfo,
   Contnrs,
   Graphics,
   PressCompatibility,
@@ -698,6 +699,8 @@ type
   private
     FCalcUpdated: Boolean;
     FDisableChangesCount: Integer;
+    FHasPubGetter: Boolean;
+    FHasPubSetter: Boolean;
     FIsCalculating: Boolean;
     FIsChanged: Boolean;
     FIsNull: Boolean;
@@ -713,6 +716,7 @@ type
     function GetName: string;
     function GetNotifier: TPressNotifier;
     function GetPersistentName: string;
+    procedure InitPropInfo;
     procedure SetIsChanged(AValue: Boolean);
   protected
     function AccessError(const AAttributeName: string): EPressError;
@@ -737,6 +741,7 @@ type
     function GetIsEmpty: Boolean; virtual;
     procedure Initialize; virtual;
     function InternalCreateMemento: TPressAttributeMemento; virtual; abstract;
+    function InternalTypeKinds: TTypeKinds; virtual;
     procedure Notify(AEvent: TPressEvent); virtual;
     procedure NotifyChange;
     procedure NotifyInvalidate;
@@ -753,6 +758,8 @@ type
     procedure SetAsVariant(AValue: Variant); virtual;
     function ValidateChars(const AStr: string; const AChars: TChars): Boolean;
     procedure VerifyCalcAttribute;
+    property HasPubGetter: Boolean read FHasPubGetter;
+    property HasPubSetter: Boolean read FHasPubSetter;
     property Notifier: TPressNotifier read GetNotifier;
   public
     constructor Create(AOwner: TPressObject; AMetadata: TPressAttributeMetadata); virtual;
@@ -865,7 +872,6 @@ function PressModel: TPressModel;
 implementation
 
 uses
-  TypInfo,
   PressConsts,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressAttributes,
@@ -1860,7 +1866,7 @@ var
   I: Integer;
 begin
   for I := 0 to Pred(FClasses.Count) do
-    TPressObjectClass(FClasses[I]).ClassMetadata;
+    TPressObjectClass(FClasses[I]).ClassMap;
 end;
 {$ENDIF}
 
@@ -3077,6 +3083,7 @@ begin
   finally
     EnableChanges;
   end;
+  InitPropInfo;
 end;
 
 function TPressAttribute.CreateMemento: TPressAttributeMemento;
@@ -3220,6 +3227,29 @@ begin
     AsString := DefaultValue
   else
     Clear;
+end;
+
+procedure TPressAttribute.InitPropInfo;
+var
+  VPropInfo: PPropInfo;
+  VHasPropInfo: Boolean;
+  VTypeKinds: TTypeKinds;
+begin
+  VTypeKinds := InternalTypeKinds;
+  VHasPropInfo := (VTypeKinds <> []) and Assigned(Owner) and Assigned(Metadata);
+  if VHasPropInfo then
+  begin
+    VPropInfo := GetPropInfo(Owner, Metadata.Name);
+    VHasPropInfo := Assigned(VPropInfo) and
+     (VPropInfo^.PropType^^.Kind in VTypeKinds);
+    FHasPubGetter := VHasPropInfo and Assigned(VPropInfo^.GetProc);
+    FHasPubSetter := VHasPropInfo and Assigned(VPropInfo^.SetProc);
+  end;
+end;
+
+function TPressAttribute.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [];
 end;
 
 function TPressAttribute.InvalidClassError(const AClassName: string): EPressError;
