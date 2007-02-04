@@ -502,7 +502,10 @@ begin
     Token := Reader.ReadToken;
     if Token = '=' then
     begin
-      VValue := Reader.ReadPath;
+      if IsValidIdent(Reader.NextChar) then
+        VValue := Reader.ReadPath
+      else
+        VValue := Reader.ReadToken;
       Token := Reader.ReadToken;
     end else
       VValue := SPressTrueString;
