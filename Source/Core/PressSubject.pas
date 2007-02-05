@@ -460,13 +460,13 @@ type
     procedure AfterCreateAttributes; virtual;
     procedure AfterRetrieve; virtual;
     procedure AfterStore(AIsUpdating: Boolean); virtual;
-    function AttributeAddress(const AAttributeName: string): PPressAttribute; virtual;
     procedure BeforeCreateAttributes; virtual;
     procedure BeforeStore; virtual;
     procedure ClearOwnerContext;
     procedure Finalize; virtual;
     function GetOwner: TPersistent; override;
     procedure Initialize; virtual;
+    function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; virtual;
     procedure InternalCalcAttribute(AAttribute: TPressAttribute); virtual;
     procedure InternalDispose; virtual;
     function InternalIsValid: Boolean; virtual;
@@ -2019,11 +2019,6 @@ begin
     inherited;
 end;
 
-function TPressObject.AttributeAddress(const AAttributeName: string): PPressAttribute;
-begin
-  Result := FieldAddress(SPressAttributePrefix + AAttributeName);
-end;
-
 function TPressObject.AttributeByName(const AAttributeName: string): TPressAttribute;
 begin
   Result := FindAttribute(AAttributeName);
@@ -2360,6 +2355,12 @@ end;
 
 procedure TPressObject.Initialize;
 begin
+end;
+
+function TPressObject.InternalAttributeAddress(
+  const AAttributeName: string): PPressAttribute;
+begin
+  Result := FieldAddress(SPressAttributePrefix + AAttributeName);
 end;
 
 procedure TPressObject.InternalCalcAttribute(AAttribute: TPressAttribute);
