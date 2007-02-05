@@ -72,8 +72,8 @@ type
   TPressQueryIterator = TPressProxyIterator;
 
   TPressQuery = class(TPressObject)
-    _QueryItems: TPressReferences;
   private
+    FQueryItems: TPressReferences;
     FMatchEmptyAndNull: Boolean;
     function AttributeToSQL(AAttribute: TPressAttribute): string;
     function GetMetadata: TPressQueryMetadata;
@@ -82,6 +82,7 @@ type
     function GetWhereClause: string;
   protected
     procedure Initialize; override;
+    function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     function InternalBuildOrderByClause: string; virtual;
     function InternalBuildStatement(AAttribute: TPressAttribute): string; virtual;
     function InternalBuildWhereClause: string; virtual;
@@ -177,7 +178,7 @@ end;
 
 function TPressQuery.Add(AObject: TPressObject): Integer;
 begin
-  Result := _QueryItems.Add(AObject);
+  Result := FQueryItems.Add(AObject);
 end;
 
 function TPressQuery.AttributeToSQL(AAttribute: TPressAttribute): string;
@@ -208,17 +209,17 @@ end;
 
 procedure TPressQuery.Clear;
 begin
-  _QueryItems.Clear;
+  FQueryItems.Clear;
 end;
 
 function TPressQuery.Count: Integer;
 begin
-  Result := _QueryItems.Count
+  Result := FQueryItems.Count
 end;
 
 function TPressQuery.CreateIterator: TPressQueryIterator;
 begin
-  Result := _QueryItems.CreateIterator;
+  Result := FQueryItems.CreateIterator;
 end;
 
 function TPressQuery.GetMetadata: TPressQueryMetadata;
@@ -228,7 +229,7 @@ end;
 
 function TPressQuery.GetObjects(AIndex: Integer): TPressObject;
 begin
-  Result := _QueryItems[AIndex];
+  Result := FQueryItems[AIndex];
 end;
 
 function TPressQuery.GetOrderByClause: string;
@@ -245,6 +246,15 @@ procedure TPressQuery.Initialize;
 begin
   inherited;
   FMatchEmptyAndNull := True;
+end;
+
+function TPressQuery.InternalAttributeAddress(
+  const AAttributeName: string): PPressAttribute;
+begin
+  if SameText(AAttributeName, SPressQueryItemsString) then
+    Result := Addr(FQueryItems)
+  else
+    Result := inherited InternalAttributeAddress(AAttributeName);
 end;
 
 function TPressQuery.InternalBuildOrderByClause: string;
@@ -354,11 +364,11 @@ end;
 
 procedure TPressQuery.InternalUpdateReferenceList;
 begin
-  _QueryItems.DisableChanges;
+  FQueryItems.DisableChanges;
   try
-    _QueryItems.AssignProxyList(PressDefaultPersistence.RetrieveProxyList(Self));
+    FQueryItems.AssignProxyList(PressDefaultPersistence.RetrieveProxyList(Self));
   finally
-    _QueryItems.EnableChanges;
+    FQueryItems.EnableChanges;
   end;
 end;
 
@@ -369,7 +379,7 @@ end;
 
 function TPressQuery.Remove(AObject: TPressObject): Integer;
 begin
-  Result := _QueryItems.Remove(AObject);
+  Result := FQueryItems.Remove(AObject);
 end;
 
 procedure TPressQuery.UpdateReferenceList;
