@@ -2125,7 +2125,7 @@ begin
     while NextItem do
     begin
       VMetadata := CurrentItem;
-      VAttribute := AttributeAddress(VMetadata.Name);
+      VAttribute := InternalAttributeAddress(VMetadata.Name);
       if Assigned(VAttribute) then
       begin
         if not Assigned(VAttribute^) then
@@ -2202,7 +2202,7 @@ function TPressObject.FindAttribute(const AAttributeName: string): TPressAttribu
 var
   VAttribute: PPressAttribute;
 begin
-  VAttribute := AttributeAddress(AAttributeName);
+  VAttribute := InternalAttributeAddress(AAttributeName);
   if Assigned(VAttribute) then
     Result := VAttribute^
   else

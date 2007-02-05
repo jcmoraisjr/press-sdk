@@ -245,7 +245,7 @@ type
     function GetName: string;
     procedure SetName(const Value: string);
   protected
-    function AttributeAddress(const AAttributeName: string): PPressAttribute; override;
+    function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     function InternalBuildWhereClause: string; override;
   published
     property Name: string read GetName write SetName;
@@ -633,18 +633,18 @@ end;
 
 { TPressMVPReferenceQuery }
 
-function TPressMVPReferenceQuery.AttributeAddress(
-  const AAttributeName: string): PPressAttribute;
-begin
-  Result := inherited AttributeAddress(AAttributeName);
-  if not Assigned(Result) and
-   (Metadata.AttributeMetadatas.IndexOfName(AAttributeName) >= 0) then
-    Result := Addr(_Name);
-end;
-
 function TPressMVPReferenceQuery.GetName: string;
 begin
   Result := _Name.Value;
+end;
+
+function TPressMVPReferenceQuery.InternalAttributeAddress(
+  const AAttributeName: string): PPressAttribute;
+begin
+  Result := inherited InternalAttributeAddress(AAttributeName);
+  if not Assigned(Result) and
+   (Metadata.AttributeMetadatas.IndexOfName(AAttributeName) >= 0) then
+    Result := Addr(_Name);
 end;
 
 function TPressMVPReferenceQuery.InternalBuildWhereClause: string;
