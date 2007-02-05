@@ -699,8 +699,8 @@ type
   private
     FCalcUpdated: Boolean;
     FDisableChangesCount: Integer;
-    FHasPubGetter: Boolean;
-    FHasPubSetter: Boolean;
+    FUsePublishedGetter: Boolean;
+    FUsePublishedSetter: Boolean;
     FIsCalculating: Boolean;
     FIsChanged: Boolean;
     FIsNull: Boolean;
@@ -718,6 +718,8 @@ type
     function GetPersistentName: string;
     procedure InitPropInfo;
     procedure SetIsChanged(AValue: Boolean);
+    function GetUsePublishedGetter: Boolean;
+    function GetUsePublishedSetter: Boolean;
   protected
     function AccessError(const AAttributeName: string): EPressError;
     { TODO : Use exception messages from the PressDialog class }
@@ -758,8 +760,8 @@ type
     procedure SetAsVariant(AValue: Variant); virtual;
     function ValidateChars(const AStr: string; const AChars: TChars): Boolean;
     procedure VerifyCalcAttribute;
-    property HasPubGetter: Boolean read FHasPubGetter;
-    property HasPubSetter: Boolean read FHasPubSetter;
+    property UsePublishedGetter: Boolean read GetUsePublishedGetter;
+    property UsePublishedSetter: Boolean read GetUsePublishedSetter;
     property Notifier: TPressNotifier read GetNotifier;
   public
     constructor Create(AOwner: TPressObject; AMetadata: TPressAttributeMetadata); virtual;
@@ -3183,6 +3185,16 @@ begin
     Result := '';
 end;
 
+function TPressAttribute.GetUsePublishedGetter: Boolean;
+begin
+  Result := FUsePublishedGetter and not ChangesDisabled;
+end;
+
+function TPressAttribute.GetUsePublishedSetter: Boolean;
+begin
+  Result := FUsePublishedSetter and not ChangesDisabled;
+end;
+
 function TPressAttribute.GetIsCalcAttribute: Boolean;
 begin
   Result := Assigned(Metadata) and Assigned(Metadata.CalcMetadata)
@@ -3243,8 +3255,8 @@ begin
     VPropInfo := GetPropInfo(Owner, Metadata.Name);
     VHasPropInfo := Assigned(VPropInfo) and
      (VPropInfo^.PropType^^.Kind in VTypeKinds);
-    FHasPubGetter := VHasPropInfo and Assigned(VPropInfo^.GetProc);
-    FHasPubSetter := VHasPropInfo and Assigned(VPropInfo^.SetProc);
+    FUsePublishedGetter := VHasPropInfo and Assigned(VPropInfo^.GetProc);
+    FUsePublishedSetter := VHasPropInfo and Assigned(VPropInfo^.SetProc);
   end;
 end;
 

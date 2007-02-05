@@ -1196,7 +1196,7 @@ end;
 
 function TPressString.GetPubValue: string;
 begin
-  if HasPubGetter then
+  if UsePublishedGetter then
     Result := GetStrProp(Owner, Metadata.Name)
   else
     Result := Value;
@@ -1271,7 +1271,7 @@ end;
 
 procedure TPressString.SetPubValue(const AValue: string);
 begin
-  if HasPubSetter then
+  if UsePublishedSetter then
     SetStrProp(Owner, Metadata.Name, AValue)
   else
     Value := AValue;
@@ -1404,7 +1404,7 @@ end;
 
 function TPressInteger.GetPubValue: Integer;
 begin
-  if HasPubGetter then
+  if UsePublishedGetter then
     Result := GetOrdProp(Owner, Metadata.Name)
   else
     Result := Value;
@@ -1466,7 +1466,7 @@ end;
 
 procedure TPressInteger.SetPubValue(AValue: Integer);
 begin
-  if HasPubSetter then
+  if UsePublishedSetter then
     SetOrdProp(Owner, Metadata.Name, AValue)
   else
     Value := AValue;
@@ -1532,7 +1532,7 @@ end;
 
 function TPressFloat.GetPubValue: Double;
 begin
-  if HasPubGetter then
+  if UsePublishedGetter then
     Result := GetFloatProp(Owner, Metadata.Name)
   else
     Result := Value;
@@ -1594,7 +1594,7 @@ end;
 
 procedure TPressFloat.SetPubValue(AValue: Double);
 begin
-  if HasPubSetter then
+  if UsePublishedSetter then
     SetFloatProp(Owner, Metadata.Name, AValue)
   else
     Value := AValue;
@@ -1675,7 +1675,7 @@ end;
 
 function TPressCurrency.GetPubValue: Currency;
 begin
-  if HasPubGetter then
+  if UsePublishedGetter then
     Result := GetFloatProp(Owner, Metadata.Name)
   else
     Result := Value;
@@ -1742,7 +1742,7 @@ end;
 
 procedure TPressCurrency.SetPubValue(AValue: Currency);
 begin
-  if HasPubSetter then
+  if UsePublishedSetter then
     SetFloatProp(Owner, Metadata.Name, AValue)
   else
     Value := AValue;
@@ -1831,7 +1831,7 @@ end;
 
 function TPressEnum.GetPubValue: Integer;
 begin
-  if HasPubGetter then
+  if UsePublishedGetter then
     Result := GetOrdProp(Owner, Metadata.Name)
   else
     Result := Value;
@@ -1917,7 +1917,7 @@ end;
 
 procedure TPressEnum.SetPubValue(AValue: Integer);
 begin
-  if HasPubSetter then
+  if UsePublishedSetter then
     SetOrdProp(Owner, Metadata.Name, AValue)
   else
     Value := AValue;
@@ -1990,7 +1990,7 @@ end;
 
 function TPressBoolean.GetPubValue: Boolean;
 begin
-  if HasPubGetter then
+  if UsePublishedGetter then
     Result := Boolean(GetOrdProp(Owner, Metadata.Name))
   else
     Result := Value;
@@ -2077,7 +2077,7 @@ end;
 
 procedure TPressBoolean.SetPubValue(AValue: Boolean);
 begin
-  if HasPubSetter then
+  if UsePublishedSetter then
     SetOrdProp(Owner, Metadata.Name, Integer(AValue))
   else
     Value := AValue;
@@ -2164,7 +2164,7 @@ end;
 
 function TPressDate.GetPubValue: TDate;
 begin
-  if HasPubGetter then
+  if UsePublishedGetter then
     Result := GetFloatProp(Owner, Metadata.Name)
   else
     Result := Value;
@@ -2244,7 +2244,7 @@ end;
 
 procedure TPressDate.SetPubValue(AValue: TDate);
 begin
-  if HasPubSetter then
+  if UsePublishedSetter then
     SetFloatProp(Owner, Metadata.Name, AValue)
   else
     Value := AValue;
@@ -2330,7 +2330,7 @@ end;
 
 function TPressTime.GetPubValue: TTime;
 begin
-  if HasPubGetter then
+  if UsePublishedGetter then
     Result := GetFloatProp(Owner, Metadata.Name)
   else
     Result := Value;
@@ -2410,7 +2410,7 @@ end;
 
 procedure TPressTime.SetPubValue(AValue: TTime);
 begin
-  if HasPubSetter then
+  if UsePublishedSetter then
     SetFloatProp(Owner, Metadata.Name, AValue)
   else
     Value := AValue;
@@ -2501,7 +2501,7 @@ end;
 
 function TPressDateTime.GetPubValue: TDateTime;
 begin
-  if HasPubGetter then
+  if UsePublishedGetter then
     Result := GetFloatProp(Owner, Metadata.Name)
   else
     Result := Value;
@@ -2581,7 +2581,7 @@ end;
 
 procedure TPressDateTime.SetPubValue(AValue: TDateTime);
 begin
-  if HasPubSetter then
+  if UsePublishedSetter then
     SetFloatProp(Owner, Metadata.Name, AValue)
   else
     Value := AValue;
@@ -2737,7 +2737,7 @@ end;
 
 function TPressVariant.GetPubValue: Variant;
 begin
-  if HasPubGetter then
+  if UsePublishedGetter then
     Result := GetVariantProp(Owner, Metadata.Name)
   else
     Result := Value;
@@ -2802,7 +2802,7 @@ end;
 
 procedure TPressVariant.SetPubValue(AValue: Variant);
 begin
-  if HasPubSetter then
+  if UsePublishedSetter then
     SetVariantProp(Owner, Metadata.Name, AValue)
   else
     Value := AValue;
@@ -2861,7 +2861,7 @@ end;
 
 function TPressBlob.GetPubValue: string;
 begin
-  if HasPubGetter then
+  if UsePublishedGetter then
     Result := GetStrProp(Owner, Metadata.Name)
   else
     Result := Value;
@@ -2940,7 +2940,7 @@ end;
 
 procedure TPressBlob.SetPubValue(const AValue: string);
 begin
-  if HasPubSetter then
+  if UsePublishedSetter then
     SetStrProp(Owner, Metadata.Name, AValue)
   else
     Value := AValue;
@@ -3106,7 +3106,7 @@ end;
 
 function TPressItem.GetPubValue: TPressObject;
 begin
-  if HasPubGetter then
+  if UsePublishedGetter then
     Result := TPressObject(GetObjectProp(Owner, Metadata.Name, TPressObject))
   else
     Result := Value;
@@ -3176,7 +3176,7 @@ end;
 
 procedure TPressItem.SetPubValue(AValue: TPressObject);
 begin
-  if HasPubSetter then
+  if UsePublishedSetter then
     SetObjectProp(Owner, Metadata.Name, AValue)
   else
     Value := AValue;
