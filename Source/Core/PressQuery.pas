@@ -74,12 +74,14 @@ type
   TPressQuery = class(TPressObject)
     _QueryItems: TPressReferences;
   private
+    FMatchEmptyAndNull: Boolean;
     function AttributeToSQL(AAttribute: TPressAttribute): string;
     function GetMetadata: TPressQueryMetadata;
     function GetObjects(AIndex: Integer): TPressObject;
     function GetOrderByClause: string;
     function GetWhereClause: string;
   protected
+    procedure Initialize; override;
     function InternalBuildOrderByClause: string; virtual;
     function InternalBuildStatement(AAttribute: TPressAttribute): string; virtual;
     function InternalBuildWhereClause: string; virtual;
@@ -93,6 +95,7 @@ type
     class function ObjectMetadataClass: TPressObjectMetadataClass; override;
     function Remove(AObject: TPressObject): Integer;
     procedure UpdateReferenceList;
+    property MatchEmptyAndNull: Boolean read FMatchEmptyAndNull write FMatchEmptyAndNull;
     property Metadata: TPressQueryMetadata read GetMetadata;
     property Objects[AIndex: Integer]: TPressObject read GetObjects; default;
     property OrderByClause: string read GetOrderByClause;
@@ -238,6 +241,12 @@ begin
   Result := InternalBuildWhereClause;
 end;
 
+procedure TPressQuery.Initialize;
+begin
+  inherited;
+  FMatchEmptyAndNull := True;
+end;
+
 function TPressQuery.InternalBuildOrderByClause: string;
 var
   VAttributeName: string;
@@ -269,12 +278,24 @@ var
     Result := Format(AMask, [VMetadata.DataName, AttributeToSQL(AAttribute)]);
   end;
 
+  function IsEmptyStatement: string;
+  begin
+    Result := Format('%s = %s%1:s', [
+     VMetadata.DataName, PressDefaultPersistence.StrQuote]);
+  end;
+
+  function IsNullStatement: string;
+  begin
+    Result := Format('%s is Null', [VMetadata.DataName]);
+  end;
+
 begin
   Result := '';
   if not (AAttribute.Metadata is TPressQueryAttributeMetadata) then
     Exit;
   VMetadata := TPressQueryAttributeMetadata(AAttribute.Metadata);
-  if not AAttribute.IsEmpty then
+  if not AAttribute.IsEmpty or
+   (not AAttribute.IsNull and not (AAttribute is TPressString)) then
     case VMetadata.Category of
       acMatch:
         Result := FormatValueItem('%s = %s');
@@ -294,7 +315,15 @@ begin
         Result := FormatValueItem('%s <= %s');
     end
   else if VMetadata.IncludeIfEmpty then
-    Result := VMetadata.DataName + ' is Null';
+    if AAttribute is TPressString then
+      if MatchEmptyAndNull then
+        Result := Format('(%s) or (%s)', [IsNullStatement, IsEmptyStatement])
+      else if AAttribute.IsNull then
+        Result := IsNullStatement
+      else
+        Result := IsEmptyStatement
+    else
+      Result := IsNullStatement;
 end;
 
 function TPressQuery.InternalBuildWhereClause: string;
@@ -302,10 +331,11 @@ function TPressQuery.InternalBuildWhereClause: string;
   procedure ConcatStatements(
     const AStatementStr, AConnectorToken: string; var ABuffer: string);
   begin
-    if ABuffer = '' then
-      ABuffer := AStatementStr
-    else if AStatementStr <> '' then
-      ABuffer := ABuffer + ' ' + AConnectorToken + ' ' + AStatementStr;
+    if AStatementStr <> '' then
+      if ABuffer = '' then
+        ABuffer := '(' + AStatementStr + ')'
+      else
+        ABuffer := ABuffer + ' ' + AConnectorToken + ' (' + AStatementStr + ')';
   end;
 
 begin
@@ -316,7 +346,7 @@ begin
     Next;  // skip Id and QueryItems attributes
     while NextItem do
       { TODO : Improve connector token storage }
-      ConcatStatements(InternalBuildStatement(CurrentItem), 'AND', Result);
+      ConcatStatements(InternalBuildStatement(CurrentItem), 'and', Result);
   finally
     Free;
   end;
