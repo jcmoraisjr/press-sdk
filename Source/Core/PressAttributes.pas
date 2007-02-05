@@ -478,10 +478,19 @@ type
   TPressBlob = class(TPressValue)
   private
     FStream: TMemoryStream;
+    function GetPubValue: string;
     function GetSize: Integer;
     function GetStream: TMemoryStream;
+    function GetValue: string;
+    procedure SetPubValue(const AValue: string);
+    procedure SetValue(const AValue: string);
   protected
     procedure Finit; override;
+    function GetAsString: string; override;
+    function GetAsVariant: Variant; override;
+    function InternalTypeKinds: TTypeKinds; override;
+    procedure SetAsString(const AValue: string); override;
+    procedure SetAsVariant(AValue: Variant); override;
     property Stream: TMemoryStream read GetStream;
   public
     procedure Assign(Source: TPersistent); override;
@@ -490,26 +499,15 @@ type
     procedure Reset; override;
     procedure SaveToStream(AStream: TStream);
     function WriteBuffer(const ABuffer; ACount: Integer): Boolean;
+    property PubValue: string read GetPubValue write SetPubValue;
     property Size: Integer read GetSize;
+    property Value: string read GetValue write SetValue;
   end;
 
   TPressMemo = class(TPressBlob)
-  private
-    function GetPubValue: string;
-    function GetValue: string;
-    procedure SetPubValue(const AValue: string);
-    procedure SetValue(const AValue: string);
-  protected
-    function GetAsString: string; override;
-    function GetAsVariant: Variant; override;
-    function InternalTypeKinds: TTypeKinds; override;
-    procedure SetAsString(const AValue: string); override;
-    procedure SetAsVariant(AValue: Variant); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
-    property PubValue: string read GetPubValue write SetPubValue;
-    property Value: string read GetValue write SetValue;
   end;
 
   TPressBinary = class(TPressBlob)
@@ -2851,6 +2849,24 @@ begin
   inherited;
 end;
 
+function TPressBlob.GetAsString: string;
+begin
+  Result := PubValue;
+end;
+
+function TPressBlob.GetAsVariant: Variant;
+begin
+  Result := PubValue;
+end;
+
+function TPressBlob.GetPubValue: string;
+begin
+  if HasPubGetter then
+    Result := GetStrProp(Owner, Metadata.Name)
+  else
+    Result := Value;
+end;
+
 function TPressBlob.GetSize: Integer;
 begin
   if Assigned(FStream) then
@@ -2864,6 +2880,23 @@ begin
   if not Assigned(FStream) then
     FStream := TMemoryStream.Create;
   Result := FStream;
+end;
+
+function TPressBlob.GetValue: string;
+begin
+  VerifyCalcAttribute;
+  if Assigned(FStream) and (FStream.Size > 0) then
+  begin
+    SetLength(Result, FStream.Size);
+    FStream.Position := 0;
+    FStream.Read(Result[1], FStream.Size);
+  end else
+    Result := '';
+end;
+
+function TPressBlob.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkString, tkLString, tkWString];
 end;
 
 procedure TPressBlob.LoadFromStream(AStream: TStream);
@@ -2886,6 +2919,43 @@ begin
   VerifyCalcAttribute;
   if Assigned(AStream) then
     Stream.SaveToStream(AStream);
+end;
+
+procedure TPressBlob.SetAsString(const AValue: string);
+begin
+  PubValue := AValue;
+end;
+
+procedure TPressBlob.SetAsVariant(AValue: Variant);
+begin
+  try
+    PubValue := AValue;
+  except
+    on E: EVariantError do
+      raise InvalidValueError(AValue, E);
+    else
+      raise;
+  end;
+end;
+
+procedure TPressBlob.SetPubValue(const AValue: string);
+begin
+  if HasPubSetter then
+    SetStrProp(Owner, Metadata.Name, AValue)
+  else
+    Value := AValue;
+end;
+
+procedure TPressBlob.SetValue(const AValue: string);
+begin
+  if AValue <> '' then
+    WriteBuffer(AValue[1], Length(AValue))
+  else if IsNull then
+  begin
+    Changing;
+    Changed;
+  end else
+    ClearBuffer;
 end;
 
 function TPressBlob.WriteBuffer(const ABuffer; ACount: Integer): Boolean;
@@ -2933,78 +3003,6 @@ end;
 class function TPressMemo.AttributeName: string;
 begin
   Result := 'Memo';
-end;
-
-function TPressMemo.GetAsString: string;
-begin
-  Result := PubValue;
-end;
-
-function TPressMemo.GetAsVariant: Variant;
-begin
-  Result := PubValue;
-end;
-
-function TPressMemo.GetPubValue: string;
-begin
-  if HasPubGetter then
-    Result := GetStrProp(Owner, Metadata.Name)
-  else
-    Result := Value;
-end;
-
-function TPressMemo.GetValue: string;
-begin
-  VerifyCalcAttribute;
-  if Assigned(FStream) and (FStream.Size > 0) then
-  begin
-    SetLength(Result, FStream.Size);
-    FStream.Position := 0;
-    FStream.Read(Result[1], FStream.Size);
-  end else
-    Result := '';
-end;
-
-function TPressMemo.InternalTypeKinds: TTypeKinds;
-begin
-  Result := [tkString, tkLString, tkWString];
-end;
-
-procedure TPressMemo.SetAsString(const AValue: string);
-begin
-  PubValue := AValue;
-end;
-
-procedure TPressMemo.SetAsVariant(AValue: Variant);
-begin
-  try
-    PubValue := AValue;
-  except
-    on E: EVariantError do
-      raise InvalidValueError(AValue, E);
-    else
-      raise;
-  end;
-end;
-
-procedure TPressMemo.SetPubValue(const AValue: string);
-begin
-  if HasPubSetter then
-    SetStrProp(Owner, Metadata.Name, AValue)
-  else
-    Value := AValue;
-end;
-
-procedure TPressMemo.SetValue(const AValue: string);
-begin
-  if AValue <> '' then
-    WriteBuffer(AValue[1], Length(AValue))
-  else if IsNull then
-  begin
-    Changing;
-    Changed;
-  end else
-    ClearBuffer;
 end;
 
 { TPressBinary }
