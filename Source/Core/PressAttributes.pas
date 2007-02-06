@@ -1665,7 +1665,7 @@ begin
   else if EditMask <> '' then
     Result := FormatCurr(EditMask, PubValue)
   else
-    Result := FormatCurr(',0.00', PubValue)
+    Result := AsString;
 end;
 
 function TPressCurrency.GetIsEmpty: Boolean;

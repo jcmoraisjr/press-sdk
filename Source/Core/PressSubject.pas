@@ -1141,10 +1141,15 @@ begin
     raise EPressError.CreateFmt(SUnsupportedAttributeType, [Value]);
   FAttributeClass := VAttributeClass;
   FAttributeName := Value;
+
   { TODO : Initialize default Size for Enum, Boolean and Date/Time
     attribute types }
+  { TODO : Improve }
   if (FSize = 0) and FAttributeClass.InheritsFrom(TPressNumeric) then
     FSize := 10;
+  if (FEditMask = '') and (FAttributeClass = TPressCurrency) then
+    FEditMask := ',0.00';
+
 end;
 
 procedure TPressAttributeMetadata.SetCalcMetadata(Value: TPressCalcMetadata);
