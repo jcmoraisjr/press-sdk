@@ -313,6 +313,7 @@ type
     function GetControl: TCustomComboBox;
   protected
     procedure ViewChangeEvent(Sender: TObject); virtual;
+    procedure ViewClickEvent(Sender: TObject); override;
     procedure ViewDrawItemEvent(AControl: TWinControl; AIndex: Integer; ARect: TRect; AState: TOwnerDrawState); virtual;
     procedure ViewDropDownEvent(Sender: TObject); virtual;
   protected
@@ -1008,7 +1009,6 @@ end;
 procedure TPressMVPItemView.AddReference(const ACaption: string);
 begin
   InternalAddReference(ACaption);
-  Changed;
 end;
 
 procedure TPressMVPItemView.AssignReferences(AItems: TStrings);
@@ -1137,7 +1137,6 @@ begin
     Control.DroppedDown := False;
     Control.DroppedDown := True;
     Control.SelectAll;
-    Unchanged;
   finally
     EnableEvents;
   end;
@@ -1150,6 +1149,14 @@ begin
   Changed;
   if Assigned(FViewChangeEvent) then
     FViewChangeEvent(Sender);
+end;
+
+procedure TPressMVPComboBoxView.ViewClickEvent(Sender: TObject);
+begin
+  if EventsDisabled then
+    Exit;
+  Changed;
+  inherited;
 end;
 
 procedure TPressMVPComboBoxView.ViewDrawItemEvent(AControl: TWinControl;
