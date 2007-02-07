@@ -67,6 +67,11 @@ type
     property Order: string read FOrderFieldName write FOrderFieldName;
   end;
 
+  TPressQueryItems = class(TPressReferences)
+  protected
+    procedure InternalUnassignObject(AObject: TPressObject); override;
+  end;
+
   TPressQueryClass = class of TPressQuery;
 
   TPressQueryIterator = TPressProxyIterator;
@@ -159,7 +164,7 @@ begin
     begin
       VAttributeMetadata := InternalAttributeMetadataClass.Create(Self);
       VAttributeMetadata.Name := SPressQueryItemsString;
-      VAttributeMetadata.AttributeName := TPressReferences.AttributeName;
+      VAttributeMetadata.AttributeName := TPressQueryItems.AttributeName;
     end else
       VAttributeMetadata := AttributeMetadatas[I];
     VAttributeMetadata.ObjectClass := Value;
@@ -172,6 +177,14 @@ begin
   if not Assigned(FItemObjectClass) or
    (FItemObjectClass.ClassName <> Value) then
     ItemObjectClass := Model.ClassByName(Value);
+end;
+
+{ TPressQueryItems }
+
+procedure TPressQueryItems.InternalUnassignObject(AObject: TPressObject);
+begin
+  AObject.Dispose;
+  inherited;
 end;
 
 { TPressQuery }
@@ -392,7 +405,13 @@ begin
   TPressQuery.RegisterClass;
 end;
 
+procedure RegisterAttributes;
+begin
+  TPressQueryItems.RegisterAttribute;
+end;
+
 initialization
   RegisterClasses;
+  RegisterAttributes;
 
 end.

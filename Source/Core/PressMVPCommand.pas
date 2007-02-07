@@ -658,10 +658,7 @@ end;
 
 function TPressMVPRemoveItemsCommand.InternalIsEnabled: Boolean;
 begin
-  { TODO : Implement removing from Query items }
-  Result := (not (Model.Parent is TPressMVPQueryModel)) and
-   (Model.Selection.Count > 0);
-  //Result := Model.Selection.Count > 0;
+  Result := Model.Selection.Count > 0;
 end;
 
 { TPressMVPObjectCommand }
