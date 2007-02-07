@@ -1008,6 +1008,7 @@ end;
 procedure TPressMVPItemView.AddReference(const ACaption: string);
 begin
   InternalAddReference(ACaption);
+  Changed;
 end;
 
 procedure TPressMVPItemView.AssignReferences(AItems: TStrings);
