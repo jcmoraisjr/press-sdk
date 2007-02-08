@@ -796,9 +796,9 @@ end;
 
 procedure TPressMVPWinView.ViewEnterEvent(Sender: TObject);
 begin
-  Unchanged;
   if EventsDisabled then
     Exit;
+  Unchanged;
   TPressMVPViewEnterEvent.Create(Self).Notify;
   if Assigned(FViewEnterEvent) then
     FViewEnterEvent(Sender);
