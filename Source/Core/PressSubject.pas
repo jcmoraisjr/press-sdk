@@ -3246,18 +3246,16 @@ end;
 procedure TPressAttribute.InitPropInfo;
 var
   VPropInfo: PPropInfo;
-  VHasPropInfo: Boolean;
-  VTypeKinds: TTypeKinds;
 begin
-  VTypeKinds := InternalTypeKinds;
-  VHasPropInfo := (VTypeKinds <> []) and Assigned(Owner) and Assigned(Metadata);
-  if VHasPropInfo then
+  if Assigned(Owner) and Assigned(Metadata) then
   begin
     VPropInfo := GetPropInfo(Owner, Metadata.Name);
-    VHasPropInfo := Assigned(VPropInfo) and
-     (VPropInfo^.PropType^^.Kind in VTypeKinds);
-    FUsePublishedGetter := VHasPropInfo and Assigned(VPropInfo^.GetProc);
-    FUsePublishedSetter := VHasPropInfo and Assigned(VPropInfo^.SetProc);
+    if Assigned(VPropInfo) and
+     (VPropInfo^.PropType^^.Kind in InternalTypeKinds) then
+    begin
+      FUsePublishedGetter := Assigned(VPropInfo^.GetProc);
+      FUsePublishedSetter := Assigned(VPropInfo^.SetProc);
+    end;
   end;
 end;
 
