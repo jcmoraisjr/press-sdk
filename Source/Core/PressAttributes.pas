@@ -636,7 +636,8 @@ type
     function InternalCreateIterator: TPressItemsIterator; override;
     *)
   public
-    function Add(AObject: TPressObject): Integer;
+    function Add: TPressObject; overload;
+    function Add(AObject: TPressObject): Integer; overload;
     function AddReference(const AClassName, AId: string): Integer;
     procedure Assign(Source: TPersistent); override;
     procedure AssignProxyList(AProxyList: TPressProxyList);
@@ -654,7 +655,8 @@ type
     property Objects[AIndex: Integer]: TPressObject read GetObjects write SetObjects; default;
     property Proxies[AIndex: Integer]: TPressProxy read GetProxies;
     (*
-    function Add(AObject: TPressObject): Integer;
+    function Add: TPressObject; overload;
+    function Add(AObject: TPressObject): Integer; overload;
     function CreateIterator: TPressItemsIterator;
     function IndexOf(AObject: TPressObject): Integer;
     procedure Insert(AIndex: Integer; AObject: TPressObject);
@@ -3296,6 +3298,18 @@ begin
 end;
 
 { TPressItems }
+
+function TPressItems.Add: TPressObject;
+begin
+  Result := ObjectClass.Create;
+  try
+    Add(Result);
+  except
+    { TODO : Test AVs }
+    FreeAndNil(Result);
+    raise;
+  end;
+end;
 
 function TPressItems.Add(AObject: TPressObject): Integer;
 begin
