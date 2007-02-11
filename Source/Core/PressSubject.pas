@@ -105,12 +105,12 @@ type
     FEditMask: string;
     FEnumMetadata: TPressEnumMetadata;
     FIsPersistent: Boolean;
+    FModel: TPressModel;
     FName: string;
     FObjectClass: TPressObjectClass;
     FOwner: TPressObjectMetadata;
     FPersistentName: string;
     FSize: Integer;
-    function GetModel: TPressModel;
     function GetObjectClassName: string;
     procedure SetAttributeName(const Value: string);
     procedure SetCalcMetadata(Value: TPressCalcMetadata);
@@ -119,7 +119,7 @@ type
     procedure SetObjectClassName(const Value: string);
   protected
     procedure SetName(const Value: string); virtual;
-    property Model: TPressModel read GetModel;
+    property Model: TPressModel read FModel;
   public
     constructor Create(AOwner: TPressObjectMetadata); virtual;
     destructor Destroy; override;
@@ -1094,7 +1094,11 @@ begin
   { TODO : Validate Owner }
   FOwner := AOwner;
   if Assigned(FOwner) then
+  begin
     FOwner.AttributeMetadatas.Add(Self);
+    FModel := FOwner.Model;
+  end else
+    FModel := PressModel;
   FIsPersistent := True;
 end;
 
@@ -1114,14 +1118,6 @@ begin
   if Assigned(FOwner) then
     FOwner.AttributeMetadatas.Extract(Self);
   inherited;
-end;
-
-function TPressAttributeMetadata.GetModel: TPressModel;
-begin
-  if Assigned(FOwner) then
-    Result := FOwner.Model
-  else
-    Result := PressModel;
 end;
 
 function TPressAttributeMetadata.GetObjectClassName: string;
