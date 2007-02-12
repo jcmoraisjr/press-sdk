@@ -498,6 +498,7 @@ type
     procedure EnableUpdates;
     function FindAttribute(const AAttributeName: string): TPressAttribute;
     function FindPathAttribute(const APath: string; ASilent: Boolean = True): TPressAttribute;
+    class function ClassMetadataStr: string;
     class function ObjectMetadataClass: TPressObjectMetadataClass; virtual;
     class procedure RegisterClass;
     procedure Save;
@@ -2072,18 +2073,26 @@ begin
 end;
 
 class function TPressObject.ClassMetadata: TPressObjectMetadata;
-var
-  VMetadataStr: string;
 begin
   Result := PressModel.FindMetadata(ClassName);
   if not Assigned(Result) then
+    Result := PressModel.RegisterMetadata(ClassMetadataStr)
+end;
+
+class function TPressObject.ClassMetadataStr: string;
+var
+  VMetadataMethod, VParentMetadataMethod: function: string of object;
+begin
+  Result := '';
+  if Self <> TPressObject then
   begin
-    { TODO : Verify if the current class has an InternalMetadataStr method implementation }
-    VMetadataStr := InternalMetadataStr;
-    if VMetadataStr = '' then // should be "wasn't InternalMetadataStr implemented?"
-      VMetadataStr := ClassName;
-    Result := PressModel.RegisterMetadata(VMetadataStr)
+    VMetadataMethod := InternalMetadataStr;
+    VParentMetadataMethod := TPressObjectClass(ClassParent).InternalMetadataStr;
+    if TMethod(VMetadataMethod).Code <> TMethod(VParentMetadataMethod).Code then
+      Result := VMetadataMethod;
   end;
+  if Result = '' then
+    Result := ClassName;
 end;
 
 {$IFDEF FPC}class{$ENDIF} function TPressObject.ClassType: TPressObjectClass;
