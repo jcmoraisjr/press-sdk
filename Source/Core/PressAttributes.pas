@@ -541,6 +541,7 @@ type
     procedure SetPubValue(AValue: TPressObject);
     procedure SetValue(AValue: TPressObject);
   protected
+    procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
     procedure Finit; override;
     function GetIsEmpty: Boolean; override;
     function GetSignature: string; override;
@@ -3061,6 +3062,16 @@ begin
 end;
 
 { TPressItem }
+
+procedure TPressItem.AfterChangeInstance(
+  Sender: TPressProxy; Instance: TPressObject;
+  ChangeType: TPressProxyChangeType);
+begin
+  if Assigned(Instance) then
+    inherited
+  else
+    Clear;
+end;
 
 procedure TPressItem.Assign(Source: TPersistent);
 begin
