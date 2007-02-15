@@ -3067,9 +3067,8 @@ procedure TPressItem.AfterChangeInstance(
   Sender: TPressProxy; Instance: TPressObject;
   ChangeType: TPressProxyChangeType);
 begin
-  if Assigned(Instance) then
-    inherited
-  else
+  inherited;
+  if not Assigned(Instance) then
     Clear;
 end;
 
