@@ -79,7 +79,7 @@ type
     FPresenters: TClassList;
     FViews: TClassList;
     FForms: TPressMVPRegisteredFormList;
-    function ChooseConcreteClass(ATargetClass, ACandidateClass1, ACandidateClass2: TClass): Integer;
+    function ChooseConcreteClass(ACandidateClass1, ACandidateClass2: TClass): TClass;
     function ExistSubClasses(AClasses: TClassList; AClass: TClass): Boolean;
     procedure RemoveSuperClasses(AClasses: TClassList; AClass: TClass);
   protected
@@ -231,49 +231,19 @@ end;
 { TPressMVPFactory }
 
 function TPressMVPFactory.ChooseConcreteClass(
-  ATargetClass, ACandidateClass1, ACandidateClass2: TClass): Integer;
-
-  function InheritanceLevel(AClass: TClass): Integer;
-  begin
-    Result := 0;
-    while Assigned(AClass) do
-    begin
-      Inc(Result);
-      AClass := AClass.ClassParent;
-    end;
-  end;
-
-var
-  VLevel1, VLevel2: Integer;
+  ACandidateClass1, ACandidateClass2: TClass): TClass;
 begin
-  { TODO : Return a class or a boolean instead an Integer }
-  if not Assigned(ATargetClass) then
-    raise EPressMVPError.Create(SUnassignedTargetClass)
-  else if not Assigned(ACandidateClass1) and not Assigned(ACandidateClass2) then
-    raise EPressMVPError.Create(SUnassignedCandidateClasses)
-  else if Assigned(ACandidateClass1) and not ATargetClass.InheritsFrom(ACandidateClass1) then
-    raise EPressMVPError.CreateFmt(SNonRelatedClasses,
-     [ATargetClass.ClassName, ACandidateClass1.ClassName])
-  else if Assigned(ACandidateClass2) and not ATargetClass.InheritsFrom(ACandidateClass2) then
-    raise EPressMVPError.CreateFmt(SNonRelatedClasses,
-     [ATargetClass.ClassName, ACandidateClass2.ClassName])
-  else if not Assigned(ACandidateClass1) then
-    Result := 2
+  if not Assigned(ACandidateClass1) then
+    Result := ACandidateClass2
   else if not Assigned(ACandidateClass2) then
-    Result := 1
+    Result := ACandidateClass1
+  else if ACandidateClass1.InheritsFrom(ACandidateClass2) then
+    Result := ACandidateClass1
+  else if ACandidateClass2.InheritsFrom(ACandidateClass1) then
+    Result := ACandidateClass2
   else
-  begin
-    VLevel1 := InheritanceLevel(ACandidateClass1);
-    VLevel2 := InheritanceLevel(ACandidateClass2);
-    if VLevel1 > VLevel2 then
-      Result := 1
-    else if VLevel2 > VLevel1 then
-      Result := 2
-    else
-      raise EPressMVPError.CreateFmt(SAmbiguousConcreteClass,
-       [ACandidateClass1.ClassName, ACandidateClass2.ClassName,
-       ATargetClass.ClassName]);
-  end;
+    raise EPressMVPError.CreateFmt(SAmbiguousClass,
+     [ACandidateClass1.ClassName, ACandidateClass2.ClassName]);
 end;
 
 constructor TPressMVPFactory.Create;
@@ -354,10 +324,9 @@ begin
     for I := 0 to Pred(FModels.Count) do
     begin
       VModelClass := TPressMVPModelClass(FModels[I]);
-      if ASubject.InheritsFrom(VModelClass.Apply) and
-       (not Assigned(VCandidateClass) or (ChooseConcreteClass(
-       ASubject.ClassType, VCandidateClass.Apply, VModelClass.Apply) = 2)) then
-        VCandidateClass := VModelClass;
+      if VModelClass.Apply(ASubject) then
+        VCandidateClass := TPressMVPModelClass(
+         ChooseConcreteClass(VCandidateClass, VModelClass));
     end;
     if not Assigned(VCandidateClass) then
       raise EPressMVPError.CreateFmt(SUnsupportedObject,
@@ -379,13 +348,8 @@ begin
   begin
     VPresenterClass := TPressMVPPresenterClass(FPresenters[I]);
     if VPresenterClass.Apply(AModel, AView) then
-    begin
-      if Assigned(VCandidateClass) then
-        raise EPressMVPError.CreateFmt(SAmbiguousConcreteClass,
-         [VCandidateClass.ClassName, VPresenterClass.ClassName,
-         AModel.ClassName + ', ' + AView.ClassName]);
-      VCandidateClass := VPresenterClass;
-    end;
+      VCandidateClass := TPressMVPPresenterClass(
+       ChooseConcreteClass(VCandidateClass, VPresenterClass));
   end;
   if not Assigned(VCandidateClass) then
     raise EPressMVPError.CreateFmt(SUnsupportedObject,
@@ -404,13 +368,8 @@ begin
   begin
     VViewClass := TPressMVPViewClass(FViews[I]);
     if VViewClass.Apply(AControl) then
-    begin
-      if Assigned(VCandidateClass) then
-        raise EPressMVPError.CreateFmt(SAmbiguousConcreteClass,
-         [VCandidateClass.ClassName, VViewClass.ClassName,
-         AControl.ClassName, AControl.Name]);
-      VCandidateClass := VViewClass;
-    end;
+      VCandidateClass := TPressMVPViewClass(
+       ChooseConcreteClass(VCandidateClass, VViewClass));
   end;
   if not Assigned(VCandidateClass) then
     raise EPressMVPError.CreateFmt(SUnsupportedControl,

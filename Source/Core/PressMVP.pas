@@ -337,7 +337,7 @@ type
     function AddCommand(ACommandClass: TPressMVPCommandClass): Integer;
     function AddCommandInstance(ACommand: TPressMVPCommand): Integer;
     procedure AddCommands(ACommandClasses: array of TPressMVPCommandClass);
-    class function Apply: TPressSubjectClass; virtual; abstract;
+    class function Apply(ASubject: TPressSubject): Boolean; virtual; abstract;
     { TODO : Remove this factory method }
     class function CreateFromSubject(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
     function FindCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
@@ -1171,7 +1171,7 @@ end;
 constructor TPressMVPModel.Create(
   AParent: TPressMVPModel; ASubject: TPressSubject);
 begin
-  CheckClass(not Assigned(ASubject) or (ASubject.InheritsFrom(Apply)));
+  CheckClass(not Assigned(ASubject) or Apply(ASubject));
   inherited Create;
   FParent := AParent;
   FSubject := ASubject;

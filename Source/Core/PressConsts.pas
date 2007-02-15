@@ -37,7 +37,7 @@ const
   SPressReportDisplayTextSuffix = 'DisplayText';
 
 resourcestring
-  SAmbiguousConcreteClass = 'Classe concreta ambígua (%s e %s) para o objeto %s';
+  SAmbiguousClass = 'Ambiguidade entre as classes ''%s'' e ''%s''';
   SAttributeAccessError = 'Não é possível acessar o atributo %s(''%s'') como %s';
   SAttributeConversionError = 'Erro ao converter valor para o atributo %s(''%s''):' + #10 + '%s';
   SAttributeIsNotItem = 'O atributo %s(''%s'') não é Part ou Reference';
@@ -59,7 +59,6 @@ resourcestring
   SMaxItemCountReached = 'A consulta retornou %d itens, o limite é %d';
   SMetadataNotFound = 'Metadata ''%s'' não encontrado';
   SMetadataParseError = 'Erro ao interpretar metadata: "(%d,%d) %s"' + SPressLineBreak + '"%s"';
-  SNonRelatedClasses = 'Classes %s e %s não são relacionadas';
   SNoLoggedUser = 'Não existe usuário logado';
   SNoReference = 'Não existe referência';
   SPathReferencesNil = 'O caminho %s(''%s'') possui atributo(s) Reference apontando para nil';
@@ -70,7 +69,6 @@ resourcestring
   STokenExpected = '''%s'' esperado, mas ''%s'' foi encontrado';
   STokenLengthOutOfBounds = 'Token muito grande';
   SUnassignedAttributeType = 'Tipo de atributo não associado para %s(''%s'')';
-  SUnassignedCandidateClasses = 'Classes candidata não estão associadas';
   SUnassignedItemObjectClass = 'Classe de negócio dos itens da Query ''%s'' não está associado';
   SUnassignedMainForm = 'Formulário principal não está associado';
   SUnassignedMainPresenter = 'Presenter principal não está associado';
@@ -78,7 +76,6 @@ resourcestring
   SUnassignedPersistenceConnector = 'Conector de persistência não foi associado';
   SUnassignedServiceType = 'Nenhum serviço %s foi associado ou registrado';
   SUnassignedSubject = 'Subject não foi associado';
-  SUnassignedTargetClass = 'Classe alvo não está associada';
   SUnexpectedEof = 'Final de arquivo inesperado';
   SUnexpectedMVPClassParam = 'Classe MVP %s inicializada com parâmetros inesperados';
   SUnsupportedAttribute = 'O atributo %s(''%s'') não é suportado';
