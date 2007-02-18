@@ -415,7 +415,6 @@ type
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
     destructor Destroy; override;
     class function Apply(ASubject: TPressSubject): Boolean; override;
-    function HasHookedSubject: Boolean;
     procedure RevertChanges;
     procedure UpdateData;
     property HookedSubject: TPressStructure read FHookedSubject write SetHookedSubject;
@@ -1584,11 +1583,6 @@ begin
   Result := FSubModels;
 end;
 
-function TPressMVPObjectModel.HasHookedSubject: Boolean;
-begin
-  Result := Assigned(FHookedSubject);
-end;
-
 procedure TPressMVPObjectModel.InitCommands;
 begin
   inherited;
@@ -1648,6 +1642,16 @@ end;
 procedure TPressMVPQueryModel.Execute;
 begin
   Subject.UpdateReferenceList;
+  { TODO : BeginUpdate / EndUpdate }
+  if HookedSubject is TPressReferences then
+    with TPressReferences(HookedSubject).CreateProxyIterator do
+    try
+      BeforeFirstItem;
+      while NextItem do
+        Subject.RemoveReference(CurrentItem);
+    finally
+      Free;
+    end;
 end;
 
 function TPressMVPQueryModel.GetSubject: TPressQuery;

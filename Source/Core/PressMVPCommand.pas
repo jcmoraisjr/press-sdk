@@ -603,7 +603,7 @@ end;
 function TPressMVPAssignSelectionCommand.InternalIsEnabled: Boolean;
 begin
   Result := Model.HasParent and (Model.Parent is TPressMVPObjectModel) and
-   TPressMVPObjectModel(Model.Parent).HasHookedSubject and
+   Assigned(TPressMVPObjectModel(Model.Parent).HookedSubject) and
    (Model.Selection.Count > 0);
 end;
 

@@ -651,6 +651,7 @@ type
     function IndexOf(AObject: TPressObject): Integer;
     procedure Insert(AIndex: Integer; AObject: TPressObject);
     function Remove(AObject: TPressObject): Integer;
+    function RemoveReference(AProxy: TPressProxy): Integer;
     property HasAddedItem: Boolean read GetHasAddedItem;
     property HasDeletedItem: Boolean read GetHasDeletedItem;
     property Objects[AIndex: Integer]: TPressObject read GetObjects write SetObjects; default;
@@ -3621,7 +3622,14 @@ function TPressItems.Remove(AObject: TPressObject): Integer;
 begin
   Result := ProxyList.IndexOfInstance(AObject);
   if Result >= 0 then
-    Delete(Result);
+    ProxyList.Delete(Result);
+end;
+
+function TPressItems.RemoveReference(AProxy: TPressProxy): Integer;
+begin
+  Result := ProxyList.IndexOfReference(AProxy.ObjectClassName, AProxy.ObjectID);
+  if Result >= 0 then
+    ProxyList.Delete(Result);
 end;
 
 procedure TPressItems.SetObjects(AIndex: Integer; AValue: TPressObject);

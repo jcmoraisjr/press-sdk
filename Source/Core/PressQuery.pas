@@ -100,6 +100,7 @@ type
     function CreateIterator: TPressQueryIterator;
     class function ObjectMetadataClass: TPressObjectMetadataClass; override;
     function Remove(AObject: TPressObject): Integer;
+    function RemoveReference(AProxy: TPressProxy): Integer;
     procedure UpdateReferenceList;
     property MatchEmptyAndNull: Boolean read FMatchEmptyAndNull write FMatchEmptyAndNull;
     property Metadata: TPressQueryMetadata read GetMetadata;
@@ -393,6 +394,11 @@ end;
 function TPressQuery.Remove(AObject: TPressObject): Integer;
 begin
   Result := FQueryItems.Remove(AObject);
+end;
+
+function TPressQuery.RemoveReference(AProxy: TPressProxy): Integer;
+begin
+  Result := FQueryItems.RemoveReference(AProxy);
 end;
 
 procedure TPressQuery.UpdateReferenceList;
