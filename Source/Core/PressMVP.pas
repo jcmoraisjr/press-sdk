@@ -266,9 +266,17 @@ type
 
   TPressMVPSelection = class(TObject)
   private
+    FFocus: TObject;
     FObjectList: TPressList;
+    FStrongSelection: Boolean;
+    FUpdatesPending: Boolean;
+    FUpdatingCount: Integer;
+    function DoAddObject(AObject: TObject): Integer;
+    procedure DoNotify;
     function GetObjectList: TPressList;
-    function GetObjects(Index: Integer): TObject;
+    function GetObjects(AIndex: Integer): TObject;
+    procedure SetFocus(Value: TObject);
+    procedure SetStrongSelection(Value: Boolean);
   protected
     procedure InternalAssignObject(AObject: TObject); virtual;
     function InternalCreateIterator: TPressIterator; virtual;
@@ -276,14 +284,20 @@ type
     property ObjectList: TPressList read GetObjectList;
   public
     destructor Destroy; override;
-    procedure AddObject(AObject: TObject);
+    function Add(AObject: TObject): Integer;
+    procedure BeginUpdate;
     procedure Clear;
     function Count: Integer;
     function CreateIterator: TPressIterator;
+    procedure EndUpdate;
+    function HasStrongSelection(AObject: TObject): Boolean;
     function IndexOf(AObject: TObject): Integer;
-    procedure RemoveObject(AObject: TObject);
-    procedure SelectObject(AObject: TObject);
-    property Objects[Index: Integer]: TObject read GetObjects; default;
+    function IsSelected(AObject: TObject): Boolean;
+    function Remove(AObject: TObject): Integer;
+    procedure Select(AObject: TObject);
+    property Focus: TObject read FFocus write SetFocus;
+    property Objects[AIndex: Integer]: TObject read GetObjects; default;
+    property StrongSelection: Boolean read FStrongSelection write SetStrongSelection;
   end;
 
   TPressMVPNullSelection = class(TPressMVPSelection)
@@ -1011,27 +1025,35 @@ end;
 
 { TPressMVPSelection }
 
-procedure TPressMVPSelection.AddObject(AObject: TObject);
+function TPressMVPSelection.Add(AObject: TObject): Integer;
 begin
   if Assigned(AObject) then
-    with TPressMVPSelectionChangedEvent.Create(Self) do
-    try
-      ObjectList.Add(AObject);
-      InternalAssignObject(AObject);
-    finally
-      Notify;
-    end;
+  begin
+    Result := ObjectList.IndexOf(AObject);
+    if Result = -1 then
+    begin
+      Result := DoAddObject(AObject);
+      DoNotify;
+    end else if AObject = FFocus then
+      StrongSelection := True;
+  end else
+    Result := -1;
+end;
+
+procedure TPressMVPSelection.BeginUpdate;
+begin
+  Inc(FUpdatingCount);
 end;
 
 procedure TPressMVPSelection.Clear;
 begin
   if Assigned(FObjectList) then
-    with TPressMVPSelectionChangedEvent.Create(Self) do
-    try
-      FObjectList.Clear;
-    finally
-      Notify;
-    end;
+  begin
+    FObjectList.Clear;
+    FFocus := nil;
+    FStrongSelection := False;
+    DoNotify;
+  end;
 end;
 
 function TPressMVPSelection.Count: Integer;
@@ -1053,6 +1075,29 @@ begin
   inherited;
 end;
 
+function TPressMVPSelection.DoAddObject(AObject: TObject): Integer;
+begin
+  Result := ObjectList.Add(AObject);
+  InternalAssignObject(AObject);
+end;
+
+procedure TPressMVPSelection.DoNotify;
+begin
+  if FUpdatingCount = 0 then
+  begin
+    TPressMVPSelectionChangedEvent.Create(Self).Notify;
+    FUpdatesPending := False;
+  end else
+    FUpdatesPending := True;
+end;
+
+procedure TPressMVPSelection.EndUpdate;
+begin
+  Dec(FUpdatingCount);
+  if (FUpdatingCount = 0) and FUpdatesPending then
+    DoNotify;
+end;
+
 function TPressMVPSelection.GetObjectList: TPressList;
 begin
   if not Assigned(FObjectList) then
@@ -1060,9 +1105,17 @@ begin
   Result := FObjectList;
 end;
 
-function TPressMVPSelection.GetObjects(Index: Integer): TObject;
+function TPressMVPSelection.GetObjects(AIndex: Integer): TObject;
 begin
-  Result := ObjectList[Index];
+  Result := ObjectList[AIndex];
+end;
+
+function TPressMVPSelection.HasStrongSelection(AObject: TObject): Boolean;
+begin
+  if AObject = Focus then
+    Result := StrongSelection
+  else
+    Result := IndexOf(AObject) <> -1;
 end;
 
 function TPressMVPSelection.IndexOf(AObject: TObject): Integer;
@@ -1087,41 +1140,60 @@ begin
   Result := False;
 end;
 
-procedure TPressMVPSelection.RemoveObject(AObject: TObject);
-var
-  VIndex: Integer;
+function TPressMVPSelection.IsSelected(AObject: TObject): Boolean;
+begin
+  Result := IndexOf(AObject) <> -1;
+end;
+
+function TPressMVPSelection.Remove(AObject: TObject): Integer;
 begin
   if Assigned(FObjectList) then
   begin
-    VIndex := 0;
-    with TPressMVPSelectionChangedEvent.Create(Self) do
-    try
-      VIndex := FObjectList.Remove(AObject);
-    finally
-      if VIndex >= 0 then
-        Notify
+    Result := FObjectList.IndexOf(AObject);
+    if Result >= 0 then
+    begin
+      if FObjectList[Result] = FFocus then
+        FStrongSelection := False
       else
-        Release;
+        FObjectList.Delete(Result);
+      DoNotify;
+    end;
+  end else
+    Result := -1;
+end;
+
+procedure TPressMVPSelection.Select(AObject: TObject);
+begin
+  Clear;
+  Focus := AObject;
+end;
+
+procedure TPressMVPSelection.SetFocus(Value: TObject);
+begin
+  if FFocus <> Value then
+  begin
+    BeginUpdate;
+    try
+      if not StrongSelection then
+        ObjectList.Remove(FFocus);
+      FStrongSelection := IndexOf(Value) <> -1;
+      if Assigned(Value) and not StrongSelection then
+        DoAddObject(Value);
+      FFocus := Value;
+      DoNotify;
+    finally
+      EndUpdate;
     end;
   end;
 end;
 
-procedure TPressMVPSelection.SelectObject(AObject: TObject);
-var
-  VObject: TObject;
+procedure TPressMVPSelection.SetStrongSelection(Value: Boolean);
 begin
-  if Assigned(AObject) then
-    with TPressMVPSelectionChangedEvent.Create(Self) do
-    begin
-      VObject := ObjectList.Extract(AObject);
-      ObjectList.Clear;
-      ObjectList.Add(AObject);
-      if not Assigned(VObject) then
-        InternalAssignObject(AObject);
-      Notify;
-    end
-  else
-    Clear;
+  if FStrongSelection <> Value then
+  begin
+    FStrongSelection := Value;
+    DoNotify;
+  end;
 end;
 
 { TPressMVPModelEvent }

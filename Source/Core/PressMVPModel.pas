@@ -43,9 +43,6 @@ type
   TPressMVPModelCreateSearchFormEvent = class(TPressMVPModelCreateFormEvent)
   end;
 
-  TPressMVPModelUpdateSelectionEvent = class(TPressMVPModelEvent)
-  end;
-
   TPressMVPModelCloseFormEvent = class(TPressMVPModelEvent)
   end;
 
@@ -141,13 +138,21 @@ type
 
   TPressMVPObjectSelection = class(TPressMVPSelection)
   private
+    function GetFocus: TPressObject;
     function GetObjects(Index: Integer): TPressObject;
+    procedure SetFocus(Value: TPressObject);
   protected
     procedure InternalAssignObject(AObject: TObject); override;
     function InternalCreateIterator: TPressIterator; override;
     function InternalOwnsObjects: Boolean; override;
   public
+    function Add(AObject: TPressObject): Integer;
     function CreateIterator: TPressObjectIterator;
+    function HasStrongSelection(AObject: TPressObject): Boolean;
+    function IndexOf(AObject: TPressObject): Integer;
+    function Remove(AObject: TPressObject): Integer;
+    procedure Select(AObject: TPressObject);
+    property Focus: TPressObject read GetFocus write SetFocus;
     property Objects[Index: Integer]: TPressObject read GetObjects; default;
   end;
 
@@ -355,6 +360,7 @@ type
     procedure InternalCreateAddCommands; virtual;
     procedure InternalCreateEditCommands; virtual;
     procedure InternalCreateRemoveCommands; virtual;
+    procedure InternalCreateSelectionCommands; virtual;
     procedure Notify(AEvent: TPressEvent); override;
     property ObjectList: TPressMVPObjectList read GetObjectList;
   public
@@ -363,7 +369,6 @@ type
     function Count: Integer;
     function DisplayText(ACol, ARow: Integer): string;
     function IndexOf(AObject: TPressObject): Integer;
-    procedure SelectIndex(AIndex: Integer);
     function TextAlignment(ACol: Integer): TAlignment;
     property Objects[AIndex: Integer]: TPressObject read GetObjects; default;
     property Subject: TPressItems read GetSubject;
@@ -659,14 +664,35 @@ end;
 
 { TPressMVPObjectSelection }
 
+function TPressMVPObjectSelection.Add(AObject: TPressObject): Integer;
+begin
+  Result := inherited Add(AObject);
+end;
+
 function TPressMVPObjectSelection.CreateIterator: TPressObjectIterator;
 begin
   Result := TPressObjectIterator.Create(ObjectList);
 end;
 
+function TPressMVPObjectSelection.GetFocus: TPressObject;
+begin
+  Result := inherited Focus as TPressObject;
+end;
+
 function TPressMVPObjectSelection.GetObjects(Index: Integer): TPressObject;
 begin
   Result := inherited Objects[Index] as TPressObject;
+end;
+
+function TPressMVPObjectSelection.HasStrongSelection(
+  AObject: TPressObject): Boolean;
+begin
+  Result := inherited HasStrongSelection(AObject);
+end;
+
+function TPressMVPObjectSelection.IndexOf(AObject: TPressObject): Integer;
+begin
+  Result := inherited IndexOf(AObject);
 end;
 
 procedure TPressMVPObjectSelection.InternalAssignObject(AObject: TObject);
@@ -683,6 +709,21 @@ end;
 function TPressMVPObjectSelection.InternalOwnsObjects: Boolean;
 begin
   Result := True;
+end;
+
+function TPressMVPObjectSelection.Remove(AObject: TPressObject): Integer;
+begin
+  Result := inherited Remove(AObject);
+end;
+
+procedure TPressMVPObjectSelection.Select(AObject: TPressObject);
+begin
+  inherited Select(AObject);
+end;
+
+procedure TPressMVPObjectSelection.SetFocus(Value: TPressObject);
+begin
+  inherited Focus := Value;
 end;
 
 { TPressMVPColumnItem }
@@ -934,7 +975,7 @@ constructor TPressMVPReferenceModel.Create(
 begin
   inherited Create(AParent, ASubject);
   if HasSubject then
-    Selection.SelectObject(Subject.Value);
+    Selection.Select(Subject.Value);
 end;
 
 function TPressMVPReferenceModel.CreateQueryIterator(
@@ -1049,7 +1090,7 @@ procedure TPressMVPReferenceModel.Notify(AEvent: TPressEvent);
 begin
   inherited;
   if (AEvent is TPressAttributeChangedEvent) and HasSubject then
-    Selection.SelectObject(Subject.Value);
+    Selection.Select(Subject.Value);
 end;
 
 function TPressMVPReferenceModel.ObjectOf(AIndex: Integer): TPressObject;
@@ -1298,8 +1339,7 @@ end;
 
 function TPressMVPItemsModel.DisplayText(ACol, ARow: Integer): string;
 begin
-  if ARow < ObjectList.Count then
-    Result := ObjectList[ARow].DisplayText[ACol];
+  Result := ObjectList[ARow].DisplayText[ACol];
 end;
 
 function TPressMVPItemsModel.GetObjectList: TPressMVPObjectList;
@@ -1330,6 +1370,7 @@ begin
   InternalCreateAddCommands;
   InternalCreateEditCommands;
   InternalCreateRemoveCommands;
+  InternalCreateSelectionCommands;
 end;
 
 procedure TPressMVPItemsModel.InternalAssignDisplayNames(
@@ -1353,6 +1394,12 @@ begin
   AddCommand(TPressMVPRemoveItemsCommand);
 end;
 
+procedure TPressMVPItemsModel.InternalCreateSelectionCommands;
+begin
+  AddCommands([nil, TPressMVPSelectAllCommand, TPressMVPSelectNoneCommand,
+   TPressMVPSelectCurrentCommand, TPressMVPSelectInvertCommand]);
+end;
+
 procedure TPressMVPItemsModel.ItemsChanged(
   AEvent: TPressItemsChangedEvent);
 
@@ -1360,7 +1407,7 @@ procedure TPressMVPItemsModel.ItemsChanged(
   begin
     ObjectList.AddProxy(AEvent.Proxy);
     if AEvent.Proxy.HasInstance then
-      Selection.SelectObject(AEvent.Proxy.Instance);
+      Selection.Select(AEvent.Proxy.Instance);
   end;
 
   procedure InsertItem;
@@ -1379,18 +1426,27 @@ procedure TPressMVPItemsModel.ItemsChanged(
   end;
 
   procedure RemoveItem;
+  var
+    VIndex: Integer;
   begin
-    ObjectList.RemoveProxy(AEvent.Proxy);
-    if AEvent.Proxy.HasInstance then
-      Selection.RemoveObject(AEvent.Proxy.Instance);
-    if Selection.Count = 0 then
-      TPressMVPModelUpdateSelectionEvent.Create(Self).Notify;
+    VIndex := ObjectList.RemoveProxy(AEvent.Proxy);
+    if (VIndex >= 0) and AEvent.Proxy.HasInstance then
+    begin
+      if VIndex >= ObjectList.Count then
+        VIndex := Pred(ObjectList.Count);
+      if Selection.Focus = AEvent.Proxy.Instance then
+        if VIndex >= 0 then
+          Selection.Focus := ObjectList[VIndex].Instance
+        else
+          Selection.Focus := nil;
+      Selection.Remove(AEvent.Proxy.Instance);
+    end;
   end;
 
   procedure ClearItems;
   begin
     ObjectList.Clear;
-    Selection.SelectObject(nil);
+    Selection.Clear;
   end;
 
 begin
@@ -1424,19 +1480,16 @@ procedure TPressMVPItemsModel.RebuildObjectList;
 var
   I: Integer;
 begin
+  Selection.Clear;
   ObjectList.Clear;
   for I := 0 to Pred(Subject.Count) do
     ObjectList.AddProxy(Subject.Proxies[I]);
   ObjectList.Reindex;
   if ObjectList.Count > 0 then
-    Selection.SelectObject(ObjectList[0].Instance)
-  else
-    Selection.SelectObject(nil);
-end;
-
-procedure TPressMVPItemsModel.SelectIndex(AIndex: Integer);
-begin
-  Selection.SelectObject(ObjectList[AIndex].Instance);
+  begin
+    Selection.Focus := ObjectList[0].Instance;
+    Selection.StrongSelection := False;
+  end;
 end;
 
 function TPressMVPItemsModel.TextAlignment(ACol: Integer): TAlignment;

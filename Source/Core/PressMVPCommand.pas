@@ -1,6 +1,6 @@
 (*
   PressObjects, MVP-Command Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -178,6 +178,39 @@ type
     function GetShortCut: TShortCut; override;
     procedure InternalExecute; override;
     function InternalIsEnabled: Boolean; override;
+  end;
+
+  TPressMVPSelectionCommand = class(TPressMVPItemsCommand)
+  protected
+    function InternalIsEnabled: Boolean; override;
+  end;
+
+  TPressMVPSelectAllCommand = class(TPressMVPSelectionCommand)
+  protected
+    function GetCaption: string; override;
+    function GetShortCut: TShortCut; override;
+    procedure InternalExecute; override;
+  end;
+
+  TPressMVPSelectNoneCommand = class(TPressMVPSelectionCommand)
+  protected
+    function GetCaption: string; override;
+    function GetShortCut: TShortCut; override;
+    procedure InternalExecute; override;
+  end;
+
+  TPressMVPSelectCurrentCommand = class(TPressMVPSelectionCommand)
+  protected
+    function GetCaption: string; override;
+    function GetShortCut: TShortCut; override;
+    procedure InternalExecute; override;
+  end;
+
+  TPressMVPSelectInvertCommand = class(TPressMVPSelectionCommand)
+  protected
+    function GetCaption: string; override;
+    function GetShortCut: TShortCut; override;
+    procedure InternalExecute; override;
   end;
 
   TPressMVPObjectCommand = class(TPressMVPCommand)
@@ -597,7 +630,7 @@ begin
     VObject.Free;
     raise;
   end;
-  Model.Selection.SelectObject(VObject);
+  Model.Selection.Select(VObject);
   TPressMVPModelCreateIncludeFormEvent.Create(Model).Notify;
 end;
 
@@ -643,22 +676,111 @@ begin
 end;
 
 procedure TPressMVPRemoveItemsCommand.InternalExecute;
+var
+  VSelection: TPressMVPObjectSelection;
+  I: Integer;
 begin
-  if (Model.Selection.Count > 0) and
-   PressDialog.ConfirmRemove(Model.Selection.Count) then
-    with Model.Selection.CreateIterator do
-    try
-      BeforeFirstItem;
-      while NextItem do
-        Model.Subject.UnassignObject(CurrentItem);
-    finally
-      Free;
-    end;
+  VSelection := Model.Selection;
+  if (VSelection.Count > 0) and
+   PressDialog.ConfirmRemove(VSelection.Count) then
+    for I := Pred(VSelection.Count) downto 0 do
+      Model.Subject.UnassignObject(VSelection[I]);
 end;
 
 function TPressMVPRemoveItemsCommand.InternalIsEnabled: Boolean;
 begin
   Result := Model.Selection.Count > 0;
+end;
+
+{ TPressMVPSelectionCommand }
+
+function TPressMVPSelectionCommand.InternalIsEnabled: Boolean;
+begin
+  Result := Model.Count > 0;
+end;
+
+{ TPressMVPSelectAllCommand }
+
+function TPressMVPSelectAllCommand.GetCaption: string;
+begin
+  Result := SPressSelectAllCommand;
+end;
+
+function TPressMVPSelectAllCommand.GetShortCut: TShortCut;
+begin
+  Result := Menus.ShortCut(Ord('A'), [ssCtrl]);
+end;
+
+procedure TPressMVPSelectAllCommand.InternalExecute;
+var
+  I: Integer;
+begin
+  with Model do
+    for I := 0 to Pred(Count) do
+      Selection.Add(Objects[I]);
+end;
+
+{ TPressMVPSelectNoneCommand }
+
+function TPressMVPSelectNoneCommand.GetCaption: string;
+begin
+  Result := SPressSelectNoneCommand;
+end;
+
+function TPressMVPSelectNoneCommand.GetShortCut: TShortCut;
+begin
+  Result := Menus.ShortCut(Ord('W'), [ssCtrl]);
+end;
+
+procedure TPressMVPSelectNoneCommand.InternalExecute;
+var
+  VObject: TPressObject;
+begin
+  VObject := Model.Selection.Focus;
+  Model.Selection.Clear;
+  Model.Selection.Focus := VObject;
+end;
+
+{ TPressMVPSelectCurrentCommand }
+
+function TPressMVPSelectCurrentCommand.GetCaption: string;
+begin
+  Result := SPressSelectCurrentCommand;
+end;
+
+function TPressMVPSelectCurrentCommand.GetShortCut: TShortCut;
+begin
+  Result := 32;
+end;
+
+procedure TPressMVPSelectCurrentCommand.InternalExecute;
+begin
+  with Model.Selection do
+    StrongSelection := not StrongSelection;
+end;
+
+{ TPressMVPSelectInvertCommand }
+
+function TPressMVPSelectInvertCommand.GetCaption: string;
+begin
+  Result := SPressSelectInvertCommand;
+end;
+
+function TPressMVPSelectInvertCommand.GetShortCut: TShortCut;
+begin
+  Result := 0;
+end;
+
+procedure TPressMVPSelectInvertCommand.InternalExecute;
+var
+  I: Integer;
+begin
+  with Model do
+    for I := 0 to Pred(Count) do
+      if Selection.HasStrongSelection(Objects[I]) then
+        Selection.Remove(Objects[I])
+      else
+        Selection.Add(Objects[I]);
 end;
 
 { TPressMVPObjectCommand }

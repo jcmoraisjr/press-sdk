@@ -103,6 +103,10 @@ resourcestring
   SPressCloseFormCommand = 'Fechar';
   SPressExecuteQueryCommand = 'Executar';
   SPressAssignSelectionQueryCommand = 'Selecionar';
+  SPressSelectAllCommand = 'Selecionar tudo';
+  SPressSelectNoneCommand = 'Remover seleção';
+  SPressSelectCurrentCommand = 'Selecionar/remover atual';
+  SPressSelectInvertCommand = 'Inverter seleção';
 
   SPressAttributeNameMsg = 'attribute name';
   SPressBooleanValueMsg = 'Valor lógico';

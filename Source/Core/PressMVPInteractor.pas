@@ -204,7 +204,7 @@ type
 
   TPressMVPCustomDrawInteractor = class(TPressMVPInteractor)
   protected
-    procedure DrawTextRect(ACanvas: TCanvas; ARect: TRect; const AText: string; AAlignment: TAlignment);
+    procedure DrawTextRect(ACanvas: TCanvas; ARect: TRect; AMargin: Integer; const AText: string; AAlignment: TAlignment);
   end;
 
   TPressMVPDrawItemInteractor = class(TPressMVPCustomDrawInteractor)
@@ -224,6 +224,8 @@ type
   end;
 
   TPressMVPDrawItemsInteractor = class(TPressMVPCustomDrawInteractor)
+  private
+    procedure DrawSelection(ACanvas: TCanvas; ARect: TRect; AStrongSelection: Boolean);
   private
     function GetOwner: TPressMVPItemsPresenter;
   public
@@ -255,26 +257,10 @@ type
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
     procedure SelectItem(AIndex: Integer); virtual;
+    procedure UpdateSelectedItem; virtual;
   public
+    class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
     property Owner: TPressMVPItemsPresenter read GetOwner;
-  end;
-
-  TPressMVPSelectListBoxInteractor = class(TPressMVPSelectItemInteractor)
-  protected
-    procedure InitInteractor; override;
-    procedure Notify(AEvent: TPressEvent); override;
-  public
-    class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
-  end;
-
-  TPressMVPSelectGridInteractor = class(TPressMVPSelectItemInteractor)
-  private
-    procedure SelectCell(Sender: TObject; ACol, ARow: Longint; var CanSelect: Boolean);
-  protected
-    procedure InitInteractor; override;
-    procedure Notify(AEvent: TPressEvent); override;
-  public
-    class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
   end;
 
   TPressMVPCreateFormInteractor = class(TPressMVPInteractor)
@@ -360,8 +346,8 @@ begin
   if Owner.Model.Parent is TPressMVPQueryModel then
   begin
     VSelection := Owner.Model.Parent.Selection;
-    if (VSelection.Count > 0) and (VSelection[0] is TPressMVPItemsModel) and
-     (TPressMVPItemsModel(VSelection[0]).Subject.Name = SPressQueryItemsString) then
+    if (VSelection.Focus is TPressMVPItemsModel) and
+     (TPressMVPItemsModel(VSelection.Focus).Subject.Name = SPressQueryItemsString) then
       TPressMVPQueryModel(Owner.Model.Parent).Execute;
   end;
 
@@ -490,10 +476,10 @@ begin
     VObjectModel := Owner.Parent.Model;
     if AEvent is TPressMVPViewEnterEvent then
     begin
-      VObjectModel.Selection.SelectObject(Owner.Model);
+      VObjectModel.Selection.Select(Owner.Model);
       Owner.View.Update;
     end else
-      VObjectModel.Selection.SelectObject(nil);
+      VObjectModel.Selection.Clear;
   end;
 end;
 
@@ -799,18 +785,18 @@ end;
 
 { TPressMVPCustomDrawInteractor }
 
-procedure TPressMVPCustomDrawInteractor.DrawTextRect(
-  ACanvas: TCanvas; ARect: TRect; const AText: string; AAlignment: TAlignment);
+procedure TPressMVPCustomDrawInteractor.DrawTextRect(ACanvas: TCanvas;
+  ARect: TRect; AMargin: Integer; const AText: string; AAlignment: TAlignment);
 var
   VTop: Integer;
   VLeft: Integer;
 begin
-  VTop := ARect.Top + 1;
+  VTop := (ARect.Top + ARect.Bottom - ACanvas.TextHeight(AText)) div 2;
   case AAlignment of
     taLeftJustify:
-      VLeft := ARect.Left + 2;
+      VLeft := ARect.Left + AMargin;
     taRightJustify:
-      VLeft := ARect.Right - ACanvas.TextWidth(AText) - 2;
+      VLeft := ARect.Right - ACanvas.TextWidth(AText) - AMargin - 1;
     else {taCenter}
       VLeft := (ARect.Left + ARect.Right - ACanvas.TextWidth(AText)) div 2;
   end;
@@ -836,7 +822,7 @@ procedure TPressMVPDrawComboBoxInteractor.DrawItem(
   Sender: TPressMVPView; ACanvas: TCanvas; AIndex: Integer;
   ARect: TRect; State: TOwnerDrawState);
 begin
-  DrawTextRect(ACanvas, ARect,
+  DrawTextRect(ACanvas, ARect, 2,
    Owner.Model.DisplayText(0, AIndex), Owner.Model.TextAlignment(0));
 end;
 
@@ -862,6 +848,24 @@ end;
 
 { TPressMVPDrawItemsInteractor }
 
+procedure TPressMVPDrawItemsInteractor.DrawSelection(
+  ACanvas: TCanvas; ARect: TRect; AStrongSelection: Boolean);
+const
+  CPointSize = 4;
+var
+  VPointPos: TRect;
+begin
+  { TODO : Save and restore Brush and Pen status }
+  ACanvas.Pen.Color := ACanvas.Font.Color;
+  if AStrongSelection then
+    ACanvas.Brush.Color := ACanvas.Font.Color;
+  VPointPos.Left := ARect.Left + 1;
+  VPointPos.Top := (ARect.Top + ARect.Bottom - CPointSize) div 2;
+  VPointPos.Right := VPointPos.Left + CPointSize;
+  VPointPos.Bottom := VPointPos.Top + CPointSize;
+  ACanvas.Ellipse(VPointPos);
+end;
+
 function TPressMVPDrawItemsInteractor.GetOwner: TPressMVPItemsPresenter;
 begin
   Result := inherited Owner as TPressMVPItemsPresenter;
@@ -878,9 +882,20 @@ end;
 procedure TPressMVPDrawListBoxInteractor.DrawItem(
   Sender: TPressMVPView; ACanvas: TCanvas; AIndex: Integer;
   ARect: TRect; State: TOwnerDrawState);
+var
+  VModel: TPressMVPItemsModel;
 begin
-  DrawTextRect(ACanvas, ARect,
-   Owner.Model.DisplayText(0, AIndex), Owner.Model.TextAlignment(0));
+  VModel := Owner.Model;
+  // A vcl's listbox event occurs between an item is removed and
+  // the listbox size is adjusted
+  if AIndex >= VModel.Count then
+    Exit;
+  DrawTextRect(ACanvas, ARect, 8,
+   VModel.DisplayText(0, AIndex), VModel.TextAlignment(0));
+  if VModel.Selection.IsSelected(VModel[AIndex]) then
+    DrawSelection(ACanvas, ARect,
+     VModel.Selection.HasStrongSelection(VModel[AIndex]));
+  ARect.Left := ARect.Left + 12;
 end;
 
 procedure TPressMVPDrawListBoxInteractor.InitInteractor;
@@ -915,28 +930,37 @@ procedure TPressMVPDrawGridInteractor.DrawCell(
   Sender: TPressMVPGridView; ACanvas: TCanvas;
   ACol, ARow: Integer; ARect: TRect; State: TGridDrawState);
 var
+  VModel: TPressMVPItemsModel;
   VAlignment: TAlignment;
   VText: string;
 begin
+  VModel := Owner.Model;
   if ACol = -1 then
   begin
-    if (ARow = -1) or (Owner.Model.Count = 0) then
+    if (ARow = -1) or (VModel.Count = 0) then
       VText := ''
     else
       VText := InttoStr(ARow + 1);
     VAlignment := taRightJustify;
   end else if ARow = -1 then
-    with Owner.Model.ColumnData[ACol] do
+    with VModel.ColumnData[ACol] do
     begin
       VText := HeaderCaption;
       VAlignment := HeaderAlignment;
     end
   else
   begin
-    VText := Owner.Model.DisplayText(ACol, ARow);
-    VAlignment := Owner.Model.TextAlignment(ACol);
+    if ARow < VModel.Count then
+      VText := VModel.DisplayText(ACol, ARow)
+    else
+      VText := '';
+    VAlignment := VModel.TextAlignment(ACol);
   end;
-  DrawTextRect(ACanvas, ARect, VText, VAlignment);
+  DrawTextRect(ACanvas, ARect, 2, VText, VAlignment);
+  if (ACol = -1) and (ARow >= 0) and (ARow < VModel.Count) and
+   VModel.Selection.IsSelected(VModel[ARow]) then
+    DrawSelection(ACanvas, ARect,
+     VModel.Selection.HasStrongSelection(VModel[ARow]));
 end;
 
 procedure TPressMVPDrawGridInteractor.InitInteractor;
@@ -961,6 +985,12 @@ end;
 
 { TPressMVPSelectItemInteractor }
 
+class function TPressMVPSelectItemInteractor.Apply(
+  APresenter: TPressMVPPresenter): Boolean;
+begin
+  Result := APresenter.View is TPressMVPItemsView;
+end;
+
 function TPressMVPSelectItemInteractor.GetOwner: TPressMVPItemsPresenter;
 begin
   Result := inherited Owner as TPressMVPItemsPresenter;
@@ -969,10 +999,10 @@ end;
 procedure TPressMVPSelectItemInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.Model.Selection,
-   [TPressMVPSelectionChangedEvent]);
-  Notifier.AddNotificationItem(Owner.Model,
-   [TPressMVPModelUpdateSelectionEvent]);
+  Notifier.AddNotificationItem(
+   Owner.Model.Selection, [TPressMVPSelectionChangedEvent]);
+  Notifier.AddNotificationItem(
+   Owner.View, [TPressMVPViewClickEvent]);
 end;
 
 procedure TPressMVPSelectItemInteractor.Notify(AEvent: TPressEvent);
@@ -980,91 +1010,49 @@ begin
   inherited;
   if AEvent is TPressMVPSelectionChangedEvent then
   begin
-    Notifier.DisableEvents;
-    try
-      with Owner.Model.Selection.CreateIterator do
-      try
-        BeforeFirstItem;
-        while NextItem do
-          { TODO : SelectItem method clear the selection }
-          { TODO : The selection is updated before the View, so this
-            assignment might raise 'index out of bounds' exception }
-          Owner.View.SelectItem(Owner.Model.IndexOf(CurrentItem));
-      finally
-        Free;
-      end;
-    finally
-      Notifier.EnableEvents;
-    end
-  end else if AEvent is TPressMVPModelUpdateSelectionEvent then
-    SelectItem(Min(Owner.View.CurrentItem, Owner.Model.Count-1));
+    UpdateSelectedItem;
+    Owner.View.Update;
+  end else if AEvent is TPressMVPViewClickEvent then
+    SelectItem(Owner.View.CurrentItem);
 end;
 
 procedure TPressMVPSelectItemInteractor.SelectItem(AIndex: Integer);
 begin
-  if Owner.Model.Count = 0 then
-    Exit;
-  Notifier.DisableEvents;
-  try
-    Owner.Model.SelectIndex(AIndex);
-  finally
-    Notifier.EnableEvents;
+  if Owner.Model.Count > 0 then
+  begin
+    Notifier.DisableEvents;
+    try
+      Owner.Model.Selection.Focus := Owner.Model[AIndex];
+    finally
+      Notifier.EnableEvents;
+    end;
+    Owner.View.Update;
   end;
 end;
 
-{ TPressMVPSelectListBoxInteractor }
-
-class function TPressMVPSelectListBoxInteractor.Apply(
-  APresenter: TPressMVPPresenter): Boolean;
+procedure TPressMVPSelectItemInteractor.UpdateSelectedItem;
+var
+  VModel: TPressMVPItemsModel;
+  VCurrentItem: Integer;
+  VIndex: Integer;
 begin
-  Result := APresenter.View is TPressMVPListBoxView;
-end;
-
-procedure TPressMVPSelectListBoxInteractor.InitInteractor;
-begin
-  inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewClickEvent]);
-end;
-
-procedure TPressMVPSelectListBoxInteractor.Notify(AEvent: TPressEvent);
-begin
-  inherited;
-  if AEvent is TPressMVPViewClickEvent then
-    SelectItem(Owner.View.CurrentItem);
-end;
-
-{ TPressMVPSelectGridInteractor }
-
-class function TPressMVPSelectGridInteractor.Apply(
-  APresenter: TPressMVPPresenter): Boolean;
-begin
-  Result := APresenter.View is TPressMVPGridView;
-end;
-
-procedure TPressMVPSelectGridInteractor.InitInteractor;
-begin
-  inherited;
-  {$IFDEF PressViewNotification}
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewSelectCellEvent]);
-  {$ELSE}{$IFDEF PressViewDirectEvent}
-  (Owner.View as TPressMVPGridView).OnSelectCell := SelectCell;
-  {$ENDIF}{$ENDIF}
-end;
-
-procedure TPressMVPSelectGridInteractor.Notify(AEvent: TPressEvent);
-begin
-  inherited;
-  {$IFDEF PressViewNotification}
-  if AEvent is TPressMVPViewSelectCellEvent then
-    with TPressMVPViewSelectCellEvent(AEvent) do
-      SelectCell(Owner, Col, Row, CanSelectPtr^)
-  {$ENDIF}
-end;
-
-procedure TPressMVPSelectGridInteractor.SelectCell(
-  Sender: TObject; ACol, ARow: Integer; var CanSelect: Boolean);
-begin
-  SelectItem(ARow);
+  VModel := Owner.Model;
+  VCurrentItem := Owner.View.CurrentItem;
+  Notifier.DisableEvents;
+  try
+    if (VCurrentItem >= 0) and
+     (VCurrentItem < VModel.Count) then
+      if VModel[VCurrentItem] <> VModel.Selection.Focus then
+        VIndex := VModel.IndexOf(VModel.Selection.Focus)
+      else
+        VIndex := -1
+    else
+      VIndex := Pred(VModel.Count);
+    if VIndex >= 0 then
+      Owner.View.SelectItem(VIndex);
+  finally
+    Notifier.EnableEvents;
+  end;
 end;
 
 { TPressMVPCreateFormInteractor }
@@ -1241,8 +1229,7 @@ begin
   TPressMVPDrawComboBoxInteractor.RegisterInteractor;
   TPressMVPDrawListBoxInteractor.RegisterInteractor;
   TPressMVPDrawGridInteractor.RegisterInteractor;
-  TPressMVPSelectListBoxInteractor.RegisterInteractor;
-  TPressMVPSelectGridInteractor.RegisterInteractor;
+  TPressMVPSelectItemInteractor.RegisterInteractor;
   TPressMVPCreateIncludeFormInteractor.RegisterInteractor;
   TPressMVPCreatePresentFormInteractor.RegisterInteractor;
   TPressMVPCreateSearchFormInteractor.RegisterInteractor;

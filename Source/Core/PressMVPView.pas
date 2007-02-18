@@ -93,6 +93,7 @@ type
   TPressMVPViewDropDownEvent = class(TPressMVPViewEvent)
   end;
 
+  TPressMVPView = class;
   TPressMVPGridView = class;
 
   {$IFDEF PressViewNotification}
@@ -102,10 +103,12 @@ type
     FItemIndex: Integer;
     FState: TOwnerDrawState;
     FRect: TRect;
+    function GetOwner: TPressMVPView;
   public
     constructor Create(AOwner: TPressMVPView; ACanvas: TCanvas; AItemIndex: Integer; ARect: TRect; State: TOwnerDrawState);
     property Canvas: TCanvas read FCanvas;
     property ItemIndex: Integer read FItemIndex;
+    property Owner: TPressMVPView read GetOwner;
     property Rect: TRect read FRect;
     property State: TOwnerDrawState read FState;
   end;
@@ -126,21 +129,6 @@ type
     property Rect: TRect read FRect;
     property Row: Integer read FRow;
     property State: TGridDrawState read FState;
-  end;
-
-  TPressMVPViewSelectCellEvent = class(TPressMVPViewEvent)
-  private
-    FCanSelect: PBoolean;
-    FCol: Integer;
-    FRow: Integer;
-    function GetCanSelect: Boolean;
-    procedure SetCanSelect(const Value: Boolean);
-  public
-    constructor Create(AOwner: TObject; ACol, ARow: Integer; var CanSelect: Boolean);
-    property CanSelect: Boolean read GetCanSelect write SetCanSelect;
-    property CanSelectPtr: PBoolean read FCanSelect;
-    property Col: Integer read FCol;
-    property Row: Integer read FRow;
   end;
   {$ENDIF}
 
@@ -387,13 +375,10 @@ type
   private
     {$IFDEF PressViewDirectEvent}
     FOnDrawCell: TPressDrawCellEvent;
-    FOnSelectCell: TSelectCellEvent;
     {$ENDIF}
     FViewDrawCellEvent: TDrawCellEvent;
-    FViewSelectCellEvent: TSelectCellEvent;
     function GetControl: TCustomDrawGrid;
     procedure ViewDrawCellEvent(Sender: TObject; ACol, ARow: Longint; ARect: TRect; State: TGridDrawState);
-    procedure ViewSelectCellEvent(Sender: TObject; ACol, ARow: Longint; var CanSelect: Boolean);
   protected
     procedure InitView; override;
     procedure InternalAlignColumns; virtual;
@@ -410,7 +395,6 @@ type
     property Control: TCustomDrawGrid read GetControl;
     {$IFDEF PressViewDirectEvent}
     property OnDrawCell: TPressDrawCellEvent read FOnDrawCell write FOnDrawCell;
-    property OnSelectCell: TSelectCellEvent read FOnSelectCell write FOnSelectCell;
     {$ENDIF}
   end;
 
@@ -489,8 +473,6 @@ type
   TPressMVPViewCustomListBoxFriend = class(TCustomListBox);
   TPressMVPViewCustomFormFriend = class(TCustomForm);
 
-{ TPressMVPViewKeyboardEvent }
-
 { TPressMVPViewEvent }
 
 {$IFNDEF PressLogViewEvents}
@@ -499,6 +481,8 @@ begin
   Result := False;
 end;
 {$ENDIF}
+
+{ TPressMVPViewKeyboardEvent }
 
 {$IFNDEF PressLogKeyboardEvents}
 function TPressMVPViewKeyboardEvent.AllowLog: Boolean;
@@ -560,6 +544,11 @@ begin
   FState := State;
 end;
 
+function TPressMVPViewDrawItemEvent.GetOwner: TPressMVPView;
+begin
+  Result := inherited Owner as TPressMVPView;
+end;
+
 { TPressMVPViewDrawCellEvent }
 
 constructor TPressMVPViewDrawCellEvent.Create(
@@ -577,27 +566,6 @@ end;
 function TPressMVPViewDrawCellEvent.GetOwner: TPressMVPGridView;
 begin
   Result := inherited Owner as TPressMVPGridView;
-end;
-
-{ TPressMVPViewSelectCellEvent }
-
-constructor TPressMVPViewSelectCellEvent.Create(
-  AOwner: TObject; ACol, ARow: Integer; var CanSelect: Boolean);
-begin
-  inherited Create(AOwner);
-  FCol := ACol;
-  FRow := ARow;
-  FCanSelect := @CanSelect;
-end;
-
-function TPressMVPViewSelectCellEvent.GetCanSelect: Boolean;
-begin
-  Result := FCanSelect^;
-end;
-
-procedure TPressMVPViewSelectCellEvent.SetCanSelect(const Value: Boolean);
-begin
-  FCanSelect^ := Value;
 end;
 
 {$ENDIF}
@@ -1166,7 +1134,7 @@ begin
     Exit;
   {$IFDEF PressViewNotification}
   TPressMVPViewDrawItemEvent.Create(
-   Self, Control.Canvas, AIndex, ARect, State).Notify;
+   Self, Control.Canvas, AIndex, ARect, AState).Notify;
   {$ENDIF}
   {$IFDEF PressViewDirectEvent}
   if Assigned(FOnDrawItem) then
@@ -1297,7 +1265,7 @@ begin
     Exit;
   {$IFDEF PressViewNotification}
   TPressMVPViewDrawItemEvent.Create(
-   Self, Control.Canvas, AIndex, ARect, State).Notify;
+   Self, Control.Canvas, AIndex, ARect, AState).Notify;
   {$ENDIF}
   {$IFDEF PressViewDirectEvent}
   if Assigned(FOnDrawItem) then
@@ -1330,9 +1298,7 @@ begin
   with Control do
   begin
     FViewDrawCellEvent := OnDrawCell;
-    FViewSelectCellEvent := OnSelectCell;
     OnDrawCell := ViewDrawCellEvent;
-    OnSelectCell := ViewSelectCellEvent;
     { TODO : Implement multi selection }
     Options := Options + [goColSizing, goRowSelect] - [goHorzLine, goRangeSelect];
   end;
@@ -1388,7 +1354,7 @@ begin
       ColWidths[I + 1] := VColumnData[I].Width;
     if ColCount > 1 then
     begin
-      ColWidths[0] := 24;
+      ColWidths[0] := 26;
       FixedCols := 1;
     end;
     if RowCount < 2 then
@@ -1441,23 +1407,6 @@ begin
   {$ENDIF}
   if Assigned(FViewDrawCellEvent) then
     FViewDrawCellEvent(Sender, ACol, ARow, ARect, State);
-end;
-
-procedure TPressMVPGridView.ViewSelectCellEvent(
-  Sender: TObject; ACol, ARow: Integer; var CanSelect: Boolean);
-begin
-  if EventsDisabled then
-    Exit;
-  {$IFDEF PressViewNotification}
-  TPressMVPViewSelectCellEvent.Create(
-   Self, ACol - 1, ARow - 1, CanSelect).Notify;
-  {$ENDIF}
-  {$IFDEF PressViewDirectEvent}
-  if Assigned(FOnSelectCell) then
-    FOnSelectCell(Self, ACol - 1, ARow - 1, CanSelect);
-  {$ENDIF}
-  if Assigned(FViewSelectCellEvent) then
-    FViewSelectCellEvent(Sender, ACol, ARow, CanSelect);
 end;
 
 { TPressMVPCaptionView }
