@@ -1040,9 +1040,9 @@ begin
   VCurrentItem := Owner.View.CurrentItem;
   Notifier.DisableEvents;
   try
-    if (VCurrentItem >= 0) and
-     (VCurrentItem < VModel.Count) then
-      if VModel[VCurrentItem] <> VModel.Selection.Focus then
+    if VCurrentItem < VModel.Count then
+      if (VCurrentItem = -1) or
+       (VModel[VCurrentItem] <> VModel.Selection.Focus) then
         VIndex := VModel.IndexOf(VModel.Selection.Focus)
       else
         VIndex := -1
