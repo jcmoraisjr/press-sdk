@@ -2082,12 +2082,14 @@ end;
 class function TPressObject.ClassMetadataStr: string;
 var
   VMetadataMethod, VParentMetadataMethod: function: string of object;
+  VObjectClass: TPressObjectClass;
 begin
   Result := '';
   if Self <> TPressObject then
   begin
     VMetadataMethod := InternalMetadataStr;
-    VParentMetadataMethod := TPressObjectClass(ClassParent).InternalMetadataStr;
+    VObjectClass := TPressObjectClass(ClassParent);
+    VParentMetadataMethod := VObjectClass.InternalMetadataStr;
     if TMethod(VMetadataMethod).Code <> TMethod(VParentMetadataMethod).Code then
       Result := VMetadataMethod;
   end;
@@ -3260,7 +3262,7 @@ begin
   begin
     VPropInfo := GetPropInfo(Owner, Metadata.Name);
     if Assigned(VPropInfo) and
-     (VPropInfo^.PropType^^.Kind in InternalTypeKinds) then
+     (VPropInfo^.PropType^.Kind in InternalTypeKinds) then
     begin
       FUsePublishedGetter := Assigned(VPropInfo^.GetProc);
       FUsePublishedSetter := Assigned(VPropInfo^.SetProc);
