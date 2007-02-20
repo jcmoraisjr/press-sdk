@@ -245,8 +245,8 @@ type
   { Reference Model }
 
   TPressMVPReferenceQuery = class(TPressQuery)
-    _Name: TPressString;
   private
+    FName: TPressString;
     function GetName: string;
     procedure SetName(const Value: string);
   protected
@@ -637,16 +637,16 @@ end;
 
 function TPressMVPReferenceQuery.GetName: string;
 begin
-  Result := _Name.Value;
+  Result := FName.Value;
 end;
 
 function TPressMVPReferenceQuery.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
-  Result := inherited InternalAttributeAddress(AAttributeName);
-  if not Assigned(Result) and
-   (Metadata.AttributeMetadatas.IndexOfName(AAttributeName) >= 0) then
-    Result := Addr(_Name);
+  if SameText(AAttributeName, 'Name') then
+    Result := Addr(FName)
+  else
+    Result := inherited InternalAttributeAddress(AAttributeName);
 end;
 
 class function TPressMVPReferenceQuery.InternalMetadataStr: string;
@@ -658,7 +658,7 @@ end;
 
 procedure TPressMVPReferenceQuery.SetName(const Value: string);
 begin
-  _Name.Value := Value;
+  FName.Value := Value;
 end;
 
 { TPressMVPObjectSelection }
@@ -1015,7 +1015,8 @@ end;
 
 function TPressMVPReferenceModel.GetMetadata: TPressQueryMetadata;
 const
-  CQueryMetadata = '%s(%s) Any Order=%s (%2:s: String Category=acPartial)';
+  CQueryMetadata =
+   '%s(%s) Any Order=%s (Name: String DataName=%2:s Category=acPartial)';
 begin
   if not Assigned(FMetadata) then
     FMetadata := TPressMetaParser.ParseMetadata(Format(
