@@ -1150,7 +1150,10 @@ end;
 function TPressMVPObjectItem.GetAttributes: TPressAttributeList;
 begin
   if not Assigned(FAttributes) then
+  begin
     FAttributes := TPressAttributeList.Create(True);
+    FOwner.CreateAttributes(Self);
+  end;
   Result := FAttributes;
 end;
 
@@ -1231,8 +1234,6 @@ function TPressMVPObjectList.GetItems(
   AIndex: Integer): TPressMVPObjectItem;
 begin
   Result := inherited Items[AIndex] as TPressMVPObjectItem;
-  if not Result.HasAttributes then
-    CreateAttributes(Result);
 end;
 
 function TPressMVPObjectList.IndexOf(
