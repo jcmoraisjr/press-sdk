@@ -190,7 +190,7 @@ end;
 
 procedure TPressPersistence.Dispose(AObject: TPressObject);
 begin
-  if Assigned(AObject) then
+  if Assigned(AObject) and AObject.IsPersistent then
   begin
     AObject.DisableChanges;
     try
