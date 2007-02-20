@@ -184,6 +184,7 @@ end;
 
 procedure TPressQueryItems.InternalUnassignObject(AObject: TPressObject);
 begin
+  { TODO : Cache }
   AObject.Dispose;
   inherited;
 end;
@@ -272,15 +273,9 @@ begin
 end;
 
 function TPressQuery.InternalBuildOrderByClause: string;
-var
-  VAttributeName: string;
 begin
-  VAttributeName := Metadata.OrderFieldName;
-  if VAttributeName = '' then
-    Result := ''
-  else
-    Result := Metadata.ItemObjectClass.ClassMetadata.Map.
-     MetadataByPath(VAttributeName).PersistentName;
+  { TODO : Removed PersistentName searching; implement path translation }
+  Result := Metadata.OrderFieldName;
 end;
 
 function TPressQuery.InternalBuildStatement(
