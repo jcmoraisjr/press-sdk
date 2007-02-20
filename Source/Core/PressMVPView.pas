@@ -1299,7 +1299,6 @@ begin
   begin
     FViewDrawCellEvent := OnDrawCell;
     OnDrawCell := ViewDrawCellEvent;
-    { TODO : Implement multi selection }
     Options := Options + [goColSizing, goRowSelect] - [goHorzLine, goRangeSelect];
   end;
 end;
