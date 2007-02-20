@@ -293,6 +293,7 @@ type
   TPressMVPObjectItem = class(TObject)
   private
     FAttributes: TPressAttributeList;
+    FItemNumber: Integer;
     FOwner: TPressMVPObjectList;
     FProxy: TPressProxy;
     function GetAttributes: TPressAttributeList;
@@ -301,13 +302,14 @@ type
   protected
     property Attributes: TPressAttributeList read GetAttributes;
   public
-    constructor Create(AOwner: TPressMVPObjectList; AProxy: TPressProxy);
+    constructor Create(AOwner: TPressMVPObjectList; AProxy: TPressProxy; AItemNumber: Integer);
     destructor Destroy; override;
     function AddAttribute(AAttribute: TPressAttribute): Integer;
     procedure ClearAttributes;
     function HasAttributes: Boolean;
     property DisplayText[ACol: Integer]: string read GetDisplayText;
     property Instance: TPressObject read GetInstance;
+    property ItemNumber: Integer read FItemNumber;
     property Proxy: TPressProxy read FProxy;
   end;
 
@@ -333,7 +335,7 @@ type
     function IndexOfProxy(AProxy: TPressProxy): Integer;
     procedure Insert(Index: Integer; AObject: TPressMVPObjectItem);
     procedure InsertProxy(Index: Integer; AProxy: TPressProxy);
-    procedure Reindex;
+    procedure Reindex(AColumn: Integer);
     function Remove(AObject: TPressMVPObjectItem): Integer;
     function RemoveProxy(AProxy: TPressProxy): Integer;
     property Items[AIndex: Integer]: TPressMVPObjectItem read GetItems write SetItems; default;
@@ -361,6 +363,7 @@ type
     procedure InternalCreateEditCommands; virtual;
     procedure InternalCreateRemoveCommands; virtual;
     procedure InternalCreateSelectionCommands; virtual;
+    procedure InternalCreateSortCommands; virtual;
     procedure Notify(AEvent: TPressEvent); override;
     property ObjectList: TPressMVPObjectList read GetObjectList;
   public
@@ -369,6 +372,8 @@ type
     function Count: Integer;
     function DisplayText(ACol, ARow: Integer): string;
     function IndexOf(AObject: TPressObject): Integer;
+    function ItemNumber(ARow: Integer): Integer;
+    procedure Reindex(AColumn: Integer);
     function TextAlignment(ACol: Integer): TAlignment;
     property Objects[AIndex: Integer]: TPressObject read GetObjects; default;
     property Subject: TPressItems read GetSubject;
@@ -440,6 +445,7 @@ implementation
 
 uses
   SysUtils,
+  Menus,
   PressConsts,
   PressDialogs,
   PressMetadata,
@@ -930,8 +936,9 @@ end;
 procedure TPressMVPStructureModel.AssignDisplayNames(
   const ADisplayNames: string);
 begin
+  if Assigned(FColumnData) and (FColumnData.ColumnCount > 0) then
+    raise EPressMVPError.Create(SDisplayNamesAlreadyAssigned);
   InternalAssignDisplayNames(ADisplayNames);
-  DoChanged(ctDisplay);
 end;
 
 destructor TPressMVPStructureModel.Destroy;
@@ -1132,12 +1139,13 @@ begin
 end;
 
 constructor TPressMVPObjectItem.Create(
-  AOwner: TPressMVPObjectList; AProxy: TPressProxy);
+  AOwner: TPressMVPObjectList; AProxy: TPressProxy; AItemNumber: Integer);
 begin
   inherited Create;
   FOwner := AOwner;
   FProxy := AProxy;
   FProxy.AddRef;
+  FItemNumber := AItemNumber;
 end;
 
 destructor TPressMVPObjectItem.Destroy;
@@ -1221,7 +1229,7 @@ end;
 function TPressMVPObjectList.CreateObjectItem(
   AProxy: TPressProxy): TPressMVPObjectItem;
 begin
-  Result := TPressMVPObjectItem.Create(Self, AProxy);
+  Result := TPressMVPObjectItem.Create(Self, AProxy, Count + 1);
 end;
 
 function TPressMVPObjectList.Extract(
@@ -1285,9 +1293,113 @@ begin
   Result := CreateIterator;
 end;
 
-procedure TPressMVPObjectList.Reindex;
+var
+  GOrderColumn: Integer;
+
+function PressCompareItems(Item1, Item2: Pointer): Integer;
+
+  function CompareItemNumbers(AID1, AID2: TPressMVPObjectItem): Integer;
+  begin
+    if AID1.ItemNumber > AID2.ItemNumber then
+      Result := 1
+    else if AID1.ItemNumber < AID2.ItemNumber then
+      Result := -1
+    else
+      Result := 0;
+  end;
+
+  function CompareStrings(const AStr1, AStr2: string): Integer;
+  begin
+    Result := AnsiCompareText(AStr1, AStr2);
+  end;
+
+  function CompareIntegers(AInt1, AInt2: Integer): Integer;
+  begin
+    if AInt1 > AInt2 then
+      Result := 1
+    else if AInt1 < AInt2 then
+      Result := -1
+    else
+      Result := 0;
+  end;
+
+  function CompareFloats(AFloat1, AFloat2: Double): Integer;
+  begin
+    if AFloat1 > AFloat2 then
+      Result := 1
+    else if AFloat1 < AFloat2 then
+      Result := -1
+    else
+      Result := 0;
+  end;
+
+  function CompareEnums(AEnum1, AEnum2: TPressEnum): Integer;
+  begin
+    if AEnum1.IsEmpty and AEnum2.IsEmpty then
+      Result := 0
+    else if AEnum1.IsEmpty then
+      Result := 1
+    else if AEnum2.IsEmpty then
+      Result := -1
+    else
+      Result := CompareStrings(AEnum1.AsString, AEnum2.AsString);
+  end;
+
+  function CompareVariants(AVariant1, AVariant2: Variant): Integer;
+  begin
+    if AVariant1 > AVariant2 then
+      Result := 1
+    else if AVariant1 < AVariant2 then
+      Result := -1
+    else
+      Result := 0;
+  end;
+
+var
+  VAttr1, VAttr2: TPressAttribute;
 begin
-  { TODO : Implement }
+  if (GOrderColumn < 0) or
+   (GOrderColumn >= TPressMVPObjectItem(Item1).Attributes.Count) then
+    Result :=
+     CompareItemNumbers(TPressMVPObjectItem(Item1), TPressMVPObjectItem(Item2))
+  else if Item1 <> Item2 then
+  begin
+    VAttr1 := TPressMVPObjectItem(Item1).Attributes[GOrderColumn];
+    VAttr2 := TPressMVPObjectItem(Item2).Attributes[GOrderColumn];
+    if not Assigned(VAttr1) and not Assigned(VAttr2) then
+      Result := 0
+    else if not Assigned(VAttr1) then
+      Result := -1
+    else if not Assigned(VAttr2) then
+      Result := 1
+    else if VAttr1.AttributeBaseType <> VAttr2.AttributeBaseType then
+      Result := 0
+    else
+      case VAttr1.AttributeBaseType of
+        attString, attBoolean, attMemo:
+          Result := CompareStrings(VAttr1.AsString, VAttr2.AsString);
+        attInteger:
+          Result := CompareIntegers(VAttr1.AsInteger, VAttr2.AsInteger);
+        attFloat, attCurrency, attDate, attTime, attDateTime:
+          Result := CompareFloats(VAttr1.AsFloat, VAttr2.AsFloat);
+        attEnum:
+          Result := CompareEnums(TPressEnum(VAttr1), TPressEnum(VAttr2));
+        attVariant:
+          Result := CompareVariants(VAttr1.AsVariant, VAttr2.AsVariant);
+        else
+          Result := -1;
+      end;
+    if Result = 0 then
+      Result := CompareItemNumbers(
+       TPressMVPObjectItem(Item1), TPressMVPObjectItem(Item2));
+  end else
+    Result := 0;
+end;
+
+procedure TPressMVPObjectList.Reindex(AColumn: Integer);
+begin
+  GOrderColumn := AColumn;
+  Sort(PressCompareItems);
 end;
 
 function TPressMVPObjectList.Remove(AObject: TPressMVPObjectItem): Integer;
@@ -1378,6 +1490,7 @@ procedure TPressMVPItemsModel.InternalAssignDisplayNames(
   const ADisplayNames: string);
 begin
   AssignColumnData(ADisplayNames);
+  InternalCreateSortCommands;
 end;
 
 procedure TPressMVPItemsModel.InternalCreateAddCommands;
@@ -1399,6 +1512,40 @@ procedure TPressMVPItemsModel.InternalCreateSelectionCommands;
 begin
   AddCommands([nil, TPressMVPSelectAllCommand, TPressMVPSelectNoneCommand,
    TPressMVPSelectCurrentCommand, TPressMVPSelectInvertCommand]);
+end;
+
+procedure TPressMVPItemsModel.InternalCreateSortCommands;
+
+  function CreateSortCommand(AColumn: Integer): TPressMVPSortCommand;
+  var
+    VShortCut: TShortCut;
+    VCaption: string;
+    VChar: Char;
+  begin
+    if AColumn in [0..8] then
+      VChar := Chr(Ord('1') + AColumn)
+    else if AColumn in [9..Ord('Z') - Ord('A') + 9] then
+      VChar := Chr(Ord('A') + AColumn - 9)
+    else
+      VChar := #0;
+    VCaption :=
+     Format(SPressSortByCommand, [ColumnData[AColumn].HeaderCaption]);
+    if VChar <> #0 then
+    begin
+      VShortCut := Menus.ShortCut(Ord(VChar), [ssShift, ssCtrl]);
+      VCaption := '&' + VChar + ' ' + VCaption;
+    end else
+      VShortCut := 0;
+    Result := TPressMVPSortCommand.Create(Self, VCaption, VShortCut);
+    Result.ColumnNumber := AColumn;
+  end;
+
+var
+  I: Integer;
+begin
+  AddCommand(nil);
+  for I := 0 to Pred(ColumnData.ColumnCount) do
+    AddCommandInstance(CreateSortCommand(I));
 end;
 
 procedure TPressMVPItemsModel.ItemsChanged(
@@ -1469,6 +1616,11 @@ begin
     DoChanged(ctSubject);
 end;
 
+function TPressMVPItemsModel.ItemNumber(ARow: Integer): Integer;
+begin
+  Result := ObjectList[ARow].ItemNumber;
+end;
+
 procedure TPressMVPItemsModel.Notify(AEvent: TPressEvent);
 begin
   if AEvent is TPressItemsChangedEvent then
@@ -1481,16 +1633,36 @@ procedure TPressMVPItemsModel.RebuildObjectList;
 var
   I: Integer;
 begin
-  Selection.Clear;
-  ObjectList.Clear;
-  for I := 0 to Pred(Subject.Count) do
-    ObjectList.AddProxy(Subject.Proxies[I]);
-  ObjectList.Reindex;
-  if ObjectList.Count > 0 then
-  begin
-    Selection.Focus := ObjectList[0].Instance;
-    Selection.StrongSelection := False;
+  Selection.BeginUpdate;
+  try
+    Selection.Clear;
+    ObjectList.Clear;
+    for I := 0 to Pred(Subject.Count) do
+      ObjectList.AddProxy(Subject.Proxies[I]);
+    if ObjectList.Count > 0 then
+    begin
+      Selection.Focus := ObjectList[0].Instance;
+      Selection.StrongSelection := False;
+    end;
+  finally
+    Selection.EndUpdate;
   end;
+end;
+
+procedure TPressMVPItemsModel.Reindex(AColumn: Integer);
+var
+  VFocus: TPressObject;
+begin
+  Selection.BeginUpdate;
+  try
+    VFocus := Selection.Focus;
+    Selection.Focus := nil;
+    ObjectList.Reindex(AColumn);
+    Selection.Focus := VFocus;
+  finally
+    Selection.EndUpdate;
+  end;
+  DoChanged(ctSubject);
 end;
 
 function TPressMVPItemsModel.TextAlignment(ACol: Integer): TAlignment;

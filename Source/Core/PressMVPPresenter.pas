@@ -388,6 +388,7 @@ begin
       TPressMVPPresenterViewFriend(FView).SetModel(FModel);
       TPressMVPPresenterModelFriend(FModel).SetChangeEvent(
        TPressMVPPresenterViewFriend(FView).ModelChanged);
+      TPressMVPPresenterModelFriend(FModel).DoChanged(ctDisplay);
     end;
     if Assigned(FCommandMenu) then
       FCommandMenu.AssignCommands(
@@ -406,6 +407,7 @@ begin
       TPressMVPPresenterViewFriend(FView).SetModel(FModel);
       TPressMVPPresenterModelFriend(FModel).SetChangeEvent(
        TPressMVPPresenterViewFriend(FView).ModelChanged);
+      TPressMVPPresenterModelFriend(FModel).DoChanged(ctDisplay);
     end;
   end;
 end;
@@ -777,6 +779,17 @@ function TPressMVPFormPresenter.CreateSubPresenter(
   AModelClass: TPressMVPModelClass;
   AViewClass: TPressMVPViewClass;
   APresenterClass: TPressMVPPresenterClass): TPressMVPPresenter;
+begin
+  Result := CreateSubPresenter(
+   AAttributeName, AControlName, '', AModelClass, AViewClass, APresenterClass);
+end;
+
+function TPressMVPFormPresenter.CreateSubPresenter(
+  const AAttributeName, AControlName: ShortString;
+  const ADisplayNames: string;
+  AModelClass: TPressMVPModelClass;
+  AViewClass: TPressMVPViewClass;
+  APresenterClass: TPressMVPPresenterClass): TPressMVPPresenter;
 var
   VAttribute: TPressAttribute;
   VControl: TControl;
@@ -789,6 +802,15 @@ begin
     VModel := AModelClass.Create(Model, VAttribute)
   else
     VModel := InternalCreateSubModel(VAttribute);
+  if VModel is TPressMVPStructureModel then
+    TPressMVPStructureModel(VModel).AssignDisplayNames(ADisplayNames)
+  else if ADisplayNames <> '' then
+  begin
+    VModel.Free;
+    VAttribute := VModel.Subject as TPressAttribute;
+    raise EPressMVPError.CreateFmt(SUnsupportedDisplayNames,
+     [VAttribute.ClassName, VAttribute.Owner.ClassName, VAttribute.Name]);
+  end;
   if Assigned(AViewClass) then
     VView := AViewClass.Create(VControl)
   else
@@ -800,27 +822,6 @@ begin
   { TODO : Fix leakages when exception raises. }
   { Note - if FModel and FView fields of the presenter was assigned,
     the compiler will destroy these instances }
-end;
-
-function TPressMVPFormPresenter.CreateSubPresenter(
-  const AAttributeName, AControlName: ShortString;
-  const ADisplayNames: string;
-  AModelClass: TPressMVPModelClass;
-  AViewClass: TPressMVPViewClass;
-  APresenterClass: TPressMVPPresenterClass): TPressMVPPresenter;
-var
-  VAttribute: TPressAttribute;
-begin
-  Result := CreateSubPresenter(
-   AAttributeName, AControlName, AModelClass, AViewClass, APresenterClass);
-  if Result.Model is TPressMVPStructureModel then
-    TPressMVPStructureModel(Result.Model).AssignDisplayNames(ADisplayNames)
-  else if ADisplayNames <> '' then
-  begin
-    VAttribute := Result.Model.Subject as TPressAttribute;
-    raise EPressMVPError.CreateFmt(SUnsupportedDisplayName,
-     [VAttribute.ClassName, VAttribute.Owner.ClassName, VAttribute.Name]);
-  end;
 end;
 
 destructor TPressMVPFormPresenter.Destroy;

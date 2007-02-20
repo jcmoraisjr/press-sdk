@@ -213,6 +213,16 @@ type
     procedure InternalExecute; override;
   end;
 
+  TPressMVPSortCommand = class(TPressMVPItemsCommand)
+  private
+    FColumnNumber: Integer;
+  protected
+    procedure InternalExecute; override;
+    function InternalIsEnabled: Boolean; override;
+  public
+    property ColumnNumber: Integer read FColumnNumber write FColumnNumber;
+  end;
+
   TPressMVPObjectCommand = class(TPressMVPCommand)
   private
     function GetModel: TPressMVPObjectModel;
@@ -781,6 +791,18 @@ begin
         Selection.Remove(Objects[I])
       else
         Selection.Add(Objects[I]);
+end;
+
+{ TPressMVPSortCommand }
+
+procedure TPressMVPSortCommand.InternalExecute;
+begin
+  Model.Reindex(FColumnNumber);
+end;
+
+function TPressMVPSortCommand.InternalIsEnabled: Boolean;
+begin
+  Result := Model.Count > 1;
 end;
 
 { TPressMVPObjectCommand }

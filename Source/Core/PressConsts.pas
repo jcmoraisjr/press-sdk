@@ -49,6 +49,7 @@ resourcestring
   SComponentIsNotAControl = 'O componente %s(''%s'') não é um controle';
   SComponentNotFound = 'O componente %s(''%s'') não foi encontrado';
   SDialogClassIsAssigned = 'Classe do objeto de diálogo já está associado';
+  SDisplayNamesAlreadyAssigned = 'DisplayNames já foi associado';
   SEnumItemNotFound = 'Enumeration ''%s'' não encontrado';
   SEnumMetadataNotFound = 'Enumeration metadata %s não encontrado';
   SEnumOutOfBounds = 'Enumeration ''%s'' fora do limite (%d)';
@@ -82,7 +83,7 @@ resourcestring
   SUnsupportedAttributeType = 'O tipo de atributo %s não é suportado';
   SUnsupportedComponent = 'O componente %s não é suportado';
   SUnsupportedControl = 'O controle %s(''%s'') não é suportado';
-  SUnsupportedDisplayName = 'DisplayName não é suportado para o atributo %s(''%s.%s'')';
+  SUnsupportedDisplayNames = 'DisplayNames não é suportado para o atributo %s(''%s.%s'')';
   SUnsupportedFeature = 'Feature %s não é suportada';
   SUnsupportedModel = 'Model %s não é suportado por %s';
   SUnsupportedObject = 'Nenhuma classe %s suporta objetos %s';
@@ -107,6 +108,7 @@ resourcestring
   SPressSelectNoneCommand = 'Remover seleção';
   SPressSelectCurrentCommand = 'Selecionar/remover atual';
   SPressSelectInvertCommand = 'Inverter seleção';
+  SPressSortByCommand = 'Ordernar por ''%s''';
 
   SPressAttributeNameMsg = 'attribute name';
   SPressBooleanValueMsg = 'Valor lógico';

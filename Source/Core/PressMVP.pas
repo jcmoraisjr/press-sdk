@@ -143,7 +143,7 @@ type
     property ComponentList: TPressMVPCommandComponentList read GetComponentList;
     property Notifier: TPressNotifier read FNotifier;
   public
-    constructor Create(AModel: TPressMVPModel); virtual;
+    constructor Create(AModel: TPressMVPModel; const ACaption: string = ''; AShortCut: TShortCut = 0); virtual;
     destructor Destroy; override;
     procedure AddComponent(AComponent: TComponent);
     class function Apply(AModel: TPressMVPModel): Boolean; virtual;
@@ -653,7 +653,8 @@ begin
   Result := True;
 end;
 
-constructor TPressMVPCommand.Create(AModel: TPressMVPModel);
+constructor TPressMVPCommand.Create(
+  AModel: TPressMVPModel; const ACaption: string; AShortCut: TShortCut);
 begin
   if not Assigned(AModel) then
     raise EPressMVPError.Create(SUnassignedModel);
@@ -662,6 +663,8 @@ begin
      [AModel.ClassName, ClassName]);
   inherited Create;
   FModel := AModel;
+  FCaption := ACaption;
+  FShortCut := AShortCut;
   VerifyAccess;
   FEnabled := VerifyEnabled;
   FNotifier := TPressNotifier.Create(Notify);

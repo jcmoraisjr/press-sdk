@@ -940,7 +940,7 @@ begin
     if (ARow = -1) or (VModel.Count = 0) then
       VText := ''
     else
-      VText := InttoStr(ARow + 1);
+      VText := InttoStr(VModel.ItemNumber(ARow));
     VAlignment := taRightJustify;
   end else if ARow = -1 then
     with VModel.ColumnData[ACol] do
