@@ -20,6 +20,7 @@ interface
 
 uses
   Classes,
+  Controls,
   Graphics,
   StdCtrls,
   Grids,
@@ -261,6 +262,15 @@ type
   public
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
     property Owner: TPressMVPItemsPresenter read GetOwner;
+  end;
+
+  TPressMVPSortItemsInteractor = class(TPressMVPInteractor)
+  protected
+    procedure ClickHeader(AOwner: TPressMVPView; AButton: TMouseButton; AShiftState: TShiftState; ACol: Integer); virtual;
+    procedure InitInteractor; override;
+    procedure Notify(AEvent: TPressEvent); override;
+  public
+    class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
   end;
 
   TPressMVPCreateFormInteractor = class(TPressMVPInteractor)
@@ -1055,6 +1065,41 @@ begin
   end;
 end;
 
+{ TPressMVPSortItemsInteractor }
+
+class function TPressMVPSortItemsInteractor.Apply(
+  APresenter: TPressMVPPresenter): Boolean;
+begin
+  Result := (APresenter.Model is TPressMVPItemsModel) and
+   (APresenter.View is TPressMVPGridView);
+end;
+
+procedure TPressMVPSortItemsInteractor.ClickHeader(AOwner: TPressMVPView;
+  AButton: TMouseButton; AShiftState: TShiftState; ACol: Integer);
+begin
+  (Owner.Model as TPressMVPItemsModel).Reindex(ACol);
+end;
+
+procedure TPressMVPSortItemsInteractor.InitInteractor;
+begin
+  inherited;
+  {$IFDEF PressViewNotification}
+  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewClickHeaderEvent]);
+  {$ELSE}{$IFDEF PressViewDirectEvent}
+  (Owner.View as TPressMVPGridView).OnClickHeader := ClickHeader;
+  {$ENDIF}{$ENDIF}
+end;
+
+procedure TPressMVPSortItemsInteractor.Notify(AEvent: TPressEvent);
+begin
+  inherited;
+  {$IFDEF PressViewNotification}
+  if AEvent is TPressMVPViewClickHeaderEvent then
+    with TPressMVPViewClickHeaderEvent(AEvent) do
+      ClickHeader(Owner, Button, ShiftState, Col);
+  {$ENDIF}
+end;
+
 { TPressMVPCreateFormInteractor }
 
 procedure TPressMVPCreateFormInteractor.ExecuteFormPresenter(
@@ -1230,6 +1275,7 @@ begin
   TPressMVPDrawListBoxInteractor.RegisterInteractor;
   TPressMVPDrawGridInteractor.RegisterInteractor;
   TPressMVPSelectItemInteractor.RegisterInteractor;
+  TPressMVPSortItemsInteractor.RegisterInteractor;
   TPressMVPCreateIncludeFormInteractor.RegisterInteractor;
   TPressMVPCreatePresentFormInteractor.RegisterInteractor;
   TPressMVPCreateSearchFormInteractor.RegisterInteractor;

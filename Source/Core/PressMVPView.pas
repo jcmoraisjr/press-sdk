@@ -36,17 +36,44 @@ uses
 type
   { TPressMVPViewEvent }
 
+  TPressMVPView = class;
+
   TPressMVPViewEvent = class(TPressEvent)
+  private
+    function GetOwner: TPressMVPView;
   protected
     {$IFNDEF PressLogViewEvents}
     function AllowLog: Boolean; override;
     {$ENDIF}
+  public
+    constructor Create(AOwner: TPressMVPView);
+    property Owner: TPressMVPView read GetOwner;
   end;
 
   TPressMVPViewClickEvent = class(TPressMVPViewEvent)
   end;
 
   TPressMVPViewDblClickEvent = class(TPressMVPViewEvent)
+  end;
+
+  TPressMVPViewMouseEvent = class(TPressMVPViewEvent)
+  private
+    FMouseButton: TMouseButton;
+    FShiftState: TShiftState;
+    FX: Integer;
+    FY: Integer;
+  public
+    constructor Create(AOwner: TPressMVPView; AMouseButton: TMouseButton; AShiftState: TShiftState; AX, AY: Integer);
+    property MouseButton: TMouseButton read FMouseButton;
+    property ShiftState: TShiftState read FShiftState;
+    property X: Integer read FX;
+    property Y: Integer read FY;
+  end;
+
+  TPressMVPViewMouseDownEvent = class(TPressMVPViewMouseEvent)
+  end;
+
+  TPressMVPViewMouseUpEvent = class(TPressMVPViewMouseEvent)
   end;
 
   TPressMVPViewEnterEvent = class(TPressMVPViewEvent)
@@ -68,7 +95,7 @@ type
     function GetKey: Char;
     procedure SetKey(const Value: Char);
   public
-    constructor Create(AOwner: TObject; var AKey: Char);
+    constructor Create(AOwner: TPressMVPView; var AKey: Char);
     property Key: Char read GetKey write SetKey;
   end;
 
@@ -79,7 +106,7 @@ type
     function GetKey: Word;
     procedure SetKey(const Value: Word);
   public
-    constructor Create(AOwner: TObject; var AKey: Word; AShift: TShiftState);
+    constructor Create(AOwner: TPressMVPView; var AKey: Word; AShift: TShiftState);
     property Key: Word read GetKey write SetKey;
     property Shift: TShiftState read FShift;
   end;
@@ -93,7 +120,6 @@ type
   TPressMVPViewDropDownEvent = class(TPressMVPViewEvent)
   end;
 
-  TPressMVPView = class;
   TPressMVPGridView = class;
 
   {$IFDEF PressViewNotification}
@@ -130,6 +156,32 @@ type
     property Row: Integer read FRow;
     property State: TGridDrawState read FState;
   end;
+
+  TPressMVPViewClickHeaderEvent = class(TPressMVPViewEvent)
+  private
+    FButton: TMouseButton;
+    FCol: Integer;
+    FShiftState: TShiftState;
+  public
+    constructor Create(AOwner: TPressMVPView; AButton: TMouseButton; AShiftState: TShiftState; ACol: Integer);
+    property Button: TMouseButton read FButton;
+    property Col: Integer read FCol;
+    property ShiftState: TShiftState read FShiftState;
+  end;
+
+  TPressMVPViewClickCellEvent = class(TPressMVPViewEvent)
+  private
+    FButton: TMouseButton;
+    FCol: Integer;
+    FRow: Integer;
+    FShiftState: TShiftState;
+  public
+    constructor Create(AOwner: TPressMVPView; AButton: TMouseButton; AShiftState: TShiftState; ACol, ARow: Integer);
+    property Button: TMouseButton read FButton;
+    property Col: Integer read FCol;
+    property Row: Integer read FRow;
+    property ShiftState: TShiftState read FShiftState;
+  end;
   {$ENDIF}
 
   TPressMVPViewFormEvent = class(TPressMVPViewEvent)
@@ -150,10 +202,14 @@ type
     FOwnsControl: Boolean;
     FViewClickEvent: TNotifyEvent;
     FViewDblClickEvent: TNotifyEvent;
+    FViewMouseDownEvent: TMouseEvent;
+    FViewMouseUpEvent: TMouseEvent;
     function GetModel: TPressMVPModel;
   protected
     procedure ViewClickEvent(Sender: TObject); virtual;
     procedure ViewDblClickEvent(Sender: TObject); virtual;
+    procedure ViewMouseDownEvent(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer); virtual;
+    procedure ViewMouseUpEvent(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer); virtual;
   protected
     procedure Changed;
     procedure InitView; virtual;
@@ -368,17 +424,27 @@ type
     {$ENDIF}
   end;
 
+  TPressClickCellEvent = procedure(AOwner: TPressMVPView;
+   AButton: TMouseButton; AShiftState: TShiftState; ACol, ARow: Integer) of object;
+
+  TPressClickHeaderEvent = procedure(AOwner: TPressMVPView;
+   AButton: TMouseButton; AShiftState: TShiftState; ACol: Integer) of object;
+
   TPressDrawCellEvent = procedure(Sender: TPressMVPGridView; ACanvas: TCanvas;
    ACol, ARow: Longint; ARect: TRect; State: TGridDrawState) of object;
 
   TPressMVPGridView = class(TPressMVPItemsView)
   private
     {$IFDEF PressViewDirectEvent}
+    FOnClickCell: TPressClickCellEvent;
+    FOnClickHeader: TPressClickHeaderEvent;
     FOnDrawCell: TPressDrawCellEvent;
     {$ENDIF}
     FViewDrawCellEvent: TDrawCellEvent;
     function GetControl: TCustomDrawGrid;
+  protected
     procedure ViewDrawCellEvent(Sender: TObject; ACol, ARow: Longint; ARect: TRect; State: TGridDrawState);
+    procedure ViewMouseUpEvent(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
   protected
     procedure InitView; override;
     procedure InternalAlignColumns; virtual;
@@ -394,6 +460,8 @@ type
     class function Apply(AControl: TControl): Boolean; override;
     property Control: TCustomDrawGrid read GetControl;
     {$IFDEF PressViewDirectEvent}
+    property OnClickCell: TPressClickCellEvent read FOnClickCell write FOnClickCell;
+    property OnClickHeader: TPressClickHeaderEvent read FOnClickHeader write FOnClickHeader;
     property OnDrawCell: TPressDrawCellEvent read FOnDrawCell write FOnDrawCell;
     {$ENDIF}
   end;
@@ -482,6 +550,28 @@ begin
 end;
 {$ENDIF}
 
+constructor TPressMVPViewEvent.Create(AOwner: TPressMVPView);
+begin
+  inherited Create(AOwner);
+end;
+
+function TPressMVPViewEvent.GetOwner: TPressMVPView;
+begin
+  Result := inherited Owner as TPressMVPView;
+end;
+
+{ TPressMVPViewMouseEvent }
+
+constructor TPressMVPViewMouseEvent.Create(AOwner: TPressMVPView;
+  AMouseButton: TMouseButton; AShiftState: TShiftState; AX, AY: Integer);
+begin
+  inherited Create(AOwner);
+  FMouseButton := AMouseButton;
+  FShiftState := AShiftState;
+  FX := AX;
+  FY := AY;
+end;
+
 { TPressMVPViewKeyboardEvent }
 
 {$IFNDEF PressLogKeyboardEvents}
@@ -493,7 +583,7 @@ end;
 
 { TPressMVPViewKeyPressEvent }
 
-constructor TPressMVPViewKeyPressEvent.Create(AOwner: TObject; var AKey: Char);
+constructor TPressMVPViewKeyPressEvent.Create(AOwner: TPressMVPView; var AKey: Char);
 begin
   inherited Create(AOwner);
   FKey := @AKey;
@@ -512,7 +602,7 @@ end;
 { TPressMVPViewKeyEvent }
 
 constructor TPressMVPViewKeyEvent.Create(
-  AOwner: TObject; var AKey: Word; AShift: TShiftState);
+  AOwner: TPressMVPView; var AKey: Word; AShift: TShiftState);
 begin
   inherited Create(AOwner);
   FKey := @AKey;
@@ -568,6 +658,29 @@ begin
   Result := inherited Owner as TPressMVPGridView;
 end;
 
+{ TPressMVPViewClickHeaderEvent }
+
+constructor TPressMVPViewClickHeaderEvent.Create(AOwner: TPressMVPView;
+  AButton: TMouseButton; AShiftState: TShiftState; ACol: Integer);
+begin
+  inherited Create(AOwner);
+  FButton := AButton;
+  FShiftState := AShiftState;
+  FCol := ACol;
+end;
+
+{ TPressMVPViewClickCellEvent }
+
+constructor TPressMVPViewClickCellEvent.Create(AOwner: TPressMVPView;
+  AButton: TMouseButton; AShiftState: TShiftState; ACol, ARow: Integer);
+begin
+  inherited Create(AOwner);
+  FButton := AButton;
+  FShiftState := AShiftState;
+  FCol := ACol;
+  FRow := ARow;
+end;
+
 {$ENDIF}
 
 { TPressMVPView }
@@ -612,8 +725,12 @@ begin
   begin
     FViewClickEvent := OnClick;
     FViewDblClickEvent := OnDblClick;
+    FViewMouseDownEvent := OnMouseDown;
+    FViewMouseUpEvent := OnMouseUp;
     OnClick := ViewClickEvent;
     OnDblClick := ViewDblClickEvent;
+    OnMouseDown := ViewMouseDownEvent;
+    OnMouseUp := ViewMouseUpEvent;
   end;
 end;
 
@@ -669,6 +786,26 @@ begin
   TPressMVPViewDblClickEvent.Create(Self).Notify;
   if Assigned(FViewDblClickEvent) then
     FViewDblClickEvent(Sender);
+end;
+
+procedure TPressMVPView.ViewMouseDownEvent(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  if EventsDisabled then
+    Exit;
+  TPressMVPViewMouseDownEvent.Create(Self, Button, Shift, X, Y).Notify;
+  if Assigned(FViewMouseDownEvent) then
+    FViewMouseDownEvent(Sender, Button, Shift, X, Y);
+end;
+
+procedure TPressMVPView.ViewMouseUpEvent(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  if EventsDisabled then
+    Exit;
+  TPressMVPViewMouseUpEvent.Create(Self, Button, Shift, X, Y).Notify;
+  if Assigned(FViewMouseUpEvent) then
+    FViewMouseUpEvent(Sender, Button, Shift, X, Y);
 end;
 
 { TPressMVPAttributeView }
@@ -1406,6 +1543,38 @@ begin
   {$ENDIF}
   if Assigned(FViewDrawCellEvent) then
     FViewDrawCellEvent(Sender, ACol, ARow, ARect, State);
+end;
+
+procedure TPressMVPGridView.ViewMouseUpEvent(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+var
+  VCol, VRow: Integer;
+begin
+  if EventsDisabled then
+    Exit;
+  inherited;
+  Control.MouseToCell(X, Y, VCol, VRow);
+  Dec(VCol);
+  Dec(VRow);
+  if VRow < 0 then
+  begin
+    {$IFDEF PressViewNotification}
+    TPressMVPViewClickHeaderEvent.Create(Self, Button, Shift, VCol).Notify;
+    {$ENDIF}
+    {$IFDEF PressViewDirectEvent}
+    if Assigned(FOnClickHeader) then
+      FOnClickHeader(Self, Button, Shift, VCol);
+    {$ENDIF}
+  end else
+  begin
+    {$IFDEF PressViewNotification}
+    TPressMVPViewClickCellEvent.Create(Self, Button, Shift, VCol, VRow).Notify;
+    {$ENDIF}
+    {$IFDEF PressViewDirectEvent}
+    if Assigned(FOnClickCell) then
+      FOnClickCell(Self, Button, Shift, VCol, VRow);
+    {$ENDIF}
+  end;
 end;
 
 { TPressMVPCaptionView }
