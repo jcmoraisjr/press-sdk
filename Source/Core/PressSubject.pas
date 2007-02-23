@@ -24,7 +24,6 @@ uses
   Classes,
   TypInfo,
   Contnrs,
-  Graphics,
   PressCompatibility,
   PressClasses,
   PressApplication,
