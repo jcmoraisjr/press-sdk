@@ -216,6 +216,7 @@ type
     procedure InternalReset; virtual;
     procedure InternalUpdate; virtual;
     procedure ModelChanged(AChangeType: TPressMVPChangeType); virtual;
+    procedure ReleaseControl; virtual;
     procedure SetModel(Value: TPressMVPModel);
     procedure Unchanged;
     property Model: TPressMVPModel read GetModel;
@@ -245,6 +246,7 @@ type
     procedure InternalClear; virtual;
     procedure SetSize(Value: Integer); virtual;
   public
+    destructor Destroy; override;
     procedure Clear;
     property AsBoolean: Boolean read GetAsBoolean;
     property AsDateTime: TDateTime read GetAsDateTime;
@@ -270,6 +272,7 @@ type
     procedure ViewKeyUpEvent(Sender: TObject; var Key: Word; Shift: TShiftState); virtual;
   protected
     procedure InitView; override;
+    procedure ReleaseControl; override;
   public
     procedure SelectNext; virtual;
     procedure SetFocus;
@@ -288,6 +291,7 @@ type
     procedure InitView; override;
     procedure InternalClear; override;
     procedure InternalUpdate; override;
+    procedure ReleaseControl; override;
     procedure SetSize(Value: Integer); override;
   public
     class function Apply(AControl: TControl): Boolean; override;
@@ -370,6 +374,7 @@ type
     procedure InternalClear; override;
     procedure InternalClearReferences; override;
     procedure InternalUpdate; override;
+    procedure ReleaseControl; override;
     procedure SetSize(Value: Integer); override;
   public
     class function Apply(AControl: TControl): Boolean; override;
@@ -408,7 +413,7 @@ type
     FOnDrawItem: TPressDrawItemEvent;
     {$ENDIF}
     FViewDrawItemEvent: TDrawItemEvent;
-    procedure ViewDrawItemEvent(AControl: TWinControl; AIndex: Integer; ARect: TRect; AState: TOwnerDrawState);
+    procedure ViewDrawItemEvent(AControl: TWinControl; AIndex: Integer; ARect: TRect; AState: TOwnerDrawState); virtual;
     function GetControl: TCustomListBox;
   protected
     procedure InitView; override;
@@ -416,6 +421,7 @@ type
     function InternalGetRowCount: Integer; override;
     procedure InternalSelectItem(AIndex: Integer); override;
     procedure InternalSetRowCount(ARowCount: Integer); override;
+    procedure ReleaseControl; override;
   public
     class function Apply(AControl: TControl): Boolean; override;
     property Control: TCustomListBox read GetControl;
@@ -443,7 +449,7 @@ type
     FViewDrawCellEvent: TDrawCellEvent;
     function GetControl: TCustomDrawGrid;
   protected
-    procedure ViewDrawCellEvent(Sender: TObject; ACol, ARow: Longint; ARect: TRect; State: TGridDrawState);
+    procedure ViewDrawCellEvent(Sender: TObject; ACol, ARow: Longint; ARect: TRect; State: TGridDrawState); virtual;
     procedure ViewMouseUpEvent(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
   protected
     procedure InitView; override;
@@ -455,6 +461,7 @@ type
     procedure InternalSetColumnCount(AColumnCount: Integer); override;
     procedure InternalSetColumnWidth(AColumn, AWidth: Integer); override;
     procedure InternalSetRowCount(ARowCount: Integer); override;
+    procedure ReleaseControl; override;
   public
     procedure AlignColumns;
     class function Apply(AControl: TControl): Boolean; override;
@@ -503,11 +510,12 @@ type
   TPressMVPFormView = class(TPressMVPCustomFormView)
   private
     FViewCloseEvent: TCloseEvent;
-    procedure ViewCloseEvent(Sender: TObject; var Action: TCloseAction);
-  private
     function GetControl: TCustomForm;
   protected
+    procedure ViewCloseEvent(Sender: TObject; var Action: TCloseAction); virtual;
+  protected
     procedure InitView; override;
+    procedure ReleaseControl; override;
   public
     class function Apply(AControl: TControl): Boolean; override;
     procedure Close;
@@ -755,6 +763,18 @@ begin
   PressDefaultMVPFactory.RegisterView(Self);
 end;
 
+procedure TPressMVPView.ReleaseControl;
+begin
+  with TPressMVPViewControlFriend(Control) do
+  begin
+    OnClick := FViewClickEvent;
+    OnDblClick := FViewDblClickEvent;
+    OnMouseDown := FViewMouseDownEvent;
+    OnMouseUp := FViewMouseUpEvent;
+  end;
+  FControl := nil;
+end;
+
 procedure TPressMVPView.SetModel(Value: TPressMVPModel);
 begin
   FModel := Value;
@@ -822,6 +842,13 @@ begin
   InternalClear;
 end;
 
+destructor TPressMVPAttributeView.Destroy;
+begin
+  if Assigned(FControl) and not OwnsControl then
+    ReleaseControl;
+  inherited;
+end;
+
 function TPressMVPAttributeView.GetAsBoolean: Boolean;
 begin
   raise AccessError('Boolean');
@@ -878,6 +905,19 @@ begin
     OnKeyPress := ViewKeyPressEvent;
     OnKeyUp := ViewKeyUpEvent;
   end;
+end;
+
+procedure TPressMVPWinView.ReleaseControl;
+begin
+  with TPressMVPViewWinControlFriend(Control) do
+  begin
+    OnEnter := FViewEnterEvent;
+    OnExit := FViewExitEvent;
+    OnKeyDown := FViewKeyDownEvent;
+    OnKeyPress := FViewKeyPressEvent;
+    OnKeyUp := FViewKeyUpEvent;
+  end;
+  inherited;
 end;
 
 procedure TPressMVPWinView.SelectNext;
@@ -987,6 +1027,15 @@ begin
   inherited;
   TPressMVPViewCustomEditFriend(Control).Text := Model.AsString;
   Unchanged;
+end;
+
+procedure TPressMVPEditView.ReleaseControl;
+begin
+  with TPressMVPViewCustomEditFriend(Control) do
+  begin
+    OnChange := FViewChangeEvent;
+  end;
+  inherited;
 end;
 
 procedure TPressMVPEditView.SetSize(Value: Integer);
@@ -1225,6 +1274,17 @@ begin
   Unchanged;
 end;
 
+procedure TPressMVPComboBoxView.ReleaseControl;
+begin
+  with TPressMVPViewCustomComboBoxFriend(Control) do
+  begin
+    OnChange := FViewChangeEvent;
+    OnDrawItem := FViewDrawItemEvent;
+    OnDropDown := FViewDropDownEvent;
+  end;
+  inherited;
+end;
+
 procedure TPressMVPComboBoxView.SelectAll;
 begin
   Control.SelectAll;
@@ -1395,6 +1455,15 @@ begin
   end;
 end;
 
+procedure TPressMVPListBoxView.ReleaseControl;
+begin
+  with TPressMVPViewCustomListBoxFriend(Control) do
+  begin
+    OnDrawItem := FViewDrawItemEvent;
+  end;
+  inherited;
+end;
+
 procedure TPressMVPListBoxView.ViewDrawItemEvent(AControl: TWinControl;
   AIndex: Integer; ARect: TRect; AState: TOwnerDrawState);
 begin
@@ -1525,6 +1594,15 @@ begin
     Control.RowCount := ARowCount + 1
   else
     Control.RowCount := 2;
+end;
+
+procedure TPressMVPGridView.ReleaseControl;
+begin
+  with Control do
+  begin
+    OnDrawCell := FViewDrawCellEvent;
+  end;
+  inherited;
 end;
 
 procedure TPressMVPGridView.ViewDrawCellEvent(
@@ -1668,6 +1746,15 @@ begin
     FViewCloseEvent := OnClose;
     OnClose := ViewCloseEvent;
   end;
+end;
+
+procedure TPressMVPFormView.ReleaseControl;
+begin
+  with TPressMVPViewCustomFormFriend(Control) do
+  begin
+    OnClose := FViewCloseEvent;
+  end;
+  inherited;
 end;
 
 procedure TPressMVPFormView.ViewCloseEvent(Sender: TObject; var Action: TCloseAction);
