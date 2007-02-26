@@ -14,7 +14,7 @@
 
 unit PressInstantObjectsBroker;
 
-{.$DEFINE IO2.1.x}
+{.$DEFINE IO2.1}
 {$I Press.inc}
 
 interface
@@ -66,7 +66,7 @@ uses
   PressConsts,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressAttributes,
-  {$IFDEF IO2.1.x}InstantBrokers,{$ENDIF}
+  {$IFDEF IO2.1}InstantBrokers,{$ENDIF}
   InstantClasses;
 
 type
@@ -353,6 +353,9 @@ procedure TPressInstantObjectsPersistence.ReadInstantObject(
       // If you got a compilation error, move the InstantObjects'
       // TInstantParts.ObjectReference property declaration (line 1067)
       // to the protected area.
+      //
+      // You can also move to InstantObjects 2.1 where this issue was
+      // fixed.
       //
       //     READ-ME!!
 
