@@ -17,7 +17,7 @@ type
 implementation
 
 uses
-  PressPersistence, PressMVPCommand, MainCommand, ObjectModel, Main, MainModel;
+  PressUser, PressMVPCommand, MainCommand, ObjectModel, Main, MainModel;
 
 { TMainPresenter }
 
@@ -35,7 +35,7 @@ end;
 procedure TMainPresenter.Running;
 begin
   inherited;
-  PressDefaultPersistence.Logon;
+  PressUserData.Logon;
 end;
 
 initialization

@@ -104,8 +104,7 @@ function PressDefaultMVPFactory: TPressMVPFactory;
 implementation
 
 uses
-  PressConsts,
-  PressQuery;
+  PressConsts;
 
 function PressDefaultMVPFactory: TPressMVPFactory;
 begin

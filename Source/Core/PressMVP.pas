@@ -130,7 +130,6 @@ type
     FVisible: Boolean;
     function CurrentUser: TPressUser;
     function GetComponentList: TPressMVPCommandComponentList;
-    function HasUser: Boolean;
     procedure Notify(AEvent: TPressEvent);
     procedure VerifyAccess;
     function VerifyEnabled: Boolean;
@@ -398,7 +397,6 @@ uses
   PressConsts,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressApplication,
-  PressPersistence,
   PressMVPFactory,
   PressMVPCommand;
 
@@ -673,8 +671,8 @@ end;
 
 function TPressMVPCommand.CurrentUser: TPressUser;
 begin
-  if HasUser then
-    Result := PressDefaultPersistence.CurrentUser
+  if PressUserData.HasUser then
+    Result := PressUserData.CurrentUser
   else
     Result := nil;
 end;
@@ -711,22 +709,13 @@ begin
   Result := FShortCut;
 end;
 
-function TPressMVPCommand.HasUser: Boolean;
-begin
-  with PressApp.Registry[stPersistence] do
-    if HasDefaultService then
-      Result := (DefaultService as TPressPersistence).HasUser
-    else
-      Result := False;
-end;
-
 procedure TPressMVPCommand.InitNotifier;
 begin
   Notifier.AddNotificationItem(
    Model.Selection, [TPressMVPSelectionChangedEvent]);
   if Model.HasSubject and (Model.Subject is TPressObject) then
     Notifier.AddNotificationItem(Model.Subject, [TPressObjectChangedEvent]);
-  Notifier.AddNotificationItem(nil, [TPressPersistenceEvent]);
+  Notifier.AddNotificationItem(nil, [TPressUserEvent]);
 end;
 
 function TPressMVPCommand.InternalIsEnabled: Boolean;
@@ -739,7 +728,7 @@ var
   VOldVisible: Boolean;
 begin
   VOldVisible := FVisible;
-  if AEvent is TPressPersistenceEvent then
+  if AEvent is TPressUserEvent then
     VerifyAccess;
   if FEnabled <> VerifyEnabled then
   begin
@@ -774,7 +763,7 @@ begin
     VCommandReg := PressRegisteredCommands[VIndex]
   else
     VCommandReg := nil;
-  if HasUser then
+  if PressUserData.HasUser then
   begin
     if Assigned(VCommandReg) and not VCommandReg.AlwaysEnabled and
      (VCommandReg.AccessID <> -1) then

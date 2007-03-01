@@ -25,7 +25,6 @@ uses
   PressNotifier,
   PressSubject,
   PressAttributes,
-  PressQuery,
   PressMVP;
 
 type
@@ -1000,7 +999,7 @@ end;
 
 function TPressMVPReferenceModel.CreateReferenceQuery: TPressMVPReferenceQuery;
 begin
-  Result := TPressMVPReferenceQuery.Create(Metadata);
+  Result := TPressMVPReferenceQuery.Create(Subject.DataAccess, Metadata);
 end;
 
 destructor TPressMVPReferenceModel.Destroy;

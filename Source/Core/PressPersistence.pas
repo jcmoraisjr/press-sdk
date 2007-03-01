@@ -1,6 +1,6 @@
 (*
   PressObjects, Base Persistence Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -19,23 +19,12 @@ unit PressPersistence;
 interface
 
 uses
+  Contnrs,
   PressApplication,
-  PressClasses,
-  PressNotifier,
   PressSubject,
-  PressQuery,
-  PressUser;
+  PressDAO;
 
 type
-  TPressPersistenceEvent = class(TPressEvent)
-  end;
-
-  TPressPersistenceLogonEvent = class(TPressPersistenceEvent)
-  end;
-
-  TPressPersistenceLogoffEvent = class(TPressPersistenceEvent)
-  end;
-
   TPressPersistence = class;
 
   TPressOIDGeneratorClass = class of TPressOIDGenerator;
@@ -50,81 +39,67 @@ type
     procedure ReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
   end;
 
-  TPressPersistence = class(TPressService)
+  TPressPersistence = class(TPressDAO)
   private
-    FCurrentUser: TPressUser;
     FOIDGenerator: TPressOIDGenerator;
-    FUserQuery: TPressUserQuery;
-    function GetCurrentUser: TPressUser;
-    function GetHasUser: Boolean;
     function GetOIDGenerator: TPressOIDGenerator;
-    function GetUserQuery: TPressUserQuery;
-    function UnsuportedFeatureError(const AFeatureName: string): EPressError;
   protected
-    procedure DoneService; override;
     function GetIdentifierQuotes: string; virtual;
     function GetStrQuote: Char; virtual;
-    procedure InternalCommitTransaction; virtual;
-    procedure InternalDispose(AObject: TPressObject); virtual;
-    procedure InternalConnect; virtual;
-    procedure InternalExecuteStatement(const AStatement: string); virtual;
-    function InternalLogon(const AUserID, APassword: string): Boolean; virtual;
+    function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; override;
     function InternalOIDGeneratorClass: TPressOIDGeneratorClass; virtual;
-    function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; virtual;
-    function InternalRetrieve(const AClass, AId: string): TPressObject; virtual;
-    function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; virtual;
-    procedure InternalRollbackTransaction; virtual;
-    function InternalSQLQuery(const ASQLStatement: string): TPressProxyList; virtual;
-    function InternalUserQueryClass: TPressUserQueryClass;
-    class function InternalServiceType: TPressServiceType; override;
-    procedure InternalStartTransaction; virtual;
-    procedure InternalStore(AObject: TPressObject); virtual;
     property OIDGenerator: TPressOIDGenerator read GetOIDGenerator;
-    property UserQuery: TPressUserQuery read GetUserQuery;
   public
     destructor Destroy; override;
-    procedure CommitTransaction;
-    procedure Connect;
-    procedure Dispose(const AClass, AId: string); overload;
-    procedure Dispose(AObject: TPressObject); overload;
-    procedure Dispose(AProxy: TPressProxy); overload;
-    procedure ExecuteStatement(const AStatement: string);
-    function GenerateOID(AObjectClass: TPressObjectClass; const AAttributeName: string = ''): string;
-    procedure Logoff;
-    function Logon(const AUserID: string = ''; const APassword: string = ''): Boolean;
-    function OQLQuery(const AOQLStatement: string): TPressProxyList;
-    function Retrieve(const AClass, AId: string): TPressObject;
-    function RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
-    procedure RollbackTransaction;
-    function SQLQuery(const ASQLStatement: string): TPressProxyList;
-    procedure StartTransaction;
-    procedure Store(AObject: TPressObject);
-    property CurrentUser: TPressUser read GetCurrentUser;
-    property HasUser: Boolean read GetHasUser;
     property IdentifierQuotes: string read GetIdentifierQuotes;
     property StrQuote: Char read GetStrQuote;
   end;
 
-function PressDefaultPersistence: TPressPersistence;
+  TPressPersistentObjectLink = class(TObject)
+  private
+    FPersistentObject: TObject;
+    FPressObject: TPressObject;
+    procedure SetPersistentObject(AValue: TObject);
+  public
+    constructor Create(APressObject: TPressObject; APersistentObject: TObject);
+    destructor Destroy; override;
+    property PersistentObject: TObject read FPersistentObject write SetPersistentObject;
+    property PressObject: TPressObject read FPressObject;
+  end;
+
+  TPressThirdPartyPersistenceCache = class(TPressDAOCache)
+  private
+    FPersistentObjectLinkList: TObjectList;
+    function GetPersistentObjectLink(AIndex: Integer): TPressPersistentObjectLink;
+  protected
+    property PersistentObjectLinkList: TObjectList read FPersistentObjectLinkList;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    function AddLink(APressObject: TPressObject; APersistentObject: TObject): Integer;
+    function IndexOfLink(APressObject: TPressObject): Integer;
+    procedure ReleaseObjects; override;
+    function RemoveObject(AObject: TPressObject): Integer; override;
+    property PersistentObjectLink[AIndex: Integer]: TPressPersistentObjectLink read GetPersistentObjectLink;
+  end;
+
+  TPressThirdPartyPersistence = class(TPressPersistence)
+  private
+    function GetCache: TPressThirdPartyPersistenceCache;
+    function GetPersistentObject(APressObject: TPressObject): TObject;
+    procedure SetPersistentObject(APressObject: TPressObject; AValue: TObject);
+  protected
+    function InternalCacheClass: TPressDAOCacheClass; override;
+    property Cache: TPressThirdPartyPersistenceCache read GetCache;
+    property PersistentObject[APressObject: TPressObject]: TObject read GetPersistentObject write SetPersistentObject;
+  end;
 
 implementation
 
 uses
   SysUtils,
   PressCompatibility,
-  PressConsts
-  {$IFDEF PressLog},PressLog{$ENDIF};
-
-type
-  TPressUserFriend = class(TPressUser);
-  TPressObjectFriend = class(TPressObject);
-
-{ Global routines }
-
-function PressDefaultPersistence: TPressPersistence;
-begin
-  Result := TPressPersistence(PressApp.DefaultService(TPressPersistence));
-end;
+  PressConsts;
 
 { TPressOIDGenerator }
 
@@ -166,81 +141,10 @@ end;
 
 { TPressPersistence }
 
-procedure TPressPersistence.CommitTransaction;
-begin
-  InternalCommitTransaction;
-end;
-
-procedure TPressPersistence.Connect;
-begin
-  InternalConnect;
-end;
-
 destructor TPressPersistence.Destroy;
 begin
   FOIDGenerator.Free;
-  FUserQuery.Free;
   inherited;
-end;
-
-procedure TPressPersistence.Dispose(AProxy: TPressProxy);
-begin
-  Dispose(AProxy.Instance);
-end;
-
-procedure TPressPersistence.Dispose(AObject: TPressObject);
-begin
-  if Assigned(AObject) and AObject.IsPersistent then
-  begin
-    AObject.DisableChanges;
-    try
-      {$IFDEF PressLogOPF}PressLogMsg(Self, 'Disposing', [AObject]);{$ENDIF}
-      InternalDispose(AObject);
-    finally
-      AObject.EnableChanges;
-    end;
-  end;
-end;
-
-procedure TPressPersistence.Dispose(const AClass, AId: string);
-var
-  VObject: TPressObject;
-begin
-  VObject := Retrieve(AClass, AId);
-  try
-    Dispose(VObject);
-  finally
-    VObject.Free;
-  end;
-end;
-
-procedure TPressPersistence.DoneService;
-begin
-  inherited;
-  Logoff;
-end;
-
-procedure TPressPersistence.ExecuteStatement(const AStatement: string);
-begin
-  InternalExecuteStatement(AStatement);
-end;
-
-function TPressPersistence.GenerateOID(
-  AObjectClass: TPressObjectClass; const AAttributeName: string): string;
-begin
-  Result := OIDGenerator.GenerateOID(Self, AObjectClass, AAttributeName);
-end;
-
-function TPressPersistence.GetCurrentUser: TPressUser;
-begin
-  if not Assigned(FCurrentUser) then
-    raise EPressError.Create(SNoLoggedUser);
-  Result := FCurrentUser;
-end;
-
-function TPressPersistence.GetHasUser: Boolean;
-begin
-  Result := Assigned(FCurrentUser);
 end;
 
 function TPressPersistence.GetIdentifierQuotes: string;
@@ -260,49 +164,10 @@ begin
   Result := '''';
 end;
 
-function TPressPersistence.GetUserQuery: TPressUserQuery;
+function TPressPersistence.InternalGenerateOID(AClass: TPressObjectClass;
+  const AAttributeName: string): string;
 begin
-  if not Assigned(FUserQuery) then
-    FUserQuery := InternalUserQueryClass.Create;
-  Result := FUserQuery;
-end;
-
-procedure TPressPersistence.InternalCommitTransaction;
-begin
-  raise UnsuportedFeatureError('Commit transaction');
-end;
-
-procedure TPressPersistence.InternalConnect;
-begin
-  raise UnsuportedFeatureError('Connect');
-end;
-
-procedure TPressPersistence.InternalDispose(AObject: TPressObject);
-begin
-  raise UnsuportedFeatureError('Dispose object');
-end;
-
-procedure TPressPersistence.InternalExecuteStatement(const AStatement: string);
-begin
-  raise UnsuportedFeatureError('Execute statement');
-end;
-
-function TPressPersistence.InternalLogon(
-  const AUserID, APassword: string): Boolean;
-var
-  VNewUser: TPressUser;
-begin
-  { TODO : Implement DB Connection }
-  VNewUser := UserQuery.CheckLogon(AUserID, APassword);
-  Result := Assigned(VNewUser);
-  if Result then
-    try
-      Logoff;
-      FCurrentUser := VNewUser;
-    except
-      VNewUser.Free;
-      raise;
-    end;
+  Result := OIDGenerator.GenerateOID(Self, AClass, AAttributeName);
 end;
 
 function TPressPersistence.InternalOIDGeneratorClass: TPressOIDGeneratorClass;
@@ -311,147 +176,123 @@ begin
    TPressOIDGeneratorClass(PressApp.DefaultServiceClass(stOIDGenerator));
 end;
 
-function TPressPersistence.InternalOQLQuery(
-  const AOQLStatement: string): TPressProxyList;
+{ TPressPersistentObjectLink }
+
+constructor TPressPersistentObjectLink.Create(
+  APressObject: TPressObject; APersistentObject: TObject);
 begin
-  raise UnsuportedFeatureError('OQL Query');
+  inherited Create;
+  FPressObject := APressObject;
+  FPersistentObject := APersistentObject;
 end;
 
-function TPressPersistence.InternalRetrieve(const AClass,
-  AId: string): TPressObject;
+destructor TPressPersistentObjectLink.Destroy;
 begin
-  raise UnsuportedFeatureError('Retrieve object');
+  FPersistentObject.Free;
+  inherited;
 end;
 
-function TPressPersistence.InternalRetrieveProxyList(
-  AQuery: TPressQuery): TPressProxyList;
+procedure TPressPersistentObjectLink.SetPersistentObject(AValue: TObject);
 begin
-  raise UnsuportedFeatureError('Retrieve proxy list');
+  FPersistentObject.Free;
+  FPersistentObject := AValue;
 end;
 
-procedure TPressPersistence.InternalRollbackTransaction;
+{ TPressThirdPartyPersistenceCache }
+
+function TPressThirdPartyPersistenceCache.AddLink(
+  APressObject: TPressObject; APersistentObject: TObject): Integer;
 begin
-  raise UnsuportedFeatureError('Rollback transaction');
+  Result := PersistentObjectLinkList.Add(
+   TPressPersistentObjectLink.Create(APressObject, APersistentObject));
 end;
 
-class function TPressPersistence.InternalServiceType: TPressServiceType;
+constructor TPressThirdPartyPersistenceCache.Create;
 begin
-  Result := stPersistence;
+  inherited Create;
+  FPersistentObjectLinkList := TObjectList.Create(True);
 end;
 
-function TPressPersistence.InternalSQLQuery(
-  const ASQLStatement: string): TPressProxyList;
+destructor TPressThirdPartyPersistenceCache.Destroy;
 begin
-  raise UnsuportedFeatureError('SQL Query');
+  FPersistentObjectLinkList.Free;
+  inherited;
 end;
 
-procedure TPressPersistence.InternalStartTransaction;
+function TPressThirdPartyPersistenceCache.GetPersistentObjectLink(
+  AIndex: Integer): TPressPersistentObjectLink;
 begin
-  raise UnsuportedFeatureError('Start transaction');
+  Result := PersistentObjectLinkList[AIndex] as TPressPersistentObjectLink;
 end;
 
-procedure TPressPersistence.InternalStore(AObject: TPressObject);
+function TPressThirdPartyPersistenceCache.IndexOfLink(
+  APressObject: TPressObject): Integer;
 begin
-  raise UnsuportedFeatureError('Store object');
+  for Result := 0 to Pred(PersistentObjectLinkList.Count) do
+    if PersistentObjectLink[Result].PressObject = APressObject then
+      Exit;
+  Result := -1;
 end;
 
-function TPressPersistence.InternalUserQueryClass: TPressUserQueryClass;
+procedure TPressThirdPartyPersistenceCache.ReleaseObjects;
 begin
-  Result := PressUserData.UserQueryClass;
+  inherited;
+  PersistentObjectLinkList.Clear;
 end;
 
-procedure TPressPersistence.Logoff;
-begin
-  if Assigned(FCurrentUser) then
-  begin
-    TPressUserFriend(FCurrentUser).BeforeLogoff;  // friend class
-    TPressPersistenceLogoffEvent.Create(Self).Notify;
-    FreeAndNil(FCurrentUser);
-  end;
-end;
-
-function TPressPersistence.Logon(
-  const AUserID, APassword: string): Boolean;
-begin
-  Result := InternalLogon(AUserID, APassword);
-  if Result then
-  begin
-    TPressPersistenceLogonEvent.Create(Self).Notify;
-    TPressUserFriend(CurrentUser).AfterLogon;  // friend class
-  end;
-end;
-
-function TPressPersistence.OQLQuery(
-  const AOQLStatement: string): TPressProxyList;
-begin
-  Result := InternalOQLQuery(AOQLStatement);
-end;
-
-function TPressPersistence.Retrieve(const AClass, AId: string): TPressObject;
-begin
-  Result := PressFindObject(AClass, AId);
-  if Assigned(Result) then
-    Result.AddRef
-  else
-  begin
-    {$IFDEF PressLogOPF}PressLogMsg(Self,
-     Format('Retrieving %s(%s)', [AClass, AId]));{$ENDIF}
-    { TODO : Ensure the class type of the retrieved object }
-    Result := InternalRetrieve(AClass, AId);
-    if Assigned(Result) then
-      TPressObjectFriend(Result).AfterRetrieve;
-  end;
-end;
-
-function TPressPersistence.RetrieveProxyList(
-  AQuery: TPressQuery): TPressProxyList;
-begin
-  Result := InternalRetrieveProxyList(AQuery);
-end;
-
-procedure TPressPersistence.RollbackTransaction;
-begin
-  InternalRollbackTransaction;
-end;
-
-function TPressPersistence.SQLQuery(
-  const ASQLStatement: string): TPressProxyList;
-begin
-  Result := InternalSQLQuery(ASQLStatement);
-end;
-
-procedure TPressPersistence.StartTransaction;
-begin
-  InternalStartTransaction;
-end;
-
-procedure TPressPersistence.Store(AObject: TPressObject);
+function TPressThirdPartyPersistenceCache.RemoveObject(
+  AObject: TPressObject): Integer;
 var
-  VIsUpdating: Boolean;
+  VIndex: Integer;
 begin
-  if Assigned(AObject) and not AObject.IsOwned and not AObject.IsUpdated then
-  begin
-    VIsUpdating := AObject.IsPersistent;
-    TPressObjectFriend(AObject).BeforeStore;
-    AObject.DisableChanges;
-    try
-      {$IFDEF PressLogOPF}PressLogMsg(Self, 'Storing', [AObject]);{$ENDIF}
-      InternalStore(AObject);
-      AObject.Unchanged;
-    finally
-      AObject.EnableChanges;
-    end;
-    TPressObjectFriend(AObject).AfterStore(VIsUpdating);
-  end;
+  Result := inherited RemoveObject(AObject);
+  VIndex := IndexOfLink(AObject);
+  if VIndex >= 0 then
+    PersistentObjectLinkList.Delete(VIndex);
 end;
 
-function TPressPersistence.UnsuportedFeatureError(
-  const AFeatureName: string): EPressError;
+{ TPressThirdPartyPersistence }
+
+function TPressThirdPartyPersistence.GetCache: TPressThirdPartyPersistenceCache;
 begin
-  Result := EPressError.CreateFmt(SUnsupportedFeature, [AFeatureName]);
+  Result := inherited Cache as TPressThirdPartyPersistenceCache;
+end;
+
+function TPressThirdPartyPersistence.GetPersistentObject(
+  APressObject: TPressObject): TObject;
+var
+  VIndex: Integer;
+begin
+  VIndex := Cache.IndexOfLink(APressObject);
+  if VIndex >= 0 then
+    Result := Cache.PersistentObjectLink[VIndex].PersistentObject
+  else
+    Result := nil;
+end;
+
+function TPressThirdPartyPersistence.InternalCacheClass: TPressDAOCacheClass;
+begin
+  Result := TPressThirdPartyPersistenceCache;
+end;
+
+procedure TPressThirdPartyPersistence.SetPersistentObject(
+  APressObject: TPressObject; AValue: TObject);
+var
+  VIndex: Integer;
+begin
+  VIndex := Cache.IndexOfLink(APressObject);
+  if VIndex >= 0 then
+    Cache.PersistentObjectLink[VIndex].PersistentObject := AValue
+  else
+    Cache.AddLink(APressObject, AValue);
+end;
+
+procedure RegisterServices;
+begin
+  TPressOIDGenerator.RegisterService;
 end;
 
 initialization
-  TPressOIDGenerator.RegisterService;
+  RegisterServices;
 
 end.

@@ -30,8 +30,7 @@ type
 implementation
 
 uses
-  {$IFDEF FPC}LCLType{$ELSE}Windows{$ENDIF}, Menus,
-  PressPersistence, ObjectModel;
+  {$IFDEF FPC}LCLType{$ELSE}Windows{$ENDIF}, Menus, ObjectModel;
 
 { TMainAddPersonCommand }
 
@@ -71,7 +70,7 @@ end;
 
 procedure TMainConnectorCommand.InternalExecute;
 begin
-  PressDefaultPersistence.Connect;
+  PressDefaultDAO.ShowConnectionManager;
 end;
 
 end.

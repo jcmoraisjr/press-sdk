@@ -38,14 +38,14 @@ type
   end;
 
   TPressServiceType = (
-   stPersistence, stOIDGenerator, stUserData,
-   stReport, stReportData, stMVPFactory, stBusinessModel);
+   stDAO, stOIDGenerator, stUserData, stReport, stReportData,
+   stMVPFactory, stBusinessModel);
 
   TPressRegistry = class;
 
   TPressServiceClass = class of TPressService;
 
-  TPressService = class(TObject)
+  TPressService = class(TInterfacedObject)
   private
     FRegistry: TPressRegistry;
     function GetIsDefault: Boolean;
@@ -427,7 +427,6 @@ end;
 
 procedure TPressRegistry.DoneServices;
 begin
-  { TODO : Replicate DoneServices call }
   with Services.CreateIterator do
   try
     BeforeFirstItem;
@@ -649,19 +648,18 @@ end;
 
 procedure TPressApplication.DoneApplication;
 
-  procedure DoneServices(AServiceType: TPressServiceType);
+  procedure DoneAllServices;
   var
-    VIndex: Integer;
+    I: Integer;
   begin
-    VIndex := Registries.IndexOfServiceType(AServiceType);
-    if VIndex <> -1 then
-      Registries[VIndex].DoneServices;
+    for I := 0 to Pred(Registries.Count) do
+      Registries[I].DoneServices;
   end;
 
 begin
   FRunning := False;
   TPressApplicationDoneEvent.Create(Self).Notify;
-  DoneServices(stPersistence);
+  DoneAllServices;
   Application.OnIdle := FOnIdle;
 end;
 

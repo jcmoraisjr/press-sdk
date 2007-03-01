@@ -639,7 +639,7 @@ type
   public
     function Add: TPressObject; overload;
     function Add(AObject: TPressObject): Integer; overload;
-    function AddReference(const AClassName, AId: string): Integer;
+    function AddReference(const AClassName, AId: string; ADataAccess: IPressDAO): Integer;
     procedure Assign(Source: TPersistent); override;
     procedure AssignProxyList(AProxyList: TPressProxyList);
     { TODO : Refactor Clear, move to virtual Reset }
@@ -3083,7 +3083,7 @@ end;
 
 procedure TPressItem.AssignReference(const AClassName, AId: string);
 begin
-  Proxy.AssignReference(AClassName, AId);
+  Proxy.AssignReference(AClassName, AId, DataAccess);
 end;
 
 procedure TPressItem.Finit;
@@ -3327,9 +3327,10 @@ begin
   Result := ProxyList.AddInstance(AObject);
 end;
 
-function TPressItems.AddReference(const AClassName, AId: string): Integer;
+function TPressItems.AddReference(
+  const AClassName, AId: string; ADataAccess: IPressDAO): Integer;
 begin
-  Result := ProxyList.AddReference(AClassName, AId);
+  Result := ProxyList.AddReference(AClassName, AId, ADataAccess);
 end;
 
 procedure TPressItems.AfterChangeInstance(

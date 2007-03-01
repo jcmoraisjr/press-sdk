@@ -15,8 +15,8 @@
     {$DEFINE PressLogSubjectMemento}
   {.$DEFINE PressLogMVP}
   {$DEFINE PressLogReport}
-  {$DEFINE PressLogOPF}
-    {.$DEFINE PressLogOPFPersistence}
+  {$DEFINE PressLogDAO}
+    {.$DEFINE PressLogDAOPersistence}
 
 {.$DEFINE PressDebugBaseUnits}
 
@@ -77,7 +77,7 @@
   {$UNDEF PressLogMVP}
   {$UNDEF PressLogSubject}
   {$UNDEF PressLogReport}
-  {$UNDEF PressLogOPF}
+  {$UNDEF PressLogDAO}
 {$ENDIF}
 
 {$IFNDEF PressLogEvents}
@@ -95,8 +95,8 @@
   {$UNDEF PressLogSubjectMemento}
 {$ENDIF}
 
-{$IFNDEF PressLogOPF}
-  {$UNDEF PressLogOPFPersistence}
+{$IFNDEF PressLogDAO}
+  {$UNDEF PressLogDAOPersistence}
 {$ENDIF}
 
 {$IFDEF VER130}

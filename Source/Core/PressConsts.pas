@@ -61,7 +61,7 @@ resourcestring
   SMetadataNotFound = 'Metadata ''%s'' não encontrado';
   SMetadataParseError = 'Erro ao interpretar metadata: "(%d,%d) %s"' + SPressLineBreak + '"%s"';
   SNoLoggedUser = 'Não existe usuário logado';
-  SNoReference = 'Não existe referência';
+  SNoReferenceOrDataAccess = 'Não existe referência ou DAO';
   SPathReferencesNil = 'O caminho %s(''%s'') possui atributo(s) Reference apontando para nil';
   SPersistentClassNotFound = 'Classe persistente %s não encontrada';
   SSingletonClassNotFound = 'Classe Singleton %s não encontrada';

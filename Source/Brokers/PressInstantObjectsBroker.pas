@@ -1,6 +1,6 @@
 (*
   PressObjects, InstantObjects Persistence Broker
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -21,14 +21,13 @@ interface
 
 uses
   PressSubject,
-  PressQuery,
   PressPersistence,
   InstantConnectionManager,
   InstantConnectionManagerFormUnit,
   InstantPersistence;
 
 type
-  TPressInstantObjectsPersistence = class(TPressPersistence)
+  TPressInstantObjectsPersistence = class(TPressThirdPartyPersistence)
   private
     FConnectionManager: TInstantConnectionManager;
     FConnector: TInstantConnector;
@@ -43,14 +42,14 @@ type
     function GetIdentifierQuotes: string; override;
     function GetStrQuote: Char; override;
     procedure InitService; override;
-    procedure InternalCommitTransaction; override;
-    procedure InternalConnect; override;
-    procedure InternalDispose(AObject: TPressObject); override;
+    procedure InternalCommit; override;
+    procedure InternalShowConnectionManager; override;
+    procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
     procedure InternalExecuteStatement(const AStatement: string); override;
     function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; override;
-    function InternalRetrieve(const AClass, AId: string): TPressObject; override;
+    function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
-    procedure InternalRollbackTransaction; override;
+    procedure InternalRollback; override;
     procedure InternalStartTransaction; override;
     procedure InternalStore(AObject: TPressObject); override;
     property Connector: TInstantConnector read FConnector;
@@ -174,33 +173,27 @@ end;
 
 procedure TPressInstantObjectsPersistence.InstantLog(const AString: string);
 begin
-  {$IFDEF PressLogOPFPersistence}PressLogMsg(Self, 'Instant: ' + AString);{$ENDIF}
+  {$IFDEF PressLogDAOPersistence}PressLogMsg(Self, 'Instant: ' + AString);{$ENDIF}
 end;
 
-procedure TPressInstantObjectsPersistence.InternalCommitTransaction;
+procedure TPressInstantObjectsPersistence.InternalCommit;
 begin
   Connector.CommitTransaction;
 end;
 
-procedure TPressInstantObjectsPersistence.InternalConnect;
-begin
-  if Assigned(FConnectionManager) then
-    FConnectionManager.Execute;
-end;
-
-procedure TPressInstantObjectsPersistence.InternalDispose(AObject: TPressObject);
+procedure TPressInstantObjectsPersistence.InternalDispose(
+  AClass: TPressObjectClass; const AId: string);
 var
   VInstantObject: TInstantObject;
 begin
-  if AObject.IsPersistent then
-  begin
-    VInstantObject := CreateInstantObject(AObject);
+  VInstantObject := InstantFindClass(
+   AClass.ClassMetadata.PersistentName).Retrieve(AId, False);
+  if Assigned(VInstantObject) then
     try
       VInstantObject.Dispose;
     finally
       VInstantObject.Free;
     end;
-  end;
 end;
 
 procedure TPressInstantObjectsPersistence.InternalExecuteStatement(
@@ -224,7 +217,7 @@ begin
       if VInstantQuery is TInstantSQLQuery then
         for I := 0 to Pred(VInstantQuery.ObjectCount) do
           with TPressInstantSQLQueryFriend(VInstantQuery).ObjectReferenceList.RefItems[I] do
-            Result.AddReference(ObjectClassName, ObjectId)
+            Result.AddReference(ObjectClassName, ObjectId, Self)
       else
         { TODO : Implement }
         // for I := 0 to Pred(VQuery.ObjectCount) do
@@ -240,19 +233,18 @@ begin
 end;
 
 function TPressInstantObjectsPersistence.InternalRetrieve(
-  const AClass, AId: string): TPressObject;
+  AClass: TPressObjectClass; const AId: string;
+  AMetadata: TPressObjectMetadata): TPressObject;
 var
-  VPressObjectClass: TPressObjectClass;
   VInstantObject: TInstantObject;
 begin
-  VPressObjectClass := PressModel.ClassByName(AClass);
   VInstantObject := InstantFindClass(
-   VPressObjectClass.ClassMetadata.PersistentName).Retrieve(AId, False);
+   AClass.ClassMetadata.PersistentName).Retrieve(AId, False);
   if Assigned(VInstantObject) then
   begin
-    Result := VPressObjectClass.Create;
+    Result := AClass.Create(Self, AMetadata);
     try
-      Result.PersistentObject := VInstantObject;
+      PersistentObject[Result] := VInstantObject;
       ReadInstantObject(VInstantObject, Result);
     except
       Result.Free;
@@ -279,13 +271,19 @@ begin
     VQueryStr := VQueryStr + ' WHERE ' + WhereClause;
   if OrderByClause <> '' then
     VQueryStr := VQueryStr + ' ORDER BY ' + OrderByClause;
-  {$IFDEF PressLogOPF}PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');{$ENDIF}
+  {$IFDEF PressLogDAOPersistence}PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');{$ENDIF}
   Result := OQLQuery(VQueryStr);
 end;
 
-procedure TPressInstantObjectsPersistence.InternalRollbackTransaction;
+procedure TPressInstantObjectsPersistence.InternalRollback;
 begin
   Connector.RollbackTransaction;
+end;
+
+procedure TPressInstantObjectsPersistence.InternalShowConnectionManager;
+begin
+  if Assigned(FConnectionManager) then
+    FConnectionManager.Execute;
 end;
 
 procedure TPressInstantObjectsPersistence.InternalStartTransaction;
@@ -295,19 +293,20 @@ end;
 
 procedure TPressInstantObjectsPersistence.InternalStore(AObject: TPressObject);
 var
+  VPersistentObject: TObject;
   VInstantObject: TInstantObject;
 begin
-  if AObject.PersistentObject is TInstantObject then
+  VPersistentObject := PersistentObject[AObject];
+  if VPersistentObject is TInstantObject then
   begin
-    VInstantObject := TInstantObject(AObject.PersistentObject);
+    VInstantObject := TInstantObject(VPersistentObject);
     ReadPressObject(AObject, VInstantObject);
   end else
   begin
     VInstantObject := CreateInstantObject(AObject);
-    AObject.PersistentObject := VInstantObject;
+    PersistentObject[AObject] := VInstantObject;
   end;
   VInstantObject.Store;
-  PressAssignPersistentId(AObject, VInstantObject.PersistentId);
 end;
 
 procedure TPressInstantObjectsPersistence.ReadInstantObject(
@@ -325,7 +324,7 @@ procedure TPressInstantObjectsPersistence.ReadInstantObject(
     end else if AInstantReference.HasValue then
     begin
       VObject := PressModel.
-       ClassByPersistentName(AInstantReference.Value.ClassName).Create;
+       ClassByPersistentName(AInstantReference.Value.ClassName).Create(Self);
       ReadInstantObject(AInstantReference.Value, VObject);
       try
         APressReference.Value := VObject;
@@ -365,11 +364,11 @@ procedure TPressInstantObjectsPersistence.ReadInstantObject(
       if (VReference.ObjectClassName <> '') and (VReference.ObjectId <> '') then
       begin
         APressParts.AddReference(
-         VReference.ObjectClassName, VReference.ObjectId);
+         VReference.ObjectClassName, VReference.ObjectId, Self);
       end else
       begin
         VObject := PressModel.
-         ClassByPersistentName(AInstantParts[I].ClassName).Create;
+         ClassByPersistentName(AInstantParts[I].ClassName).Create(Self);
         ReadInstantObject(AInstantParts[I], VObject);
         try
           APressParts.Add(VObject);
@@ -395,11 +394,11 @@ procedure TPressInstantObjectsPersistence.ReadInstantObject(
       if (VReference.ObjectClassName <> '') and (VReference.ObjectId <> '') then
       begin
         APressReferences.AddReference(
-         VReference.ObjectClassName, VReference.ObjectId);
+         VReference.ObjectClassName, VReference.ObjectId, Self);
       end else if VReference.HasInstance then
       begin
         VObject := PressModel.
-         ClassByPersistentName(VReference.Instance.ClassName).Create;
+         ClassByPersistentName(VReference.Instance.ClassName).Create(Self);
         ReadInstantObject(VReference.Instance, VObject);
         try
           APressReferences.Add(VObject);
@@ -467,7 +466,7 @@ procedure TPressInstantObjectsPersistence.ReadPressObject(
   begin
     if APressReference.HasInstance and
      not APressReference.Value.IsPersistent then
-      APressReference.Value.Save;
+      APressReference.Value.Store;
     if (APressReference.ObjectClassName <> '') and
      (APressReference.ObjectId <> '') then
       AInstantReference.ReferenceObject(
@@ -508,7 +507,7 @@ procedure TPressInstantObjectsPersistence.ReadPressObject(
     begin
       VProxy := APressReferences.Proxies[I];
       if VProxy.HasInstance and not VProxy.Instance.IsPersistent then
-        VProxy.Instance.Save;
+        VProxy.Instance.Store;
       if (VProxy.ObjectClassName <> '') and (VProxy.ObjectId <> '') then
       begin
         VObjectReference := TPressInstantReferencesFriend(AInstantReferences).

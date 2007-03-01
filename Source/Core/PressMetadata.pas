@@ -21,8 +21,7 @@ interface
 uses
   Classes,
   PressParser,
-  PressSubject,
-  PressQuery;
+  PressSubject;
 
 type
   TPressMetaParserReader = class(TPressParserReader)

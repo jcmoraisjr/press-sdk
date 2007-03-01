@@ -1,6 +1,6 @@
 (*
   PressObjects, User Control Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -20,10 +20,19 @@ interface
 
 uses
   PressApplication,
-  PressSubject,
-  PressQuery;
+  PressNotifier,
+  PressSubject;
 
 type
+  TPressUserEvent = class(TPressEvent)
+  end;
+
+  TPressUserLogonEvent = class(TPressUserEvent)
+  end;
+
+  TPressUserLogoffEvent = class(TPressUserEvent)
+  end;
+
   TPressAccessMode = (amInvisible, amVisible, amWritable);
 
   TPressUser = class(TPressObject)
@@ -45,20 +54,38 @@ type
   end;
 
   TPressUserData = class(TPressService)
+  private
+    FCurrentUser: TPressUser;
+    FUserQuery: TPressUserQuery;
+    function GetCurrentUser: TPressUser;
+    function GetHasUser: Boolean;
   protected
-    class function InternalServiceType: TPressServiceType; override;
+    procedure DoneService; override;
+    function InternalLogon(const AUserID, APassword: string): Boolean; virtual;
     function InternalUserQueryClass: TPressUserQueryClass; virtual;
+    class function InternalServiceType: TPressServiceType; override;
+    property UserQuery: TPressUserQuery read FUserQuery;
   public
-    function UserQueryClass: TPressUserQueryClass;
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Logoff;
+    function Logon(const AUserID: string = ''; const APassword: string = ''): Boolean;
+    property CurrentUser: TPressUser read GetCurrentUser;
+    property HasUser: Boolean read GetHasUser;
   end;
 
 function PressUserData: TPressUserData;
 
 implementation
 
+uses
+  SysUtils,
+  PressClasses,
+  PressConsts;
+
 function PressUserData: TPressUserData;
 begin
-  Result := PressApp.DefaultService(stUserData) as TPressUserData;
+  Result := PressApp.DefaultService(TPressUserData) as TPressUserData;
 end;
 
 { TPressUser }
@@ -98,6 +125,54 @@ end;
 
 { TPressUserData }
 
+constructor TPressUserData.Create;
+begin
+  inherited Create;
+  FUserQuery := InternalUserQueryClass.Create;
+end;
+
+destructor TPressUserData.Destroy;
+begin
+  FCurrentUser.Free;
+  FUserQuery.Free;
+  inherited;
+end;
+
+procedure TPressUserData.DoneService;
+begin
+  inherited;
+  Logoff;
+end;
+
+function TPressUserData.GetCurrentUser: TPressUser;
+begin
+  if not Assigned(FCurrentUser) then
+    raise EPressError.Create(SNoLoggedUser);
+  Result := FCurrentUser;
+end;
+
+function TPressUserData.GetHasUser: Boolean;
+begin
+  Result := Assigned(FCurrentUser);
+end;
+
+function TPressUserData.InternalLogon(
+  const AUserID, APassword: string): Boolean;
+var
+  VNewUser: TPressUser;
+begin
+  VNewUser := UserQuery.CheckLogon(AUserID, APassword);
+  Result := Assigned(VNewUser);
+  if Result then
+    try
+      Logoff;
+      FCurrentUser := VNewUser;
+    except
+      VNewUser.Free;
+      raise;
+    end;
+end;
+
 class function TPressUserData.InternalServiceType: TPressServiceType;
 begin
   Result := stUserData;
@@ -108,14 +183,24 @@ begin
   Result := TPressUserQuery;
 end;
 
-function TPressUserData.UserQueryClass: TPressUserQueryClass;
+procedure TPressUserData.Logoff;
 begin
-  Result := InternalUserQueryClass;
+  if Assigned(FCurrentUser) then
+  begin
+    FCurrentUser.BeforeLogoff;  // friend class
+    TPressUserLogoffEvent.Create(Self).Notify;
+    FreeAndNil(FCurrentUser);
+  end;
 end;
 
-procedure RegisterServices;
+function TPressUserData.Logon(const AUserID, APassword: string): Boolean;
 begin
-  TPressUserData.RegisterService;
+  Result := InternalLogon(AUserID, APassword);
+  if Result then
+  begin
+    TPressUserLogonEvent.Create(Self).Notify;
+    CurrentUser.AfterLogon;  // friend class
+  end;
 end;
 
 procedure RegisterClasses;
@@ -125,7 +210,6 @@ begin
 end;
 
 initialization
-  RegisterServices;
   RegisterClasses;
 
 end.

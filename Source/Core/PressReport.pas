@@ -144,10 +144,10 @@ type
 
   TPressReportData = class(TPressService)
   protected
-    function InternalFindReportGroup(const AObjectClassName: string): TPressReportGroup; virtual; abstract;
+    function InternalFindReportGroup(ADataAccess: IPressDAO; const AObjectClassName: string): TPressReportGroup; virtual; abstract;
     class function InternalServiceType: TPressServiceType; override;
   public
-    function FindReportGroup(const AObjectClassName: string): TPressReportGroup;
+    function FindReportGroup(ADataAccess: IPressDAO; const AObjectClassName: string): TPressReportGroup;
   end;
 
   TPressReportGroup = class(TPressObject)
@@ -173,7 +173,7 @@ type
     procedure ReportNeedValue(const ADataSetName, AFieldName: string; var AValue: Variant; AForceData: Boolean);
     procedure SaveReport;
   protected
-    procedure Finalize; override;
+    procedure Finit; override;
     function GetReportCaption: string; virtual;
     procedure GetReportData(AStream: TStream); virtual;
     function GetReportVisible: Boolean; virtual;
@@ -199,8 +199,7 @@ implementation
 uses
   SysUtils,
   {$IFDEF PressLog}PressLog,{$ENDIF}
-  PressConsts,
-  PressQuery;
+  PressConsts;
 
 { Global routines }
 
@@ -444,9 +443,9 @@ end;
 { TPressReportData }
 
 function TPressReportData.FindReportGroup(
-  const AObjectClassName: string): TPressReportGroup;
+  ADataAccess: IPressDAO; const AObjectClassName: string): TPressReportGroup;
 begin
-  Result := InternalFindReportGroup(AObjectClassName);
+  Result := InternalFindReportGroup(ADataAccess, AObjectClassName);
 end;
 
 class function TPressReportData.InternalServiceType: TPressServiceType;
@@ -474,7 +473,7 @@ begin
   Report.Execute;
 end;
 
-procedure TPressReportGroupItem.Finalize;
+procedure TPressReportGroupItem.Finit;
 begin
   FReport.Free;
   FDataSources.Free;

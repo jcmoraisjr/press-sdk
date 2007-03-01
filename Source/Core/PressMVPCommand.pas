@@ -849,7 +849,7 @@ begin
       Exit;
     Model.Subject.DisableUpdates;
     try
-      Model.Subject.Save;
+      Model.Subject.Store;
     finally
       Model.Subject.EnableUpdates;
     end;

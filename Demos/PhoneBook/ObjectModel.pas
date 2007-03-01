@@ -5,7 +5,7 @@ unit ObjectModel;
 interface
 
 uses
-  PressSubject, PressAttributes, PressQuery;
+  PressSubject, PressAttributes;
 
 type
   TAddress = class;
@@ -14,8 +14,6 @@ type
   {$M-}
 
   TCustomObject = class(TPressObject)
-  protected
-    procedure InternalSave; override;
   end;
 
   TContact = class(TCustomObject)
@@ -151,14 +149,6 @@ implementation
 
 uses
   PressPersistence;
-
-{ TCustomObject }
-
-procedure TCustomObject.InternalSave;
-begin
-  if PressDefaultPersistence.ClassType <> TPressPersistence then
-    inherited;
-end;
 
 { TContact }
 
