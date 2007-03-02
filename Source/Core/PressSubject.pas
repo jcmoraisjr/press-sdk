@@ -788,16 +788,17 @@ type
   private
     FCalcUpdated: Boolean;
     FDisableChangesCount: Integer;
-    FUsePublishedGetter: Boolean;
-    FUsePublishedSetter: Boolean;
     FIsCalculating: Boolean;
     FIsChanged: Boolean;
     FIsNull: Boolean;
     FMetadata: TPressAttributeMetadata;
     FNotifier: TPressNotifier;
     FOwner: TPressObject;
+    FUsePublishedGetter: Boolean;
+    FUsePublishedSetter: Boolean;
     function CreateMemento: TPressAttributeMemento;
     function GetChangesDisabled: Boolean;
+    function GetDataAccess: IPressDAO;
     function GetDefaultValue: string;
     function GetEditMask: string;
     function GetIsCalcAttribute: Boolean;
@@ -805,11 +806,10 @@ type
     function GetName: string;
     function GetNotifier: TPressNotifier;
     function GetPersistentName: string;
-    procedure InitPropInfo;
-    procedure SetIsChanged(AValue: Boolean);
     function GetUsePublishedGetter: Boolean;
     function GetUsePublishedSetter: Boolean;
-    function GetDataAccess: IPressDAO;
+    procedure InitPropInfo;
+    procedure SetIsChanged(AValue: Boolean);
   protected
     function AccessError(const AAttributeName: string): EPressError;
     { TODO : Use exception messages from the PressDialog class }
