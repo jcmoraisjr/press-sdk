@@ -251,6 +251,8 @@ type
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
+  public
+    property _Name: TPressString read FName;
   published
     property Name: string read GetName write SetName;
   end;
