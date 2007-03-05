@@ -59,7 +59,8 @@ type
     procedure InternalRollback; virtual;
     class function InternalServiceType: TPressServiceType; override;
     procedure InternalShowConnectionManager; virtual;
-    function InternalSQLQuery(const ASQLStatement: string): TPressProxyList; virtual;
+    function InternalSQLForObject(const ASQLStatement: string): TPressProxyList; virtual;
+    function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList; virtual;
     procedure InternalStartTransaction; virtual;
     procedure InternalStore(AObject: TPressObject); virtual;
     function UnsupportedFeatureError(const AFeatureName: string): EPressError;
@@ -78,7 +79,8 @@ type
     function RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
     procedure Rollback;
     procedure ShowConnectionManager;
-    function SQLQuery(const ASQLStatement: string): TPressProxyList;
+    function SQLForObject(const ASQLStatement: string): TPressProxyList;
+    function SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
     procedure StartTransaction;
     procedure Store(AObject: TPressObject);
   end;
@@ -272,8 +274,14 @@ procedure TPressDAO.InternalShowConnectionManager;
 begin
 end;
 
-function TPressDAO.InternalSQLQuery(
+function TPressDAO.InternalSQLForObject(
   const ASQLStatement: string): TPressProxyList;
+begin
+  raise UnsupportedFeatureError('SQL Query');
+end;
+
+function TPressDAO.InternalSQLQuery(
+  AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
 begin
   raise UnsupportedFeatureError('SQL Query');
 end;
@@ -331,9 +339,15 @@ begin
   InternalShowConnectionManager;
 end;
 
-function TPressDAO.SQLQuery(const ASQLStatement: string): TPressProxyList;
+function TPressDAO.SQLForObject(
+  const ASQLStatement: string): TPressProxyList;
 begin
-  Result := InternalSQLQuery(ASQLStatement);
+  Result := InternalSQLForObject(ASQLStatement);
+end;
+
+function TPressDAO.SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
+begin
+  Result := InternalSQLQuery(AClass, ASQLStatement);
 end;
 
 procedure TPressDAO.StartTransaction;

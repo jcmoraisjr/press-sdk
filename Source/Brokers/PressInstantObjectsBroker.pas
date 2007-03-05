@@ -20,6 +20,7 @@ unit PressInstantObjectsBroker;
 interface
 
 uses
+  Db,
   PressSubject,
   PressPersistence,
   InstantConnectionManager,
@@ -33,6 +34,7 @@ type
     FConnector: TInstantConnector;
     procedure ConnectionManagerConnect(Sender: TObject; var ConnectionDef: TInstantConnectionDef; var Result: Boolean);
     function CreateInstantObject(AObject: TPressObject): TInstantObject;
+    function CreatePressObject(AClass: TPressObjectClass; ADataSet: TDataSet): TPressObject;
     procedure InstantGenerateOID(Sender: TObject; const AObject: TInstantObject; var Id: string);
     procedure InstantLog(const AString: string);
     { TODO : Use streaming to copy an InstantObject to a PressObject and vice-versa }
@@ -49,6 +51,8 @@ type
     function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
+    function InternalSQLForObject(const ASQLStatement: string): TPressProxyList; override;
+    function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList; override;
     procedure InternalRollback; override;
     procedure InternalStartTransaction; override;
     procedure InternalStore(AObject: TPressObject); override;
@@ -103,6 +107,26 @@ begin
     Result := VInstantObjectClass.Create;
   try
     ReadPressObject(AObject, Result);
+  except
+    Result.Free;
+    raise;
+  end;
+end;
+
+function TPressInstantObjectsPersistence.CreatePressObject(
+  AClass: TPressObjectClass; ADataSet: TDataSet): TPressObject;
+var
+  VAttribute: TPressAttribute;
+  I: Integer;
+begin
+  Result := AClass.Create(Self);
+  try
+    for I := 0 to Pred(ADataSet.FieldCount) do
+    begin
+      VAttribute := Result.FindAttribute(ADataSet.FieldDefs[I].Name);
+      if Assigned(VAttribute) then
+        VAttribute.AsVariant := ADataSet.Fields[I].AsVariant;
+    end;
   except
     Result.Free;
     raise;
@@ -256,23 +280,53 @@ end;
 
 function TPressInstantObjectsPersistence.InternalRetrieveProxyList(
   AQuery: TPressQuery): TPressProxyList;
+
+  function SelectPart: string;
+  begin
+    Result := 'SELECT ' + AQuery.FieldNamesClause;
+  end;
+
+  function FromPart: string;
+  begin
+    Result := AQuery.FromClause;
+    if Result <> '' then
+      if (AQuery.Style = qsOQL) and AQuery.Metadata.IncludeSubClasses then
+        Result := ' FROM ANY ' + Result
+      else
+        Result := ' FROM ' + Result;
+  end;
+
+  function WherePart: string;
+  begin
+    Result := AQuery.WhereClause;
+    if Result <> '' then
+      Result := ' WHERE ' + Result;
+  end;
+
+  function GroupByPart: string;
+  begin
+    Result := AQuery.GroupByClause;
+    if Result <> '' then
+      Result := ' GROUP BY ' + Result;
+  end;
+
+  function OrderByPart: string;
+  begin
+    Result := AQuery.OrderByClause;
+    if Result <> '' then
+      Result := ' ORDER BY ' + Result;
+  end;
+
 var
   VQueryStr: string;
-  WhereClause: string;
-  OrderByClause: string;
 begin
-  VQueryStr := 'SELECT * FROM ';
-  if AQuery.Metadata.IncludeSubClasses then
-    VQueryStr := VQueryStr + 'ANY ';
-  VQueryStr := VQueryStr + AQuery.Metadata.ItemObjectClassName;
-  WhereClause := AQuery.WhereClause;
-  OrderByClause := AQuery.OrderByClause;
-  if WhereClause <> '' then
-    VQueryStr := VQueryStr + ' WHERE ' + WhereClause;
-  if OrderByClause <> '' then
-    VQueryStr := VQueryStr + ' ORDER BY ' + OrderByClause;
+  VQueryStr := SelectPart + FromPart + WherePart + GroupByPart + OrderByPart;
   {$IFDEF PressLogDAOPersistence}PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');{$ENDIF}
-  Result := OQLQuery(VQueryStr);
+  case AQuery.Style of
+    qsOQL: Result := OQLQuery(VQueryStr);
+    qsReference: Result := SQLForObject(VQueryStr);
+    else {qsCustom} Result := SQLQuery(AQuery.Metadata.ItemObjectClass, VQueryStr);
+  end;
 end;
 
 procedure TPressInstantObjectsPersistence.InternalRollback;
@@ -284,6 +338,62 @@ procedure TPressInstantObjectsPersistence.InternalShowConnectionManager;
 begin
   if Assigned(FConnectionManager) then
     FConnectionManager.Execute;
+end;
+
+function TPressInstantObjectsPersistence.InternalSQLForObject(
+  const ASQLStatement: string): TPressProxyList;
+var
+  VBroker: TInstantSQLBroker;
+  VDataSet: TDataSet;
+begin
+  VBroker := DefaultConnector.Broker as TInstantSQLBroker;
+  VDataSet := VBroker.AcquireDataSet(ASQLStatement);
+  try
+    Result := TPressProxyList.Create(True, ptShared);
+    try
+      VDataSet.Open;
+      while not VDataSet.Eof do
+      begin
+        Result.AddReference(
+         VDataSet.Fields[0].AsString, VDataSet.Fields[1].AsString, Self);
+        VDataSet.Next;
+      end;
+    except
+      Result.Free;
+      raise;
+    end;
+  finally
+    VBroker.ReleaseDataSet(VDataSet);
+  end;
+end;
+
+function TPressInstantObjectsPersistence.InternalSQLQuery(
+  AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
+var
+  VBroker: TInstantSQLBroker;
+  VDataSet: TDataSet;
+  VInstance: TPressObject;
+begin
+  VBroker := DefaultConnector.Broker as TInstantSQLBroker;
+  VDataSet := VBroker.AcquireDataSet(ASQLStatement);
+  try
+    Result := TPressProxyList.Create(True, ptShared);
+    try
+      VDataSet.Open;
+      while not VDataSet.Eof do
+      begin
+        VInstance := CreatePressObject(AClass, VDataSet);
+        Result.AddInstance(VInstance);
+        VInstance.Release;
+        VDataSet.Next;
+      end;
+    except
+      Result.Free;
+      raise;
+    end;
+  finally
+    VBroker.ReleaseDataSet(VDataSet);
+  end;
 end;
 
 procedure TPressInstantObjectsPersistence.InternalStartTransaction;

@@ -98,7 +98,6 @@ type
   TPressAttributeMetadata = class(TPressStreamable)
   private
     FAttributeClass: TPressAttributeClass;
-    FAttributeName: string;
     FCalcMetadata: TPressCalcMetadata;
     FDefaultValue: string;
     FEditMask: string;
@@ -110,7 +109,9 @@ type
     FOwner: TPressObjectMetadata;
     FPersistentName: string;
     FSize: Integer;
+    function GetAttributeName: string;
     function GetObjectClassName: string;
+    procedure SetAttributeClass(Value: TPressAttributeClass);
     procedure SetAttributeName(const Value: string);
     procedure SetCalcMetadata(Value: TPressCalcMetadata);
     procedure SetEnumMetadata(Value: TPressEnumMetadata);
@@ -123,8 +124,8 @@ type
     constructor Create(AOwner: TPressObjectMetadata); virtual;
     destructor Destroy; override;
     function CreateAttribute(AOwner: TPressObject): TPressAttribute;
-    property AttributeClass: TPressAttributeClass read FAttributeClass;
-    property AttributeName: string read FAttributeName write SetAttributeName;
+    property AttributeClass: TPressAttributeClass read FAttributeClass write SetAttributeClass;
+    property AttributeName: string read GetAttributeName write SetAttributeName;
     property CalcMetadata: TPressCalcMetadata read FCalcMetadata write SetCalcMetadata;
     property EnumMetadata: TPressEnumMetadata read FEnumMetadata write SetEnumMetadata;
     property Name: string read FName write SetName;
@@ -465,7 +466,8 @@ type
     function RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
     procedure Rollback;
     procedure ShowConnectionManager;
-    function SQLQuery(const ASQLStatement: string): TPressProxyList;
+    function SQLForObject(const ASQLStatement: string): TPressProxyList;
+    function SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
     procedure StartTransaction;
     procedure Store(AObject: TPressObject);
   end;
@@ -612,6 +614,8 @@ type
   TPressProxy = class;
   TPressProxyIterator = class;
 
+  TPressQueryStyle = (qsOQL, qsReference, qsCustom);
+
   TPressQueryClass = class of TPressQuery;
   TPressQueryIterator = TPressProxyIterator;
 
@@ -620,16 +624,20 @@ type
     FQueryItems: TPressAttribute;  // TPressReferences;
     FItemsDataAccess: IPressDAO;
     FMatchEmptyAndNull: Boolean;
+    FStyle: TPressQueryStyle;
     function GetMetadata: TPressQueryMetadata;
     function GetObjects(AIndex: Integer): TPressObject;
-    function GetOrderByClause: string;
-    function GetWhereClause: string;
+    procedure SetStyle(AValue: TPressQueryStyle);
   protected
+    procedure ConcatStatements(const AStatementStr, AConnectorToken: string; var ABuffer: string);
+    function GetFieldNamesClause: string; virtual;
+    function GetFromClause: string; virtual;
+    function GetGroupByClause: string; virtual;
+    function GetOrderByClause: string; virtual;
+    function GetWhereClause: string; virtual;
     procedure Init; override;
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
-    function InternalBuildOrderByClause: string; virtual;
     function InternalBuildStatement(AAttribute: TPressAttribute): string; virtual;
-    function InternalBuildWhereClause: string; virtual;
     procedure InternalUpdateReferenceList; virtual;
   public
     function Add(AObject: TPressObject): Integer;
@@ -641,11 +649,15 @@ type
     function Remove(AObject: TPressObject): Integer;
     function RemoveReference(AProxy: TPressProxy): Integer;
     procedure UpdateReferenceList;
+    property FieldNamesClause: string read GetFieldNamesClause;
+    property FromClause: string read GetFromClause;
+    property GroupByClause: string read GetGroupByClause;
     property ItemsDataAccess: IPressDAO read FItemsDataAccess;
     property MatchEmptyAndNull: Boolean read FMatchEmptyAndNull write FMatchEmptyAndNull;
     property Metadata: TPressQueryMetadata read GetMetadata;
     property Objects[AIndex: Integer]: TPressObject read GetObjects; default;
     property OrderByClause: string read GetOrderByClause;
+    property Style: TPressQueryStyle read FStyle write SetStyle;
     property WhereClause: string read GetWhereClause;
   end;
 
@@ -1205,12 +1217,38 @@ begin
   inherited;
 end;
 
+function TPressAttributeMetadata.GetAttributeName: string;
+begin
+  if Assigned(FAttributeClass) then
+    Result := FAttributeClass.AttributeName
+  else
+    Result := '';
+end;
+
 function TPressAttributeMetadata.GetObjectClassName: string;
 begin
   if Assigned(FObjectClass) then
     Result := FObjectClass.ClassName
   else
     Result := '';
+end;
+
+procedure TPressAttributeMetadata.SetAttributeClass(
+  Value: TPressAttributeClass);
+begin
+  if FAttributeClass <> Value then
+  begin
+    FAttributeClass := Value;
+
+    { TODO : Initialize default Size for Enum, Boolean and Date/Time
+      attribute types }
+    { TODO : Improve }
+    if (FSize = 0) and FAttributeClass.InheritsFrom(TPressNumeric) then
+      FSize := 10;
+    if (FEditMask = '') and (FAttributeClass = TPressCurrency) then
+      FEditMask := ',0.00';
+
+  end;
 end;
 
 procedure TPressAttributeMetadata.SetAttributeName(const Value: string);
@@ -1220,17 +1258,7 @@ begin
   VAttributeClass := Model.FindAttribute(Value);
   if not Assigned(VAttributeClass) then
     raise EPressError.CreateFmt(SUnsupportedAttributeType, [Value]);
-  FAttributeClass := VAttributeClass;
-  FAttributeName := Value;
-
-  { TODO : Initialize default Size for Enum, Boolean and Date/Time
-    attribute types }
-  { TODO : Improve }
-  if (FSize = 0) and FAttributeClass.InheritsFrom(TPressNumeric) then
-    FSize := 10;
-  if (FEditMask = '') and (FAttributeClass = TPressCurrency) then
-    FEditMask := ',0.00';
-
+  AttributeClass := VAttributeClass;
 end;
 
 procedure TPressAttributeMetadata.SetCalcMetadata(Value: TPressCalcMetadata);
@@ -2287,7 +2315,8 @@ end;
 
 procedure TPressObject.CreateAttributes;
 var
-  VAttribute: PPressAttribute;
+  VAttributePtr: PPressAttribute;
+  VAttribute: TPressAttribute;
   VMetadata: TPressAttributeMetadata;
 begin
   BeforeCreateAttributes;
@@ -2299,17 +2328,11 @@ begin
     while NextItem do
     begin
       VMetadata := CurrentItem;
-      VAttribute := InternalAttributeAddress(VMetadata.Name);
-      if Assigned(VAttribute) then
-      begin
-        if not Assigned(VAttribute^) then
-        begin
-          VAttribute^ := VMetadata.CreateAttribute(Self);
-          FAttributes.Add(VAttribute^);
-        end;
-      end else
-        raise EPressError.CreateFmt(SAttributeNotFound,
-         [VMetadata.Owner.ObjectClassName, VMetadata.Name]);
+      VAttribute := VMetadata.CreateAttribute(Self);
+      FAttributes.Add(VAttribute);
+      VAttributePtr := InternalAttributeAddress(VMetadata.Name);
+      if Assigned(VAttributePtr) then
+        VAttributePtr^ := VAttribute;
     end;
   finally
     Free;
@@ -2719,6 +2742,16 @@ begin
   FQueryItems.Clear;
 end;
 
+procedure TPressQuery.ConcatStatements(
+  const AStatementStr, AConnectorToken: string; var ABuffer: string);
+begin
+  if AStatementStr <> '' then
+    if ABuffer = '' then
+      ABuffer := '(' + AStatementStr + ')'
+    else
+      ABuffer := ABuffer + ' ' + AConnectorToken + ' (' + AStatementStr + ')';
+end;
+
 function TPressQuery.Count: Integer;
 begin
   Result := TPressReferences(FQueryItems).Count
@@ -2727,6 +2760,21 @@ end;
 function TPressQuery.CreateIterator: TPressQueryIterator;
 begin
   Result := TPressReferences(FQueryItems).CreateIterator;
+end;
+
+function TPressQuery.GetFieldNamesClause: string;
+begin
+  Result := '*';
+end;
+
+function TPressQuery.GetFromClause: string;
+begin
+  Result := Metadata.ItemObjectClassName;
+end;
+
+function TPressQuery.GetGroupByClause: string;
+begin
+  Result := '';
 end;
 
 function TPressQuery.GetMetadata: TPressQueryMetadata;
@@ -2741,12 +2789,23 @@ end;
 
 function TPressQuery.GetOrderByClause: string;
 begin
-  Result := InternalBuildOrderByClause;
+  { TODO : Removed PersistentName searching; implement path translation }
+  Result := Metadata.OrderFieldName;
 end;
 
 function TPressQuery.GetWhereClause: string;
 begin
-  Result := InternalBuildWhereClause;
+  Result := '';
+  with CreateAttributeIterator do
+  try
+    First;
+    Next;  // skip Id and QueryItems attributes
+    while NextItem do
+      { TODO : Improve connector token storage }
+      ConcatStatements(InternalBuildStatement(CurrentItem), 'and', Result);
+  finally
+    Free;
+  end;
 end;
 
 procedure TPressQuery.Init;
@@ -2755,6 +2814,7 @@ begin
   { TODO : Improve Items DAO assignment }
   FItemsDataAccess := DataAccess;
   FMatchEmptyAndNull := True;
+  FStyle := qsOQL;
 end;
 
 function TPressQuery.InternalAttributeAddress(
@@ -2766,11 +2826,6 @@ begin
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
 
-function TPressQuery.InternalBuildOrderByClause: string;
-begin
-  { TODO : Removed PersistentName searching; implement path translation }
-  Result := Metadata.OrderFieldName;
-end;
 
 function TPressQuery.InternalBuildStatement(
   AAttribute: TPressAttribute): string;
@@ -2862,32 +2917,6 @@ begin
       Result := IsNullStatement;
 end;
 
-function TPressQuery.InternalBuildWhereClause: string;
-
-  procedure ConcatStatements(
-    const AStatementStr, AConnectorToken: string; var ABuffer: string);
-  begin
-    if AStatementStr <> '' then
-      if ABuffer = '' then
-        ABuffer := '(' + AStatementStr + ')'
-      else
-        ABuffer := ABuffer + ' ' + AConnectorToken + ' (' + AStatementStr + ')';
-  end;
-
-begin
-  Result := '';
-  with CreateAttributeIterator do
-  try
-    First;
-    Next;  // skip Id and QueryItems attributes
-    while NextItem do
-      { TODO : Improve connector token storage }
-      ConcatStatements(InternalBuildStatement(CurrentItem), 'and', Result);
-  finally
-    Free;
-  end;
-end;
-
 procedure TPressQuery.InternalUpdateReferenceList;
 begin
   FQueryItems.DisableChanges;
@@ -2912,6 +2941,15 @@ end;
 function TPressQuery.RemoveReference(AProxy: TPressProxy): Integer;
 begin
   Result := TPressReferences(FQueryItems).RemoveReference(AProxy);
+end;
+
+procedure TPressQuery.SetStyle(AValue: TPressQueryStyle);
+begin
+  if FStyle <> AValue then
+  begin
+    FStyle := AValue;
+    Clear;
+  end;
 end;
 
 procedure TPressQuery.UpdateReferenceList;
