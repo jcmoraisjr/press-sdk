@@ -1264,7 +1264,10 @@ end;
 procedure TPressString.SetAsVariant(AValue: Variant);
 begin
   try
-    PubValue := AValue;
+    if AValue = Null then
+      Clear
+    else
+      PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
@@ -1459,7 +1462,10 @@ end;
 procedure TPressInteger.SetAsVariant(AValue: Variant);
 begin
   try
-    PubValue := AValue;
+    if AValue = Null then
+      Clear
+    else
+      PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
@@ -1587,7 +1593,10 @@ end;
 procedure TPressFloat.SetAsVariant(AValue: Variant);
 begin
   try
-    PubValue := AValue;
+    if AValue = Null then
+      Clear
+    else
+      PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
@@ -1735,7 +1744,10 @@ end;
 procedure TPressCurrency.SetAsVariant(AValue: Variant);
 begin
   try
-    PubValue := AValue;
+    if AValue = Null then
+      Clear
+    else
+      PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
@@ -1910,7 +1922,10 @@ end;
 procedure TPressEnum.SetAsVariant(AValue: Variant);
 begin
   try
-    PubValue := AValue;
+    if AValue = Null then
+      Clear
+    else
+      PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
@@ -2070,7 +2085,10 @@ end;
 procedure TPressBoolean.SetAsVariant(AValue: Variant);
 begin
   try
-    PubValue := AValue;
+    if AValue = Null then
+      Clear
+    else
+      PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
@@ -2237,7 +2255,10 @@ end;
 procedure TPressDate.SetAsVariant(AValue: Variant);
 begin
   try
-    PubValue := AValue;
+    if AValue = Null then
+      Clear
+    else
+      PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
@@ -2403,7 +2424,10 @@ end;
 procedure TPressTime.SetAsVariant(AValue: Variant);
 begin
   try
-    PubValue := AValue;
+    if AValue = Null then
+      Clear
+    else
+      PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
@@ -2574,7 +2598,10 @@ end;
 procedure TPressDateTime.SetAsVariant(AValue: Variant);
 begin
   try
-    PubValue := AValue;
+    if AValue = Null then
+      Clear
+    else
+      PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
@@ -2933,7 +2960,10 @@ end;
 procedure TPressBlob.SetAsVariant(AValue: Variant);
 begin
   try
-    PubValue := AValue;
+    if AValue = Null then
+      Clear
+    else
+      PubValue := AValue;
   except
     on E: EVariantError do
       raise InvalidValueError(AValue, E);
