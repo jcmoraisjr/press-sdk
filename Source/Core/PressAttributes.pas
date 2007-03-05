@@ -3141,6 +3141,7 @@ end;
 
 function TPressItem.GetValue: TPressObject;
 begin
+  VerifyCalcAttribute;
   Result := Proxy.Instance;
 end;
 
