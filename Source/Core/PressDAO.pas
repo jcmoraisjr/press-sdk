@@ -169,26 +169,30 @@ var
 begin
   { TODO : Improve }
   VObject := Retrieve(AClass, AId);
-  if Assigned(VObject) and VObject.IsPersistent then
-  begin
-    TPressObjectFriend(VObject).BeforeDispose;
-    StartTransaction;
-    try
-      VObject.DisableChanges;
+  try
+    if Assigned(VObject) and VObject.IsPersistent then
+    begin
+      TPressObjectFriend(VObject).BeforeDispose;
+      StartTransaction;
       try
-        {$IFDEF PressLogDAO}PressLogMsg(Self, 'Disposing', [VObject]);{$ENDIF}
-        TPressObjectFriend(VObject).InternalDispose(DisposeObject);
-        Cache.RemoveObject(VObject);
-        PressAssignPersistentId(VObject, '');
-      finally
-        VObject.EnableChanges;
+        VObject.DisableChanges;
+        try
+          {$IFDEF PressLogDAO}PressLogMsg(Self, 'Disposing', [VObject]);{$ENDIF}
+          TPressObjectFriend(VObject).InternalDispose(DisposeObject);
+          Cache.RemoveObject(VObject);
+          PressAssignPersistentId(VObject, '');
+        finally
+          VObject.EnableChanges;
+        end;
+        Commit;
+      except
+        Rollback;
+        raise;
       end;
-      Commit;
-    except
-      Rollback;
-      raise;
+      TPressObjectFriend(VObject).AfterDispose;
     end;
-    TPressObjectFriend(VObject).AfterDispose;
+  finally
+    VObject.Free;
   end;
 end;
 
