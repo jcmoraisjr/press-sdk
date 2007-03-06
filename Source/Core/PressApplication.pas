@@ -21,6 +21,7 @@ interface
 
 uses
   Forms,
+  PressCompatibility,
   PressClasses,
   PressNotifier;
 
@@ -45,7 +46,7 @@ type
 
   TPressServiceClass = class of TPressService;
 
-  TPressService = class(TInterfacedObject)
+  TPressService = class(TObject, IInterface)
   private
     FRegistry: TPressRegistry;
     function GetIsDefault: Boolean;
@@ -54,6 +55,9 @@ type
     procedure DoneService; virtual;
     procedure InitService; virtual;
     class function InternalServiceType: TPressServiceType; virtual; abstract;
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
   public
     constructor Create; virtual;
     destructor Destroy; override;
@@ -254,6 +258,11 @@ procedure TPressService.InitService;
 begin
 end;
 
+function TPressService.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then Result := 0 else Result := HResult($80004002);
+end;
+
 class procedure TPressService.RegisterService(AIsDefault: Boolean);
 begin
   PressApp.RegisterService(InternalServiceType, Self, AIsDefault);
@@ -266,6 +275,16 @@ begin
       Registry.DefaultService := Self
     else
       Registry.DefaultService := nil;
+end;
+
+function TPressService._AddRef: Integer;
+begin
+  Result := 1;
+end;
+
+function TPressService._Release: Integer;
+begin
+  Result := 1;
 end;
 
 { TPressServiceClassList }
