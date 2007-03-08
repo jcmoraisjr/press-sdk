@@ -414,6 +414,8 @@ type
     procedure SetHookedSubject(Value: TPressStructure);
   protected
     procedure InitCommands; override;
+    procedure InternalCreateCancelCommand; virtual;
+    procedure InternalCreateSaveCommand; virtual;
     function InternalCreateSelection: TPressMVPSelection; override;
     procedure Notify(AEvent: TPressEvent); override;
     property SubModels: TPressMVPModelList read GetSubModels;
@@ -1761,7 +1763,18 @@ end;
 procedure TPressMVPObjectModel.InitCommands;
 begin
   inherited;
-  AddCommands([TPressMVPSaveObjectCommand, TPressMVPCancelObjectCommand]);
+  InternalCreateSaveCommand;
+  InternalCreateCancelCommand;
+end;
+
+procedure TPressMVPObjectModel.InternalCreateCancelCommand;
+begin
+  AddCommand(TPressMVPCancelObjectCommand);
+end;
+
+procedure TPressMVPObjectModel.InternalCreateSaveCommand;
+begin
+  AddCommand(TPressMVPSaveObjectCommand);
 end;
 
 function TPressMVPObjectModel.InternalCreateSelection: TPressMVPSelection;
