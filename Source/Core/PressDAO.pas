@@ -37,6 +37,7 @@ type
     constructor Create; virtual;
     destructor Destroy; override;
     procedure AddObject(AObject: TPressObject); virtual;
+    function CreateIterator: TPressObjectIterator;
     function FindObject(AClass: TPressObjectClass; const AId: string): TPressObject;
     procedure ReleaseObjects; virtual;
     function RemoveObject(AObject: TPressObject): Integer; virtual;
@@ -105,6 +106,11 @@ constructor TPressDAOCache.Create;
 begin
   inherited Create;
   FObjectList := TPressObjectList.Create(False);
+end;
+
+function TPressDAOCache.CreateIterator: TPressObjectIterator;
+begin
+  Result := ObjectList.CreateIterator;
 end;
 
 destructor TPressDAOCache.Destroy;
