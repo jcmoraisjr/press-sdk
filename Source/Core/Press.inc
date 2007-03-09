@@ -52,8 +52,8 @@
       {$DEBUGINFO ON}
     {$ENDIF}
   {$ENDIF}
-  {$LOCALSYMBOLS ON}
   {$IFNDEF FPC}
+    {$LOCALSYMBOLS ON}
     {$IFDEF PressCrossReferenceInfo}
       {$REFERENCEINFO ON}
     {$ELSE}
