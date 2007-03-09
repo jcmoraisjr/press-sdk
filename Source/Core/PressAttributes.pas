@@ -707,6 +707,7 @@ implementation
 
 uses
   SysUtils,
+  {$IFDEF D6+}Variants,{$ENDIF}
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressConsts;
 
