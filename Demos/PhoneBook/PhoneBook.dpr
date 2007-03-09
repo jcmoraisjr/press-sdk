@@ -2,14 +2,14 @@ program PhoneBook;
 
 uses
   Forms,
-  PressInstantObjectsBroker,
-  // Insert at least one InstantObjects' unit broker here
+  Brokers in 'Brokers.pas',
   IOModel in 'IOModel.pas',
   ObjectModel in 'ObjectModel.pas',
   Main in 'Main.pas' {MainForm},
   MainPresenter in 'MainPresenter.pas',
   MainModel in 'MainModel.pas',
   MainCommand in 'MainCommand.pas',
+  Populate in 'Populate.pas',
   CustomEdit in 'CustomEdit.pas' {CustomEditForm},
   CustomEditPresenter in 'CustomEditPresenter.pas',
   ContactEdit in 'ContactEdit.pas' {ContactEditForm},
@@ -24,7 +24,6 @@ uses
   CityEditPresenter in 'CityEditPresenter.pas';
 
 {$R *.RES}
-{$R *.mdr} {IOModel}
 
 begin
   Application.Initialize;

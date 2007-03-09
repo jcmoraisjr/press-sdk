@@ -1,20 +1,12 @@
 == PhoneBook
 ============
 
-:: Delphi
+Para utilizar mapeamento e persistência do InstantObjects:
 
-Para executar o Demo Agenda Telefônica, abra e altere o arquivo
-principal do projeto, incluindo um broker do InstantObjects.
-
-:: Delphi e Lazarus
-
-Para executar o projeto sem um broker de persistência, remova
-todas as referências ao InstantObjects dentro do arquivo
-principal do projeto:
-
-1. PressInstantObjectsBroker
-2. IOModel
-3. {$R *.mdr}
-
-Note que sem o Broker, executar a Query e abrir o Combo de
-atributos Reference (City e Contact) causará uma exceção.
+1. remova o ponto em frente a cláusula "$DEFINE UseInstantObjects" -
+   arquivo PhoneBook.inc
+2. altere a unit Brokers.pas, removendo ou incluindo brokers do
+   InstantObjects
+3. inclua a unit IOModel como uma unit de modelo do IO (primeiro botão
+   do Model Explorer - View | InstantObjects Model Explorer)
+4. Salve todo o projeto (File | Save All)

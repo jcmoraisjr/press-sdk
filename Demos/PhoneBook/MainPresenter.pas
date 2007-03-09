@@ -5,21 +5,32 @@ unit MainPresenter;
 interface
 
 uses
-  PressMVPPresenter;
+  PressSubject, PressMVPPresenter;
 
 type
   TMainPresenter = class(TPressMVPMainFormPresenter)
+  private
+    FInternalCache: TPressObjectList;
   protected
     procedure InitPresenter; override;
     procedure Running; override;
+  public
+    destructor Destroy; override;
   end;
 
 implementation
 
 uses
-  PressUser, PressMVPCommand, MainCommand, ObjectModel, Main, MainModel;
+  PressUser, PressMVPCommand, MainCommand, ObjectModel,
+  Main, MainModel, Populate;
 
 { TMainPresenter }
+
+destructor TMainPresenter.Destroy;
+begin
+  FInternalCache.Free;
+  inherited;
+end;
 
 procedure TMainPresenter.InitPresenter;
 begin
@@ -36,6 +47,10 @@ procedure TMainPresenter.Running;
 begin
   inherited;
   PressUserData.Logon;
+  {$IFNDEF UseInstantObjects}
+  FInternalCache := TPressObjectList.Create(True);
+  PopulatePhoneBook(FInternalCache);
+  {$ENDIF}
 end;
 
 initialization

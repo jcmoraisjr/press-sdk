@@ -4,6 +4,8 @@ unit IOModel;
 
 interface
 
+{$IFDEF UseInstantObjects}
+
 uses
   InstantPersistence;
 
@@ -120,7 +122,11 @@ type
     property PhoneType: Integer read GetPhoneType write SetPhoneType;
   end;
 
+{$ENDIF}
+
 implementation
+
+{$IFDEF UseInstantObjects}
 
 { TContact }
 
@@ -298,5 +304,7 @@ initialization
     TPerson,
     TPhone
   ]);
+
+{$ENDIF}
 
 end.
