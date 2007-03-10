@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <ProjectOptions>
+    <Units Count="1">
+      <Unit0>
+        <Filename Value="PhoneBook.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <EditorIndex Value="0"/>
+        <UsageCount Value="20"/>
+        <Loaded Value="True"/>
+      </Unit0>
+    </Units>
+  </ProjectOptions>
+  <CompilerOptions>
+    <SearchPaths>
+      <OtherUnitFiles Value="../../Source/Core/"/>
+    </SearchPaths>
+  </CompilerOptions>
+</CONFIG>
