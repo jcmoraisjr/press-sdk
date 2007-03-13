@@ -417,6 +417,8 @@ begin
     PersistentObject[AObject] := VInstantObject;
   end;
   VInstantObject.Store;
+  if AObject.Id = '' then
+    AObject.Id := VInstantObject.Id;
 end;
 
 procedure TPressInstantObjectsPersistence.ReadInstantObject(
