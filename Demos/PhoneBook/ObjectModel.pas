@@ -82,7 +82,8 @@ type
   protected
     function InternalCreateIterator: TPressItemsIterator; override;
   public
-    function Add(AObject: TPhone): Integer;
+    function Add: TPhone; overload;
+    function Add(AObject: TPhone): Integer; overload;
     function CreateIterator: TPhoneIterator;
     function IndexOf(AObject: TPhone): Integer;
     procedure Insert(AIndex: Integer; AObject: TPhone);
@@ -250,6 +251,11 @@ begin
 end;
 
 { TPhoneParts }
+
+function TPhoneParts.Add: TPhone;
+begin
+  Result := inherited Add as TPhone;
+end;
 
 function TPhoneParts.Add(AObject: TPhone): Integer;
 begin
