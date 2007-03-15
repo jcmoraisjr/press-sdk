@@ -48,7 +48,7 @@ type
     function GetName: string;
     procedure SetName(const Value: string);
   protected
-    procedure Initialize; override;
+    procedure Init; override;
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
   public
@@ -271,7 +271,7 @@ begin
   Result := FName.Value;
 end;
 
-procedure TPressProjectExplorer.Initialize;
+procedure TPressProjectExplorer.Init;
 begin
   inherited;
   { TODO : Improve }

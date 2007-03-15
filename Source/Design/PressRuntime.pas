@@ -21,7 +21,6 @@ interface
 uses
   Classes,
   PressSubject,
-  PressQuery,
   PressAttributes,
   PressProjectBOModel,
   PressCodeUpdater;
