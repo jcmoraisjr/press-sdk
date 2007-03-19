@@ -267,8 +267,10 @@ procedure TPressCodeUpdater.ExtractBODeclarations(
     if VLastStatement is TPressPascalPlainStatement then
     begin
       Reader.Position := VLastStatement.StartPos;
+      { TODO : Support something beyond a string constant? }
       if SameText(Reader.ReadToken, SPressResultStr) and
-       (Reader.ReadToken = ':=') then
+       (Reader.ReadToken = ':=') and
+       ((Reader.ReadNextToken = 'concat') or (Reader.ReadNextToken = '''')) then
         Result := Reader.ReadConcatString;
     end;
   end;
