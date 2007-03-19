@@ -501,6 +501,7 @@ type
     FOwnerAttribute: TPressStructure;
     FPersistentId: string;
     procedure CreateAttributes;
+    function EnsureDataAccess: IPressDAO;
     function GetAttributes(AIndex: Integer): TPressAttribute;
     function GetChangesDisabled: Boolean;
     function GetId: string;
@@ -623,6 +624,7 @@ type
     FItemsDataAccess: IPressDAO;
     FMatchEmptyAndNull: Boolean;
     FStyle: TPressQueryStyle;
+    function EnsureItemsDataAccess: IPressDAO;
     function GetMetadata: TPressQueryMetadata;
     function GetObjects(AIndex: Integer): TPressObject;
     procedure SetStyle(AValue: TPressQueryStyle);
@@ -969,7 +971,7 @@ type
 
 procedure PressAssignPersistentId(AObject: TPressObject; const AId: string);
 function PressModel: TPressModel;
-function PressDefaultDAO: IPressDAO;
+function PressDefaultDAO(const AForce: Boolean = True): IPressDAO;
 
 implementation
 
@@ -1019,9 +1021,13 @@ begin
   end;
 end;
 
-function PressDefaultDAO: IPressDAO;
+function PressDefaultDAO(const AForce: Boolean): IPressDAO;
 begin
-  Result := PressApp.DefaultService(stDAO) as IPressDAO;
+  with PressApp.Registry[stDAO] do
+    if AForce or HasDefaultService then
+      Result := DefaultService as IPressDAO
+    else
+      Result := nil;
 end;
 
 { TPressEnumMetadata }
@@ -2294,10 +2300,10 @@ constructor TPressObject.Create(
   ADataAccess: IPressDAO; AMetadata: TPressObjectMetadata);
 begin
   inherited Create;
-  if Assigned(ADataAccess) then
-    FDataAccess := ADataAccess
+  if not Assigned(ADataAccess) then
+    FDataAccess := PressDefaultDAO(False)
   else
-    FDataAccess := PressDefaultDAO;
+    FDataAccess := ADataAccess;
   FMetadata := AMetadata;
   Init;
 end;
@@ -2369,7 +2375,7 @@ end;
 procedure TPressObject.Dispose;
 begin
   if IsPersistent then
-    DataAccess.Dispose(ClassType, PersistentId);
+    EnsureDataAccess.Dispose(ClassType, PersistentId);
 end;
 
 procedure TPressObject.EnableChanges;
@@ -2384,6 +2390,16 @@ begin
     Dec(FDisableUpdatesCount);
   if FDisableUpdatesCount = 0 then
     NotifyInvalidate;
+end;
+
+function TPressObject.EnsureDataAccess: IPressDAO;
+begin
+  if not Assigned(FDataAccess) then
+  begin
+    FDataAccess := PressDefaultDAO;
+    FDataAccess.Assign(Self);
+  end;
+  Result := FDataAccess;
 end;
 
 function TPressObject.FindAttribute(const AAttributeName: string): TPressAttribute;
@@ -2530,7 +2546,8 @@ begin
   DisableChanges;
   try
     CreateAttributes;
-    DataAccess.Assign(Self);
+    if Assigned(FDataAccess) then
+      FDataAccess.Assign(Self);
   finally
     EnableChanges;
   end;
@@ -2646,7 +2663,7 @@ end;
 
 procedure TPressObject.Store;
 begin
-  DataAccess.Store(Self);
+  EnsureDataAccess.Store(Self);
 end;
 
 procedure TPressObject.UnchangeAttributes;
@@ -2754,6 +2771,13 @@ end;
 function TPressQuery.CreateIterator: TPressQueryIterator;
 begin
   Result := TPressReferences(FQueryItems).CreateIterator;
+end;
+
+function TPressQuery.EnsureItemsDataAccess: IPressDAO;
+begin
+  if not Assigned(FItemsDataAccess) then
+    FItemsDataAccess := PressDefaultDAO;
+  Result := FItemsDataAccess;
 end;
 
 function TPressQuery.GetFieldNamesClause: string;
@@ -2916,7 +2940,7 @@ begin
   FQueryItems.DisableChanges;
   try
     TPressReferences(FQueryItems).
-     AssignProxyList(ItemsDataAccess.RetrieveProxyList(Self));
+     AssignProxyList(EnsureItemsDataAccess.RetrieveProxyList(Self));
   finally
     FQueryItems.EnableChanges;
   end;
