@@ -166,9 +166,10 @@ type
     FHeaderCaption: string;
     FOwner: TPressMVPColumnData;
     FWidth: Integer;
+    procedure InitColumnItem(const AAttributeName: string);
     procedure SetAttributeName(const Value: string);
   public
-    constructor Create(AOwner: TPressMVPColumnData);
+    constructor Create(AOwner: TPressMVPColumnData; const AAttributeName: string);
     procedure ReadColumnItem(const AColumnItem: string);
   published
     property AttributeName: string read FAttributeName write SetAttributeName;
@@ -217,7 +218,7 @@ type
   public
     constructor Create(AMap: TPressMap);
     destructor Destroy; override;
-    function AddColumn: TPressMVPColumnItem;
+    function AddColumn(const AAttributeName: string): TPressMVPColumnItem;
     function ColumnCount: Integer;
     property Columns[AIndex: Integer]: TPressMVPColumnItem read GetColumns; default;
     property Map: TPressMap read FMap;
@@ -736,36 +737,74 @@ end;
 
 { TPressMVPColumnItem }
 
-constructor TPressMVPColumnItem.Create(AOwner: TPressMVPColumnData);
+constructor TPressMVPColumnItem.Create(
+  AOwner: TPressMVPColumnData; const AAttributeName: string);
 begin
   inherited Create;
   FOwner := AOwner;
-  FAttributeAlignment := taLeftJustify;
+  InitColumnItem(AAttributeName);
+end;
+
+procedure TPressMVPColumnItem.InitColumnItem(const AAttributeName: string);
+var
+  VMetadata: TPressAttributeMetadata;
+  VPos: Integer;
+begin
+  AttributeName := AAttributeName;
+  VPos := Length(AAttributeName);
+  while (VPos > 0) and (AAttributeName[VPos] <> SPressAttributeSeparator) do
+    Dec(VPos);
+  if VPos > 0 then
+    FHeaderCaption := Copy(AAttributeName, 1, VPos - 1)
+  else
+    FHeaderCaption := AAttributeName;
+  VMetadata := FOwner.Map.MetadataByPath(AAttributeName);
+  if VMetadata.AttributeClass.InheritsFrom(TPressBoolean) then
+    FAttributeAlignment := taCenter
+  else if VMetadata.AttributeClass.InheritsFrom(TPressNumeric) then
+    FAttributeAlignment := taRightJustify
+  else
+    FAttributeAlignment := taLeftJustify;
+  FWidth := 8 * VMetadata.Size;
   FHeaderAlignment := taCenter;
-  FWidth := 64;
 end;
 
 procedure TPressMVPColumnItem.ReadColumnItem(const AColumnItem: string);
+var
+  VToken: string;
+  VPToken: PChar;
+  VPos: Integer;
 begin
   if AColumnItem = '' then
     Exit;
-  if AColumnItem[1] in ['0'..'9'] then
-  begin
-    try
-      FWidth := StrtoInt(AColumnItem)
-    except
-      on E: Exception do
-        if not (E is EConvertError) then
-          raise;
-    end;
+  VPos := Pos(',', AColumnItem);
+  if VPos > 0 then
+    VToken := Copy(AColumnItem, 1, VPos - 1)
+  else
+    VToken := AColumnItem;
+  try
+    FWidth := StrtoInt(VToken)
+  except
+    on E: Exception do
+      if not (E is EConvertError) then
+        raise;
   end;
-  { TODO : Implement alignments, caption }
+  if VPos > 0 then
+  begin
+    VToken := Copy(AColumnItem, VPos + 1, Length(AColumnItem) - VPos);
+    VPToken := PChar(VToken);
+    if (VToken[1] in ['''', '"']) and (VToken[1] = VToken[Length(VToken)]) then
+      VToken := AnsiExtractQuotedStr(VPToken, VToken[1]);
+  end else
+    VToken := '';
+  if VToken <> '' then
+    FHeaderCaption := VToken;
+  { TODO : Implement alignments }
 end;
 
 procedure TPressMVPColumnItem.SetAttributeName(const Value: string);
 var
   VMetadata: TPressAttributeMetadata;
-  VPos: Integer;
 begin
   VMetadata := FOwner.Map.FindMetadata(Value);
   if not Assigned(VMetadata) then
@@ -775,20 +814,6 @@ begin
     raise EPressMVPError.CreateFmt(SAttributeIsNotValue,
      [FOwner.Map.ObjectMetadata.ObjectClassName, Value]);
   FAttributeName := Value;
-  VPos := Length(Value);
-  while (VPos > 0) and (Value[VPos] <> SPressAttributeSeparator) do
-    Dec(VPos);
-  if VPos > 0 then
-    FHeaderCaption := Copy(Value, 1, VPos - 1)
-  else
-    FHeaderCaption := Value;
-  if VMetadata.AttributeClass.InheritsFrom(TPressBoolean) then
-    FAttributeAlignment := taCenter
-  else if VMetadata.AttributeClass.InheritsFrom(TPressNumeric) then
-    FAttributeAlignment := taRightJustify
-  else
-    FAttributeAlignment := taLeftJustify;
-  FWidth := 8 * VMetadata.Size;
 end;
 
 { TPressMVPColumnList }
@@ -860,9 +885,10 @@ end;
 
 { TPressMVPColumnData }
 
-function TPressMVPColumnData.AddColumn: TPressMVPColumnItem;
+function TPressMVPColumnData.AddColumn(
+  const AAttributeName: string): TPressMVPColumnItem;
 begin
-  Result := TPressMVPColumnItem.Create(Self);
+  Result := TPressMVPColumnItem.Create(Self, AAttributeName);
   ColumnList.Add(Result);
 end;
 
@@ -903,8 +929,7 @@ end;
 procedure TPressMVPStructureModel.AssignColumnData(const AColumnData: string);
 var
   VLastDelimiter, VDelimiterPos, VBracket1Pos, VBracket2Pos: Integer;
-  VColumnItemString: string;
-  VColumnItem: TPressMVPColumnItem;
+  VColumnItemStr: string;
 begin
   if AColumnData = '' then
     Exit;
@@ -915,23 +940,19 @@ begin
     while (VDelimiterPos <= Length(AColumnData)) and
      (AColumnData[VDelimiterPos] <> SPressFieldDelimiter) do
       Inc(VDelimiterPos);
-    VColumnItemString :=
+    VColumnItemStr :=
      Copy(AColumnData, VLastDelimiter + 1, VDelimiterPos - VLastDelimiter - 1);
-    VBracket1Pos := Pos(SPressBrackets[1], VColumnItemString);
-    VBracket2Pos := Pos(SPressBrackets[2], VColumnItemString);
+    VBracket1Pos := Pos(SPressBrackets[1], VColumnItemStr);
+    VBracket2Pos := Pos(SPressBrackets[2], VColumnItemStr);
     if VBracket1Pos > VBracket2Pos then
       raise EPressMVPError.CreateFmt(SColumnDataParseError,
        [Subject.ClassName, Subject.Name, AColumnData]);
-    VColumnItem := ColumnData.AddColumn;
-    if VBracket1Pos = 0 then
-      VColumnItem.AttributeName := VColumnItemString
+    if VBracket1Pos > 0 then
+      ColumnData.
+       AddColumn(Copy(VColumnItemStr, 1, VBracket1Pos - 1)).ReadColumnItem(
+       Copy(VColumnItemStr, VBracket1Pos + 1, VBracket2Pos - VBracket1Pos - 1))
     else
-    begin
-      VColumnItem.AttributeName :=
-       Copy(VColumnItemString, 1, VBracket1Pos - 1);
-      VColumnItem.ReadColumnItem(Copy(
-       VColumnItemString, VBracket1Pos + 1, VBracket2Pos - VBracket1Pos - 1));
-    end;
+      ColumnData.AddColumn(VColumnItemStr);
     VLastDelimiter := VDelimiterPos;
   until VDelimiterPos > Length(AColumnData);
 end;
