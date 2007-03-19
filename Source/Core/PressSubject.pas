@@ -26,7 +26,6 @@ uses
   Contnrs,
   PressCompatibility,
   PressClasses,
-  PressApplication,
   PressNotifier;
 
 type
@@ -368,7 +367,7 @@ type
 
   { Model declaration }
 
-  TPressModel = class(TPressService)
+  TPressModel = class(TObject)
   private
     FAttributes: TClassList;
     FClasses: TClassList;
@@ -383,11 +382,10 @@ type
     function InternalFindAttribute(const AAttributeName: string): TPressAttributeClass; virtual;
     function InternalFindClass(const AClassName: string): TPressObjectClass; virtual;
     function InternalParentMetadataOf(AMetadata: TPressObjectMetadata): TPressObjectMetadata; virtual;
-    class function InternalServiceType: TPressServiceType; override;
     property EnumMetadatas: TPressEnumMetadataList read FEnumMetadatas;
     property Metadatas: TPressObjectMetadataList read FMetadatas;
   public
-    constructor Create; override;
+    constructor Create;
     destructor Destroy; override;
     procedure AddAttribute(AAttributeClass: TPressAttributeClass);
     procedure AddClass(AClass: TPressObjectClass);
@@ -978,6 +976,7 @@ implementation
 uses
   PressConsts,
   {$IFDEF PressLog}PressLog,{$ENDIF}
+  PressApplication,
   PressAttributes,
   PressMetadata;
 
@@ -1006,7 +1005,7 @@ end;
 function PressModel: TPressModel;
 begin
   if not Assigned(_PressModel) then
-    _PressModel := TPressModel(PressApp.CreateService(TPressModel));
+    _PressModel := TPressModel.Create;
   Result := _PressModel;
 end;
 
@@ -2024,11 +2023,6 @@ begin
     Result := TPressObjectClass(VObjectClass.ClassParent).ClassMetadata
   else
     Result := nil;
-end;
-
-class function TPressModel.InternalServiceType: TPressServiceType;
-begin
-  Result := stBusinessModel;
 end;
 
 function TPressModel.MetadataByName(
@@ -4044,5 +4038,8 @@ end;
 initialization
   RegisterClasses;
   RegisterAttributes;
+
+finalization
+  _PressModel.Free;
 
 end.

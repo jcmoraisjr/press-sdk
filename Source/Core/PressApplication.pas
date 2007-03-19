@@ -40,7 +40,7 @@ type
 
   TPressServiceType = (
    stDAO, stOIDGenerator, stUserData, stReport, stReportData,
-   stMVPFactory, stBusinessModel);
+   stMVPFactory);
 
   TPressRegistry = class;
 
