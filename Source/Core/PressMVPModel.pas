@@ -1586,6 +1586,8 @@ procedure TPressMVPItemsModel.ItemsChanged(
   begin
     { TODO : Verify the correct index (when sorted) }
     ObjectList.InsertProxy(AEvent.Index, AEvent.Proxy);
+    if AEvent.Proxy.HasInstance then
+      Selection.Select(AEvent.Proxy.Instance);
   end;
 
   procedure ModifyItem;
