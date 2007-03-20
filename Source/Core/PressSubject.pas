@@ -2745,7 +2745,7 @@ end;
 
 procedure TPressQuery.Clear;
 begin
-  FQueryItems.Clear;
+  TPressReferences(FQueryItems).Clear;
 end;
 
 procedure TPressQuery.ConcatStatements(
