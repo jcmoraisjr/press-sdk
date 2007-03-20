@@ -910,6 +910,7 @@ type
   public
     function Add(AObject: TPressAttribute): Integer;
     function CreateIterator: TPressAttributeIterator;
+    function FindAttribute(const AAttributeName: string): TPressAttribute;
     function IndexOf(AObject: TPressAttribute): Integer;
     procedure Insert(Index: Integer; AObject: TPressAttribute);
     function Remove(AObject: TPressAttribute): Integer;
@@ -2403,14 +2404,8 @@ begin
 end;
 
 function TPressObject.FindAttribute(const AAttributeName: string): TPressAttribute;
-var
-  VAttribute: PPressAttribute;
 begin
-  VAttribute := InternalAttributeAddress(AAttributeName);
-  if Assigned(VAttribute) then
-    Result := VAttribute^
-  else
-    Result := nil;
+  Result := FAttributes.FindAttribute(AAttributeName);
 end;
 
 function TPressObject.FindPathAttribute(
@@ -3834,6 +3829,20 @@ end;
 function TPressAttributeList.CreateIterator: TPressAttributeIterator;
 begin
   Result := TPressAttributeIterator.Create(Self);
+end;
+
+function TPressAttributeList.FindAttribute(
+  const AAttributeName: string): TPressAttribute;
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(Count) do
+  begin
+    Result := Items[I];
+    if SameText(Result.Name, AAttributeName) then
+      Exit;
+  end;
+  Result := nil;
 end;
 
 function TPressAttributeList.GetItems(AIndex: Integer): TPressAttribute;
