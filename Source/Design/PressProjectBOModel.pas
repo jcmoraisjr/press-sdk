@@ -96,7 +96,7 @@ type
   protected
     function InternalCreateIterator: TPressItemsIterator; override;
   public
-    function Add: TPressProjectExplorerNode; overload;
+    function Add(AClass: TPressObjectClass = nil): TPressProjectExplorerNode; overload;
     function Add(AObject: TPressProjectExplorerNode): Integer; overload;
     class function AttributeName: string; override;
     function CreateIterator: TPressProjectExplorerNodeIterator;
@@ -276,8 +276,8 @@ begin
   RootNodes.Add.Caption := SPressProjectBusinessClasses;
   with RootNodes[0].ChildNodes do
   begin
-    Add.Caption := SPressProjectPersistentClasses;
-    Add.Caption := SPressProjectQueryClasses;
+    Add(TPressObjectClassEditor).Caption := SPressProjectPersistentClasses;
+    Add(TPressObjectClassEditor).Caption := SPressProjectQueryClasses;
     FPersistentClassesNode := Objects[0];
     FQueryClassesNode := Objects[1];
   end;
@@ -372,9 +372,10 @@ end;
 
 { TPressProjectExplorerNodeParts }
 
-function TPressProjectExplorerNodeParts.Add: TPressProjectExplorerNode;
+function TPressProjectExplorerNodeParts.Add(
+  AClass: TPressObjectClass): TPressProjectExplorerNode;
 begin
-  Result := inherited Add as TPressProjectExplorerNode;
+  Result := inherited Add(AClass) as TPressProjectExplorerNode;
 end;
 
 function TPressProjectExplorerNodeParts.Add(AObject: TPressProjectExplorerNode): Integer;
