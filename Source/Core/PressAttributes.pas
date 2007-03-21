@@ -637,7 +637,7 @@ type
     function InternalCreateIterator: TPressItemsIterator; override;
     *)
   public
-    function Add: TPressObject; overload;
+    function Add(AClass: TPressObjectClass = nil): TPressObject; overload;
     function Add(AObject: TPressObject): Integer; overload;
     function AddReference(const AClassName, AId: string; ADataAccess: IPressDAO): Integer;
     procedure Assign(Source: TPersistent); override;
@@ -3342,9 +3342,13 @@ end;
 
 { TPressItems }
 
-function TPressItems.Add: TPressObject;
+function TPressItems.Add(AClass: TPressObjectClass): TPressObject;
 begin
-  Result := ObjectClass.Create;
+  if Assigned(AClass) then
+    ValidateObjectClass(AClass)
+  else
+    AClass := ObjectClass;
+  Result := AClass.Create;
   try
     Add(Result);
   except
