@@ -168,6 +168,7 @@ type
     FWidth: Integer;
     procedure InitColumnItem(const AAttributeName: string);
     procedure SetAttributeName(const Value: string);
+    procedure SetWidth(Value: Integer);
   public
     constructor Create(AOwner: TPressMVPColumnData; const AAttributeName: string);
     procedure ReadColumnItem(const AColumnItem: string);
@@ -176,7 +177,7 @@ type
     property AttributeAlignment: TAlignment read FAttributeAlignment write FAttributeAlignment;
     property HeaderAlignment: TAlignment read FHeaderAlignment write FHeaderAlignment;
     property HeaderCaption: string read FHeaderCaption write FHeaderCaption;
-    property Width: Integer read FWidth write FWidth;
+    property Width: Integer read FWidth write SetWidth;
   end;
 
   TPressMVPColumnIterator = class;
@@ -765,7 +766,7 @@ begin
     FAttributeAlignment := taRightJustify
   else
     FAttributeAlignment := taLeftJustify;
-  FWidth := 8 * VMetadata.Size;
+  Width := 8 * VMetadata.Size;
   FHeaderAlignment := taCenter;
 end;
 
@@ -814,6 +815,14 @@ begin
     raise EPressMVPError.CreateFmt(SAttributeIsNotValue,
      [FOwner.Map.ObjectMetadata.ObjectClassName, Value]);
   FAttributeName := Value;
+end;
+
+procedure TPressMVPColumnItem.SetWidth(Value: Integer);
+begin
+  if Value > 8 then
+    FWidth := Value
+  else
+    FWidth := 8;
 end;
 
 { TPressMVPColumnList }
