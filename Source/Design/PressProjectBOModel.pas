@@ -28,7 +28,6 @@ type
 
   TPressProjectExplorer = class(TPressObject)
   private
-    FCommonClassesNode: TPressProjectExplorerNode;
     FPersistentClassesNode: TPressProjectExplorerNode;
     FQueryClassesNode: TPressProjectExplorerNode;
     FModelsNode: TPressProjectExplorerNode;
@@ -53,7 +52,6 @@ type
     class function InternalMetadataStr: string; override;
   public
     property CommandsNode: TPressProjectExplorerNode read FCommandsNode;
-    property CommonClassesNode: TPressProjectExplorerNode read FCommonClassesNode;
     property FormsNode: TPressProjectExplorerNode read FFormsNode;
     property FramesNode: TPressProjectExplorerNode read FFramesNode;
     property InteractorsNode: TPressProjectExplorerNode read FInteractorsNode;
@@ -278,12 +276,10 @@ begin
   RootNodes.Add.Caption := SPressProjectBusinessClasses;
   with RootNodes[0].ChildNodes do
   begin
-    Add.Caption := SPressProjectCommonClasses;
     Add.Caption := SPressProjectPersistentClasses;
     Add.Caption := SPressProjectQueryClasses;
-    FCommonClassesNode := Objects[0];
-    FPersistentClassesNode := Objects[1];
-    FQueryClassesNode := Objects[2];
+    FPersistentClassesNode := Objects[0];
+    FQueryClassesNode := Objects[1];
   end;
   RootNodes.Add.Caption := SPressProjectMVPClasses;
   with RootNodes[1].ChildNodes do

@@ -34,7 +34,6 @@ resourcestring
   SPressStringConstMsg = 'Constante string';
 
   SPressProjectBusinessClasses = 'Business classes';
-  SPressProjectCommonClasses = 'Common classes';
   SPressProjectPersistentClasses = 'Persistent classes';
   SPressProjectQueryClasses = 'Query classes';
   SPressProjectMVPClasses = 'MVP classes';
