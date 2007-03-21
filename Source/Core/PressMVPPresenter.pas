@@ -937,6 +937,9 @@ begin
     AIncluding := True;
   end;
 
+  if not Assigned(AParent) then
+    AParent := PressMainPresenter;
+
   { TODO : Catch memory leakage when an exception is raised }
   VModelClass := InternalModelClass;
   if Assigned(VModelClass) then
@@ -955,8 +958,6 @@ begin
     VView := TPressMVPView.CreateFromControl(
      VFormClass.Create(nil), True) as TPressMVPCustomFormView;
 
-  if not Assigned(AParent) then
-    AParent := PressMainPresenter;
   Result := Create(AParent, VModel, VView);
   Result.FAutoDestroy := AAutoDestroy;
   Result.Refresh;
