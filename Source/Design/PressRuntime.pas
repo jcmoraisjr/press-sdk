@@ -239,7 +239,7 @@ type
   end;
 
   function FindParentOfBO(const AClassName: string;
-    var AParentNode: TPressProjectExplorerNode): Boolean;
+    var AParentNode: TPressProjectExplorerItem): Boolean;
   var
     VClass: TPressObjectClass;
   begin
@@ -255,7 +255,7 @@ type
   end;
 
   function FindParentOfMVP(const AClassName: string;
-    var AParentNode: TPressProjectExplorerNode): Boolean;
+    var AParentNode: TPressProjectExplorerItem): Boolean;
 
     function IsMVP(AClassName, ASuffix: string): Boolean;
     begin
@@ -279,13 +279,13 @@ type
   end;
 
   procedure CreateNodes(
-    AParentNode: TPressProjectExplorerNode;
+    AParentNode: TPressProjectExplorerItem;
     AClass: TPressClassDeclaration;
     AProc: TPressClassRegistryProc = nil;
     AIncludeRootClass: Boolean = False);
   var
     VSubClasses: TPressClassDeclarationList;
-    VNode: TPressProjectExplorerNode;
+    VNode: TPressProjectExplorerItem;
     I: Integer;
   begin
     if AIncludeRootClass then
@@ -307,7 +307,7 @@ type
 var
   VClassDeclaration: TPressClassDeclaration;
   VClassName: string;
-  VParentNode: TPressProjectExplorerNode;
+  VParentNode: TPressProjectExplorerItem;
   I: Integer;
 begin
   for I := 0 to Pred(CodeUpdater.Classes.Count) do

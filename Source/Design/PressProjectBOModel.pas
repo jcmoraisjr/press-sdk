@@ -23,27 +23,27 @@ uses
   PressAttributes;
 
 type
-  TPressProjectExplorerNode = class;
-  TPressProjectExplorerNodeParts = class;
+  TPressProjectExplorerItem = class;
+  TPressProjectExplorerItemParts = class;
 
   TPressProjectExplorer = class(TPressObject)
   private
-    FPersistentClassesNode: TPressProjectExplorerNode;
-    FQueryClassesNode: TPressProjectExplorerNode;
-    FModelsNode: TPressProjectExplorerNode;
-    FViewsNode: TPressProjectExplorerNode;
-    FPresentersNode: TPressProjectExplorerNode;
-    FCommandsNode: TPressProjectExplorerNode;
-    FInteractorsNode: TPressProjectExplorerNode;
-    FUserAttributesNode: TPressProjectExplorerNode;
-    FUserEnumerationsNode: TPressProjectExplorerNode;
-    FUserGeneratorsNode: TPressProjectExplorerNode;
-    FFormsNode: TPressProjectExplorerNode;
-    FFramesNode: TPressProjectExplorerNode;
-    FUnknownClassesNode: TPressProjectExplorerNode;
+    FPersistentClassesNode: TPressProjectExplorerItem;
+    FQueryClassesNode: TPressProjectExplorerItem;
+    FModelsNode: TPressProjectExplorerItem;
+    FViewsNode: TPressProjectExplorerItem;
+    FPresentersNode: TPressProjectExplorerItem;
+    FCommandsNode: TPressProjectExplorerItem;
+    FInteractorsNode: TPressProjectExplorerItem;
+    FUserAttributesNode: TPressProjectExplorerItem;
+    FUserEnumerationsNode: TPressProjectExplorerItem;
+    FUserGeneratorsNode: TPressProjectExplorerItem;
+    FFormsNode: TPressProjectExplorerItem;
+    FFramesNode: TPressProjectExplorerItem;
+    FUnknownClassesNode: TPressProjectExplorerItem;
   private
     FName: TPressString;
-    FRootNodes: TPressProjectExplorerNodeParts;
+    FRootNodes: TPressProjectExplorerItemParts;
     function GetName: string;
     procedure SetName(const Value: string);
   protected
@@ -51,73 +51,71 @@ type
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
   public
-    property CommandsNode: TPressProjectExplorerNode read FCommandsNode;
-    property FormsNode: TPressProjectExplorerNode read FFormsNode;
-    property FramesNode: TPressProjectExplorerNode read FFramesNode;
-    property InteractorsNode: TPressProjectExplorerNode read FInteractorsNode;
-    property ModelsNode: TPressProjectExplorerNode read FModelsNode;
-    property PersistentClassesNode: TPressProjectExplorerNode read FPersistentClassesNode;
-    property PresentersNode: TPressProjectExplorerNode read FPresentersNode;
-    property QueryClassesNode: TPressProjectExplorerNode read FQueryClassesNode;
-    property UnknownClassesNode: TPressProjectExplorerNode read FUnknownClassesNode;
-    property UserAttributesNode: TPressProjectExplorerNode read FUserAttributesNode;
-    property UserEnumerationsNode: TPressProjectExplorerNode read FUserEnumerationsNode;
-    property UserGeneratorsNode: TPressProjectExplorerNode read FUserGeneratorsNode;
-    property ViewsNode: TPressProjectExplorerNode read FViewsNode;
+    property CommandsNode: TPressProjectExplorerItem read FCommandsNode;
+    property FormsNode: TPressProjectExplorerItem read FFormsNode;
+    property FramesNode: TPressProjectExplorerItem read FFramesNode;
+    property InteractorsNode: TPressProjectExplorerItem read FInteractorsNode;
+    property ModelsNode: TPressProjectExplorerItem read FModelsNode;
+    property PersistentClassesNode: TPressProjectExplorerItem read FPersistentClassesNode;
+    property PresentersNode: TPressProjectExplorerItem read FPresentersNode;
+    property QueryClassesNode: TPressProjectExplorerItem read FQueryClassesNode;
+    property UnknownClassesNode: TPressProjectExplorerItem read FUnknownClassesNode;
+    property UserAttributesNode: TPressProjectExplorerItem read FUserAttributesNode;
+    property UserEnumerationsNode: TPressProjectExplorerItem read FUserEnumerationsNode;
+    property UserGeneratorsNode: TPressProjectExplorerItem read FUserGeneratorsNode;
+    property ViewsNode: TPressProjectExplorerItem read FViewsNode;
   public
-    property RootNodes: TPressProjectExplorerNodeParts read FRootNodes;
+    property RootNodes: TPressProjectExplorerItemParts read FRootNodes;
   published
     property Name: string read GetName write SetName;
   end;
 
-  PPressProjectExplorerNode = ^TPressProjectExplorerNode;
-
-  TPressProjectExplorerNode = class(TPressObject)
+  TPressProjectExplorerItem = class(TPressObject)
   private
     FCaption: TPressString;
-    FChildNodes: TPressProjectExplorerNodeParts;
+    FChildNodes: TPressProjectExplorerItemParts;
     function GetCaption: string;
     procedure SetCaption(const Value: string);
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
   public
-    property ChildNodes: TPressProjectExplorerNodeParts read FChildNodes;
+    property ChildNodes: TPressProjectExplorerItemParts read FChildNodes;
   published
     property Caption: string read GetCaption write SetCaption;
   end;
 
-  TPressProjectExplorerNodeIterator = class;
+  TPressProjectExplorerItemIterator = class;
 
-  TPressProjectExplorerNodeParts = class(TPressParts)
+  TPressProjectExplorerItemParts = class(TPressParts)
   private
-    function GetObjects(AIndex: Integer): TPressProjectExplorerNode;
-    procedure SetObjects(AIndex: Integer; const Value: TPressProjectExplorerNode);
+    function GetObjects(AIndex: Integer): TPressProjectExplorerItem;
+    procedure SetObjects(AIndex: Integer; const Value: TPressProjectExplorerItem);
   protected
     function InternalCreateIterator: TPressItemsIterator; override;
   public
-    function Add(AClass: TPressObjectClass = nil): TPressProjectExplorerNode; overload;
-    function Add(AObject: TPressProjectExplorerNode): Integer; overload;
+    function Add(AClass: TPressObjectClass = nil): TPressProjectExplorerItem; overload;
+    function Add(AObject: TPressProjectExplorerItem): Integer; overload;
     class function AttributeName: string; override;
-    function CreateIterator: TPressProjectExplorerNodeIterator;
-    function IndexOf(AObject: TPressProjectExplorerNode): Integer;
-    procedure Insert(AIndex: Integer; AObject: TPressProjectExplorerNode);
-    function Remove(AObject: TPressProjectExplorerNode): Integer;
+    function CreateIterator: TPressProjectExplorerItemIterator;
+    function IndexOf(AObject: TPressProjectExplorerItem): Integer;
+    procedure Insert(AIndex: Integer; AObject: TPressProjectExplorerItem);
+    function Remove(AObject: TPressProjectExplorerItem): Integer;
     class function ValidObjectClass: TPressObjectClass; override;
-    property Objects[AIndex: Integer]: TPressProjectExplorerNode read GetObjects write SetObjects; default;
+    property Objects[AIndex: Integer]: TPressProjectExplorerItem read GetObjects write SetObjects; default;
   end;
 
-  TPressProjectExplorerNodeIterator = class(TPressItemsIterator)
+  TPressProjectExplorerItemIterator = class(TPressItemsIterator)
   private
-    function GetCurrentItem: TPressProjectExplorerNode;
+    function GetCurrentItem: TPressProjectExplorerItem;
   public
-    property CurrentItem: TPressProjectExplorerNode read GetCurrentItem;
+    property CurrentItem: TPressProjectExplorerItem read GetCurrentItem;
   end;
 
-  TPressObjectAttributeEditorParts = class;
-  TPressModuleEditor = class;
+  TPressAttributeMetadataRegistryParts = class;
+  TPressProjectModule = class;
 
-  TPressObjectClassEditor = class(TPressProjectExplorerNode)
+  TPressObjectMetadataRegistry = class(TPressProjectExplorerItem)
   private
     FRuntimeMetadata: TPressObjectMetadata;
   private
@@ -125,31 +123,31 @@ type
     FParentClass: TPressReference;
     FModule: TPressReference;
     FKeyName: TPressString;
-    FAttributeList: TPressObjectAttributeEditorParts;
+    FAttributeList: TPressAttributeMetadataRegistryParts;
     function GetKeyName: string;
-    function GetModule: TPressModuleEditor;
+    function GetModule: TPressProjectModule;
     function GetObjectClassName: string;
-    function GetParentClass: TPressObjectClassEditor;
+    function GetParentClass: TPressObjectMetadataRegistry;
     procedure SetKeyName(const Value: string);
-    procedure SetModule(Value: TPressModuleEditor);
+    procedure SetModule(Value: TPressProjectModule);
     procedure SetObjectClassName(const Value: string);
-    procedure SetParentClass(Value: TPressObjectClassEditor);
+    procedure SetParentClass(Value: TPressObjectMetadataRegistry);
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
   public
-    property AttributeList: TPressObjectAttributeEditorParts read FAttributeList;
+    property AttributeList: TPressAttributeMetadataRegistryParts read FAttributeList;
     property RuntimeMetadata: TPressObjectMetadata read FRuntimeMetadata write FRuntimeMetadata;
   published
     property KeyName: string read GetKeyName write SetKeyName;
-    property Module: TPressModuleEditor read GetModule write SetModule;
+    property Module: TPressProjectModule read GetModule write SetModule;
     property ObjectClassName: string read GetObjectClassName write SetObjectClassName;
-    property ParentClass: TPressObjectClassEditor read GetParentClass write SetParentClass;
+    property ParentClass: TPressObjectMetadataRegistry read GetParentClass write SetParentClass;
   end;
 
-  TPressAttributeRegistryEditor = class;
+  TPressAttributeTypeRegistry = class;
 
-  TPressObjectAttributeEditor = class(TPressObject)
+  TPressAttributeMetadataRegistry = class(TPressObject)
   private
     FRuntimeMetadata: TPressAttributeMetadata;
   private
@@ -161,16 +159,16 @@ type
     FEditMask: TPressString;
     FIsPersistent: TPressBoolean;
     FPersistentName: TPressString;
-    function GetAttributeType: TPressAttributeRegistryEditor;
-    function GetContainerType: TPressObjectClassEditor;
+    function GetAttributeType: TPressAttributeTypeRegistry;
+    function GetContainerType: TPressObjectMetadataRegistry;
     function GetDefaultValue: string;
     function GetEditMask: string;
     function GetIsPersistent: Boolean;
     function GetName: string;
     function GetPersistentName: string;
     function GetSize: Integer;
-    procedure SetAttributeType(Value: TPressAttributeRegistryEditor);
-    procedure SetContainerType(Value: TPressObjectClassEditor);
+    procedure SetAttributeType(Value: TPressAttributeTypeRegistry);
+    procedure SetContainerType(Value: TPressObjectMetadataRegistry);
     procedure SetDefaultValue(const Value: string);
     procedure SetEditMask(const Value: string);
     procedure SetIsPersistent(Value: Boolean);
@@ -183,8 +181,8 @@ type
   public
     property RuntimeMetadata: TPressAttributeMetadata read FRuntimeMetadata write FRuntimeMetadata;
   published
-    property AttributeType: TPressAttributeRegistryEditor read GetAttributeType write SetAttributeType;
-    property ContainerType: TPressObjectClassEditor read GetContainerType write SetContainerType;
+    property AttributeType: TPressAttributeTypeRegistry read GetAttributeType write SetAttributeType;
+    property ContainerType: TPressObjectMetadataRegistry read GetContainerType write SetContainerType;
     property DefaultValue: string read GetDefaultValue write SetDefaultValue;
     property EditMask: string read GetEditMask write SetEditMask;
     property IsPersistent: Boolean read GetIsPersistent write SetIsPersistent;
@@ -193,34 +191,34 @@ type
     property Size: Integer read GetSize write SetSize;
   end;
 
-  TPressObjectAttributeEditorIterator = class;
+  TPressAttributeMetadataRegistryIterator = class;
 
-  TPressObjectAttributeEditorParts = class(TPressParts)
+  TPressAttributeMetadataRegistryParts = class(TPressParts)
   private
-    function GetObjects(AIndex: Integer): TPressObjectAttributeEditor;
-    procedure SetObjects(AIndex: Integer; Value: TPressObjectAttributeEditor);
+    function GetObjects(AIndex: Integer): TPressAttributeMetadataRegistry;
+    procedure SetObjects(AIndex: Integer; Value: TPressAttributeMetadataRegistry);
   protected
     function InternalCreateIterator: TPressItemsIterator; override;
   public
-    function Add: TPressObjectAttributeEditor; overload;
-    function Add(AObject: TPressObjectAttributeEditor): Integer; overload;
+    function Add: TPressAttributeMetadataRegistry; overload;
+    function Add(AObject: TPressAttributeMetadataRegistry): Integer; overload;
     class function AttributeName: string; override;
-    function CreateIterator: TPressObjectAttributeEditorIterator;
-    function IndexOf(AObject: TPressObjectAttributeEditor): Integer;
-    procedure Insert(AIndex: Integer; AObject: TPressObjectAttributeEditor);
-    function Remove(AObject: TPressObjectAttributeEditor): Integer;
+    function CreateIterator: TPressAttributeMetadataRegistryIterator;
+    function IndexOf(AObject: TPressAttributeMetadataRegistry): Integer;
+    procedure Insert(AIndex: Integer; AObject: TPressAttributeMetadataRegistry);
+    function Remove(AObject: TPressAttributeMetadataRegistry): Integer;
     class function ValidObjectClass: TPressObjectClass; override;
-    property Objects[AIndex: Integer]: TPressObjectAttributeEditor read GetObjects write SetObjects; default;
+    property Objects[AIndex: Integer]: TPressAttributeMetadataRegistry read GetObjects write SetObjects; default;
   end;
 
-  TPressObjectAttributeEditorIterator = class(TPressItemsIterator)
+  TPressAttributeMetadataRegistryIterator = class(TPressItemsIterator)
   private
-    function GetCurrentItem: TPressObjectAttributeEditor;
+    function GetCurrentItem: TPressAttributeMetadataRegistry;
   public
-    property CurrentItem: TPressObjectAttributeEditor read GetCurrentItem;
+    property CurrentItem: TPressAttributeMetadataRegistry read GetCurrentItem;
   end;
 
-  TPressAttributeRegistryEditor = class(TPressProjectExplorerNode)
+  TPressAttributeTypeRegistry = class(TPressProjectExplorerItem)
   private
     FName: TPressString;
     function GetName: string;
@@ -232,7 +230,7 @@ type
     property Name: string read GetName write SetName;
   end;
 
-  TPressEnumerationRegistryEditor = class(TPressProjectExplorerNode)
+  TPressEnumerationRegistry = class(TPressProjectExplorerItem)
   private
     FName: TPressString;
     function GetName: string;
@@ -244,7 +242,7 @@ type
     property Name: string read GetName write SetName;
   end;
 
-  TPressModuleEditor = class(TPressObject)
+  TPressProjectModule = class(TPressObject)
   private
     FName: TPressString;
     function GetName: string;
@@ -276,8 +274,8 @@ begin
   RootNodes.Add.Caption := SPressProjectBusinessClasses;
   with RootNodes[0].ChildNodes do
   begin
-    Add(TPressObjectClassEditor).Caption := SPressProjectPersistentClasses;
-    Add(TPressObjectClassEditor).Caption := SPressProjectQueryClasses;
+    Add(TPressObjectMetadataRegistry).Caption := SPressProjectPersistentClasses;
+    Add(TPressObjectMetadataRegistry).Caption := SPressProjectQueryClasses;
     FPersistentClassesNode := Objects[0];
     FQueryClassesNode := Objects[1];
   end;
@@ -340,14 +338,14 @@ begin
   FName.Value := Value;
 end;
 
-{ TPressProjectExplorerNode }
+{ TPressProjectExplorerItem }
 
-function TPressProjectExplorerNode.GetCaption: string;
+function TPressProjectExplorerItem.GetCaption: string;
 begin
   Result := FCaption.Value;
 end;
 
-function TPressProjectExplorerNode.InternalAttributeAddress(
+function TPressProjectExplorerItem.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
   if SameText(AAttributeName, 'Caption') then
@@ -358,111 +356,111 @@ begin
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
 
-class function TPressProjectExplorerNode.InternalMetadataStr: string;
+class function TPressProjectExplorerItem.InternalMetadataStr: string;
 begin
-  Result := 'TPressProjectExplorerNode (' +
+  Result := 'TPressProjectExplorerItem (' +
    'Caption: String;' +
    'ChildNodes: ProjectExplorerNodeParts)';
 end;
 
-procedure TPressProjectExplorerNode.SetCaption(const Value: string);
+procedure TPressProjectExplorerItem.SetCaption(const Value: string);
 begin
   FCaption.Value := Value;
 end;
 
-{ TPressProjectExplorerNodeParts }
+{ TPressProjectExplorerItemParts }
 
-function TPressProjectExplorerNodeParts.Add(
-  AClass: TPressObjectClass): TPressProjectExplorerNode;
+function TPressProjectExplorerItemParts.Add(
+  AClass: TPressObjectClass): TPressProjectExplorerItem;
 begin
-  Result := inherited Add(AClass) as TPressProjectExplorerNode;
+  Result := inherited Add(AClass) as TPressProjectExplorerItem;
 end;
 
-function TPressProjectExplorerNodeParts.Add(AObject: TPressProjectExplorerNode): Integer;
+function TPressProjectExplorerItemParts.Add(AObject: TPressProjectExplorerItem): Integer;
 begin
   Result := inherited Add(AObject);
 end;
 
-class function TPressProjectExplorerNodeParts.AttributeName: string;
+class function TPressProjectExplorerItemParts.AttributeName: string;
 begin
   Result := 'ProjectExplorerNodeParts';
 end;
 
-function TPressProjectExplorerNodeParts.CreateIterator: TPressProjectExplorerNodeIterator;
+function TPressProjectExplorerItemParts.CreateIterator: TPressProjectExplorerItemIterator;
 begin
-  Result := TPressProjectExplorerNodeIterator.Create(ProxyList);
+  Result := TPressProjectExplorerItemIterator.Create(ProxyList);
 end;
 
-function TPressProjectExplorerNodeParts.GetObjects(
-  AIndex: Integer): TPressProjectExplorerNode;
+function TPressProjectExplorerItemParts.GetObjects(
+  AIndex: Integer): TPressProjectExplorerItem;
 begin
-  Result := inherited Objects[AIndex] as TPressProjectExplorerNode;
+  Result := inherited Objects[AIndex] as TPressProjectExplorerItem;
 end;
 
-function TPressProjectExplorerNodeParts.IndexOf(
-  AObject: TPressProjectExplorerNode): Integer;
+function TPressProjectExplorerItemParts.IndexOf(
+  AObject: TPressProjectExplorerItem): Integer;
 begin
   Result := inherited IndexOf(AObject);
 end;
 
-procedure TPressProjectExplorerNodeParts.Insert(AIndex: Integer;
-  AObject: TPressProjectExplorerNode);
+procedure TPressProjectExplorerItemParts.Insert(AIndex: Integer;
+  AObject: TPressProjectExplorerItem);
 begin
   inherited Insert(AIndex, AObject);
 end;
 
-function TPressProjectExplorerNodeParts.InternalCreateIterator: TPressItemsIterator;
+function TPressProjectExplorerItemParts.InternalCreateIterator: TPressItemsIterator;
 begin
   Result := CreateIterator;
 end;
 
-function TPressProjectExplorerNodeParts.Remove(
-  AObject: TPressProjectExplorerNode): Integer;
+function TPressProjectExplorerItemParts.Remove(
+  AObject: TPressProjectExplorerItem): Integer;
 begin
   Result := inherited Remove(AObject);
 end;
 
-procedure TPressProjectExplorerNodeParts.SetObjects(AIndex: Integer;
-  const Value: TPressProjectExplorerNode);
+procedure TPressProjectExplorerItemParts.SetObjects(AIndex: Integer;
+  const Value: TPressProjectExplorerItem);
 begin
   inherited Objects[AIndex] := Value;
 end;
 
-class function TPressProjectExplorerNodeParts.ValidObjectClass: TPressObjectClass;
+class function TPressProjectExplorerItemParts.ValidObjectClass: TPressObjectClass;
 begin
-  Result := TPressProjectExplorerNode;
+  Result := TPressProjectExplorerItem;
 end;
 
-{ TPressProjectExplorerNodeIterator }
+{ TPressProjectExplorerItemIterator }
 
-function TPressProjectExplorerNodeIterator.GetCurrentItem: TPressProjectExplorerNode;
+function TPressProjectExplorerItemIterator.GetCurrentItem: TPressProjectExplorerItem;
 begin
-  Result := inherited CurrentItem as TPressProjectExplorerNode;
+  Result := inherited CurrentItem as TPressProjectExplorerItem;
 end;
 
-{ TPressObjectClassEditor }
+{ TPressObjectMetadataRegistry }
 
-function TPressObjectClassEditor.GetKeyName: string;
+function TPressObjectMetadataRegistry.GetKeyName: string;
 begin
   Result := FKeyName.Value;
 end;
 
-function TPressObjectClassEditor.GetModule: TPressModuleEditor;
+function TPressObjectMetadataRegistry.GetModule: TPressProjectModule;
 begin
-  Result := FModule.Value as TPressModuleEditor;
+  Result := FModule.Value as TPressProjectModule;
 end;
 
-function TPressObjectClassEditor.GetObjectClassName: string;
+function TPressObjectMetadataRegistry.GetObjectClassName: string;
 begin
   Result := FObjectClassName.Value;
 end;
 
-function TPressObjectClassEditor.GetParentClass: TPressObjectClassEditor;
+function TPressObjectMetadataRegistry.GetParentClass: TPressObjectMetadataRegistry;
 begin
-  Result := FParentClass.Value as TPressObjectClassEditor;
+  Result := FParentClass.Value as TPressObjectMetadataRegistry;
 end;
 
-function TPressObjectClassEditor.InternalAttributeAddress(
+function TPressObjectMetadataRegistry.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
   if SameText(AAttributeName, 'ObjectClassName') then
@@ -479,81 +477,81 @@ begin
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
 
-class function TPressObjectClassEditor.InternalMetadataStr: string;
+class function TPressObjectMetadataRegistry.InternalMetadataStr: string;
 begin
-  Result := 'TPressObjectClassEditor (' +
-   'ChildNodes: ProjectExplorerNodeParts(TPressObjectClassEditor);' +
+  Result := 'TPressObjectMetadataRegistry (' +
+   'ChildNodes: ProjectExplorerNodeParts(TPressObjectMetadataRegistry);' +
    'ObjectClassName: String;' +
-   'ParentClass: Reference(TPressObjectClassEditor);' +
-   'Module: Reference(TPressModuleEditor);' +
+   'ParentClass: Reference(TPressObjectMetadataRegistry);' +
+   'Module: Reference(TPressProjectModule);' +
    'KeyName: String;' +
    'AttributeList: ObjectAttributeEditorParts)';
 end;
 
-procedure TPressObjectClassEditor.SetKeyName(const Value: string);
+procedure TPressObjectMetadataRegistry.SetKeyName(const Value: string);
 begin
   FKeyName.Value := Value;
 end;
 
-procedure TPressObjectClassEditor.SetModule(Value: TPressModuleEditor);
+procedure TPressObjectMetadataRegistry.SetModule(Value: TPressProjectModule);
 begin
   FModule.Value := Value;
 end;
 
-procedure TPressObjectClassEditor.SetObjectClassName(const Value: string);
+procedure TPressObjectMetadataRegistry.SetObjectClassName(const Value: string);
 begin
   FObjectClassName.Value := Value;
 end;
 
-procedure TPressObjectClassEditor.SetParentClass(
-  Value: TPressObjectClassEditor);
+procedure TPressObjectMetadataRegistry.SetParentClass(
+  Value: TPressObjectMetadataRegistry);
 begin
   FParentClass.Value := Value;
 end;
 
-{ TPressObjectAttributeEditor }
+{ TPressAttributeMetadataRegistry }
 
-function TPressObjectAttributeEditor.GetAttributeType: TPressAttributeRegistryEditor;
+function TPressAttributeMetadataRegistry.GetAttributeType: TPressAttributeTypeRegistry;
 begin
-  Result := FAttributeType.Value as TPressAttributeRegistryEditor;
+  Result := FAttributeType.Value as TPressAttributeTypeRegistry;
 end;
 
-function TPressObjectAttributeEditor.GetContainerType: TPressObjectClassEditor;
+function TPressAttributeMetadataRegistry.GetContainerType: TPressObjectMetadataRegistry;
 begin
-  Result := FContainerType.Value as TPressObjectClassEditor;
+  Result := FContainerType.Value as TPressObjectMetadataRegistry;
 end;
 
-function TPressObjectAttributeEditor.GetDefaultValue: string;
+function TPressAttributeMetadataRegistry.GetDefaultValue: string;
 begin
   Result := FDefaultValue.Value;
 end;
 
-function TPressObjectAttributeEditor.GetEditMask: string;
+function TPressAttributeMetadataRegistry.GetEditMask: string;
 begin
   Result := FEditMask.Value;
 end;
 
-function TPressObjectAttributeEditor.GetIsPersistent: Boolean;
+function TPressAttributeMetadataRegistry.GetIsPersistent: Boolean;
 begin
   Result := FIsPersistent.Value;
 end;
 
-function TPressObjectAttributeEditor.GetName: string;
+function TPressAttributeMetadataRegistry.GetName: string;
 begin
   Result := FName.Value;
 end;
 
-function TPressObjectAttributeEditor.GetPersistentName: string;
+function TPressAttributeMetadataRegistry.GetPersistentName: string;
 begin
   Result := FPersistentName.Value;
 end;
 
-function TPressObjectAttributeEditor.GetSize: Integer;
+function TPressAttributeMetadataRegistry.GetSize: Integer;
 begin
   Result := FSize.Value;
 end;
 
-function TPressObjectAttributeEditor.InternalAttributeAddress(
+function TPressAttributeMetadataRegistry.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
   if SameText(AAttributeName, 'Name') then
@@ -576,139 +574,139 @@ begin
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
 
-class function TPressObjectAttributeEditor.InternalMetadataStr: string;
+class function TPressAttributeMetadataRegistry.InternalMetadataStr: string;
 begin
-  Result := 'TPressObjectAttributeEditor (' +
+  Result := 'TPressAttributeMetadataRegistry (' +
    'Name: String;' +
-   'AttributeType: Reference(TPressAttributeRegistryEditor);' +
+   'AttributeType: Reference(TPressAttributeTypeRegistry);' +
    'Size: Integer;' +
-   'ContainerType: Reference(TPressObjectClassEditor);' +
+   'ContainerType: Reference(TPressObjectMetadataRegistry);' +
    'DefaultValue: String;' +
    'EditMask: String;' +
    'IsPersistent: Boolean;' +
    'PersistentName: String)';
 end;
 
-procedure TPressObjectAttributeEditor.SetAttributeType(
-  Value: TPressAttributeRegistryEditor);
+procedure TPressAttributeMetadataRegistry.SetAttributeType(
+  Value: TPressAttributeTypeRegistry);
 begin
   FAttributeType.Value := Value;
 end;
 
-procedure TPressObjectAttributeEditor.SetContainerType(
-  Value: TPressObjectClassEditor);
+procedure TPressAttributeMetadataRegistry.SetContainerType(
+  Value: TPressObjectMetadataRegistry);
 begin
   FContainerType.Value := Value;
 end;
 
-procedure TPressObjectAttributeEditor.SetDefaultValue(const Value: string);
+procedure TPressAttributeMetadataRegistry.SetDefaultValue(const Value: string);
 begin
   FDefaultValue.Value := Value;
 end;
 
-procedure TPressObjectAttributeEditor.SetEditMask(const Value: string);
+procedure TPressAttributeMetadataRegistry.SetEditMask(const Value: string);
 begin
   FEditMask.Value := Value;
 end;
 
-procedure TPressObjectAttributeEditor.SetIsPersistent(Value: Boolean);
+procedure TPressAttributeMetadataRegistry.SetIsPersistent(Value: Boolean);
 begin
   FIsPersistent.Value := Value;
 end;
 
-procedure TPressObjectAttributeEditor.SetName(const Value: string);
+procedure TPressAttributeMetadataRegistry.SetName(const Value: string);
 begin
   FName.Value := Value;
 end;
 
-procedure TPressObjectAttributeEditor.SetPersistentName(const Value: string);
+procedure TPressAttributeMetadataRegistry.SetPersistentName(const Value: string);
 begin
   FPersistentName.Value := Value;
 end;
 
-procedure TPressObjectAttributeEditor.SetSize(Value: Integer);
+procedure TPressAttributeMetadataRegistry.SetSize(Value: Integer);
 begin
   FSize.Value := Value;
 end;
 
-{ TPressObjectAttributeEditorParts }
+{ TPressAttributeMetadataRegistryParts }
 
-function TPressObjectAttributeEditorParts.Add: TPressObjectAttributeEditor;
+function TPressAttributeMetadataRegistryParts.Add: TPressAttributeMetadataRegistry;
 begin
-  Result := inherited Add as TPressObjectAttributeEditor;
+  Result := inherited Add as TPressAttributeMetadataRegistry;
 end;
 
-function TPressObjectAttributeEditorParts.Add(
-  AObject: TPressObjectAttributeEditor): Integer;
+function TPressAttributeMetadataRegistryParts.Add(
+  AObject: TPressAttributeMetadataRegistry): Integer;
 begin
   Result := inherited Add(AObject);
 end;
 
-class function TPressObjectAttributeEditorParts.AttributeName: string;
+class function TPressAttributeMetadataRegistryParts.AttributeName: string;
 begin
   Result := 'ObjectAttributeEditorParts';
 end;
 
-function TPressObjectAttributeEditorParts.CreateIterator: TPressObjectAttributeEditorIterator;
+function TPressAttributeMetadataRegistryParts.CreateIterator: TPressAttributeMetadataRegistryIterator;
 begin
-  Result := TPressObjectAttributeEditorIterator.Create(ProxyList);
+  Result := TPressAttributeMetadataRegistryIterator.Create(ProxyList);
 end;
 
-function TPressObjectAttributeEditorParts.GetObjects(
-  AIndex: Integer): TPressObjectAttributeEditor;
+function TPressAttributeMetadataRegistryParts.GetObjects(
+  AIndex: Integer): TPressAttributeMetadataRegistry;
 begin
-  Result := inherited Objects[AIndex] as TPressObjectAttributeEditor;
+  Result := inherited Objects[AIndex] as TPressAttributeMetadataRegistry;
 end;
 
-function TPressObjectAttributeEditorParts.IndexOf(
-  AObject: TPressObjectAttributeEditor): Integer;
+function TPressAttributeMetadataRegistryParts.IndexOf(
+  AObject: TPressAttributeMetadataRegistry): Integer;
 begin
   Result := inherited IndexOf(AObject);
 end;
 
-procedure TPressObjectAttributeEditorParts.Insert(AIndex: Integer;
-  AObject: TPressObjectAttributeEditor);
+procedure TPressAttributeMetadataRegistryParts.Insert(AIndex: Integer;
+  AObject: TPressAttributeMetadataRegistry);
 begin
   inherited Insert(AIndex, AObject);
 end;
 
-function TPressObjectAttributeEditorParts.InternalCreateIterator: TPressItemsIterator;
+function TPressAttributeMetadataRegistryParts.InternalCreateIterator: TPressItemsIterator;
 begin
   Result := CreateIterator;
 end;
 
-function TPressObjectAttributeEditorParts.Remove(
-  AObject: TPressObjectAttributeEditor): Integer;
+function TPressAttributeMetadataRegistryParts.Remove(
+  AObject: TPressAttributeMetadataRegistry): Integer;
 begin
   Result := inherited Remove(AObject);
 end;
 
-procedure TPressObjectAttributeEditorParts.SetObjects(
-  AIndex: Integer; Value: TPressObjectAttributeEditor);
+procedure TPressAttributeMetadataRegistryParts.SetObjects(
+  AIndex: Integer; Value: TPressAttributeMetadataRegistry);
 begin
   inherited Objects[AIndex] := Value;
 end;
 
-class function TPressObjectAttributeEditorParts.ValidObjectClass: TPressObjectClass;
+class function TPressAttributeMetadataRegistryParts.ValidObjectClass: TPressObjectClass;
 begin
-  Result := TPressObjectAttributeEditor;
+  Result := TPressAttributeMetadataRegistry;
 end;
 
-{ TPressObjectAttributeEditorIterator }
+{ TPressAttributeMetadataRegistryIterator }
 
-function TPressObjectAttributeEditorIterator.GetCurrentItem: TPressObjectAttributeEditor;
+function TPressAttributeMetadataRegistryIterator.GetCurrentItem: TPressAttributeMetadataRegistry;
 begin
-  Result := inherited CurrentItem as TPressObjectAttributeEditor;
+  Result := inherited CurrentItem as TPressAttributeMetadataRegistry;
 end;
 
-{ TPressAttributeRegistryEditor }
+{ TPressAttributeTypeRegistry }
 
-function TPressAttributeRegistryEditor.GetName: string;
+function TPressAttributeTypeRegistry.GetName: string;
 begin
   Result := FName.Value;
 end;
 
-function TPressAttributeRegistryEditor.InternalAttributeAddress(
+function TPressAttributeTypeRegistry.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
   if SameText(AAttributeName, 'Name') then
@@ -717,26 +715,26 @@ begin
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
 
-class function TPressAttributeRegistryEditor.InternalMetadataStr: string;
+class function TPressAttributeTypeRegistry.InternalMetadataStr: string;
 begin
-  Result := 'TPressAttributeRegistryEditor (' +
-   'ChildNodes: ProjectExplorerNodeParts(TPressAttributeRegistryEditor);' +
+  Result := 'TPressAttributeTypeRegistry (' +
+   'ChildNodes: ProjectExplorerNodeParts(TPressAttributeTypeRegistry);' +
    'Name: String)';
 end;
 
-procedure TPressAttributeRegistryEditor.SetName(const Value: string);
+procedure TPressAttributeTypeRegistry.SetName(const Value: string);
 begin
   FName.Value := Value;
 end;
 
-{ TPressEnumerationRegistryEditor }
+{ TPressEnumerationRegistry }
 
-function TPressEnumerationRegistryEditor.GetName: string;
+function TPressEnumerationRegistry.GetName: string;
 begin
   Result := FName.Value;
 end;
 
-function TPressEnumerationRegistryEditor.InternalAttributeAddress(
+function TPressEnumerationRegistry.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
   if SameText(AAttributeName, 'Name') then
@@ -745,26 +743,26 @@ begin
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
 
-class function TPressEnumerationRegistryEditor.InternalMetadataStr: string;
+class function TPressEnumerationRegistry.InternalMetadataStr: string;
 begin
-  Result := 'TPressEnumerationRegistryEditor (' +
-   'ChildNodes: ProjectExplorerNodeParts(TPressEnumerationRegistryEditor);' +
+  Result := 'TPressEnumerationRegistry (' +
+   'ChildNodes: ProjectExplorerNodeParts(TPressEnumerationRegistry);' +
    'Name: String)';
 end;
 
-procedure TPressEnumerationRegistryEditor.SetName(const Value: string);
+procedure TPressEnumerationRegistry.SetName(const Value: string);
 begin
   FName.Value := Value;
 end;
 
-{ TPressModuleEditor }
+{ TPressProjectModule }
 
-function TPressModuleEditor.GetName: string;
+function TPressProjectModule.GetName: string;
 begin
   Result := FName.Value;
 end;
 
-function TPressModuleEditor.InternalAttributeAddress(
+function TPressProjectModule.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
   if SameText(AAttributeName, 'Name') then
@@ -773,13 +771,13 @@ begin
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
 
-class function TPressModuleEditor.InternalMetadataStr: string;
+class function TPressProjectModule.InternalMetadataStr: string;
 begin
-  Result := 'TPressModuleEditor (' +
+  Result := 'TPressProjectModule (' +
    'Name: String)';
 end;
 
-procedure TPressModuleEditor.SetName(const Value: string);
+procedure TPressProjectModule.SetName(const Value: string);
 begin
   FName.Value := Value;
 end;
@@ -787,18 +785,18 @@ end;
 procedure RegisterClasses;
 begin
   TPressProjectExplorer.RegisterClass;
-  TPressProjectExplorerNode.RegisterClass;
-  TPressObjectClassEditor.RegisterClass;
-  TPressObjectAttributeEditor.RegisterClass;
-  TPressAttributeRegistryEditor.RegisterClass;
-  TPressEnumerationRegistryEditor.RegisterClass;
-  TPressModuleEditor.RegisterClass;
+  TPressProjectExplorerItem.RegisterClass;
+  TPressObjectMetadataRegistry.RegisterClass;
+  TPressAttributeMetadataRegistry.RegisterClass;
+  TPressAttributeTypeRegistry.RegisterClass;
+  TPressEnumerationRegistry.RegisterClass;
+  TPressProjectModule.RegisterClass;
 end;
 
 procedure RegisterAttributes;
 begin
-  TPressProjectExplorerNodeParts.RegisterAttribute;
-  TPressObjectAttributeEditorParts.RegisterAttribute;
+  TPressProjectExplorerItemParts.RegisterAttribute;
+  TPressAttributeMetadataRegistryParts.RegisterAttribute;
 end;
 
 initialization
