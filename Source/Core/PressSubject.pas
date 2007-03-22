@@ -498,6 +498,7 @@ type
     FMap: TPressMap;
     FMementos: TPressObjectMementoList;
     FMetadata: TPressObjectMetadata;
+    FNotifying: Boolean;
     FOwnerAttribute: TPressStructure;
     FPersistentId: string;
     procedure CreateAttributes;
@@ -2580,14 +2581,26 @@ end;
 
 procedure TPressObject.NotifyChange;
 begin
-  {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s changed', [Signature]));{$ENDIF}
-  TPressObjectChangedEvent.Create(Self).Notify;
+  if not FNotifying then
+    try
+      FNotifying := True;
+      {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s changed', [Signature]));{$ENDIF}
+      TPressObjectChangedEvent.Create(Self).Notify;
+    finally
+      FNotifying := False;
+    end;
 end;
 
 procedure TPressObject.NotifyInvalidate;
 begin
-  {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s invalidated', [Signature]));{$ENDIF}
-  TPressObjectChangedEvent.Create(Self, False).Notify;
+  if not FNotifying then
+    try
+      FNotifying := True;
+      {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s invalidated', [Signature]));{$ENDIF}
+      TPressObjectChangedEvent.Create(Self, False).Notify;
+    finally
+      FNotifying := False;
+    end;
 end;
 
 procedure TPressObject.NotifyMementos(AAttribute: TPressAttribute);
@@ -2605,8 +2618,14 @@ end;
 
 procedure TPressObject.NotifyUnchange;
 begin
-  {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s unchanged', [Signature]));{$ENDIF}
-  TPressObjectUnchangedEvent.Create(Self).Notify;
+  if not FNotifying then
+    try
+      FNotifying := True;
+      {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s unchanged', [Signature]));{$ENDIF}
+      TPressObjectUnchangedEvent.Create(Self).Notify;
+    finally
+      FNotifying := False;
+    end;
 end;
 
 class function TPressObject.ObjectMetadataClass: TPressObjectMetadataClass;
