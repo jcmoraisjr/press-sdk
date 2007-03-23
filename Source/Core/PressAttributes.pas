@@ -657,7 +657,7 @@ type
     property Objects[AIndex: Integer]: TPressObject read GetObjects write SetObjects; default;
     property Proxies[AIndex: Integer]: TPressProxy read GetProxies;
     (*
-    function Add: TPressObject; overload;
+    function Add(AClass: TPressObjectClass = nil): TPressObject; overload;
     function Add(AObject: TPressObject): Integer; overload;
     function CreateIterator: TPressItemsIterator;
     function IndexOf(AObject: TPressObject): Integer;
