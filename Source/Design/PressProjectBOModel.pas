@@ -76,14 +76,14 @@ type
   TPressProjectItem = class(TPressObject)
   private
     FCaption: TPressString;
-    FChildNodes: TPressProjectItemParts;
+    FChildItems: TPressProjectItemParts;
     function GetCaption: string;
     procedure SetCaption(const Value: string);
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
   public
-    property ChildNodes: TPressProjectItemParts read FChildNodes;
+    property ChildItems: TPressProjectItemParts read FChildItems;
   published
     property Caption: string read GetCaption write SetCaption;
   end;
@@ -302,7 +302,7 @@ begin
   inherited;
   { TODO : Improve }
   RootItems.Add.Caption := SPressProjectBusinessClasses;
-  with RootItems[0].ChildNodes do
+  with RootItems[0].ChildItems do
   begin
     Add(TPressObjectMetadataRegistry).Caption := SPressProjectPersistentClasses;
     Add(TPressObjectMetadataRegistry).Caption := SPressProjectQueryClasses;
@@ -310,7 +310,7 @@ begin
     FRootQueryClasses := Objects[1];
   end;
   RootItems.Add.Caption := SPressProjectMVPClasses;
-  with RootItems[1].ChildNodes do
+  with RootItems[1].ChildItems do
   begin
     Add.Caption := SPressProjectModels;
     Add.Caption := SPressProjectViews;
@@ -324,7 +324,7 @@ begin
     FRootInteractors := Objects[4];
   end;
   RootItems.Add.Caption := SPressProjectRegistries;
-  with RootItems[2].ChildNodes do
+  with RootItems[2].ChildItems do
   begin
     Add.Caption := SPressProjectUserAttributes;
     Add.Caption := SPressProjectUserEnumerations;
@@ -334,7 +334,7 @@ begin
     FRootUserGenerators := Objects[2];
   end;
   RootItems.Add.Caption := SPressProjectOtherClasses;
-  with RootItems[3].ChildNodes do
+  with RootItems[3].ChildItems do
   begin
     Add.Caption := SPressProjectForms;
     Add.Caption := SPressProjectFrames;
@@ -383,8 +383,8 @@ function TPressProjectItem.InternalAttributeAddress(
 begin
   if SameText(AAttributeName, 'Caption') then
     Result := Addr(FCaption)
-  else if SameText(AAttributeName, 'ChildNodes') then
-    Result := Addr(FChildNodes)
+  else if SameText(AAttributeName, 'ChildItems') then
+    Result := Addr(FChildItems)
   else
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
@@ -393,7 +393,7 @@ class function TPressProjectItem.InternalMetadataStr: string;
 begin
   Result := 'TPressProjectItem (' +
    'Caption: String;' +
-   'ChildNodes: PressProjectItemParts)';
+   'ChildItems: PressProjectItemParts)';
 end;
 
 procedure TPressProjectItem.SetCaption(const Value: string);
@@ -513,7 +513,7 @@ end;
 class function TPressObjectMetadataRegistry.InternalMetadataStr: string;
 begin
   Result := 'TPressObjectMetadataRegistry (' +
-   'ChildNodes: PressProjectItemParts(TPressObjectMetadataRegistry);' +
+   'ChildItems: PressProjectItemParts(TPressObjectMetadataRegistry);' +
    'ObjectClassName: String;' +
    'ParentClass: Reference(TPressObjectMetadataRegistry);' +
    'Module: Reference(TPressProjectModule);' +
@@ -751,7 +751,7 @@ end;
 class function TPressAttributeTypeRegistry.InternalMetadataStr: string;
 begin
   Result := 'TPressAttributeTypeRegistry (' +
-   'ChildNodes: PressProjectItemParts(TPressAttributeTypeRegistry);' +
+   'ChildItems: PressProjectItemParts(TPressAttributeTypeRegistry);' +
    'Name: String)';
 end;
 
@@ -779,7 +779,7 @@ end;
 class function TPressEnumerationRegistry.InternalMetadataStr: string;
 begin
   Result := 'TPressEnumerationRegistry (' +
-   'ChildNodes: PressProjectItemParts(TPressEnumerationRegistry);' +
+   'ChildItems: PressProjectItemParts(TPressEnumerationRegistry);' +
    'Name: String)';
 end;
 

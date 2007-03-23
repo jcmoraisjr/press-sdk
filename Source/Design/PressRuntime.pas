@@ -290,7 +290,7 @@ type
   begin
     if AIncludeRootClass then
     begin
-      AParentNode := AParentNode.ChildNodes.Add;
+      AParentNode := AParentNode.ChildItems.Add;
       AParentNode.Caption := AClass.DisplayName;
     end;
     VSubClasses := AClass.SubClasses;
@@ -298,7 +298,7 @@ type
     begin
       if Assigned(AProc) then
         AProc(VSubClasses[I]);
-      VNode := AParentNode.ChildNodes.Add;
+      VNode := AParentNode.ChildItems.Add;
       VNode.Caption := VSubClasses[I].DisplayName;
       CreateNodes(VNode, VSubClasses[I], AProc, False);
     end;
@@ -349,7 +349,7 @@ procedure TPressRuntimeClasses.CreateProjectNodesFromRegistries;
     begin
       VEnumName := CodeUpdater.EnumMetadatas[I];
       CreateEnumMetadata(VEnumName);
-      Project.RootUserEnumerations.ChildNodes.Add.Caption := VEnumName;
+      Project.RootUserEnumerations.ChildItems.Add.Caption := VEnumName;
     end;
   end;
 
