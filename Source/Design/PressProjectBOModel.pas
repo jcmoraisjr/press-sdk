@@ -28,22 +28,22 @@ type
 
   TPressProject = class(TPressObject)
   private
-    FPersistentClassesNode: TPressProjectItem;
-    FQueryClassesNode: TPressProjectItem;
-    FModelsNode: TPressProjectItem;
-    FViewsNode: TPressProjectItem;
-    FPresentersNode: TPressProjectItem;
-    FCommandsNode: TPressProjectItem;
-    FInteractorsNode: TPressProjectItem;
-    FUserAttributesNode: TPressProjectItem;
-    FUserEnumerationsNode: TPressProjectItem;
-    FUserGeneratorsNode: TPressProjectItem;
-    FFormsNode: TPressProjectItem;
-    FFramesNode: TPressProjectItem;
-    FUnknownClassesNode: TPressProjectItem;
+    FRootPersistentClasses: TPressProjectItem;
+    FRootQueryClasses: TPressProjectItem;
+    FRootModels: TPressProjectItem;
+    FRootViews: TPressProjectItem;
+    FRootPresenters: TPressProjectItem;
+    FRootCommands: TPressProjectItem;
+    FRootInteractors: TPressProjectItem;
+    FRootUserAttributes: TPressProjectItem;
+    FRootUserEnumerations: TPressProjectItem;
+    FRootUserGenerators: TPressProjectItem;
+    FRootForms: TPressProjectItem;
+    FRootFrames: TPressProjectItem;
+    FRootUnknownClasses: TPressProjectItem;
   private
     FName: TPressString;
-    FRootNodes: TPressProjectItemParts;
+    FRootItems: TPressProjectItemParts;
     function GetName: string;
     procedure SetName(const Value: string);
   protected
@@ -51,21 +51,21 @@ type
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
   public
-    property CommandsNode: TPressProjectItem read FCommandsNode;
-    property FormsNode: TPressProjectItem read FFormsNode;
-    property FramesNode: TPressProjectItem read FFramesNode;
-    property InteractorsNode: TPressProjectItem read FInteractorsNode;
-    property ModelsNode: TPressProjectItem read FModelsNode;
-    property PersistentClassesNode: TPressProjectItem read FPersistentClassesNode;
-    property PresentersNode: TPressProjectItem read FPresentersNode;
-    property QueryClassesNode: TPressProjectItem read FQueryClassesNode;
-    property UnknownClassesNode: TPressProjectItem read FUnknownClassesNode;
-    property UserAttributesNode: TPressProjectItem read FUserAttributesNode;
-    property UserEnumerationsNode: TPressProjectItem read FUserEnumerationsNode;
-    property UserGeneratorsNode: TPressProjectItem read FUserGeneratorsNode;
-    property ViewsNode: TPressProjectItem read FViewsNode;
+    property RootCommands: TPressProjectItem read FRootCommands;
+    property RootForms: TPressProjectItem read FRootForms;
+    property RootFrames: TPressProjectItem read FRootFrames;
+    property RootInteractors: TPressProjectItem read FRootInteractors;
+    property RootModels: TPressProjectItem read FRootModels;
+    property RootPersistentClasses: TPressProjectItem read FRootPersistentClasses;
+    property RootPresenters: TPressProjectItem read FRootPresenters;
+    property RootQueryClasses: TPressProjectItem read FRootQueryClasses;
+    property RootUnknownClasses: TPressProjectItem read FRootUnknownClasses;
+    property RootUserAttributes: TPressProjectItem read FRootUserAttributes;
+    property RootUserEnumerations: TPressProjectItem read FRootUserEnumerations;
+    property RootUserGenerators: TPressProjectItem read FRootUserGenerators;
+    property RootViews: TPressProjectItem read FRootViews;
   public
-    property RootNodes: TPressProjectItemParts read FRootNodes;
+    property RootItems: TPressProjectItemParts read FRootItems;
   published
     property Name: string read GetName write SetName;
   end;
@@ -271,47 +271,47 @@ procedure TPressProject.Init;
 begin
   inherited;
   { TODO : Improve }
-  RootNodes.Add.Caption := SPressProjectBusinessClasses;
-  with RootNodes[0].ChildNodes do
+  RootItems.Add.Caption := SPressProjectBusinessClasses;
+  with RootItems[0].ChildNodes do
   begin
     Add(TPressObjectMetadataRegistry).Caption := SPressProjectPersistentClasses;
     Add(TPressObjectMetadataRegistry).Caption := SPressProjectQueryClasses;
-    FPersistentClassesNode := Objects[0];
-    FQueryClassesNode := Objects[1];
+    FRootPersistentClasses := Objects[0];
+    FRootQueryClasses := Objects[1];
   end;
-  RootNodes.Add.Caption := SPressProjectMVPClasses;
-  with RootNodes[1].ChildNodes do
+  RootItems.Add.Caption := SPressProjectMVPClasses;
+  with RootItems[1].ChildNodes do
   begin
     Add.Caption := SPressProjectModels;
     Add.Caption := SPressProjectViews;
     Add.Caption := SPressProjectPresenters;
     Add.Caption := SPressProjectCommands;
     Add.Caption := SPressProjectInteractors;
-    FModelsNode := Objects[0];
-    FViewsNode := Objects[1];
-    FPresentersNode := Objects[2];
-    FCommandsNode := Objects[3];
-    FInteractorsNode := Objects[4];
+    FRootModels := Objects[0];
+    FRootViews := Objects[1];
+    FRootPresenters := Objects[2];
+    FRootCommands := Objects[3];
+    FRootInteractors := Objects[4];
   end;
-  RootNodes.Add.Caption := SPressProjectRegistries;
-  with RootNodes[2].ChildNodes do
+  RootItems.Add.Caption := SPressProjectRegistries;
+  with RootItems[2].ChildNodes do
   begin
     Add.Caption := SPressProjectUserAttributes;
     Add.Caption := SPressProjectUserEnumerations;
     Add.Caption := SPressProjectUserOIDGenerators;
-    FUserAttributesNode := Objects[0];
-    FUserEnumerationsNode := Objects[1];
-    FUserGeneratorsNode := Objects[2];
+    FRootUserAttributes := Objects[0];
+    FRootUserEnumerations := Objects[1];
+    FRootUserGenerators := Objects[2];
   end;
-  RootNodes.Add.Caption := SPressProjectOtherClasses;
-  with RootNodes[3].ChildNodes do
+  RootItems.Add.Caption := SPressProjectOtherClasses;
+  with RootItems[3].ChildNodes do
   begin
     Add.Caption := SPressProjectForms;
     Add.Caption := SPressProjectFrames;
     Add.Caption := SPressProjectUnknown;
-    FFormsNode := Objects[0];
-    FFramesNode := Objects[1];
-    FUnknownClassesNode := Objects[2];
+    FRootForms := Objects[0];
+    FRootFrames := Objects[1];
+    FRootUnknownClasses := Objects[2];
   end;
 end;
 
@@ -320,8 +320,8 @@ function TPressProject.InternalAttributeAddress(
 begin
   if SameText(AAttributeName, 'Name') then
     Result := Addr(FName)
-  else if SameText(AAttributeName, 'RootNodes') then
-    Result := Addr(FRootNodes)
+  else if SameText(AAttributeName, 'RootItems') then
+    Result := Addr(FRootItems)
   else
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
@@ -330,7 +330,7 @@ class function TPressProject.InternalMetadataStr: string;
 begin
   Result := 'TPressProject (' +
    'Name: String;' +
-   'RootNodes: PressProjectItemParts)';
+   'RootItems: PressProjectItemParts)';
 end;
 
 procedure TPressProject.SetName(const Value: string);

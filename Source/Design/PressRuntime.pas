@@ -246,9 +246,9 @@ type
     VClass := PressModel.FindClass(AClassName);
     if Assigned(VClass) then
       if VClass.InheritsFrom(TPressQuery) then
-        AParentNode := Project.QueryClassesNode
+        AParentNode := Project.RootQueryClasses
       else
-        AParentNode := Project.PersistentClassesNode
+        AParentNode := Project.RootPersistentClasses
     else
       AParentNode := nil;
     Result := Assigned(AParentNode);
@@ -264,15 +264,15 @@ type
 
   begin
     if IsMVP(AClassName, 'Model') then
-      AParentNode := Project.ModelsNode
+      AParentNode := Project.RootModels
     else if IsMVP(AClassName, 'View') then
-      AParentNode := Project.ViewsNode
+      AParentNode := Project.RootViews
     else if IsMVP(AClassName, 'Presenter') then
-      AParentNode := Project.PresentersNode
+      AParentNode := Project.RootPresenters
     else if IsMVP(AClassName, 'Command') then
-      AParentNode := Project.CommandsNode
+      AParentNode := Project.RootCommands
     else if IsMVP(AClassName, 'Interactor') then
-      AParentNode := Project.InteractorsNode
+      AParentNode := Project.RootInteractors
     else
       AParentNode := nil;
     Result := Assigned(AParentNode);
@@ -317,17 +317,17 @@ begin
     if FindParentOfBO(VClassName, VParentNode) then
       CreateNodes(VParentNode, VClassDeclaration, CreateBOMetadata)
     else if Assigned(PressModel.FindAttributeClass(VClassName)) then
-      CreateNodes(Project.UserAttributesNode, VClassDeclaration)
+      CreateNodes(Project.RootUserAttributes, VClassDeclaration)
     else if SameText(VClassName, 'TPressOIDGenerator') then
-      CreateNodes(Project.UserGeneratorsNode, VClassDeclaration)
+      CreateNodes(Project.RootUserGenerators, VClassDeclaration)
     else if SameText(VClassName, 'TForm') then
-      CreateNodes(Project.FormsNode, VClassDeclaration)
+      CreateNodes(Project.RootForms, VClassDeclaration)
     else if SameText(VClassName, 'TFrame') then
-      CreateNodes(Project.FramesNode, VClassDeclaration)
+      CreateNodes(Project.RootFrames, VClassDeclaration)
     else if FindParentOfMVP(VClassName, VParentNode) then
       CreateNodes(VParentNode, VClassDeclaration, CreateMVPMetadata)
     else
-      CreateNodes(Project.UnknownClassesNode, VClassDeclaration, nil, True);
+      CreateNodes(Project.RootUnknownClasses, VClassDeclaration, nil, True);
   end;
 end;
 
@@ -349,7 +349,7 @@ procedure TPressRuntimeClasses.CreateProjectNodesFromRegistries;
     begin
       VEnumName := CodeUpdater.EnumMetadatas[I];
       CreateEnumMetadata(VEnumName);
-      Project.UserEnumerationsNode.ChildNodes.Add.Caption := VEnumName;
+      Project.RootUserEnumerations.ChildNodes.Add.Caption := VEnumName;
     end;
   end;
 
