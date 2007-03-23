@@ -25,6 +25,7 @@ uses
 type
   TPressProjectItem = class;
   TPressProjectItemParts = class;
+  TPressProjectModuleParts = class;
 
   TPressProject = class(TPressObject)
   private
@@ -44,6 +45,7 @@ type
   private
     FName: TPressString;
     FRootItems: TPressProjectItemParts;
+    FModules: TPressProjectModuleParts;
     function GetName: string;
     procedure SetName(const Value: string);
   protected
@@ -65,6 +67,7 @@ type
     property RootUserGenerators: TPressProjectItem read FRootUserGenerators;
     property RootViews: TPressProjectItem read FRootViews;
   public
+    property Modules: TPressProjectModuleParts read FModules;
     property RootItems: TPressProjectItemParts read FRootItems;
   published
     property Name: string read GetName write SetName;
@@ -254,6 +257,33 @@ type
     property Name: string read GetName write SetName;
   end;
 
+  TPressProjectModuleIterator = class;
+
+  TPressProjectModuleParts = class(TPressParts)
+  private
+    function GetObjects(AIndex: Integer): TPressProjectModule;
+    procedure SetObjects(AIndex: Integer; const Value: TPressProjectModule);
+  protected
+    function InternalCreateIterator: TPressItemsIterator; override;
+  public
+    function Add: TPressProjectModule; overload;
+    function Add(AObject: TPressProjectModule): Integer; overload;
+    class function AttributeName: string; override;
+    function CreateIterator: TPressItemsIterator;
+    function IndexOf(AObject: TPressProjectModule): Integer;
+    procedure Insert(AIndex: Integer; AObject: TPressProjectModule);
+    function Remove(AObject: TPressProjectModule): Integer;
+    class function ValidObjectClass: TPressObjectClass; override;
+    property Objects[AIndex: Integer]: TPressProjectModule read GetObjects write SetObjects; default;
+  end;
+
+  TPressProjectModuleIterator = class(TPressItemsIterator)
+  private
+    function GetCurrentItem: TPressProjectModule;
+  public
+    property CurrentItem: TPressProjectModule read GetCurrentItem;
+  end;
+
 implementation
 
 uses
@@ -322,6 +352,8 @@ begin
     Result := Addr(FName)
   else if SameText(AAttributeName, 'RootItems') then
     Result := Addr(FRootItems)
+  else if SameText(AAttributeName, 'Modules') then
+    Result := Addr(FModules)
   else
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
@@ -330,7 +362,8 @@ class function TPressProject.InternalMetadataStr: string;
 begin
   Result := 'TPressProject (' +
    'Name: String;' +
-   'RootItems: PressProjectItemParts)';
+   'RootItems: PressProjectItemParts;' +
+   'Modules: PressProjectModuleParts)';
 end;
 
 procedure TPressProject.SetName(const Value: string);
@@ -782,6 +815,72 @@ begin
   FName.Value := Value;
 end;
 
+{ TPressProjectModuleParts }
+
+function TPressProjectModuleParts.Add: TPressProjectModule;
+begin
+  Result := inherited Add as TPressProjectModule;
+end;
+
+function TPressProjectModuleParts.Add(AObject: TPressProjectModule): Integer;
+begin
+  Result := inherited Add(AObject);
+end;
+
+class function TPressProjectModuleParts.AttributeName: string;
+begin
+  Result := 'PressProjectModuleParts';
+end;
+
+function TPressProjectModuleParts.CreateIterator: TPressItemsIterator;
+begin
+  Result := TPressProjectModuleIterator.Create(ProxyList);
+end;
+
+function TPressProjectModuleParts.GetObjects(AIndex: Integer): TPressProjectModule;
+begin
+  Result := Objects[AIndex] as TPressProjectModule;
+end;
+
+function TPressProjectModuleParts.IndexOf(AObject: TPressProjectModule): Integer;
+begin
+  Result := IndexOf(AObject);
+end;
+
+procedure TPressProjectModuleParts.Insert(
+  AIndex: Integer; AObject: TPressProjectModule);
+begin
+  inherited Insert(AIndex, AObject);
+end;
+
+function TPressProjectModuleParts.InternalCreateIterator: TPressItemsIterator;
+begin
+  Result := CreateIterator;
+end;
+
+function TPressProjectModuleParts.Remove(AObject: TPressProjectModule): Integer;
+begin
+  Result := inherited Remove(AObject);
+end;
+
+procedure TPressProjectModuleParts.SetObjects(
+  AIndex: Integer; const Value: TPressProjectModule);
+begin
+  inherited Objects[AIndex] := Value;
+end;
+
+class function TPressProjectModuleParts.ValidObjectClass: TPressObjectClass;
+begin
+  Result := TPressProjectModule;
+end;
+
+{ TPressProjectModuleIterator }
+
+function TPressProjectModuleIterator.GetCurrentItem: TPressProjectModule;
+begin
+  Result := inherited CurrentItem as TPressProjectModule;
+end;
+
 procedure RegisterClasses;
 begin
   TPressProject.RegisterClass;
@@ -797,6 +896,7 @@ procedure RegisterAttributes;
 begin
   TPressProjectItemParts.RegisterAttribute;
   TPressAttributeMetadataRegistryParts.RegisterAttribute;
+  TPressProjectModuleParts.RegisterAttribute;
 end;
 
 initialization
