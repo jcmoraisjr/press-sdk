@@ -330,7 +330,7 @@ class function TPressProject.InternalMetadataStr: string;
 begin
   Result := 'TPressProject (' +
    'Name: String;' +
-   'RootNodes: ProjectExplorerNodeParts)';
+   'RootNodes: PressProjectItemParts)';
 end;
 
 procedure TPressProject.SetName(const Value: string);
@@ -360,7 +360,7 @@ class function TPressProjectItem.InternalMetadataStr: string;
 begin
   Result := 'TPressProjectItem (' +
    'Caption: String;' +
-   'ChildNodes: ProjectExplorerNodeParts)';
+   'ChildNodes: PressProjectItemParts)';
 end;
 
 procedure TPressProjectItem.SetCaption(const Value: string);
@@ -383,7 +383,7 @@ end;
 
 class function TPressProjectItemParts.AttributeName: string;
 begin
-  Result := 'ProjectExplorerNodeParts';
+  Result := 'PressProjectItemParts';
 end;
 
 function TPressProjectItemParts.CreateIterator: TPressProjectItemIterator;
@@ -480,7 +480,7 @@ end;
 class function TPressObjectMetadataRegistry.InternalMetadataStr: string;
 begin
   Result := 'TPressObjectMetadataRegistry (' +
-   'ChildNodes: ProjectExplorerNodeParts(TPressObjectMetadataRegistry);' +
+   'ChildNodes: PressProjectItemParts(TPressObjectMetadataRegistry);' +
    'ObjectClassName: String;' +
    'ParentClass: Reference(TPressObjectMetadataRegistry);' +
    'Module: Reference(TPressProjectModule);' +
@@ -718,7 +718,7 @@ end;
 class function TPressAttributeTypeRegistry.InternalMetadataStr: string;
 begin
   Result := 'TPressAttributeTypeRegistry (' +
-   'ChildNodes: ProjectExplorerNodeParts(TPressAttributeTypeRegistry);' +
+   'ChildNodes: PressProjectItemParts(TPressAttributeTypeRegistry);' +
    'Name: String)';
 end;
 
@@ -746,7 +746,7 @@ end;
 class function TPressEnumerationRegistry.InternalMetadataStr: string;
 begin
   Result := 'TPressEnumerationRegistry (' +
-   'ChildNodes: ProjectExplorerNodeParts(TPressEnumerationRegistry);' +
+   'ChildNodes: PressProjectItemParts(TPressEnumerationRegistry);' +
    'Name: String)';
 end;
 
