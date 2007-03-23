@@ -71,7 +71,7 @@ type
     FClasses: TPressClassDeclarationList;
     FCodeUpdater: TPressCodeUpdater;
     FMVPModel: TPressRuntimeMVPModel;
-    FProjectExplorer: TPressProjectExplorer;
+    FProject: TPressProject;
     procedure CreateBOMetadata(AClass: TPressClassDeclaration);
     procedure CreateMVPMetadata(AClass: TPressClassDeclaration);
     procedure CreateProjectNodesFromClasses;
@@ -80,7 +80,7 @@ type
     function GetClasses: TPressClassDeclarationList;
     function GetCodeUpdater: TPressCodeUpdater;
     function GetMVPModel: TPressRuntimeMVPModel;
-    function GetProjectExplorer: TPressProjectExplorer;
+    function GetProject: TPressProject;
   protected
     property BOModel: TPressRuntimeBOModel read GetBOModel;
     property Classes: TPressClassDeclarationList read GetClasses;
@@ -92,7 +92,7 @@ type
     procedure ReadMVPClasses;
     procedure WriteBusinessClasses;
     procedure WriteMVPClasses;
-    property ProjectExplorer: TPressProjectExplorer read GetProjectExplorer;
+    property Project: TPressProject read GetProject;
   end;
 
 function PressRuntimeClasses: TPressRuntimeClasses;
@@ -239,23 +239,23 @@ type
   end;
 
   function FindParentOfBO(const AClassName: string;
-    var AParentNode: TPressProjectExplorerItem): Boolean;
+    var AParentNode: TPressProjectItem): Boolean;
   var
     VClass: TPressObjectClass;
   begin
     VClass := PressModel.FindClass(AClassName);
     if Assigned(VClass) then
       if VClass.InheritsFrom(TPressQuery) then
-        AParentNode := ProjectExplorer.QueryClassesNode
+        AParentNode := Project.QueryClassesNode
       else
-        AParentNode := ProjectExplorer.PersistentClassesNode
+        AParentNode := Project.PersistentClassesNode
     else
       AParentNode := nil;
     Result := Assigned(AParentNode);
   end;
 
   function FindParentOfMVP(const AClassName: string;
-    var AParentNode: TPressProjectExplorerItem): Boolean;
+    var AParentNode: TPressProjectItem): Boolean;
 
     function IsMVP(AClassName, ASuffix: string): Boolean;
     begin
@@ -264,28 +264,28 @@ type
 
   begin
     if IsMVP(AClassName, 'Model') then
-      AParentNode := ProjectExplorer.ModelsNode
+      AParentNode := Project.ModelsNode
     else if IsMVP(AClassName, 'View') then
-      AParentNode := ProjectExplorer.ViewsNode
+      AParentNode := Project.ViewsNode
     else if IsMVP(AClassName, 'Presenter') then
-      AParentNode := ProjectExplorer.PresentersNode
+      AParentNode := Project.PresentersNode
     else if IsMVP(AClassName, 'Command') then
-      AParentNode := ProjectExplorer.CommandsNode
+      AParentNode := Project.CommandsNode
     else if IsMVP(AClassName, 'Interactor') then
-      AParentNode := ProjectExplorer.InteractorsNode
+      AParentNode := Project.InteractorsNode
     else
       AParentNode := nil;
     Result := Assigned(AParentNode);
   end;
 
   procedure CreateNodes(
-    AParentNode: TPressProjectExplorerItem;
+    AParentNode: TPressProjectItem;
     AClass: TPressClassDeclaration;
     AProc: TPressClassRegistryProc = nil;
     AIncludeRootClass: Boolean = False);
   var
     VSubClasses: TPressClassDeclarationList;
-    VNode: TPressProjectExplorerItem;
+    VNode: TPressProjectItem;
     I: Integer;
   begin
     if AIncludeRootClass then
@@ -307,7 +307,7 @@ type
 var
   VClassDeclaration: TPressClassDeclaration;
   VClassName: string;
-  VParentNode: TPressProjectExplorerItem;
+  VParentNode: TPressProjectItem;
   I: Integer;
 begin
   for I := 0 to Pred(CodeUpdater.Classes.Count) do
@@ -317,17 +317,17 @@ begin
     if FindParentOfBO(VClassName, VParentNode) then
       CreateNodes(VParentNode, VClassDeclaration, CreateBOMetadata)
     else if Assigned(PressModel.FindAttributeClass(VClassName)) then
-      CreateNodes(ProjectExplorer.UserAttributesNode, VClassDeclaration)
+      CreateNodes(Project.UserAttributesNode, VClassDeclaration)
     else if SameText(VClassName, 'TPressOIDGenerator') then
-      CreateNodes(ProjectExplorer.UserGeneratorsNode, VClassDeclaration)
+      CreateNodes(Project.UserGeneratorsNode, VClassDeclaration)
     else if SameText(VClassName, 'TForm') then
-      CreateNodes(ProjectExplorer.FormsNode, VClassDeclaration)
+      CreateNodes(Project.FormsNode, VClassDeclaration)
     else if SameText(VClassName, 'TFrame') then
-      CreateNodes(ProjectExplorer.FramesNode, VClassDeclaration)
+      CreateNodes(Project.FramesNode, VClassDeclaration)
     else if FindParentOfMVP(VClassName, VParentNode) then
       CreateNodes(VParentNode, VClassDeclaration, CreateMVPMetadata)
     else
-      CreateNodes(ProjectExplorer.UnknownClassesNode, VClassDeclaration, nil, True);
+      CreateNodes(Project.UnknownClassesNode, VClassDeclaration, nil, True);
   end;
 end;
 
@@ -349,7 +349,7 @@ procedure TPressRuntimeClasses.CreateProjectNodesFromRegistries;
     begin
       VEnumName := CodeUpdater.EnumMetadatas[I];
       CreateEnumMetadata(VEnumName);
-      ProjectExplorer.UserEnumerationsNode.ChildNodes.Add.Caption := VEnumName;
+      Project.UserEnumerationsNode.ChildNodes.Add.Caption := VEnumName;
     end;
   end;
 
@@ -359,7 +359,7 @@ end;
 
 destructor TPressRuntimeClasses.Destroy;
 begin
-  FProjectExplorer.Free;
+  FProject.Free;
   FBOModel.Free;
   FMVPModel.Free;
   FCodeUpdater.Free;
@@ -394,18 +394,18 @@ begin
   Result := FMVPModel;
 end;
 
-function TPressRuntimeClasses.GetProjectExplorer: TPressProjectExplorer;
+function TPressRuntimeClasses.GetProject: TPressProject;
 begin
-  if not Assigned(FProjectExplorer) then
-    FProjectExplorer := TPressProjectExplorer.Create;
-  Result := FProjectExplorer;
+  if not Assigned(FProject) then
+    FProject := TPressProject.Create;
+  Result := FProject;
 end;
 
 procedure TPressRuntimeClasses.ReadBusinessClasses;
 begin
   CodeUpdater.ParseBusinessClasses;
   BOModel.ClearMetadatas;
-  FreeAndNil(FProjectExplorer);
+  FreeAndNil(FProject);
   CreateProjectNodesFromRegistries;
   CreateProjectNodesFromClasses;
 end;
