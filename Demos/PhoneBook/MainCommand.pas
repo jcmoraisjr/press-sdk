@@ -12,14 +12,14 @@ type
   protected
     function GetCaption: string; override;
     function GetShortCut: TShortCut; override;
-    function InternalCreateObject: TPressObject; override;
+    function InternalObjectClass: TPressObjectClass; override;
   end;
 
   TMainAddCompanyCommand = class(TPressMVPCustomAddItemsCommand)
   protected
     function GetCaption: string; override;
     function GetShortCut: TShortCut; override;
-    function InternalCreateObject: TPressObject; override;
+    function InternalObjectClass: TPressObjectClass; override;
   end;
 
   TMainConnectorCommand = class(TPressMVPCommand)
@@ -44,9 +44,9 @@ begin
   Result := VK_F2;
 end;
 
-function TMainAddPersonCommand.InternalCreateObject: TPressObject;
+function TMainAddPersonCommand.InternalObjectClass: TPressObjectClass;
 begin
-  Result := TPerson.Create;
+  Result := TPerson;
 end;
 
 { TMainAddCompanyCommand }
@@ -61,9 +61,9 @@ begin
   Result := Menus.ShortCut(VK_F2, [ssCtrl]);
 end;
 
-function TMainAddCompanyCommand.InternalCreateObject: TPressObject;
+function TMainAddCompanyCommand.InternalObjectClass: TPressObjectClass;
 begin
-  Result := TCompany.Create;
+  Result := TCompany;
 end;
 
 { TMainConnectorCommand }
