@@ -24,7 +24,7 @@ uses
 
 type
   TPressProjectItem = class;
-  TPressProjectItemParts = class;
+  TPressProjectItemReferences = class;
   TPressProjectModuleParts = class;
 
   TPressProject = class(TPressObject)
@@ -44,7 +44,7 @@ type
     FRootUnknownClasses: TPressProjectItem;
   private
     FName: TPressString;
-    FRootItems: TPressProjectItemParts;
+    FRootItems: TPressProjectItemReferences;
     FModules: TPressProjectModuleParts;
     function GetName: string;
     procedure SetName(const Value: string);
@@ -68,7 +68,7 @@ type
     property RootViews: TPressProjectItem read FRootViews;
   public
     property Modules: TPressProjectModuleParts read FModules;
-    property RootItems: TPressProjectItemParts read FRootItems;
+    property RootItems: TPressProjectItemReferences read FRootItems;
   published
     property Name: string read GetName write SetName;
   end;
@@ -76,21 +76,21 @@ type
   TPressProjectItem = class(TPressObject)
   private
     FCaption: TPressString;
-    FChildItems: TPressProjectItemParts;
+    FChildItems: TPressProjectItemReferences;
     function GetCaption: string;
     procedure SetCaption(const Value: string);
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
   public
-    property ChildItems: TPressProjectItemParts read FChildItems;
+    property ChildItems: TPressProjectItemReferences read FChildItems;
   published
     property Caption: string read GetCaption write SetCaption;
   end;
 
   TPressProjectItemIterator = class;
 
-  TPressProjectItemParts = class(TPressParts)
+  TPressProjectItemReferences = class(TPressReferences)
   private
     function GetObjects(AIndex: Integer): TPressProjectItem;
     procedure SetObjects(AIndex: Integer; const Value: TPressProjectItem);
@@ -362,7 +362,7 @@ class function TPressProject.InternalMetadataStr: string;
 begin
   Result := 'TPressProject (' +
    'Name: String;' +
-   'RootItems: PressProjectItemParts;' +
+   'RootItems: PressProjectItemReferences;' +
    'Modules: PressProjectModuleParts)';
 end;
 
@@ -393,7 +393,7 @@ class function TPressProjectItem.InternalMetadataStr: string;
 begin
   Result := 'TPressProjectItem (' +
    'Caption: String;' +
-   'ChildItems: PressProjectItemParts)';
+   'ChildItems: PressProjectItemReferences)';
 end;
 
 procedure TPressProjectItem.SetCaption(const Value: string);
@@ -401,65 +401,65 @@ begin
   FCaption.Value := Value;
 end;
 
-{ TPressProjectItemParts }
+{ TPressProjectItemReferences }
 
-function TPressProjectItemParts.Add(
+function TPressProjectItemReferences.Add(
   AClass: TPressObjectClass): TPressProjectItem;
 begin
   Result := inherited Add(AClass) as TPressProjectItem;
 end;
 
-function TPressProjectItemParts.Add(AObject: TPressProjectItem): Integer;
+function TPressProjectItemReferences.Add(AObject: TPressProjectItem): Integer;
 begin
   Result := inherited Add(AObject);
 end;
 
-class function TPressProjectItemParts.AttributeName: string;
+class function TPressProjectItemReferences.AttributeName: string;
 begin
-  Result := 'PressProjectItemParts';
+  Result := 'PressProjectItemReferences';
 end;
 
-function TPressProjectItemParts.CreateIterator: TPressProjectItemIterator;
+function TPressProjectItemReferences.CreateIterator: TPressProjectItemIterator;
 begin
   Result := TPressProjectItemIterator.Create(ProxyList);
 end;
 
-function TPressProjectItemParts.GetObjects(
+function TPressProjectItemReferences.GetObjects(
   AIndex: Integer): TPressProjectItem;
 begin
   Result := inherited Objects[AIndex] as TPressProjectItem;
 end;
 
-function TPressProjectItemParts.IndexOf(
+function TPressProjectItemReferences.IndexOf(
   AObject: TPressProjectItem): Integer;
 begin
   Result := inherited IndexOf(AObject);
 end;
 
-procedure TPressProjectItemParts.Insert(AIndex: Integer;
+procedure TPressProjectItemReferences.Insert(AIndex: Integer;
   AObject: TPressProjectItem);
 begin
   inherited Insert(AIndex, AObject);
 end;
 
-function TPressProjectItemParts.InternalCreateIterator: TPressItemsIterator;
+function TPressProjectItemReferences.InternalCreateIterator: TPressItemsIterator;
 begin
   Result := CreateIterator;
 end;
 
-function TPressProjectItemParts.Remove(
+function TPressProjectItemReferences.Remove(
   AObject: TPressProjectItem): Integer;
 begin
   Result := inherited Remove(AObject);
 end;
 
-procedure TPressProjectItemParts.SetObjects(AIndex: Integer;
+procedure TPressProjectItemReferences.SetObjects(AIndex: Integer;
   const Value: TPressProjectItem);
 begin
   inherited Objects[AIndex] := Value;
 end;
 
-class function TPressProjectItemParts.ValidObjectClass: TPressObjectClass;
+class function TPressProjectItemReferences.ValidObjectClass: TPressObjectClass;
 begin
   Result := TPressProjectItem;
 end;
@@ -513,7 +513,7 @@ end;
 class function TPressObjectMetadataRegistry.InternalMetadataStr: string;
 begin
   Result := 'TPressObjectMetadataRegistry (' +
-   'ChildItems: PressProjectItemParts(TPressObjectMetadataRegistry);' +
+   'ChildItems: PressProjectItemReferences(TPressObjectMetadataRegistry);' +
    'ObjectClassName: String;' +
    'ParentClass: Reference(TPressObjectMetadataRegistry);' +
    'Module: Reference(TPressProjectModule);' +
@@ -751,7 +751,7 @@ end;
 class function TPressAttributeTypeRegistry.InternalMetadataStr: string;
 begin
   Result := 'TPressAttributeTypeRegistry (' +
-   'ChildItems: PressProjectItemParts(TPressAttributeTypeRegistry);' +
+   'ChildItems: PressProjectItemReferences(TPressAttributeTypeRegistry);' +
    'Name: String)';
 end;
 
@@ -779,7 +779,7 @@ end;
 class function TPressEnumerationRegistry.InternalMetadataStr: string;
 begin
   Result := 'TPressEnumerationRegistry (' +
-   'ChildItems: PressProjectItemParts(TPressEnumerationRegistry);' +
+   'ChildItems: PressProjectItemReferences(TPressEnumerationRegistry);' +
    'Name: String)';
 end;
 
@@ -894,7 +894,7 @@ end;
 
 procedure RegisterAttributes;
 begin
-  TPressProjectItemParts.RegisterAttribute;
+  TPressProjectItemReferences.RegisterAttribute;
   TPressAttributeMetadataRegistryParts.RegisterAttribute;
   TPressProjectModuleParts.RegisterAttribute;
 end;
