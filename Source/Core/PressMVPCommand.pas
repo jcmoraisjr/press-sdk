@@ -155,8 +155,8 @@ type
 
   TPressMVPCustomAddItemsCommand = class(TPressMVPItemsCommand)
   protected
-    function InternalCreateObject: TPressObject; virtual;
     procedure InternalExecute; override;
+    function InternalObjectClass: TPressObjectClass; virtual;
   end;
 
   TPressMVPAddItemsCommand = class(TPressMVPCustomAddItemsCommand)
@@ -619,29 +619,18 @@ end;
 
 { TPressMVPCustomAddItemsCommand }
 
-function TPressMVPCustomAddItemsCommand.InternalCreateObject: TPressObject;
-begin
-  Result := Model.Subject.ObjectClass.Create;
-end;
-
 procedure TPressMVPCustomAddItemsCommand.InternalExecute;
 var
-  VObject: TPressObject;
+  VModel: TPressMVPItemsModel;
 begin
-  VObject := InternalCreateObject;
-  try
-    with Model.Subject do
-    begin
-      Add(VObject);
-      if ProxyType = ptShared then
-        VObject.Release;
-    end;
-  except
-    VObject.Free;
-    raise;
-  end;
-  Model.Selection.Select(VObject);
-  TPressMVPModelCreateIncludeFormEvent.Create(Model).Notify;
+  VModel := Model;
+  VModel.Selection.Select(VModel.Subject.Add(InternalObjectClass));
+  TPressMVPModelCreateIncludeFormEvent.Create(VModel).Notify;
+end;
+
+function TPressMVPCustomAddItemsCommand.InternalObjectClass: TPressObjectClass;
+begin
+  Result := Model.Subject.ObjectClass;
 end;
 
 { TPressMVPAddItemsCommand }
