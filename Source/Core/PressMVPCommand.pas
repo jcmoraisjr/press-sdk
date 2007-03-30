@@ -240,6 +240,7 @@ type
     function InternalConfirm: Boolean; virtual;
     procedure InternalExecute; override;
     function InternalIsEnabled: Boolean; override;
+    procedure InternalStoreObject; virtual;
   end;
 
   TPressMVPSaveConfirmObjectCommand = class(TPressMVPSaveObjectCommand)
@@ -836,12 +837,7 @@ begin
   begin
     if not InternalConfirm then
       Exit;
-    Model.Subject.DisableUpdates;
-    try
-      Model.Subject.Store;
-    finally
-      Model.Subject.EnableUpdates;
-    end;
+    InternalStoreObject;
   end;
   TPressMVPModelCloseFormEvent.Create(Model).Notify;
 end;
@@ -850,6 +846,19 @@ function TPressMVPSaveObjectCommand.InternalIsEnabled: Boolean;
 begin
   Result := inherited InternalIsEnabled and
    Model.HasSubject and Model.Subject.IsValid;
+end;
+
+procedure TPressMVPSaveObjectCommand.InternalStoreObject;
+var
+  VSubject: TPressObject;
+begin
+  VSubject := Model.Subject;
+  VSubject.DisableUpdates;
+  try
+    VSubject.Store;
+  finally
+    VSubject.EnableUpdates;
+  end;
 end;
 
 { TPressMVPSaveConfirmObjectCommand }
