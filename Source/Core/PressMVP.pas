@@ -114,7 +114,7 @@ type
   end;
 
   TPressMVPModel = class;
-  TPressMVPRegisteredCommand = class;
+  TPressMVPCommandRegistry = class;
 
   TPressMVPCommandClass = class of TPressMVPCommand;
 
@@ -147,7 +147,7 @@ type
     procedure AddComponent(AComponent: TComponent);
     class function Apply(AModel: TPressMVPModel): Boolean; virtual;
     procedure Execute;
-    class function RegisterCommand: TPressMVPRegisteredCommand;
+    class function RegisterCommand: TPressMVPCommandRegistry;
     property Caption: string read GetCaption;
     property Enabled: Boolean read FEnabled;
     property Model: TPressMVPModel read FModel;
@@ -179,44 +179,45 @@ type
     property CurrentItem: TPressMVPCommand read GetCurrentItem;
   end;
 
-  TPressMVPRegisteredCommand = class(TObject)
+  TPressMVPCommandRegistry = class(TObject)
   private
     FAccessID: Integer;
     FAlwaysEnabled: Boolean;
     FCommandClass: TPressMVPCommandClass;
     FEnabledIfNoUser: Boolean;
+    procedure SetAccessID(const Value: Integer);
   public
     constructor Create(ACommandClass: TPressMVPCommandClass);
-    property AccessID: Integer read FAccessID write FAccessID;
+    property AccessID: Integer read FAccessID write SetAccessID;
     property AlwaysEnabled: Boolean read FAlwaysEnabled write FAlwaysEnabled;
     property CommandClass: TPressMVPCommandClass read FCommandClass;
     property EnabledIfNoUser: Boolean read FEnabledIfNoUser write FEnabledIfNoUser;
   end;
 
-  TPressMVPRegisteredCommandIterator = class;
+  TPressMVPCommandRegistryIterator = class;
 
-  TPressMVPRegisteredCommandList = class(TPressList)
+  TPressMVPCommandRegistryList = class(TPressList)
   private
-    function GetItems(AIndex: Integer): TPressMVPRegisteredCommand;
-    procedure SetItems(AIndex: Integer; Value: TPressMVPRegisteredCommand);
+    function GetItems(AIndex: Integer): TPressMVPCommandRegistry;
+    procedure SetItems(AIndex: Integer; Value: TPressMVPCommandRegistry);
   protected
     function InternalCreateIterator: TPressCustomIterator; override;
   public
-    function Add(AObject: TPressMVPRegisteredCommand): Integer;
-    function CreateIterator: TPressMVPRegisteredCommandIterator;
-    function Extract(AObject: TPressMVPRegisteredCommand): TPressMVPRegisteredCommand;
-    function IndexOf(AObject: TPressMVPRegisteredCommand): Integer;
+    function Add(AObject: TPressMVPCommandRegistry): Integer;
+    function CreateIterator: TPressMVPCommandRegistryIterator;
+    function Extract(AObject: TPressMVPCommandRegistry): TPressMVPCommandRegistry;
+    function IndexOf(AObject: TPressMVPCommandRegistry): Integer;
     function IndexOfCommand(ACommandClass: TPressMVPCommandClass): Integer;
-    procedure Insert(AIndex: Integer; AObject: TPressMVPRegisteredCommand);
-    function Remove(AObject: TPressMVPRegisteredCommand): Integer;
-    property Items[AIndex: Integer]: TPressMVPRegisteredCommand read GetItems write SetItems; default;
+    procedure Insert(AIndex: Integer; AObject: TPressMVPCommandRegistry);
+    function Remove(AObject: TPressMVPCommandRegistry): Integer;
+    property Items[AIndex: Integer]: TPressMVPCommandRegistry read GetItems write SetItems; default;
   end;
 
-  TPressMVPRegisteredCommandIterator = class(TPressIterator)
+  TPressMVPCommandRegistryIterator = class(TPressIterator)
   private
-    function GetCurrentItem: TPressMVPRegisteredCommand;
+    function GetCurrentItem: TPressMVPCommandRegistry;
   public
-    property CurrentItem: TPressMVPRegisteredCommand read GetCurrentItem;
+    property CurrentItem: TPressMVPCommandRegistry read GetCurrentItem;
   end;
 
   TPressMVPCommands = class(TObject)
@@ -404,16 +405,16 @@ type
   TPressMVPControlFriend = class(TControl);
 
 var
-  _PressRegisteredCommands: TPressMVPRegisteredCommandList;
+  _PressCommandRegistryList: TPressMVPCommandRegistryList;
 
-function PressRegisteredCommands: TPressMVPRegisteredCommandList;
+function PressCommandRegistryList: TPressMVPCommandRegistryList;
 begin
-  if not Assigned(_PressRegisteredCommands) then
+  if not Assigned(_PressCommandRegistryList) then
   begin
-    _PressRegisteredCommands := TPressMVPRegisteredCommandList.Create(True);
-    PressRegisterSingleObject(_PressRegisteredCommands);
+    _PressCommandRegistryList := TPressMVPCommandRegistryList.Create(True);
+    PressRegisterSingleObject(_PressCommandRegistryList);
   end;
-  Result := _PressRegisteredCommands;
+  Result := _PressCommandRegistryList;
 end;
 
 { TPressMVPCommandComponent }
@@ -740,11 +741,11 @@ begin
     ComponentList.Visible := FVisible;
 end;
 
-class function TPressMVPCommand.RegisterCommand: TPressMVPRegisteredCommand;
+class function TPressMVPCommand.RegisterCommand: TPressMVPCommandRegistry;
 begin
-  Result := TPressMVPRegisteredCommand.Create(Self);
+  Result := TPressMVPCommandRegistry.Create(Self);
   try
-    PressRegisteredCommands.Add(Result);
+    PressCommandRegistryList.Add(Result);
   except
     Result.Free;
     raise;
@@ -754,13 +755,13 @@ end;
 procedure TPressMVPCommand.VerifyAccess;
 var
   VAccessMode: TPressAccessMode;
-  VCommandReg: TPressMVPRegisteredCommand;
+  VCommandReg: TPressMVPCommandRegistry;
   VIndex: Integer;
 begin
   VIndex :=
-   PressRegisteredCommands.IndexOfCommand(TPressMVPCommandClass(ClassType));
+   PressCommandRegistryList.IndexOfCommand(TPressMVPCommandClass(ClassType));
   if VIndex <> -1 then
-    VCommandReg := PressRegisteredCommands[VIndex]
+    VCommandReg := PressCommandRegistryList[VIndex]
   else
     VCommandReg := nil;
   if PressUserData.HasUser then
@@ -842,9 +843,9 @@ begin
   Result := inherited CurrentItem as TPressMVPCommand;
 end;
 
-{ TPressMVPRegisteredCommand }
+{ TPressMVPCommandRegistry }
 
-constructor TPressMVPRegisteredCommand.Create(
+constructor TPressMVPCommandRegistry.Create(
   ACommandClass: TPressMVPCommandClass);
 begin
   inherited Create;
@@ -852,38 +853,43 @@ begin
   FAccessID := -1;
 end;
 
-{ TPressMVPRegisteredCommandList }
+procedure TPressMVPCommandRegistry.SetAccessID(const Value: Integer);
+begin
+  FAccessID := Value;
+end;
 
-function TPressMVPRegisteredCommandList.Add(
-  AObject: TPressMVPRegisteredCommand): Integer;
+{ TPressMVPCommandRegistryList }
+
+function TPressMVPCommandRegistryList.Add(
+  AObject: TPressMVPCommandRegistry): Integer;
 begin
   Result := inherited Add(AObject);
 end;
 
-function TPressMVPRegisteredCommandList.CreateIterator: TPressMVPRegisteredCommandIterator;
+function TPressMVPCommandRegistryList.CreateIterator: TPressMVPCommandRegistryIterator;
 begin
-  Result := TPressMVPRegisteredCommandIterator.Create(Self);
+  Result := TPressMVPCommandRegistryIterator.Create(Self);
 end;
 
-function TPressMVPRegisteredCommandList.Extract(
-  AObject: TPressMVPRegisteredCommand): TPressMVPRegisteredCommand;
+function TPressMVPCommandRegistryList.Extract(
+  AObject: TPressMVPCommandRegistry): TPressMVPCommandRegistry;
 begin
-  Result := inherited Extract(AObject) as TPressMVPRegisteredCommand;
+  Result := inherited Extract(AObject) as TPressMVPCommandRegistry;
 end;
 
-function TPressMVPRegisteredCommandList.GetItems(
-  AIndex: Integer): TPressMVPRegisteredCommand;
+function TPressMVPCommandRegistryList.GetItems(
+  AIndex: Integer): TPressMVPCommandRegistry;
 begin
-  Result := inherited Items[AIndex] as TPressMVPRegisteredCommand;
+  Result := inherited Items[AIndex] as TPressMVPCommandRegistry;
 end;
 
-function TPressMVPRegisteredCommandList.IndexOf(
-  AObject: TPressMVPRegisteredCommand): Integer;
+function TPressMVPCommandRegistryList.IndexOf(
+  AObject: TPressMVPCommandRegistry): Integer;
 begin
   Result := inherited IndexOf(AObject);
 end;
 
-function TPressMVPRegisteredCommandList.IndexOfCommand(
+function TPressMVPCommandRegistryList.IndexOfCommand(
   ACommandClass: TPressMVPCommandClass): Integer;
 begin
   for Result := 0 to Pred(Count) do
@@ -892,34 +898,34 @@ begin
   Result := -1;
 end;
 
-procedure TPressMVPRegisteredCommandList.Insert(
-  AIndex: Integer; AObject: TPressMVPRegisteredCommand);
+procedure TPressMVPCommandRegistryList.Insert(
+  AIndex: Integer; AObject: TPressMVPCommandRegistry);
 begin
   inherited Insert(AIndex, AObject);
 end;
 
-function TPressMVPRegisteredCommandList.InternalCreateIterator: TPressCustomIterator;
+function TPressMVPCommandRegistryList.InternalCreateIterator: TPressCustomIterator;
 begin
   Result := CreateIterator;
 end;
 
-function TPressMVPRegisteredCommandList.Remove(
-  AObject: TPressMVPRegisteredCommand): Integer;
+function TPressMVPCommandRegistryList.Remove(
+  AObject: TPressMVPCommandRegistry): Integer;
 begin
   Result := inherited Remove(AObject);
 end;
 
-procedure TPressMVPRegisteredCommandList.SetItems(
-  AIndex: Integer; Value: TPressMVPRegisteredCommand);
+procedure TPressMVPCommandRegistryList.SetItems(
+  AIndex: Integer; Value: TPressMVPCommandRegistry);
 begin
   inherited Items[AIndex] := Value;
 end;
 
-{ TPressMVPRegisteredCommandIterator }
+{ TPressMVPCommandRegistryIterator }
 
-function TPressMVPRegisteredCommandIterator.GetCurrentItem: TPressMVPRegisteredCommand;
+function TPressMVPCommandRegistryIterator.GetCurrentItem: TPressMVPCommandRegistry;
 begin
-  Result := inherited CurrentItem as TPressMVPRegisteredCommand;
+  Result := inherited CurrentItem as TPressMVPCommandRegistry;
 end;
 
 { TPressMVPCommands }
