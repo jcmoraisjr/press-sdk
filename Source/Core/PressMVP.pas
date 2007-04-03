@@ -185,10 +185,9 @@ type
     FAlwaysEnabled: Boolean;
     FCommandClass: TPressMVPCommandClass;
     FEnabledIfNoUser: Boolean;
-    procedure SetAccessID(const Value: Integer);
   public
     constructor Create(ACommandClass: TPressMVPCommandClass);
-    property AccessID: Integer read FAccessID write SetAccessID;
+    property AccessID: Integer read FAccessID write FAccessID;
     property AlwaysEnabled: Boolean read FAlwaysEnabled write FAlwaysEnabled;
     property CommandClass: TPressMVPCommandClass read FCommandClass;
     property EnabledIfNoUser: Boolean read FEnabledIfNoUser write FEnabledIfNoUser;
@@ -851,11 +850,6 @@ begin
   inherited Create;
   FCommandClass := ACommandClass;
   FAccessID := -1;
-end;
-
-procedure TPressMVPCommandRegistry.SetAccessID(const Value: Integer);
-begin
-  FAccessID := Value;
 end;
 
 { TPressMVPCommandRegistryList }
