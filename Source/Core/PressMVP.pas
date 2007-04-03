@@ -892,10 +892,14 @@ end;
 function TPressMVPCommandRegistryList.IndexOfCommand(
   ACommandClass: TPressMVPCommandClass): Integer;
 begin
-  for Result := 0 to Pred(Count) do
-    if ACommandClass.InheritsFrom(Items[Result].CommandClass) then
-      Exit;
-  Result := -1;
+  if ACommandClass <> TPressMVPCommand then
+  begin
+    for Result := 0 to Pred(Count) do
+      if ACommandClass = Items[Result].CommandClass then
+        Exit;
+    Result := IndexOfCommand(TPressMVPCommandClass(ACommandClass.ClassParent));
+  end else
+    Result := -1;
 end;
 
 procedure TPressMVPCommandRegistryList.Insert(
