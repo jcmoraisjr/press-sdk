@@ -1907,7 +1907,9 @@ begin
     Clear
   else
   begin
-    VIndex := Metadata.EnumMetadata.Items.IndexOf(AValue);
+    VIndex := GetEnumValue(Metadata.EnumMetadata.TypeAddress, AValue);
+    if VIndex = -1 then
+      VIndex := Metadata.EnumMetadata.Items.IndexOf(AValue);
     if VIndex <> -1 then
       PubValue := VIndex
     else
