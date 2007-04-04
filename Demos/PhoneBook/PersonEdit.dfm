@@ -1,4 +1,6 @@
 inherited PersonEditForm: TPersonEditForm
+  Left = 296
+  Top = 228
   Caption = 'Person'
   PixelsPerInch = 96
   TextHeight = 13
