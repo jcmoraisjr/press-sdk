@@ -92,7 +92,10 @@ end;
 
 function TPressUser.AccessMode(AAccessObjectID: Integer): TPressAccessMode;
 begin
-  Result := InternalAccessMode(AAccessObjectID);
+  if AAccessObjectID >= 0 then
+    Result := InternalAccessMode(AAccessObjectID)
+  else
+    Result := amWritable;
 end;
 
 procedure TPressUser.AfterLogon;
