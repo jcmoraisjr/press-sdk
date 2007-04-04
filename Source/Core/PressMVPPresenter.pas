@@ -1,6 +1,6 @@
 (*
   PressObjects, MVP-Presenter Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -213,8 +213,7 @@ type
   protected
     function AttributeByName(const AAttributeName: ShortString): TPressAttribute;
     procedure BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString); override;
-    function CreateSubPresenter(const AAttributeName, AControlName: ShortString; AModelClass: TPressMVPModelClass = nil; AViewClass: TPressMVPViewClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter; overload;
-    function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string; AModelClass: TPressMVPModelClass = nil; AViewClass: TPressMVPViewClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter; overload;
+    function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; AViewClass: TPressMVPViewClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
     procedure InitPresenter; override;
     function InternalCreateSubModel(ASubject: TPressSubject): TPressMVPModel; virtual;
     function InternalCreateSubPresenter(AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter; virtual;
@@ -772,16 +771,6 @@ begin
   if not Assigned(ACommandClass) then
     ACommandClass := TPressMVPNullCommand;
   Model.RegisterCommand(ACommandClass).AddComponent(VComponent);
-end;
-
-function TPressMVPFormPresenter.CreateSubPresenter(
-  const AAttributeName, AControlName: ShortString;
-  AModelClass: TPressMVPModelClass;
-  AViewClass: TPressMVPViewClass;
-  APresenterClass: TPressMVPPresenterClass): TPressMVPPresenter;
-begin
-  Result := CreateSubPresenter(
-   AAttributeName, AControlName, '', AModelClass, AViewClass, APresenterClass);
 end;
 
 function TPressMVPFormPresenter.CreateSubPresenter(
