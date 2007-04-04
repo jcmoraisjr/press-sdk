@@ -30,6 +30,7 @@ uses
   PressClasses,
   PressNotifier,
   PressSubject,
+  PressUser,
   PressMVP,
   PressMVPModel;
 
@@ -196,6 +197,7 @@ type
 
   TPressMVPView = class(TPressMVPObject)
   private
+    FAccessMode: TPressAccessMode;
     FControl: TControl;
     FIsChanged: Boolean;
     FModel: TPressMVPModel;
@@ -205,6 +207,7 @@ type
     FViewMouseDownEvent: TMouseEvent;
     FViewMouseUpEvent: TMouseEvent;
     function GetModel: TPressMVPModel;
+    procedure SetAccessMode(Value: TPressAccessMode);
   protected
     procedure ViewClickEvent(Sender: TObject); virtual;
     procedure ViewDblClickEvent(Sender: TObject); virtual;
@@ -213,6 +216,7 @@ type
   protected
     procedure Changed;
     procedure InitView; virtual;
+    procedure InternalAccessModeUpdated; virtual;
     procedure InternalReset; virtual;
     procedure InternalUpdate; virtual;
     procedure ModelChanged(AChangeType: TPressMVPChangeType); virtual;
@@ -228,6 +232,7 @@ type
     class function CreateFromControl(AControl: TControl; AOwnsControl: Boolean = False): TPressMVPView;
     class procedure RegisterView;
     procedure Update;
+    property AccessMode: TPressAccessMode read FAccessMode write SetAccessMode;
     property Control: TControl read FControl;
     property IsChanged: Boolean read FIsChanged;
     property OwnsControl: Boolean read FOwnsControl write FOwnsControl;
@@ -264,6 +269,8 @@ type
     FViewKeyDownEvent: TKeyEvent;
     FViewKeyPressEvent: TKeyPressEvent;
     FViewKeyUpEvent: TKeyEvent;
+  private
+    procedure UpdateRelatedPanel;
   protected
     procedure ViewEnterEvent(Sender: TObject); virtual;
     procedure ViewExitEvent(Sender: TObject); virtual;
@@ -272,6 +279,7 @@ type
     procedure ViewKeyUpEvent(Sender: TObject; var Key: Word; Shift: TShiftState); virtual;
   protected
     procedure InitView; override;
+    procedure InternalAccessModeUpdated; override;
     procedure ReleaseControl; override;
   public
     procedure SelectNext; virtual;
@@ -547,6 +555,7 @@ type
   TPressMVPViewCustomCheckBoxFriend = class(TCustomCheckBox);
   TPressMVPViewCustomComboBoxFriend = class(TCustomComboBox);
   TPressMVPViewCustomListBoxFriend = class(TCustomListBox);
+  TPressMVPViewCustomLabelFriend = class(TCustomLabel);
   TPressMVPViewCustomFormFriend = class(TCustomForm);
 
 { TPressMVPViewEvent }
@@ -742,6 +751,11 @@ begin
   end;
 end;
 
+procedure TPressMVPView.InternalAccessModeUpdated;
+begin
+  InternalUpdate;
+end;
+
 procedure TPressMVPView.InternalReset;
 begin
 end;
@@ -773,6 +787,15 @@ begin
     OnMouseUp := FViewMouseUpEvent;
   end;
   FControl := nil;
+end;
+
+procedure TPressMVPView.SetAccessMode(Value: TPressAccessMode);
+begin
+  if FAccessMode <> Value then
+  begin
+    FAccessMode := Value;
+    InternalAccessModeUpdated;
+  end;
 end;
 
 procedure TPressMVPView.SetModel(Value: TPressMVPModel);
@@ -907,6 +930,12 @@ begin
   end;
 end;
 
+procedure TPressMVPWinView.InternalAccessModeUpdated;
+begin
+  inherited;
+  UpdateRelatedPanel;
+end;
+
 procedure TPressMVPWinView.ReleaseControl;
 begin
   with TPressMVPViewWinControlFriend(Control) do
@@ -937,6 +966,26 @@ end;
 procedure TPressMVPWinView.SetFocus;
 begin
   (Control as TWinControl).SetFocus;
+end;
+
+procedure TPressMVPWinView.UpdateRelatedPanel;
+var
+  VOwner: TComponent;
+  VLabel: TCustomLabel;
+  I: Integer;
+begin
+  VOwner := Control.Owner;
+  if Assigned(VOwner) then
+    for I := 0 to Pred(VOwner.ComponentCount) do
+      if (VOwner.Components[I] is TCustomLabel) then
+      begin
+        VLabel := TCustomLabel(VOwner.Components[I]);
+        if TPressMVPViewCustomLabelFriend(VLabel).FocusControl = Control then
+        begin
+          VLabel.Enabled := AccessMode = amWritable;
+          Exit;
+        end;
+      end;
 end;
 
 procedure TPressMVPWinView.ViewEnterEvent(Sender: TObject);
@@ -1025,7 +1074,11 @@ end;
 procedure TPressMVPEditView.InternalUpdate;
 begin
   inherited;
-  TPressMVPViewCustomEditFriend(Control).Text := Model.AsString;
+  if AccessMode = amInvisible then
+    TPressMVPViewCustomEditFriend(Control).Text := ''
+  else
+    TPressMVPViewCustomEditFriend(Control).Text := Model.AsString;
+  Control.Enabled := AccessMode = amWritable;
   Unchanged;
 end;
 
@@ -1093,8 +1146,12 @@ end;
 procedure TPressMVPDateTimeView.InternalUpdate;
 begin
   inherited;
-  TPressMVPViewCustomCalendarFriend(Control).DateTime :=
-   Model.Subject.AsDateTime;
+  if AccessMode = amInvisible then
+    TPressMVPViewCustomCalendarFriend(Control).DateTime := 0
+  else
+    TPressMVPViewCustomCalendarFriend(Control).DateTime :=
+     Model.Subject.AsDateTime;
+  Control.Enabled := AccessMode = amWritable;
   Unchanged;
 end;
 
@@ -1149,12 +1206,14 @@ var
 begin
   inherited;
   VAttribute := Model.Subject;
+  { TODO : Implement invisibility }
   if VAttribute.IsNull then
     TPressMVPViewCustomCheckBoxFriend(Control).State := cbGrayed
   else if VAttribute.AsBoolean then
     TPressMVPViewCustomCheckBoxFriend(Control).State := cbChecked
   else
     TPressMVPViewCustomCheckBoxFriend(Control).State := cbUnchecked;
+  Control.Enabled := AccessMode = amWritable;
   Unchanged;
 end;
 
@@ -1270,7 +1329,11 @@ end;
 procedure TPressMVPComboBoxView.InternalUpdate;
 begin
   inherited;
-  TPressMVPViewCustomComboBoxFriend(Control).Text := Model.AsString;
+  if AccessMode = amInvisible then
+    TPressMVPViewCustomComboBoxFriend(Control).Text := ''
+  else
+    TPressMVPViewCustomComboBoxFriend(Control).Text := Model.AsString;
+  Control.Enabled := AccessMode = amWritable;
   Unchanged;
 end;
 
@@ -1379,6 +1442,7 @@ procedure TPressMVPItemsView.InternalUpdate;
 begin
   inherited;
   RowCount := Model.Count;
+  Control.Enabled := AccessMode = amWritable;
   { TODO : Improve }
   Control.Invalidate;
 end;
@@ -1665,7 +1729,10 @@ end;
 procedure TPressMVPCaptionView.InternalUpdate;
 begin
   inherited;
-  TPressMVPViewControlFriend(Control).Caption := Model.AsString;
+  if AccessMode = amInvisible then
+    TPressMVPViewControlFriend(Control).Caption := ''
+  else
+    TPressMVPViewControlFriend(Control).Caption := Model.AsString;
 end;
 
 { TPressMVPLabelView }
