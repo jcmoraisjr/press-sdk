@@ -154,6 +154,7 @@ end;
 
 procedure TPressDAO.Commit;
 begin
+  { TODO : Implement transaction control }
   InternalCommit;
 end;
 
@@ -185,7 +186,6 @@ begin
         try
           {$IFDEF PressLogDAO}PressLogMsg(Self, 'Disposing', [VObject]);{$ENDIF}
           TPressObjectFriend(VObject).InternalDispose(DisposeObject);
-          Cache.RemoveObject(VObject);
           PressAssignPersistentId(VObject, '');
         finally
           VObject.EnableChanges;
@@ -341,6 +341,7 @@ end;
 
 procedure TPressDAO.Rollback;
 begin
+  { TODO : Implement transaction control }
   InternalRollback;
 end;
 
@@ -362,6 +363,7 @@ end;
 
 procedure TPressDAO.StartTransaction;
 begin
+  { TODO : Implement transaction control }
   InternalStartTransaction;
 end;
 
