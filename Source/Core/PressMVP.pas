@@ -321,6 +321,9 @@ type
 
   TPressMVPModel = class(TPressMVPObject)
   private
+    FAccessChangeObjectID: Integer;
+    FAccessNewObjectID: Integer;
+    FAccessUser: TPressUser;
     FCommands: TPressMVPCommands;
     FNotifier: TPressNotifier;
     FOnChange: TPressMVPModelNotifyEvent;
@@ -335,10 +338,16 @@ type
     function GetOwnedCommands: TPressMVPCommandList;
     function GetSelection: TPressMVPSelection;
     function GetSubject: TPressSubject;
+    procedure SetAccessChangeObjectID(Value: Integer);
+    procedure SetAccessNewObjectID(Value: Integer);
+    procedure SetAccessUser(Value: TPressUser);
   protected
-    procedure DoChanged(AChangeType: TPressMVPChangeType);
     procedure InitCommands; virtual;
+    function InternalAccessID: Integer; virtual;
+    function InternalAccessMode: TPressAccessMode; virtual;
+    procedure InternalChanged(AChangeType: TPressMVPChangeType); virtual;
     function InternalCreateSelection: TPressMVPSelection; virtual;
+    function InternalIsIncluding: Boolean; virtual;
     procedure Notify(AEvent: TPressEvent); virtual;
     procedure SetChangeEvent(Value: TPressMVPModelNotifyEvent);
     property Commands: TPressMVPCommands read GetCommands;
@@ -347,10 +356,12 @@ type
   public
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); virtual;
     destructor Destroy; override;
+    function AccessMode: TPressAccessMode;
     function AddCommand(ACommandClass: TPressMVPCommandClass): Integer;
     function AddCommandInstance(ACommand: TPressMVPCommand): Integer;
     procedure AddCommands(ACommandClasses: array of TPressMVPCommandClass);
     class function Apply(ASubject: TPressSubject): Boolean; virtual; abstract;
+    procedure Changed(AChangeType: TPressMVPChangeType);
     { TODO : Remove this factory method }
     class function CreateFromSubject(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
     function FindCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
@@ -358,6 +369,9 @@ type
     function RegisterCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     class procedure RegisterModel;
     procedure UpdateData;
+    property AccessChangeObjectID: Integer read FAccessChangeObjectID write SetAccessChangeObjectID;
+    property AccessNewObjectID: Integer read FAccessNewObjectID write SetAccessNewObjectID;
+    property AccessUser: TPressUser read FAccessUser write SetAccessUser;
     property HasParent: Boolean read GetHasParent;
     property HasSubject: Boolean read GetHasSubject;
     property Parent: TPressMVPModel read FParent;
@@ -1178,6 +1192,11 @@ end;
 
 { TPressMVPModel }
 
+function TPressMVPModel.AccessMode: TPressAccessMode;
+begin
+  Result := InternalAccessMode;
+end;
+
 function TPressMVPModel.AddCommand(
   ACommandClass: TPressMVPCommandClass): Integer;
 var
@@ -1211,6 +1230,11 @@ begin
     AddCommand(ACommandClasses[I]);
 end;
 
+procedure TPressMVPModel.Changed(AChangeType: TPressMVPChangeType);
+begin
+  InternalChanged(AChangeType);
+end;
+
 constructor TPressMVPModel.Create(
   AParent: TPressMVPModel; ASubject: TPressSubject);
 begin
@@ -1218,6 +1242,8 @@ begin
   inherited Create;
   FParent := AParent;
   FSubject := ASubject;
+  FAccessChangeObjectID := -1;
+  FAccessNewObjectID := -1;
   if HasSubject then
   begin
     FSubject.AddRef;
@@ -1236,16 +1262,11 @@ destructor TPressMVPModel.Destroy;
 begin
   FNotifier.Free;
   FCommands.Free;
+  FAccessUser.Free;
   FSubject.Free;
   FSelection.Free;
   FOwnedCommands.Free;
   inherited;
-end;
-
-procedure TPressMVPModel.DoChanged(AChangeType: TPressMVPChangeType);
-begin
-  if not EventsDisabled and Assigned(FOnChange) then
-    FOnChange(AChangeType);
 end;
 
 function TPressMVPModel.FindCommand(
@@ -1313,15 +1334,59 @@ procedure TPressMVPModel.InitCommands;
 begin
 end;
 
+function TPressMVPModel.InternalAccessID: Integer;
+begin
+  if InternalIsIncluding then
+    Result := FAccessNewObjectID
+  else
+    Result := FAccessChangeObjectID;
+end;
+
+function TPressMVPModel.InternalAccessMode: TPressAccessMode;
+var
+  VUser: TPressUser;
+  VAccessID: Integer;
+begin
+  VUser := AccessUser;
+  VAccessID := InternalAccessID;
+  if HasParent and (not Assigned(VUser) or (VAccessID = -1)) then
+  begin
+    if not Assigned(VUser) then
+      VUser := Parent.AccessUser;
+    if VAccessID = -1 then
+      VAccessID := Parent.InternalAccessID;
+  end;
+  if Assigned(VUser) then
+    Result := VUser.AccessMode(VAccessID)
+  else if VAccessID = -1 then
+    Result := amWritable
+  else
+    Result := amInvisible;
+end;
+
+procedure TPressMVPModel.InternalChanged(AChangeType: TPressMVPChangeType);
+begin
+  if Assigned(FOnChange) and not EventsDisabled then
+    FOnChange(AChangeType);
+end;
+
 function TPressMVPModel.InternalCreateSelection: TPressMVPSelection;
 begin
   Result := TPressMVPNullSelection.Create;
 end;
 
+function TPressMVPModel.InternalIsIncluding: Boolean;
+begin
+  if HasParent then
+    Result := Parent.InternalIsIncluding
+  else
+    Result := True;
+end;
+
 procedure TPressMVPModel.Notify(AEvent: TPressEvent);
 begin
   if AEvent is TPressSubjectChangedEvent then
-    DoChanged(ctSubject);
+    Changed(ctSubject);
 end;
 
 function TPressMVPModel.RegisterCommand(
@@ -1338,6 +1403,35 @@ end;
 class procedure TPressMVPModel.RegisterModel;
 begin
   PressDefaultMVPFactory.RegisterModel(Self);
+end;
+
+procedure TPressMVPModel.SetAccessChangeObjectID(Value: Integer);
+begin
+  if FAccessChangeObjectID <> Value then
+  begin
+    FAccessChangeObjectID := Value;
+    Changed(ctDisplay);
+  end;
+end;
+
+procedure TPressMVPModel.SetAccessNewObjectID(Value: Integer);
+begin
+  if FAccessNewObjectID <> Value then
+  begin
+    FAccessNewObjectID := Value;
+    Changed(ctDisplay);
+  end;
+end;
+
+procedure TPressMVPModel.SetAccessUser(Value: TPressUser);
+begin
+  if FAccessUser <> Value then
+  begin
+    FAccessUser.Free;
+    FAccessUser := Value;
+    FAccessUser.AddRef;
+    Changed(ctDisplay);
+  end;
 end;
 
 procedure TPressMVPModel.SetChangeEvent(Value: TPressMVPModelNotifyEvent);

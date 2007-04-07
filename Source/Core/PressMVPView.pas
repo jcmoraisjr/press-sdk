@@ -738,6 +738,7 @@ end;
 
 procedure TPressMVPView.InitView;
 begin
+  FAccessMode := amWritable;
   with TPressMVPViewControlFriend(Control) do
   begin
     FViewClickEvent := OnClick;
@@ -758,6 +759,8 @@ end;
 
 procedure TPressMVPView.InternalReset;
 begin
+  AccessMode := Model.AccessMode;
+  InternalUpdate;
 end;
 
 procedure TPressMVPView.InternalUpdate;
@@ -1613,7 +1616,6 @@ var
   VColumnData: TPressMVPColumnData;
   I: Integer;
 begin
-  inherited;
   with Control do
   begin
     DefaultRowHeight := 16;
@@ -1631,7 +1633,7 @@ begin
     FixedRows := 1;
     AlignColumns;
   end;
-  Update;
+  inherited;
 end;
 
 procedure TPressMVPGridView.InternalSelectItem(AIndex: Integer);

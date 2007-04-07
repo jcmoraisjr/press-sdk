@@ -25,7 +25,8 @@ uses
   PressNotifier,
   PressSubject,
   PressAttributes,
-  PressMVP;
+  PressMVP,
+  PressUser;
 
 type
   { MVP-Model events }
@@ -40,6 +41,14 @@ type
   end;
 
   TPressMVPModelCreateSearchFormEvent = class(TPressMVPModelCreateFormEvent)
+  end;
+
+  TPressMVPObjectModelChangedEvent = class(TPressMVPModelEvent)
+  private
+    FChangeType: TPressMVPChangeType;
+  public
+    constructor Create(AOwner: TObject; AChangeType: TPressMVPChangeType);
+    property ChangeType: TPressMVPChangeType read FChangeType;
   end;
 
   TPressMVPModelCloseFormEvent = class(TPressMVPModelEvent)
@@ -414,9 +423,11 @@ type
     procedure SetHookedSubject(Value: TPressStructure);
   protected
     procedure InitCommands; override;
+    procedure InternalChanged(AChangeType: TPressMVPChangeType); override;
     procedure InternalCreateCancelCommand; virtual;
     procedure InternalCreateSaveCommand; virtual;
     function InternalCreateSelection: TPressMVPSelection; override;
+    function InternalIsIncluding: Boolean; override;
     procedure Notify(AEvent: TPressEvent); override;
   public
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
@@ -452,6 +463,15 @@ uses
   PressDialogs,
   PressMetadata,
   PressMVPCommand;
+
+{ TPressMVPObjectModelChangedEvent }
+
+constructor TPressMVPObjectModelChangedEvent.Create(
+  AOwner: TObject; AChangeType: TPressMVPChangeType);
+begin
+  inherited Create(AOwner);
+  FChangeType := AChangeType;
+end;
 
 { TPressMVPAttributeModel }
 
@@ -1645,7 +1665,7 @@ begin
       RebuildObjectList;
   end;
   if AEvent.EventType <> ietNotify then
-    DoChanged(ctSubject);
+    Changed(ctSubject);
 end;
 
 function TPressMVPItemsModel.ItemNumber(ARow: Integer): Integer;
@@ -1694,7 +1714,7 @@ begin
   finally
     Selection.EndUpdate;
   end;
-  DoChanged(ctSubject);
+  Changed(ctSubject);
 end;
 
 function TPressMVPItemsModel.TextAlignment(ACol: Integer): TAlignment;
@@ -1788,6 +1808,14 @@ begin
   InternalCreateCancelCommand;
 end;
 
+procedure TPressMVPObjectModel.InternalChanged(
+  AChangeType: TPressMVPChangeType);
+begin
+  if AChangeType = ctDisplay then
+  { TODO : or (HasSubject and not (Subject is TPressObject)) }
+    TPressMVPObjectModelChangedEvent.Create(Self, AChangeType).Notify;
+end;
+
 procedure TPressMVPObjectModel.InternalCreateCancelCommand;
 begin
   AddCommand(TPressMVPCancelObjectCommand);
@@ -1801,6 +1829,11 @@ end;
 function TPressMVPObjectModel.InternalCreateSelection: TPressMVPSelection;
 begin
   Result := TPressMVPModelSelection.Create;
+end;
+
+function TPressMVPObjectModel.InternalIsIncluding: Boolean;
+begin
+  Result := IsIncluding;
 end;
 
 procedure TPressMVPObjectModel.Notify(AEvent: TPressEvent);

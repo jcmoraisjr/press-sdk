@@ -84,8 +84,6 @@ type
 
   TPressMVPPresenter = class(TPressMVPObject)
   private
-    FAccessChangeObjectID: Integer;
-    FAccessNewObjectID: Integer;
     FCommandMenu: TPressMVPCommandMenu;
     FInteractors: TPressMVPInteractorList;
     FModel: TPressMVPModel;
@@ -99,21 +97,15 @@ type
     procedure BeforeChangeView;
     procedure DoInitInteractors;
     procedure DoInitPresenter;
-    function GetAccessMode: TPressAccessMode;
     function GetInteractors: TPressMVPInteractorList;
-    procedure SetAccessChangeObjectID(Value: Integer);
-    procedure SetAccessNewObjectID(Value: Integer);
     procedure SetCommandMenu(Value: TPressMVPCommandMenu);
     procedure SetModel(Value: TPressMVPModel);
     procedure SetView(Value: TPressMVPView);
-    procedure UpdateViewAccess;
   protected
     procedure AfterInitInteractors; virtual;
     procedure BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString); virtual;
     procedure InitPresenter; virtual;
-    procedure InternalAccessMode(AAccessID: Integer; var AAccessMode: TPressAccessMode); virtual;
     function InternalCreateCommandMenu: TPressMVPCommandMenu; virtual;
-    property AccessMode: TPressAccessMode read GetAccessMode;
     property CommandMenu: TPressMVPCommandMenu read FCommandMenu write SetCommandMenu;
     property Interactors: TPressMVPInteractorList read GetInteractors;
   public
@@ -123,8 +115,6 @@ type
     { TODO : Remove this factory method }
     class function CreateFromControllers(AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
     class procedure RegisterPresenter;
-    property AccessChangeObjectID: Integer read FAccessChangeObjectID write SetAccessChangeObjectID;
-    property AccessNewObjectID: Integer read FAccessNewObjectID write SetAccessNewObjectID;
     property Model: TPressMVPModel read FModel;
     property Parent: TPressMVPFormPresenter read FParent;
     property View: TPressMVPView read FView;
@@ -236,6 +226,7 @@ type
   public
     destructor Destroy; override;
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
+    function CreatePresenterIterator: TPressMVPPresenterIterator;
     procedure Refresh;
     class procedure RegisterFormPresenter(AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterType: TPressMVPFormPresenterType = fpIncludePresent);
     class function Run(AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
@@ -398,8 +389,7 @@ begin
       TPressMVPPresenterViewFriend(FView).SetModel(FModel);
       TPressMVPPresenterModelFriend(FModel).SetChangeEvent(
        TPressMVPPresenterViewFriend(FView).ModelChanged);
-      TPressMVPPresenterModelFriend(FModel).DoChanged(ctDisplay);
-      UpdateViewAccess;
+      FModel.Changed(ctDisplay);
     end;
     if Assigned(FCommandMenu) then
       FCommandMenu.AssignCommands(
@@ -418,8 +408,7 @@ begin
       TPressMVPPresenterViewFriend(FView).SetModel(FModel);
       TPressMVPPresenterModelFriend(FModel).SetChangeEvent(
        TPressMVPPresenterViewFriend(FView).ModelChanged);
-      TPressMVPPresenterModelFriend(FModel).DoChanged(ctDisplay);
-      UpdateViewAccess;
+      FModel.Changed(ctDisplay);
     end;
   end;
 end;
@@ -490,8 +479,6 @@ begin
   FParent := AParent;
   if Assigned(FParent) then
     FParent.SubPresenters.Add(Self);
-  FAccessNewObjectID := -1;
-  FAccessChangeObjectID := -1;
   SetModel(AModel);
   SetView(AView);
   if Model.HasCommands then
@@ -538,50 +525,6 @@ begin
   InitPresenter;
 end;
 
-function TPressMVPPresenter.GetAccessMode: TPressAccessMode;
-var
-  VUser: TPressUser;
-  VParentAccessID, VAccessID: Integer;
-begin
-  if PressUserData.HasUser then
-    VUser := PressUserData.CurrentUser
-  else
-    VUser := nil;
-
-  if Assigned(Parent) then
-  begin
-    if Parent.Model.IsIncluding then
-    begin
-      VParentAccessID := Parent.AccessNewObjectID;
-      VAccessID := AccessNewObjectID;
-    end else
-    begin
-      VParentAccessID := Parent.AccessChangeObjectID;
-      VAccessID := AccessChangeObjectID;
-    end
-  end else
-  begin
-    VParentAccessID := -1;
-    if Assigned(FModel) and (FModel is TPressMVPObjectModel) then
-      if TPressMVPObjectModel(FModel).IsIncluding then
-        VAccessID := AccessNewObjectID
-      else
-        VAccessID := AccessChangeObjectID
-    else
-      VAccessID := -1;
-  end;
-  if VAccessID = -1 then
-    VAccessID := VParentAccessID;
-
-  if VAccessID = -1 then
-    Result := amWritable
-  else if Assigned(VUser) then
-    Result := VUser.AccessMode(VAccessID)
-  else
-    Result := amInvisible;
-  InternalAccessMode(VAccessID, Result);
-end;
-
 function TPressMVPPresenter.GetInteractors: TPressMVPInteractorList;
 begin
   if not Assigned(FInteractors) then
@@ -593,11 +536,6 @@ procedure TPressMVPPresenter.InitPresenter;
 begin
 end;
 
-procedure TPressMVPPresenter.InternalAccessMode(
-  AAccessID: Integer; var AAccessMode: TPressAccessMode);
-begin
-end;
-
 function TPressMVPPresenter.InternalCreateCommandMenu: TPressMVPCommandMenu;
 begin
   Result := TPressMVPPopupCommandMenu.Create;
@@ -606,24 +544,6 @@ end;
 class procedure TPressMVPPresenter.RegisterPresenter;
 begin
   PressDefaultMVPFactory.RegisterPresenter(Self);
-end;
-
-procedure TPressMVPPresenter.SetAccessChangeObjectID(Value: Integer);
-begin
-  if FAccessChangeObjectID <> Value then
-  begin
-    FAccessChangeObjectID := Value;
-    UpdateViewAccess;
-  end;
-end;
-
-procedure TPressMVPPresenter.SetAccessNewObjectID(Value: Integer);
-begin
-  if FAccessNewObjectID <> Value then
-  begin
-    FAccessNewObjectID := Value;
-    UpdateViewAccess;
-  end;
 end;
 
 procedure TPressMVPPresenter.SetCommandMenu(Value: TPressMVPCommandMenu);
@@ -654,12 +574,6 @@ begin
     FView := Value;
     AfterChangeView;
   end;
-end;
-
-procedure TPressMVPPresenter.UpdateViewAccess;
-begin
-  if Assigned(FView) then
-    FView.AccessMode := AccessMode;
 end;
 
 { TPressMVPPresenterList }
@@ -861,6 +775,11 @@ begin
   Model.RegisterCommand(ACommandClass).AddComponent(VComponent);
 end;
 
+function TPressMVPFormPresenter.CreatePresenterIterator: TPressMVPPresenterIterator;
+begin
+  Result := SubPresenters.CreateIterator;
+end;
+
 function TPressMVPFormPresenter.CreateSubPresenter(
   const AAttributeName, AControlName: ShortString;
   const ADisplayNames: string;
@@ -1025,6 +944,7 @@ begin
     VModel := TPressMVPModel.CreateFromSubject(
      AParent.Model, AObject) as TPressMVPObjectModel;
   VModel.IsIncluding := AIncluding;
+  VModel.AccessUser := PressUserData.User;
   if VObjectIsMissing then
     AObject.Release;
 
