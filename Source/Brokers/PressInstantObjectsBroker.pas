@@ -51,7 +51,7 @@ type
     function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
-    function InternalSQLForObject(const ASQLStatement: string): TPressProxyList; override;
+    function InternalSQLProxy(const ASQLStatement: string): TPressProxyList; override;
     function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList; override;
     procedure InternalRollback; override;
     procedure InternalStartTransaction; override;
@@ -324,7 +324,7 @@ begin
   {$IFDEF PressLogDAOPersistence}PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');{$ENDIF}
   case AQuery.Style of
     qsOQL: Result := OQLQuery(VQueryStr);
-    qsReference: Result := SQLForObject(VQueryStr);
+    qsReference: Result := SQLProxy(VQueryStr);
     else {qsCustom} Result := SQLQuery(AQuery.Metadata.ItemObjectClass, VQueryStr);
   end;
 end;
@@ -340,7 +340,7 @@ begin
     FConnectionManager.Execute;
 end;
 
-function TPressInstantObjectsPersistence.InternalSQLForObject(
+function TPressInstantObjectsPersistence.InternalSQLProxy(
   const ASQLStatement: string): TPressProxyList;
 var
   VBroker: TInstantSQLBroker;

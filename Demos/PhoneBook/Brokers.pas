@@ -26,7 +26,7 @@ type
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
     procedure InternalRollback; override;
-    function InternalSQLForObject(const ASQLStatement: string): TPressProxyList; override;
+    function InternalSQLProxy(const ASQLStatement: string): TPressProxyList; override;
     function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList; override;
     procedure InternalStartTransaction; override;
     procedure InternalStore(AObject: TPressObject); override;
@@ -87,7 +87,7 @@ procedure TPressPhoneBookPersistence.InternalRollback;
 begin
 end;
 
-function TPressPhoneBookPersistence.InternalSQLForObject(
+function TPressPhoneBookPersistence.InternalSQLProxy(
   const ASQLStatement: string): TPressProxyList;
 begin
   { TODO : Implement }

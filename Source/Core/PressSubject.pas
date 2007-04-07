@@ -464,7 +464,7 @@ type
     function RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
     procedure Rollback;
     procedure ShowConnectionManager;
-    function SQLForObject(const ASQLStatement: string): TPressProxyList;
+    function SQLProxy(const ASQLStatement: string): TPressProxyList;
     function SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
     procedure StartTransaction;
     procedure Store(AObject: TPressObject);

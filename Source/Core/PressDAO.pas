@@ -60,7 +60,7 @@ type
     procedure InternalRollback; virtual;
     class function InternalServiceType: TPressServiceType; override;
     procedure InternalShowConnectionManager; virtual;
-    function InternalSQLForObject(const ASQLStatement: string): TPressProxyList; virtual;
+    function InternalSQLProxy(const ASQLStatement: string): TPressProxyList; virtual;
     function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList; virtual;
     procedure InternalStartTransaction; virtual;
     procedure InternalStore(AObject: TPressObject); virtual;
@@ -80,7 +80,7 @@ type
     function RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
     procedure Rollback;
     procedure ShowConnectionManager;
-    function SQLForObject(const ASQLStatement: string): TPressProxyList;
+    function SQLProxy(const ASQLStatement: string): TPressProxyList;
     function SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
     procedure StartTransaction;
     procedure Store(AObject: TPressObject);
@@ -284,10 +284,10 @@ procedure TPressDAO.InternalShowConnectionManager;
 begin
 end;
 
-function TPressDAO.InternalSQLForObject(
+function TPressDAO.InternalSQLProxy(
   const ASQLStatement: string): TPressProxyList;
 begin
-  raise UnsupportedFeatureError('SQL Query');
+  raise UnsupportedFeatureError('SQL Proxy');
 end;
 
 function TPressDAO.InternalSQLQuery(
@@ -350,10 +350,10 @@ begin
   InternalShowConnectionManager;
 end;
 
-function TPressDAO.SQLForObject(
+function TPressDAO.SQLProxy(
   const ASQLStatement: string): TPressProxyList;
 begin
-  Result := InternalSQLForObject(ASQLStatement);
+  Result := InternalSQLProxy(ASQLStatement);
 end;
 
 function TPressDAO.SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
