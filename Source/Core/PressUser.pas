@@ -44,34 +44,23 @@ type
     function AccessMode(AAccessObjectID: Integer): TPressAccessMode;
   end;
 
-  TPressUserQueryClass = class of TPressUserQuery;
-
-  TPressUserQuery = class(TPressQuery)
-  protected
-    function InternalCheckLogon(const AUserID, APassword: string): TPressUser; virtual;
-  public
-    function CheckLogon(const AUserID, APassword: string): TPressUser;
-  end;
-
   TPressUserData = class(TPressService)
   private
     FCurrentUser: TPressUser;
-    FUserQuery: TPressUserQuery;
     function GetCurrentUser: TPressUser;
     function GetHasUser: Boolean;
   protected
     procedure DoneService; override;
-    function InternalLogon(const AUserID, APassword: string): Boolean; virtual;
-    function InternalUserQueryClass: TPressUserQueryClass; virtual;
+    function InternalQueryUser(const AUserID, APassword: string): TPressUser; virtual;
     class function InternalServiceType: TPressServiceType; override;
-    property UserQuery: TPressUserQuery read FUserQuery;
   public
-    constructor Create; override;
     destructor Destroy; override;
     procedure Logoff;
     function Logon(const AUserID: string = ''; const APassword: string = ''): Boolean;
+    function QueryUser(const AUserID, APassword: string): TPressUser;
     property CurrentUser: TPressUser read GetCurrentUser;
     property HasUser: Boolean read GetHasUser;
+    property User: TPressUser read FCurrentUser;
   end;
 
 function PressUserData: TPressUserData;
@@ -112,32 +101,11 @@ begin
   Result := amWritable;
 end;
 
-{ TPressUserQuery }
-
-function TPressUserQuery.CheckLogon(
-  const AUserID, APassword: string): TPressUser;
-begin
-  Result := InternalCheckLogon(AUserID, APassword);
-end;
-
-function TPressUserQuery.InternalCheckLogon(
-  const AUserID, APassword: string): TPressUser;
-begin
-  Result := TPressUser.Create;
-end;
-
 { TPressUserData }
-
-constructor TPressUserData.Create;
-begin
-  inherited Create;
-  FUserQuery := InternalUserQueryClass.Create;
-end;
 
 destructor TPressUserData.Destroy;
 begin
   FCurrentUser.Free;
-  FUserQuery.Free;
   inherited;
 end;
 
@@ -159,31 +127,15 @@ begin
   Result := Assigned(FCurrentUser);
 end;
 
-function TPressUserData.InternalLogon(
-  const AUserID, APassword: string): Boolean;
-var
-  VNewUser: TPressUser;
+function TPressUserData.InternalQueryUser(
+  const AUserID, APassword: string): TPressUser;
 begin
-  VNewUser := UserQuery.CheckLogon(AUserID, APassword);
-  Result := Assigned(VNewUser);
-  if Result then
-    try
-      Logoff;
-      FCurrentUser := VNewUser;
-    except
-      VNewUser.Free;
-      raise;
-    end;
+  Result := TPressUser.Create;
 end;
 
 class function TPressUserData.InternalServiceType: TPressServiceType;
 begin
   Result := stUserData;
-end;
-
-function TPressUserData.InternalUserQueryClass: TPressUserQueryClass;
-begin
-  Result := TPressUserQuery;
 end;
 
 procedure TPressUserData.Logoff;
@@ -197,19 +149,32 @@ begin
 end;
 
 function TPressUserData.Logon(const AUserID, APassword: string): Boolean;
+var
+  VNewUser: TPressUser;
 begin
-  Result := InternalLogon(AUserID, APassword);
+  VNewUser := InternalQueryUser(AUserID, APassword);
+  Result := Assigned(VNewUser);
   if Result then
-  begin
-    TPressUserLogonEvent.Create(Self).Notify;
-    CurrentUser.AfterLogon;  // friend class
-  end;
+    try
+      Logoff;
+      FCurrentUser := VNewUser;
+      TPressUserLogonEvent.Create(Self).Notify;
+      FCurrentUser.AfterLogon;  // friend class
+    except
+      VNewUser.Free;
+      raise;
+    end;
+end;
+
+function TPressUserData.QueryUser(const AUserID,
+  APassword: string): TPressUser;
+begin
+  Result := InternalQueryUser(AUserID, APassword);
 end;
 
 procedure RegisterClasses;
 begin
   TPressUser.RegisterClass;
-  TPressUserQuery.RegisterClass;
 end;
 
 initialization
