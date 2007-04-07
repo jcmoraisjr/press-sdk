@@ -365,31 +365,6 @@ type
     property Subject: TPressSubject read GetSubject;
   end;
 
-  TPressMVPModelIterator = class;
-
-  TPressMVPModelList = class(TPressList)
-  private
-    function GetItems(AIndex: Integer): TPressMVPModel;
-    procedure SetItems(AIndex: Integer; Value: TPressMVPModel);
-  protected
-    function InternalCreateIterator: TPressCustomIterator; override;
-  public
-    function Add(AObject: TPressMVPModel): Integer;
-    function CreateIterator: TPressMVPModelIterator;
-    function Extract(AObject: TPressMVPModel): TObject;
-    function IndexOf(AObject: TPressMVPModel): Integer;
-    procedure Insert(Index: Integer; AObject: TPressMVPModel);
-    function Remove(AObject: TPressMVPModel): Integer;
-    property Items[AIndex: Integer]: TPressMVPModel read GetItems write SetItems; default;
-  end;
-
-  TPressMVPModelIterator = class(TPressIterator)
-  private
-    function GetCurrentItem: TPressMVPModel;
-  public
-    property CurrentItem: TPressMVPModel read GetCurrentItem;
-  end;
-
 implementation
 
 uses
@@ -1373,62 +1348,6 @@ end;
 procedure TPressMVPModel.UpdateData;
 begin
   TPressMVPModelUpdateDataEvent.Create(Self).Notify;
-end;
-
-{ TPressMVPModelList }
-
-function TPressMVPModelList.Add(AObject: TPressMVPModel): Integer;
-begin
-  Result := inherited Add(AObject);
-end;
-
-function TPressMVPModelList.CreateIterator: TPressMVPModelIterator;
-begin
-  Result := TPressMVPModelIterator.Create(Self);
-end;
-
-function TPressMVPModelList.Extract(AObject: TPressMVPModel): TObject;
-begin
-  Result := inherited Extract(AObject) as TPressMVPModel;
-end;
-
-function TPressMVPModelList.GetItems(AIndex: Integer): TPressMVPModel;
-begin
-  Result := inherited Items[AIndex] as TPressMVPModel;
-end;
-
-function TPressMVPModelList.IndexOf(AObject: TPressMVPModel): Integer;
-begin
-  Result := inherited IndexOf(AObject);
-end;
-
-procedure TPressMVPModelList.Insert(
-  Index: Integer; AObject: TPressMVPModel);
-begin
-  inherited Insert(Index, AObject);
-end;
-
-function TPressMVPModelList.InternalCreateIterator: TPressCustomIterator;
-begin
-  Result := CreateIterator;
-end;
-
-function TPressMVPModelList.Remove(AObject: TPressMVPModel): Integer;
-begin
-  Result := inherited Remove(AObject);
-end;
-
-procedure TPressMVPModelList.SetItems(
-  AIndex: Integer; Value: TPressMVPModel);
-begin
-  inherited Items[AIndex] := Value;
-end;
-
-{ TPressMVPModelIterator }
-
-function TPressMVPModelIterator.GetCurrentItem: TPressMVPModel;
-begin
-  Result := inherited CurrentItem as TPressMVPModel;
 end;
 
 end.

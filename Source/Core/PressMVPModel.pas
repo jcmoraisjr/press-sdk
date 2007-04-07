@@ -406,13 +406,11 @@ type
     FHookedSubject: TPressStructure;
     FIsIncluding: Boolean;
     FObjectMemento: TPressObjectMemento;
-    FSubModels: TPressMVPModelList;
     procedure AfterChangeHookedSubject;
     procedure BeforeChangeHookedSubject;
     function GetIsChanged: Boolean;
     function GetSelection: TPressMVPModelSelection;
     function GetSubject: TPressObject;
-    function GetSubModels: TPressMVPModelList;
     procedure SetHookedSubject(Value: TPressStructure);
   protected
     procedure InitCommands; override;
@@ -420,7 +418,6 @@ type
     procedure InternalCreateSaveCommand; virtual;
     function InternalCreateSelection: TPressMVPSelection; override;
     procedure Notify(AEvent: TPressEvent); override;
-    property SubModels: TPressMVPModelList read GetSubModels;
   public
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
     destructor Destroy; override;
@@ -1765,7 +1762,6 @@ end;
 destructor TPressMVPObjectModel.Destroy;
 begin
   FHookedSubject.Free;
-  FSubModels.Free;
   FObjectMemento.Free;
   inherited;
 end;
@@ -1783,13 +1779,6 @@ end;
 function TPressMVPObjectModel.GetSubject: TPressObject;
 begin
   Result := inherited Subject as TPressObject;
-end;
-
-function TPressMVPObjectModel.GetSubModels: TPressMVPModelList;
-begin
-  if not Assigned(FSubModels) then
-    FSubModels := TPressMVPModelList.Create(True);
-  Result := FSubModels;
 end;
 
 procedure TPressMVPObjectModel.InitCommands;
