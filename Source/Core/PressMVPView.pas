@@ -270,7 +270,7 @@ type
     FViewKeyPressEvent: TKeyPressEvent;
     FViewKeyUpEvent: TKeyEvent;
   private
-    procedure UpdateRelatedPanel;
+    procedure UpdateRelatedLabel;
   protected
     procedure ViewEnterEvent(Sender: TObject); virtual;
     procedure ViewExitEvent(Sender: TObject); virtual;
@@ -933,7 +933,7 @@ end;
 procedure TPressMVPWinView.InternalAccessModeUpdated;
 begin
   inherited;
-  UpdateRelatedPanel;
+  UpdateRelatedLabel;
 end;
 
 procedure TPressMVPWinView.ReleaseControl;
@@ -968,7 +968,7 @@ begin
   (Control as TWinControl).SetFocus;
 end;
 
-procedure TPressMVPWinView.UpdateRelatedPanel;
+procedure TPressMVPWinView.UpdateRelatedLabel;
 var
   VOwner: TComponent;
   VLabel: TCustomLabel;
