@@ -164,7 +164,7 @@ type
     property CurrentItem: TPressAttributeMetadata read GetCurrentItem;
   end;
 
-  TPressMap = class(TPressAttributeMetadataList)
+  TPressClassMap = class(TPressAttributeMetadataList)
   private
     FObjectMetadata: TPressObjectMetadata;
     procedure ReadMetadatas(AObjectMetadata: TPressObjectMetadata);
@@ -205,14 +205,14 @@ type
     FAttributeMetadatas: TPressAttributeMetadataList;
     FIdMetadata: TPressAttributeMetadata;
     FKeyName: string;
-    FMap: TPressMap;
+    FMap: TPressClassMap;
     FModel: TPressModel;
     FObjectClassName: string;
     FParent: TPressObjectMetadata;
     FPersistentName: string;
     function GetAttributeMetadatas: TPressAttributeMetadataList;
     function GetIdMetadata: TPressAttributeMetadata;
-    function GetMap: TPressMap;
+    function GetMap: TPressClassMap;
   protected
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; virtual;
     property Model: TPressModel read FModel;
@@ -222,7 +222,7 @@ type
     function CreateAttributeMetadata: TPressAttributeMetadata;
     property AttributeMetadatas: TPressAttributeMetadataList read GetAttributeMetadatas;
     property IdMetadata: TPressAttributeMetadata read GetIdMetadata;
-    property Map: TPressMap read GetMap;
+    property Map: TPressClassMap read GetMap;
     property ObjectClassName: string read FObjectClassName;
     property Parent: TPressObjectMetadata read FParent;
   published
@@ -495,7 +495,7 @@ type
     FDisableUpdatesCount: Integer;
     FId: TPressAttribute;
     FIsChanged: Boolean;
-    FMap: TPressMap;
+    FMap: TPressClassMap;
     FMementos: TPressObjectMementoList;
     FMetadata: TPressObjectMetadata;
     FNotifying: Boolean;
@@ -510,7 +510,7 @@ type
     function GetIsPersistent: Boolean;
     function GetIsUpdated: Boolean;
     function GetIsValid: Boolean;
-    function GetMap: TPressMap;
+    function GetMap: TPressClassMap;
     function GetMementos: TPressObjectMementoList;
     function GetMetadata: TPressObjectMetadata;
     function GetObjectOwner: TPressObject;
@@ -551,7 +551,7 @@ type
     function AttributeCount: Integer;
     procedure Changed(AAttribute: TPressAttribute);
     procedure Changing(AAttribute: TPressAttribute);
-    class function ClassMap: TPressMap;
+    class function ClassMap: TPressClassMap;
     class function ClassMetadata: TPressObjectMetadata;
     class function ClassMetadataStr: string;
     {$IFDEF FPC}class{$ENDIF} function ClassType: TPressObjectClass;
@@ -578,7 +578,7 @@ type
     property IsPersistent: Boolean read GetIsPersistent;
     property IsUpdated: Boolean read GetIsUpdated;
     property IsValid: Boolean read GetIsValid;
-    property Map: TPressMap read GetMap;
+    property Map: TPressClassMap read GetMap;
     property Metadata: TPressObjectMetadata read GetMetadata;
     property Owner: TPressObject read GetObjectOwner;
     property OwnerAttribute: TPressStructure read FOwnerAttribute;
@@ -1370,16 +1370,16 @@ begin
   Result := inherited CurrentItem as TPressAttributeMetadata;
 end;
 
-{ TPressMap }
+{ TPressClassMap }
 
-constructor TPressMap.Create(AObjectMetadata: TPressObjectMetadata);
+constructor TPressClassMap.Create(AObjectMetadata: TPressObjectMetadata);
 begin
   inherited Create(False);
   FObjectMetadata := AObjectMetadata;
   ReadMetadatas(AObjectMetadata);
 end;
 
-function TPressMap.FindMetadata(const APath: string): TPressAttributeMetadata;
+function TPressClassMap.FindMetadata(const APath: string): TPressAttributeMetadata;
 var
   VMetadata: TPressAttributeMetadata;
   VPos: Integer;
@@ -1409,7 +1409,7 @@ begin
   end;
 end;
 
-function TPressMap.MetadataByPath(
+function TPressClassMap.MetadataByPath(
   const APath: string): TPressAttributeMetadata;
 begin
   Result := FindMetadata(APath);
@@ -1418,7 +1418,7 @@ begin
      SAttributeNotFound, [FObjectMetadata.ObjectClassName, APath]);
 end;
 
-procedure TPressMap.ReadMetadatas(AObjectMetadata: TPressObjectMetadata);
+procedure TPressClassMap.ReadMetadatas(AObjectMetadata: TPressObjectMetadata);
 var
   VCurrentMetadata: TPressAttributeMetadata;
   VIndex: Integer;
@@ -1506,10 +1506,10 @@ begin
   Result := FIdMetadata;
 end;
 
-function TPressObjectMetadata.GetMap: TPressMap;
+function TPressObjectMetadata.GetMap: TPressClassMap;
 begin
   if not Assigned(FMap) then
-    FMap := TPressMap.Create(Self);
+    FMap := TPressClassMap.Create(Self);
   Result := FMap;
 end;
 
@@ -2252,7 +2252,7 @@ begin
   NotifyMementos(AAttribute);
 end;
 
-class function TPressObject.ClassMap: TPressMap;
+class function TPressObject.ClassMap: TPressClassMap;
 begin
   Result := ClassMetadata.Map;
 end;
@@ -2492,7 +2492,7 @@ begin
   Result := InternalIsValid;
 end;
 
-function TPressObject.GetMap: TPressMap;
+function TPressObject.GetMap: TPressClassMap;
 begin
   if not Assigned(FMap) then
     FMap := Metadata.Map;

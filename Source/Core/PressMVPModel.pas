@@ -220,18 +220,18 @@ type
   { TODO : Collection }
   private
     FColumnList: TPressMVPColumnList;
-    FMap: TPressMap;
+    FMap: TPressClassMap;
     function GetColumnList: TPressMVPColumnList;
     function GetColumns(AIndex: Integer): TPressMVPColumnItem;
   protected
     property ColumnList: TPressMVPColumnList read GetColumnList;
   public
-    constructor Create(AMap: TPressMap);
+    constructor Create(AMap: TPressClassMap);
     destructor Destroy; override;
     function AddColumn(const AAttributeName: string): TPressMVPColumnItem;
     function ColumnCount: Integer;
     property Columns[AIndex: Integer]: TPressMVPColumnItem read GetColumns; default;
-    property Map: TPressMap read FMap;
+    property Map: TPressClassMap read FMap;
   end;
 
   TPressMVPStructureModel = class(TPressMVPAttributeModel)
@@ -926,7 +926,7 @@ begin
     Result := 0;
 end;
 
-constructor TPressMVPColumnData.Create(AMap: TPressMap);
+constructor TPressMVPColumnData.Create(AMap: TPressClassMap);
 begin
   inherited Create;
   FMap := AMap;
