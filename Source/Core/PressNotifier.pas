@@ -1,6 +1,6 @@
 (*
   PressObjects, Event and Notification Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -668,31 +668,29 @@ begin
 end;
 
 procedure TPressNotifiers.NotifyEvent(AEvent: TPressEvent);
+var
+  I, J, K: Integer;
+  VEventClass: TPressEventClassItem;
+  VNotification: TPressNotificationItem;
 begin
-  with EventClasses.CreateIterator do
-  try
-    BeforeFirstItem;
-    while NextItem do
-      if AEvent is CurrentItem.EventClass then
-        with CurrentItem.Notifications.CreateIterator do
-        try
-          BeforeFirstItem;
-          while NextItem do
-            if not Assigned(CurrentItem.ObservedObject) or
-             (CurrentItem.ObservedObject = AEvent.Owner) then
-              with CurrentItem.Notifiers.CreateIterator do
-              try
-                BeforeFirstItem;
-                while NextItem do
-                  CurrentItem.ProcessEvent(AEvent);
-              finally
-                Free;
-              end;
-        finally
-          Free;
+  { TODO : Test and fix crash if an event is removed within the
+    notification process }
+  for I := 0 to Pred(EventClasses.Count) do
+  begin
+    VEventClass := EventClasses[I];
+    if AEvent is VEventClass.EventClass then
+    begin
+      for J := 0 to Pred(VEventClass.Notifications.Count) do
+      begin
+        VNotification := VEventClass.Notifications[J];
+        if not Assigned(VNotification.ObservedObject) or
+         (VNotification.ObservedObject = AEvent.Owner) then
+        begin
+          for K := 0 to Pred(VNotification.Notifiers.Count) do
+            VNotification.Notifiers[K].ProcessEvent(AEvent);
         end;
-  finally
-    Free;
+      end;
+    end;
   end;
 end;
 
