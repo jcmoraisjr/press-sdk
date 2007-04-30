@@ -1,70 +1,96 @@
-PressObjects Framework, Versão 0.1.1
+PressObjects SDK, Versão 0.1.1
 Copyright (C) 2006-2007 Laserpress Ltda.
 
 http://www.pressobjects.org
 
-Vide arquivo LICENSE.txt, incluso nesta distribuição,
-para detalhes do copyright.
+Vide arquivo LICENSE.txt, incluso nesta distribuição, para detalhes do
+copyright.
 
-== Introdução
-=============
 
-PressObjects é um framework de aplicação que integra objetos de negócio
-a componentes visuais, construído para Delphi-Win32 e Free Pascal-Lazarus.
+INTRODUÇÃO
+==========
 
-== Recursos
-===========
+PressObjects é um kit de desenvolvimento de software (SDK) composto por diversos
+frameworks que auxiliam a construção de aplicações orientadas a objetos. O
+código é compatível com os compiladores Delphi-Win32 e Free Pascal.
 
--- Integração
 
-Um problema comum ao construir aplicativos é a falta de integração entre
-os formulários que apresentam os objetos de negócio. O registro de
-classes do PressObjects liga tais formulários através dos atributos dos
-objetos de negócio, fazendo com que formulários sejam criados e
-destruídos de forma totalmente transparente para o programador.
+FRAMEWORKS E RECURSOS
+=====================
 
--- Modelagem de classes de negócio
+Apresentação de objetos de negócio
+----------------------------------
+Através do padrão MVP, objetos de negócio são apresentados em componentes
+visuais simples, tal como TEdit e TComboBox. Há diversas vantagens nesta
+abordagem, tal como: separar totalmente as regras de negócio e de apresentação
+da implementação do formulário; permitir o uso de outros componentes que o
+framework não conhece; replicar código e comportamento apenas registrando
+models, views ou interactors customizados, etc.
 
-(não implementado)
+Persistência
+------------
+Objetos de negócio são lidos e armazenados através da interface IPressDAO,
+que pode ser implementada por uma classe de persistência (OPF) ou um webservice.
 
--- Modelagem de classes MVP
+Notificação
+-----------
+O framework de notificação do PressObjects é baseado no padrão
+publish-subscriber, que é um padrão mais flexível do que o observer. Algumas de
+suas características: observadores podem escutar um ou mais eventos de um objeto
+específico ou de qualquer objeto, bem como um objeto pode gerar tipos de eventos
+diferentes a partir da mesma instância; eventos podem ser enfileirados para
+serem processados quando a aplicação entrar em modo Idle; eventos são objetos,
+portanto podem transportar dados; classes de eventos podem ser declaradas em uma
+unidade diferente daquela em que suas instâncias são criadas e disparadas,
+diminuindo o acoplamento.
 
-(não implementado)
+Relatórios
+----------
+Todo o metadado das classes de negócio são transformados em campos e containeres
+através do framework de relatórios. Desta forma, qualquer formulário de consulta
+de dados ou qualquer pesquisa pode ser transformada em um relatório pelo próprio
+usuário da aplicação. Tal relatório será disponibilizado para todos os demais
+usuários sem que seja necessário recompilar ou mesmo fechar e reabrir a
+aplicação.
 
--- Persistência
+Modelagem visual (em desenvolvimento)
+----------------
+Classes de negócio, classes MVP, classes para relatórios entre outras são
+criadas através do Project Explorer do PressObjects. As informações são gravadas
+apenas nos fontes do projeto, desta forma atualizações feitas em código são
+visíveis no Project Explorer e vice-versa.
 
-(não implementado, feito atualmente através de um broker de persistência)
+Integração
+----------
+Formulários conhecem seus objetos de negócio, controles visuais conhecem seus
+atributos. Desta forma configurar controles complexos, tal como um grid, é uma
+questão de informar ao controle qual é o atributo ao qual ele se refere. A
+partir deste ponto o controle visual estará apto a encontrar classes de
+formulários, instanciá-los e apresentálos sem que seja necessária qualquer outra
+intervenção do programador.
 
--- Notificação
 
-O acoplamento fraco, um ponto relevante para um projeto orientado a
-objetos, faz com que determinadas classes não tenham como acessar umas
-às outras. O PressObjects possui um poderoso sistema de notificação,
-fazendo com que o acoplamento continue fraco e ainda assim ocorra
-comunicação. A própria aplicação final pode criar novas notificações,
-bem como ouvir as notificações do framework.
+INSTALAÇÃO
+==========
 
-== Instalação
-=============
+Vide ($Press)/Docs/Install-ptbr.txt
 
-Atualmente o PressObjects não possui código ou package de Design Time.
 
-Vide ($Press)/Docs/Install-ptbr.txt para maiores informações.
+PRIMEIROS PASSOS
+================
 
-== Conhecendo o framework
-=========================
-
-Para uma visão geral do framework, veja o documento
+Para uma visão geral:
 ($Press)/Docs/Overview-ptbr.txt
 
-Para uma resumida lista dos itens necessários para construir uma
-aplicação com PressObjects, veja o documento
+Para construir uma nova aplicação:
 ($Press)/Docs/Primer-ptbr.txt
 
 Consulte o aplicativo demonstração:
 ($Press)/Demos/
 
-== Suporte, relato de bugs, contato
-===================================
 
-Vide informações no site do projeto: http://www.pressobjects.org
+SUPORTE, BUGS, CONTATO
+======================
+
+Vide informações no site do projeto:
+http://br.pressobjects.org
