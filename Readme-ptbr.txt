@@ -30,35 +30,34 @@ models, views ou interactors customizados, etc.
 Persistência
 ------------
 Objetos de negócio são lidos e armazenados através da interface IPressDAO,
-que pode ser implementada por uma classe de persistência (OPF) ou um webservice.
+que pode ser implementada por uma classe de persistência (OPF) ou um web
+service.
 
 Notificação
 -----------
 O framework de notificação do PressObjects é baseado no padrão
 publish-subscriber, que é um padrão mais flexível do que o observer. Algumas de
-suas características: observadores podem escutar um ou mais eventos de um objeto
-específico ou de qualquer objeto, bem como um objeto pode gerar tipos de eventos
-diferentes a partir da mesma instância; eventos podem ser enfileirados para
-serem processados quando a aplicação entrar em modo Idle; eventos são objetos,
-portanto podem transportar dados; classes de eventos podem ser declaradas em uma
-unidade diferente daquela em que suas instâncias são criadas e disparadas,
-diminuindo o acoplamento.
+suas características: publicadores e observadores podem ter uma relação de
+muitos para muitos (NxN); eventos podem ser enfileirados para serem processados
+quando a aplicação entrar em modo de espera; eventos são objetos, portanto podem
+transportar dados; classes de evento não precisam ser declaradas junto com
+publicadores, portanto, reduz o acoplamento.
 
 Relatórios
 ----------
 Todo o metadado das classes de negócio são transformados em campos e containeres
 através do framework de relatórios. Desta forma, qualquer formulário de consulta
 de dados ou qualquer pesquisa pode ser transformada em um relatório pelo próprio
-usuário da aplicação. Tal relatório será disponibilizado para todos os demais
+usuário da aplicação. Tais relatórios são disponibilizados para todos os demais
 usuários sem que seja necessário recompilar ou mesmo fechar e reabrir a
 aplicação.
 
 Modelagem visual (em desenvolvimento)
 ----------------
 Classes de negócio, classes MVP, classes para relatórios entre outras são
-criadas através do Project Explorer do PressObjects. As informações são gravadas
-apenas nos fontes do projeto, desta forma atualizações feitas em código são
-visíveis no Project Explorer e vice-versa.
+criadas através do Project Explorer na IDE. As informações são gravadas nos
+fontes do projeto, desta forma atualizações feitas em código são visíveis no
+Project Explorer e vice-versa.
 
 Integração
 ----------
@@ -73,7 +72,8 @@ intervenção do programador.
 INSTALAÇÃO
 ==========
 
-Vide ($Press)/Docs/Install-ptbr.txt
+Vide
+($Press)/Docs/Install-ptbr.txt
 
 
 PRIMEIROS PASSOS
