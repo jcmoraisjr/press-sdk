@@ -83,7 +83,7 @@ Para uma visão geral:
 ($Press)/Docs/Overview-ptbr.txt
 
 Para construir uma nova aplicação:
-($Press)/Docs/Primer-ptbr.txt
+($Press)/Docs/CreatingApplication-ptbr.txt
 
 Consulte o aplicativo demonstração:
 ($Press)/Demos/

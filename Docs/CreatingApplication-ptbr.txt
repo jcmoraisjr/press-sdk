@@ -1,0 +1,29 @@
+CRIANDO UMA APLICAÇÃO
+=====================
+
+Este documento possui um resumo dos passos necessários para criar uma aplicação
+com PressObjects. Vários passos serão melhorados ou até removidos assim que o
+Project Explorer, em desenvolvimento, esteja disponível.
+
+1. Crie um novo projeto;
+
+2. Crie o Presenter do formulário principal (vide 'MVP-ptbr.txt');
+
+3. Modifique o arquivo principal do projeto, substituindo a chamada
+'Application.Run' por '<MainPresenterClass>.Run';
+
+4. Inclua o serviço de persistência no projeto (vide 'Persistence-ptbr.txt');
+
+5. Crie o modelo de classes de negócio (vide 'BusinessClasses-ptbr.txt'). Note
+que a implementação atual do broker para InstantObjects requer dois modelos de
+negócio sincronizados, o modelo do PressObjects (usado por diversos frameworks
+do PressObjects) e o modelo do InstantObjects (usado para criar e sincronizar o
+banco de dados, bem como ler e gravar objetos persistentes);
+
+6. Crie formulários para as classes de negócio;
+
+7. Crie o presenter de cada formuário (vide 'MVP-ptbr.txt');
+
+8. Crie Commands e habilite-os como desejado - com o Model, para que seja
+visualizado através do menu de contexto do componente, e/ou a componentes
+visuais e/ou a itens de menu (vide 'MVP-ptbr.txt').
