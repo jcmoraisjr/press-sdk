@@ -1,0 +1,9 @@
+INSTALL
+=======
+
+To install PressObjects, include the folders ($Press)/Source/Core and
+($Press)/Source/Brokers in the list of library paths so that the compiler can
+find them.
+
+PressObjects currently possesses only Runtime units. No IDE Designtime
+functionality has been implemented yet.

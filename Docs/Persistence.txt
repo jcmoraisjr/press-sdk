@@ -1,0 +1,14 @@
+PERSISTENCE
+===========
+
+PressObjects, currently, does not possess a persistence framework, therefore
+this task is executed through a persistence broker.
+
+To select a broker, include its unit in the uses clause of any project file.
+
+InstantObjects
+--------------
+
+To use InstantObjects (IO), a minimum of two units must be added to the uses
+clause of any project file. One must be 'PressInstantObjectsBroker' plus
+at least one of the IO broker units (eg 'InstantBDE') for database access.
