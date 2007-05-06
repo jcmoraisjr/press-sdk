@@ -40,13 +40,7 @@ features are: the publishers and the subscribers can have a many to many (NxN)
 relationship; events can be queued for processing when the application is 
 idle; events are objects, therefore they can contain and transport data; event 
 classes don't need to be declared with its publishers, therefore, reducing the 
-coupling. Observers can listen to one or more events from a specific object or 
-any object, also an object can generate different event types from the same 
-instance; events can be queued for processing when the application is idle (eg 
-in Delphi's TApplication.OnIdle event); events are objects, therefore they can 
-contain and transport data and information; event classes can be declared in a 
-different unit than the one where its instances are created and executed, 
-reducing the coupling.
+coupling.
 
 Reports
 -------
