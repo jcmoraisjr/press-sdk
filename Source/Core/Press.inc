@@ -2,7 +2,7 @@
 {.$DEFINE PressRelease}
 
 // Use LOG
-{.$DEFINE PressLog}
+{$DEFINE PressLog}
   {.$DEFINE PressLogIdle}
   {.$DEFINE PressLogMemory}
   {.$DEFINE PressLogEvents}
@@ -14,9 +14,10 @@
     {.$DEFINE PressLogSubjectChanges}
     {$DEFINE PressLogSubjectMemento}
   {.$DEFINE PressLogMVP}
-  {$DEFINE PressLogReport}
-  {$DEFINE PressLogDAO}
-    {.$DEFINE PressLogDAOPersistence}
+  {.$DEFINE PressLogReport}
+  {.$DEFINE PressLogDAO}
+    {.$DEFINE PressLogDAOInterface}
+    {$DEFINE PressLogDAOPersistence}
 
 {.$DEFINE PressDebugBaseUnits}
 
@@ -96,6 +97,7 @@
 {$ENDIF}
 
 {$IFNDEF PressLogDAO}
+  {$UNDEF PressLogDAOInterface}
   {$UNDEF PressLogDAOPersistence}
 {$ENDIF}
 

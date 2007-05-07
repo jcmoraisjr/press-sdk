@@ -89,8 +89,8 @@ type
 implementation
 
 uses
-  PressConsts
-  {$IFDEF PressLog}, PressLog{$ENDIF};
+  {$IFDEF PressLog}SysUtils, PressLog,{$ENDIF}
+  PressConsts;
 
 type
   TPressObjectFriend = class(TPressObject);
@@ -184,7 +184,7 @@ begin
       try
         VObject.DisableChanges;
         try
-          {$IFDEF PressLogDAO}PressLogMsg(Self, 'Disposing', [VObject]);{$ENDIF}
+          {$IFDEF PressLogDAOInterface}PressLogMsg(Self, 'Disposing', [VObject]);{$ENDIF}
           TPressObjectFriend(VObject).InternalDispose(DisposeObject);
           PressAssignPersistentId(VObject, '');
         finally
@@ -325,7 +325,7 @@ begin
     Result.AddRef
   else
   begin
-    {$IFDEF PressLogDAO}PressLogMsg(Self,
+    {$IFDEF PressLogDAOInterface}PressLogMsg(Self,
      Format('Retrieving %s(%s)', [AClass.ClassName, AId]));{$ENDIF}
     { TODO : Ensure the class type of the retrieved object }
     Result := InternalRetrieve(AClass, AId, AMetadata);
@@ -376,7 +376,7 @@ begin
     try
       AObject.DisableChanges;
       try
-        {$IFDEF PressLogDAO}PressLogMsg(Self, 'Storing', [AObject]);{$ENDIF}
+        {$IFDEF PressLogDAOInterface}PressLogMsg(Self, 'Storing', [AObject]);{$ENDIF}
         TPressObjectFriend(AObject).InternalStore(InternalStore);
         PressAssignPersistentId(AObject, AObject.Id);
         AObject.Unchanged;
