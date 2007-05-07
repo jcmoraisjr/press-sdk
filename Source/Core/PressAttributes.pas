@@ -607,16 +607,17 @@ type
 
   TPressItems = class(TPressStructure)
   private
+    { TODO : Implement added/removed proxies functionality }
+    FAddedProxies: TPressProxyList;
     FMementos: TPressItemsMementoList;
-    FProxyDeletedList: TPressProxyList;
     FProxyList: TPressProxyList;
-    function GetHasAddedItem: Boolean;
-    function GetHasDeletedItem: Boolean;
+    FRemovedProxies: TPressProxyList;
+    function GetAddedProxies: TPressProxyList;
     function GetMementos: TPressItemsMementoList;
     function GetObjects(AIndex: Integer): TPressObject;
     function GetProxies(AIndex: Integer): TPressProxy;
-    function GetProxyDeletedList: TPressProxyList;
     function GetProxyList: TPressProxyList;
+    function GetRemovedProxies: TPressProxyList;
     procedure SetObjects(AIndex: Integer; AValue: TPressObject);
   protected
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
@@ -631,7 +632,6 @@ type
     procedure NotifyMementos(AProxy: TPressProxy; AItemState: TPressItemState; AOldIndex: Integer = -1);
     procedure NotifyRebuild;
     property Mementos: TPressItemsMementoList read GetMementos;
-    property ProxyDeletedList: TPressProxyList read GetProxyDeletedList;
     property ProxyList: TPressProxyList read GetProxyList;
     (*
     function InternalCreateIterator: TPressItemsIterator; override;
@@ -652,10 +652,10 @@ type
     procedure Insert(AIndex: Integer; AObject: TPressObject);
     function Remove(AObject: TPressObject): Integer;
     function RemoveReference(AProxy: TPressProxy): Integer;
-    property HasAddedItem: Boolean read GetHasAddedItem;
-    property HasDeletedItem: Boolean read GetHasDeletedItem;
+    property AddedProxies: TPressProxyList read GetAddedProxies;
     property Objects[AIndex: Integer]: TPressObject read GetObjects write SetObjects; default;
     property Proxies[AIndex: Integer]: TPressProxy read GetProxies;
+    property RemovedProxies: TPressProxyList read GetRemovedProxies;
     (*
     function Add(AClass: TPressObjectClass = nil): TPressObject; overload;
     function Add(AObject: TPressObject): Integer; overload;
@@ -3552,18 +3552,16 @@ begin
   Clear;
   FProxyList.Free;
   FMementos.Free;
+  FAddedProxies.Free;
+  FRemovedProxies.Free;
   inherited;
 end;
 
-function TPressItems.GetHasAddedItem: Boolean;
+function TPressItems.GetAddedProxies: TPressProxyList;
 begin
-  { TODO : Implement }
-  Result := False;
-end;
-
-function TPressItems.GetHasDeletedItem: Boolean;
-begin
-  Result := Assigned(FProxyDeletedList) and (FProxyDeletedList.Count > 0);
+  if not Assigned(FAddedProxies) then
+    FAddedProxies := TPressProxyList.Create(True, ptShared);
+  Result := FAddedProxies;
 end;
 
 function TPressItems.GetIsEmpty: Boolean;
@@ -3588,18 +3586,18 @@ begin
   Result := ProxyList[AIndex];
 end;
 
-function TPressItems.GetProxyDeletedList: TPressProxyList;
-begin
-  if not Assigned(FProxyDeletedList) then
-    FProxyDeletedList := TPressProxyList.Create(True, InternalProxyType);
-  Result := FProxyDeletedList;
-end;
-
 function TPressItems.GetProxyList: TPressProxyList;
 begin
   if not Assigned(FProxyList) then
     AssignProxyList(TPressProxyList.Create(True, InternalProxyType));
   Result := FProxyList;
+end;
+
+function TPressItems.GetRemovedProxies: TPressProxyList;
+begin
+  if not Assigned(FRemovedProxies) then
+    FRemovedProxies := TPressProxyList.Create(True, ptShared);
+  Result := FRemovedProxies;
 end;
 
 function TPressItems.IndexOf(AObject: TPressObject): Integer;
