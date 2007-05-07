@@ -54,6 +54,7 @@ type
   protected
     procedure DoneService; virtual;
     procedure InitService; virtual;
+    procedure InternalIsDefaultChanged; virtual;
     class function InternalServiceType: TPressServiceType; virtual; abstract;
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
     function _AddRef: Integer; stdcall;
@@ -251,10 +252,14 @@ end;
 
 function TPressService.GetIsDefault: Boolean;
 begin
-  Result := Registry.FDefaultService = Self;  // friend class
+  Result := Registry.DefaultService = Self;
 end;
 
 procedure TPressService.InitService;
+begin
+end;
+
+procedure TPressService.InternalIsDefaultChanged;
 begin
 end;
 
@@ -500,6 +505,8 @@ end;
 procedure TPressRegistry.InsertService(AService: TPressService);
 begin
   Services.Add(AService);
+  if not Assigned(FDefaultService) then
+    DefaultService := AService;
 end;
 
 procedure TPressRegistry.RegisterService(
@@ -511,8 +518,18 @@ begin
 end;
 
 procedure TPressRegistry.SetDefaultService(Value: TPressService);
+var
+  VOldDefaultService: TPressService;
 begin
-  FDefaultService := Value;
+  if FDefaultService <> Value then
+  begin
+    VOldDefaultService := FDefaultService;
+    FDefaultService := Value;
+    if Assigned(VOldDefaultService) then
+      VOldDefaultService.InternalIsDefaultChanged;  // friend class
+    if Assigned(FDefaultService) then
+      FDefaultService.InternalIsDefaultChanged;  // friend class
+  end;
 end;
 
 procedure TPressRegistry.SetDefaultServiceClass(Value: TPressServiceClass);
