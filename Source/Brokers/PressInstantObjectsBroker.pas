@@ -47,7 +47,7 @@ type
     procedure InternalCommit; override;
     procedure InternalShowConnectionManager; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
-    procedure InternalExecuteStatement(const AStatement: string); override;
+    function InternalExecuteStatement(const AStatement: string): Integer; override;
     function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
@@ -220,10 +220,11 @@ begin
     end;
 end;
 
-procedure TPressInstantObjectsPersistence.InternalExecuteStatement(
-  const AStatement: string);
+function TPressInstantObjectsPersistence.InternalExecuteStatement(
+  const AStatement: string): Integer;
 begin
-  (Connector.Broker as TInstantCustomRelationalBroker).Execute(AStatement);
+  Result :=
+   (Connector.Broker as TInstantCustomRelationalBroker).Execute(AStatement);
 end;
 
 function TPressInstantObjectsPersistence.InternalOQLQuery(

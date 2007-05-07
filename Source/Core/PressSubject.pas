@@ -472,7 +472,7 @@ type
     procedure Assign(AObject: TPressObject);
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
-    procedure ExecuteStatement(const AStatement: string);
+    function ExecuteStatement(const AStatement: string): Integer;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
     function OQLQuery(const AOQLStatement: string): TPressProxyList;
     procedure Release(AObject: TPressObject);

@@ -52,7 +52,7 @@ type
     function InternalCacheClass: TPressDAOCacheClass; virtual;
     procedure InternalCommit; virtual;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); virtual;
-    procedure InternalExecuteStatement(const AStatement: string); virtual;
+    function InternalExecuteStatement(const AStatement: string): Integer; virtual;
     function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; virtual;
     function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; virtual;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; virtual;
@@ -72,7 +72,7 @@ type
     procedure Assign(AObject: TPressObject);
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
-    procedure ExecuteStatement(const AStatement: string);
+    function ExecuteStatement(const AStatement: string): Integer;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
     function OQLQuery(const AOQLStatement: string): TPressProxyList;
     procedure Release(AObject: TPressObject);
@@ -213,9 +213,9 @@ begin
   Cache.ReleaseObjects;
 end;
 
-procedure TPressDAO.ExecuteStatement(const AStatement: string);
+function TPressDAO.ExecuteStatement(const AStatement: string): Integer;
 begin
-  InternalExecuteStatement(AStatement);
+  Result := InternalExecuteStatement(AStatement);
 end;
 
 function TPressDAO.GenerateOID(AClass: TPressObjectClass;
@@ -240,7 +240,7 @@ begin
   raise UnsupportedFeatureError('Dispose object');
 end;
 
-procedure TPressDAO.InternalExecuteStatement(const AStatement: string);
+function TPressDAO.InternalExecuteStatement(const AStatement: string): Integer;
 begin
   raise UnsupportedFeatureError('Execute statement');
 end;
