@@ -25,6 +25,14 @@ uses
   PressClasses,
   PressNotifier;
 
+const
+  CPressDataAccessServicesBase  = $0100;
+  CPressUserServicesBase        = $0200;
+  CPressReportServicesBase      = $0300;
+  CPressMVPServicesBase         = $0400;
+
+  CPressUserDefinedServicesBase = $8000;
+
 type
   TPressApplicationEvent = class(TPressEvent)
   end;
@@ -38,9 +46,7 @@ type
   TPressApplicationDoneEvent = class(TPressApplicationEvent)
   end;
 
-  TPressServiceType = (
-   stDAO, stOIDGenerator, stUserData, stReport, stReportData,
-   stMVPFactory);
+  TPressServiceType = type Word;
 
   TPressRegistry = class;
 
@@ -217,7 +223,7 @@ function PressApp: TPressApplication;
 implementation
 
 uses
-  TypInfo,
+  SysUtils,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressConsts;
 
@@ -488,7 +494,8 @@ end;
 
 function TPressRegistry.GetServiceTypeName: string;
 begin
-  Result := GetEnumName(TypeInfo(TPressServiceType), Ord(FServiceType));
+  { TODO : Implement }
+  Result := Format('#%.4x', [FServiceType]);
 end;
 
 function TPressRegistry.HasDefaultService: Boolean;

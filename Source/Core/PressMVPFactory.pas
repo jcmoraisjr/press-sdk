@@ -29,6 +29,9 @@ uses
   PressMVPView,
   PressMVPPresenter;
 
+const
+  CPressMVPFactoryService = CPressMVPServicesBase + $0001;
+
 type
   TPressMVPRegisteredForm = class(TObject)
   private
@@ -108,7 +111,7 @@ uses
 
 function PressDefaultMVPFactory: TPressMVPFactory;
 begin
-  with PressApp.Registry[stMVPFactory] do
+  with PressApp.Registry[CPressMVPFactoryService] do
   begin
     if not HasDefaultService then
       RegisterService(TPressMVPFactory, False);
@@ -281,7 +284,7 @@ end;
 
 class function TPressMVPFactory.InternalServiceType: TPressServiceType;
 begin
-  Result := stMVPFactory;
+  Result := CPressMVPFactoryService;
 end;
 
 function TPressMVPFactory.MVPInteractorFactory(

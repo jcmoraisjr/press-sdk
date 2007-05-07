@@ -24,6 +24,9 @@ uses
   PressSubject,
   PressDAO;
 
+const
+  CPressOIDGeneratorService = CPressDataAccessServicesBase + $0002;
+
 type
   TPressPersistence = class;
 
@@ -126,7 +129,7 @@ end;
 
 class function TPressOIDGenerator.InternalServiceType: TPressServiceType;
 begin
-  Result := stOIDGenerator;
+  Result := CPressOIDGeneratorService;
 end;
 
 procedure TPressOIDGenerator.ReleaseOID(Sender: TPressPersistence;
@@ -158,8 +161,8 @@ end;
 
 function TPressPersistence.InternalOIDGeneratorClass: TPressOIDGeneratorClass;
 begin
-  Result :=
-   TPressOIDGeneratorClass(PressApp.DefaultServiceClass(stOIDGenerator));
+  Result := TPressOIDGeneratorClass(
+   PressApp.DefaultServiceClass(CPressOIDGeneratorService));
 end;
 
 { TPressPersistentObjectLink }

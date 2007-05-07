@@ -26,7 +26,12 @@ uses
   Contnrs,
   PressCompatibility,
   PressClasses,
+  PressApplication,
   PressNotifier;
+
+const
+  { TODO : Remove the DAO and persistence info from the subject unit }
+  CPressDAOService = CPressDataAccessServicesBase + $0001;
 
 type
   { Metadata declarations }
@@ -996,7 +1001,6 @@ implementation
 uses
   PressConsts,
   {$IFDEF PressLog}PressLog,{$ENDIF}
-  PressApplication,
   PressAttributes,
   PressMetadata;
 
@@ -1041,7 +1045,7 @@ end;
 
 function PressDefaultDAO(const AForce: Boolean): IPressDAO;
 begin
-  with PressApp.Registry[stDAO] do
+  with PressApp.Registry[CPressDAOService] do
     if AForce or HasDefaultService then
       Result := DefaultService as IPressDAO
     else

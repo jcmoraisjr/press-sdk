@@ -23,6 +23,9 @@ uses
   PressNotifier,
   PressSubject;
 
+const
+  CPressUserDataService = CPressUserServicesBase + $0001;
+
 type
   TPressUserEvent = class(TPressEvent)
   end;
@@ -135,7 +138,7 @@ end;
 
 class function TPressUserData.InternalServiceType: TPressServiceType;
 begin
-  Result := stUserData;
+  Result := CPressUserDataService;
 end;
 
 procedure TPressUserData.Logoff;

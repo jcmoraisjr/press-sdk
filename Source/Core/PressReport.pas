@@ -26,6 +26,10 @@ uses
   PressSubject,
   PressAttributes;
 
+const
+  CPressReportDataService = CPressReportServicesBase + $0001;
+  CPressReportService     = CPressReportServicesBase + $0002;
+
 type
   TPressReportNeedValueEvent = procedure(
    const ADataSetName, AFieldName: string; var AValue: Variant;
@@ -205,7 +209,7 @@ uses
 
 function PressReportData: TPressReportData;
 begin
-  Result := PressApp.DefaultService(stReportData) as TPressReportData;
+  Result := PressApp.DefaultService(CPressReportDataService) as TPressReportData;
 end;
 
 { TPressReport }
@@ -241,7 +245,7 @@ end;
 
 class function TPressReport.InternalServiceType: TPressServiceType;
 begin
-  Result := stReport;
+  Result := CPressReportService;
 end;
 
 procedure TPressReport.LoadFromStream(AStream: TStream);
@@ -450,7 +454,7 @@ end;
 
 class function TPressReportData.InternalServiceType: TPressServiceType;
 begin
-  Result := stReportData;
+  Result := CPressReportDataService;
 end;
 
 { TPressReportGroup }
@@ -499,7 +503,8 @@ function TPressReportGroupItem.GetReport: TPressReport;
 begin
   if not Assigned(FReport) then
   begin
-    FReport := PressApp.CreateDefaultService(stReport) as TPressReport;
+    FReport :=
+     PressApp.CreateDefaultService(CPressReportService) as TPressReport;
     FReport.OnNeedValue := ReportNeedValue;
     LoadReport;
     LoadMetadatas;

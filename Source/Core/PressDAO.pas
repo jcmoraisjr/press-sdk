@@ -277,7 +277,7 @@ end;
 
 class function TPressDAO.InternalServiceType: TPressServiceType;
 begin
-  Result := stDAO;
+  Result := CPressDAOService;
 end;
 
 procedure TPressDAO.InternalShowConnectionManager;
