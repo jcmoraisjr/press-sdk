@@ -1269,10 +1269,10 @@ begin
   begin
     FAttributeClass := Value;
 
-    { TODO : Initialize default Size for Enum, Boolean and Date/Time
-      attribute types }
     { TODO : Improve }
-    if (FSize = 0) and FAttributeClass.InheritsFrom(TPressNumeric) then
+    { TODO : Implement estimated size per-attribute type after
+      implementing metadata inheritance per attribute class }
+    if FSize = 0 then
       FSize := 10;
     if (FEditMask = '') and (FAttributeClass = TPressCurrency) then
       FEditMask := ',0.00';
