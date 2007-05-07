@@ -31,6 +31,8 @@ const
   SPressFalseString = 'False';
   SPressNilString = 'nil';
   SPressIdString = 'Id';
+  SPressParentIdString = 'ParentId';
+  SPressChildIdString = 'ChildId';
   SPressCalcString = 'Calc';
   SPressQueryItemsString = 'QueryItems';
   SPressReportNativeValueSuffix = 'Value';

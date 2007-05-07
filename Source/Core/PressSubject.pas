@@ -96,6 +96,9 @@ type
 
   TPressAttributeMetadata = class(TPressStreamable)
   private
+    { TODO : Refactor attribute metadatas to use attribute class inheritance,
+      instead of object class inheritance. }
+    { TODO : Refactor, moving persistent items to the persistence unit }
     FAttributeClass: TPressAttributeClass;
     FCalcMetadata: TPressCalcMetadata;
     FDefaultValue: string;
@@ -106,7 +109,10 @@ type
     FName: string;
     FObjectClass: TPressObjectClass;
     FOwner: TPressObjectMetadata;
+    FPersistentChildName: string;
+    FPersistentLinkName: string;
     FPersistentName: string;
+    FPersistentParentName: string;
     FSize: Integer;
     function GetAttributeName: string;
     function GetObjectClassName: string;
@@ -116,6 +122,7 @@ type
     procedure SetEnumMetadata(Value: TPressEnumMetadata);
     procedure SetObjectClass(Value: TPressObjectClass);
     procedure SetObjectClassName(const Value: string);
+    procedure UpdatePersistentNames;
   protected
     procedure SetName(const Value: string); virtual;
     property Model: TPressModel read FModel;
@@ -135,7 +142,10 @@ type
     property DefaultValue: string read FDefaultValue write FDefaultValue;
     property EditMask: string read FEditMask write FEditMask;
     property IsPersistent: Boolean read FIsPersistent write FIsPersistent default True;
+    property PersistentChildName: string read FPersistentChildName write FPersistentChildName;
+    property PersistentLinkName: string read FPersistentLinkName write FPersistentLinkName;
     property PersistentName: string read FPersistentName write FPersistentName;
+    property PersistentParentName: string read FPersistentParentName write FPersistentParentName;
     property Size: Integer read FSize write FSize;
   end;
 
@@ -204,15 +214,19 @@ type
   private
     FAttributeMetadatas: TPressAttributeMetadataList;
     FIdMetadata: TPressAttributeMetadata;
+    FIsPersistent: Boolean;
     FKeyName: string;
     FMap: TPressClassMap;
     FModel: TPressModel;
+    FObjectClass: TPressObjectClass;
     FObjectClassName: string;
     FParent: TPressObjectMetadata;
     FPersistentName: string;
     function GetAttributeMetadatas: TPressAttributeMetadataList;
     function GetIdMetadata: TPressAttributeMetadata;
     function GetMap: TPressClassMap;
+    function GetObjectClass: TPressObjectClass;
+    procedure SetIsPersistent(AValue: Boolean);
   protected
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; virtual;
     property Model: TPressModel read FModel;
@@ -223,10 +237,12 @@ type
     property AttributeMetadatas: TPressAttributeMetadataList read GetAttributeMetadatas;
     property IdMetadata: TPressAttributeMetadata read GetIdMetadata;
     property Map: TPressClassMap read GetMap;
+    property ObjectClass: TPressObjectClass read GetObjectClass;
     property ObjectClassName: string read FObjectClassName;
     property Parent: TPressObjectMetadata read FParent;
   published
     property KeyName: string read FKeyName write FKeyName;
+    property IsPersistent: Boolean read FIsPersistent write SetIsPersistent;
     property PersistentName: string read FPersistentName write FPersistentName;
   end;
 
@@ -1255,6 +1271,7 @@ begin
     if (FEditMask = '') and (FAttributeClass = TPressCurrency) then
       FEditMask := ',0.00';
 
+    UpdatePersistentNames;
   end;
 end;
 
@@ -1283,8 +1300,7 @@ end;
 procedure TPressAttributeMetadata.SetName(const Value: string);
 begin
   FName := Value;
-  if FPersistentName = '' then
-    FPersistentName := FName;
+  UpdatePersistentNames;
 end;
 
 procedure TPressAttributeMetadata.SetObjectClass(Value: TPressObjectClass);
@@ -1305,6 +1321,34 @@ procedure TPressAttributeMetadata.SetObjectClassName(const Value: string);
 begin
   if ObjectClassName <> Value then
     ObjectClass := Model.ClassByName(Value);
+end;
+
+procedure TPressAttributeMetadata.UpdatePersistentNames;
+begin
+  if (FName = '') or not Assigned(FAttributeClass) then
+    Exit;
+  if FPersistentName = '' then
+    FPersistentName := FName;
+  if FAttributeClass.InheritsFrom(TPressItems) then
+  begin
+    if FPersistentName = '' then
+      FPersistentName := FName;
+    if FPersistentLinkName = '' then
+      if Assigned(Owner) then
+        FPersistentLinkName := Owner.PersistentName + '_' + FPersistentName
+      else
+        FPersistentLinkName := '_' + FPersistentName;
+    if FPersistentParentName = '' then
+      if Assigned(Owner) then
+        FPersistentParentName := Owner.PersistentName + SPressIdString
+      else
+        FPersistentParentName := SPressParentIdString;
+    if FPersistentChildName = '' then
+      if Assigned(Owner) then
+        FPersistentChildName := FPersistentName + SPressIdString
+      else
+        FPersistentChildName := SPressChildIdString;
+  end;
 end;
 
 { TPressAttributeMetadataList }
@@ -1471,6 +1515,8 @@ begin
   FPersistentName := FObjectClassName;
   FModel := AModel;
   FParent := FModel.ParentMetadataOf(Self);
+  if Assigned(FParent) then
+    FIsPersistent := FParent.IsPersistent;
   FKeyName := SPressIdString;
   FModel.Metadatas.Add(Self);
 end;
@@ -1513,9 +1559,22 @@ begin
   Result := FMap;
 end;
 
+function TPressObjectMetadata.GetObjectClass: TPressObjectClass;
+begin
+  if not Assigned(FObjectClass) then
+    FObjectClass := Model.ClassByName(FObjectClassName);
+  Result := FObjectClass;
+end;
+
 function TPressObjectMetadata.InternalAttributeMetadataClass: TPressAttributeMetadataClass;
 begin
   Result := TPressAttributeMetadata;
+end;
+
+procedure TPressObjectMetadata.SetIsPersistent(AValue: Boolean);
+begin
+  if Assigned(Parent) and not Parent.IsPersistent then
+    FIsPersistent := AValue;
 end;
 
 { TPressObjectMetadataList }
