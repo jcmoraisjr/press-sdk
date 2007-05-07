@@ -221,6 +221,7 @@ type
     FIdMetadata: TPressAttributeMetadata;
     FIsPersistent: Boolean;
     FKeyName: string;
+    FKeyType: string;
     FMap: TPressClassMap;
     FModel: TPressModel;
     FObjectClass: TPressObjectClass;
@@ -247,6 +248,7 @@ type
     property Parent: TPressObjectMetadata read FParent;
   published
     property KeyName: string read FKeyName write FKeyName;
+    property KeyType: string read FKeyType write FKeyType;
     property IsPersistent: Boolean read FIsPersistent write SetIsPersistent;
     property PersistentName: string read FPersistentName write FPersistentName;
   end;
@@ -392,8 +394,8 @@ type
   private
     FAttributes: TClassList;
     FClasses: TClassList;
+    FDefaultKeyType: string;
     FEnumMetadatas: TPressEnumMetadataList;
-    FKeyType: string;
     FMetadatas: TPressObjectMetadataList;
     {$IFNDEF PressRelease}
     FNotifier: TPressNotifier;
@@ -426,7 +428,7 @@ type
     function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string; AEnumValues: array of string): TPressEnumMetadata; overload;
     function RegisterMetadata(const AMetadataStr: string): TPressObjectMetadata;
     procedure UnregisterMetadata(AMetadata: TPressObjectMetadata);
-    property KeyType: string read FKeyType;
+    property DefaultKeyType: string read FDefaultKeyType;
   end;
 
   { Abstract Subject declarations }
@@ -1522,6 +1524,7 @@ begin
   if Assigned(FParent) then
     FIsPersistent := FParent.IsPersistent;
   FKeyName := SPressIdString;
+  FKeyType := FModel.DefaultKeyType;
   FModel.Metadatas.Add(Self);
 end;
 
@@ -1551,7 +1554,7 @@ begin
   begin
     FIdMetadata := InternalAttributeMetadataClass.Create(nil);
     FIdMetadata.Name := KeyName;
-    FIdMetadata.AttributeName := Model.KeyType;
+    FIdMetadata.AttributeName := KeyType;
   end;
   Result := FIdMetadata;
 end;
@@ -1970,7 +1973,7 @@ begin
   FClasses := TClassList.Create;
   FMetadatas := TPressObjectMetadataList.Create(True);
   FEnumMetadatas := TPressEnumMetadataList.Create(True);
-  FKeyType := TPressString.AttributeName;
+  FDefaultKeyType := TPressString.AttributeName;
   {$IFNDEF PressRelease}
   FNotifier := TPressNotifier.Create(Notify);
   FNotifier.AddNotificationItem(PressApp, [TPressApplicationRunningEvent]);
