@@ -44,15 +44,11 @@ type
     FOIDGenerator: TPressOIDGenerator;
     function GetOIDGenerator: TPressOIDGenerator;
   protected
-    function GetIdentifierQuotes: string; virtual;
-    function GetStrQuote: Char; virtual;
     function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; override;
     function InternalOIDGeneratorClass: TPressOIDGeneratorClass; virtual;
     property OIDGenerator: TPressOIDGenerator read GetOIDGenerator;
   public
     destructor Destroy; override;
-    property IdentifierQuotes: string read GetIdentifierQuotes;
-    property StrQuote: Char read GetStrQuote;
   end;
 
   TPressPersistentObjectLink = class(TObject)
@@ -147,21 +143,11 @@ begin
   inherited;
 end;
 
-function TPressPersistence.GetIdentifierQuotes: string;
-begin
-  Result := '"';
-end;
-
 function TPressPersistence.GetOIDGenerator: TPressOIDGenerator;
 begin
   if not Assigned(FOIDGenerator) then
     FOIDGenerator := InternalOIDGeneratorClass.Create;
   Result := FOIDGenerator;
-end;
-
-function TPressPersistence.GetStrQuote: Char;
-begin
-  Result := '''';
 end;
 
 function TPressPersistence.InternalGenerateOID(AClass: TPressObjectClass;

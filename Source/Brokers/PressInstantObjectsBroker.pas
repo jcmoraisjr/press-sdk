@@ -41,8 +41,6 @@ type
     procedure ReadInstantObject(AInstantObject: TInstantObject; APressObject: TPressObject);
     procedure ReadPressObject(APressObject: TPressObject; AInstantObject: TInstantObject);
   protected
-    function GetIdentifierQuotes: string; override;
-    function GetStrQuote: Char; override;
     procedure InitService; override;
     procedure InternalCommit; override;
     procedure InternalShowConnectionManager; override;
@@ -138,28 +136,6 @@ begin
   FConnectionManager.Free;
   FConnector.Free;
   inherited;
-end;
-
-function TPressInstantObjectsPersistence.GetIdentifierQuotes: string;
-var
-  VInstantBroker: TInstantBroker;
-begin
-  VInstantBroker := DefaultConnector.Broker;
-  if VInstantBroker is TInstantCustomRelationalBroker then
-    Result := TInstantCustomRelationalBroker(VInstantBroker).SQLDelimiters
-  else
-    Result := '';
-end;
-
-function TPressInstantObjectsPersistence.GetStrQuote: Char;
-var
-  VInstantBroker: TInstantBroker;
-begin
-  VInstantBroker := DefaultConnector.Broker;
-  if VInstantBroker is TInstantCustomRelationalBroker then
-    Result := TInstantCustomRelationalBroker(VInstantBroker).SQLQuote
-  else
-    Result := '"';
 end;
 
 procedure TPressInstantObjectsPersistence.InitService;
