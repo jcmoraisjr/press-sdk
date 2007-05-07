@@ -258,7 +258,7 @@ end;
 
 function TPressService.GetIsDefault: Boolean;
 begin
-  Result := Registry.DefaultService = Self;
+  Result := Registry.FDefaultService = Self;  // friend class
 end;
 
 procedure TPressService.InitService;
