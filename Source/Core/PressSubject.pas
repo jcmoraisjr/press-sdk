@@ -1272,7 +1272,9 @@ begin
     { TODO : Improve }
     { TODO : Implement estimated size per-attribute type after
       implementing metadata inheritance per attribute class }
-    if FSize = 0 then
+    if (FSize = 0) and (FAttributeClass.AttributeBaseType in [
+     attInteger, attFloat, attCurrency, attEnum, attBoolean,
+     attDate, attTime, attDateTime]) then
       FSize := 10;
     if (FEditMask = '') and (FAttributeClass = TPressCurrency) then
       FEditMask := ',0.00';
