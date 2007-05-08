@@ -228,7 +228,7 @@ type
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
     function CreatePresenterIterator: TPressMVPPresenterIterator;
     procedure Refresh;
-    class procedure RegisterFormPresenter(AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]);
+    class procedure RegisterFormPresenter(AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil; AViewClass: TPressMVPCustomFormViewClass = nil);
     class function Run(AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
     class function Run(AParent: TPressMVPFormPresenter; AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
     property AutoDestroy: Boolean read FAutoDestroy;
@@ -891,10 +891,12 @@ end;
 
 class procedure TPressMVPFormPresenter.RegisterFormPresenter(
   AObjectClass: TPressObjectClass; AFormClass: TFormClass;
-  AFormPresenterTypes: TPressMVPFormPresenterTypes);
+  AFormPresenterTypes: TPressMVPFormPresenterTypes;
+  AModelClass: TPressMVPObjectModelClass;
+  AViewClass: TPressMVPCustomFormViewClass);
 begin
-  PressDefaultMVPFactory.RegisterForm(
-   Self, AObjectClass, AFormClass, AFormPresenterTypes);
+  PressDefaultMVPFactory.RegisterForm(Self, AObjectClass, AFormClass,
+   AFormPresenterTypes, AModelClass, AViewClass);
 end;
 
 class function TPressMVPFormPresenter.Run(
@@ -924,6 +926,8 @@ begin
   begin
     VFormClass := VRegForms[VIndex].FormClass;
     VObjectClass := VRegForms[VIndex].ObjectClass;
+    VModelClass := VRegForms[VIndex].ModelClass;
+    VViewClass := VRegForms[VIndex].ViewClass;
   end else
     raise EPressError.CreateFmt(SClassNotFound, [ClassName]);
   VObjectIsMissing := not Assigned(AObject);
@@ -937,7 +941,8 @@ begin
     AParent := PressMainPresenter;
 
   { TODO : Catch memory leakage when an exception is raised }
-  VModelClass := InternalModelClass;
+  if not Assigned(VModelClass) then
+    VModelClass := InternalModelClass;
   if Assigned(VModelClass) then
     VModel := VModelClass.Create(AParent.Model, AObject)
   else
@@ -948,7 +953,8 @@ begin
   if VObjectIsMissing then
     AObject.Release;
 
-  VViewClass := InternalViewClass;
+  if not Assigned(VViewClass) then
+    VViewClass := InternalViewClass;
   if Assigned(VViewClass) then
     VView := VViewClass.Create(VFormClass.Create(nil), True)
   else
@@ -1022,32 +1028,48 @@ end;
 
 constructor TPressMVPMainFormPresenter.Create;
 var
-  VModelClass: TPressMVPModelClass;
-  VModel: TPressMVPModel;
-  VView: TPressMVPView;
+  VModelClass: TPressMVPObjectModelClass;
+  VModel: TPressMVPObjectModel;
+  VViewClass: TPressMVPCustomFormViewClass;
+  VView: TPressMVPCustomFormView;
   VSubject: TPressObject;
   VIndex: Integer;
   VRegForms: TPressMVPRegisteredFormList;
 begin
   if not Assigned(Application) or not Assigned(Application.MainForm) then
     raise EPressError.Create(SUnassignedMainForm);
-  VModelClass := InternalModelClass;
-  if not Assigned(VModelClass) then
-    VModelClass := TPressMVPQueryModel;
 
   VSubject := nil;
+  VModelClass := nil;
+  VViewClass := nil;
+
   VRegForms := PressDefaultMVPFactory.Forms;
   VIndex := VRegForms.IndexOfPresenterClass(
    TPressMVPFormPresenterClass(ClassType));
   if VIndex >= 0 then
-    with VRegForms[VIndex] do
-      if Assigned(ObjectClass) then
-        VSubject := ObjectClass.Create;
+  begin
+    if Assigned(VRegForms[VIndex].ObjectClass) then
+      VSubject := VRegForms[VIndex].ObjectClass.Create;
+    VModelClass := VRegForms[VIndex].ModelClass;
+    VViewClass := VRegForms[VIndex].ViewClass;
+  end;
 
+  if not Assigned(VModelClass) then
+    VModelClass := InternalModelClass;
+  if not Assigned(VModelClass) then
+    VModelClass := TPressMVPQueryModel;
   VModel := VModelClass.Create(nil, VSubject);
   if Assigned(VSubject) then
     VSubject.Release;
-  VView := TPressMVPView.CreateFromControl(Application.MainForm);
+
+  if not Assigned(VViewClass) then
+    VViewClass := InternalViewClass;
+  if Assigned(VViewClass) then
+    VView := VViewClass.Create(Application.MainForm)
+  else
+    VView :=
+     TPressMVPView.CreateFromControl(Application.MainForm) as TPressMVPCustomFormView;
+
   inherited Create(nil, VModel, VView);
   FNotifier := TPressNotifier.Create(Notify);
   FNotifier.AddNotificationItem(PressApp, [TPressApplicationEvent]);
