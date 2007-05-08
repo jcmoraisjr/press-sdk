@@ -199,8 +199,8 @@ type
     property View: TPressMVPItemsView read GetView;
   end;
 
-  TPressMVPFormPresenterType =
-   (fpInclude, fpPresent, fpIncludePresent, fpRegister);
+  TPressMVPFormPresenterType = (fpNew, fpExisting, fpQuery);
+  TPressMVPFormPresenterTypes = set of TPressMVPFormPresenterType;
 
   TPressMVPFormPresenterClass = class of TPressMVPFormPresenter;
 
@@ -228,7 +228,7 @@ type
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
     function CreatePresenterIterator: TPressMVPPresenterIterator;
     procedure Refresh;
-    class procedure RegisterFormPresenter(AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterType: TPressMVPFormPresenterType = fpIncludePresent);
+    class procedure RegisterFormPresenter(AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]);
     class function Run(AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
     class function Run(AParent: TPressMVPFormPresenter; AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
     property AutoDestroy: Boolean read FAutoDestroy;
@@ -891,10 +891,10 @@ end;
 
 class procedure TPressMVPFormPresenter.RegisterFormPresenter(
   AObjectClass: TPressObjectClass; AFormClass: TFormClass;
-  AFormPresenterType: TPressMVPFormPresenterType);
+  AFormPresenterTypes: TPressMVPFormPresenterTypes);
 begin
   PressDefaultMVPFactory.RegisterForm(
-   Self, AObjectClass, AFormClass, AFormPresenterType);
+   Self, AObjectClass, AFormClass, AFormPresenterTypes);
 end;
 
 class function TPressMVPFormPresenter.Run(

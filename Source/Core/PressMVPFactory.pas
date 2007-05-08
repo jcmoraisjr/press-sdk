@@ -36,13 +36,13 @@ type
   TPressMVPRegisteredForm = class(TObject)
   private
     FFormClass: TFormClass;
-    FFormPresenterType: TPressMVPFormPresenterType;
+    FFormPresenterTypes: TPressMVPFormPresenterTypes;
     FObjectClass: TPressObjectClass;
     FPresenterClass: TPressMVPFormPresenterClass;
   public
-    constructor Create(APresenterClass: TPressMVPFormPresenterClass; AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterType: TPressMVPFormPresenterType);
+    constructor Create(APresenterClass: TPressMVPFormPresenterClass; AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes);
     property FormClass: TFormClass read FFormClass;
-    property FormPresenterType: TPressMVPFormPresenterType read FFormPresenterType;
+    property FormPresenterTypes: TPressMVPFormPresenterTypes read FFormPresenterTypes;
     property ObjectClass: TPressObjectClass read FObjectClass;
     property PresenterClass: TPressMVPFormPresenterClass read FPresenterClass;
   end;
@@ -95,7 +95,7 @@ type
     function MVPPresenterFactory(AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
     function MVPViewFactory(AControl: TControl; AOwnsControl: Boolean = False): TPressMVPView;
     procedure RegisterInteractor(AInteractorClass: TPressMVPInteractorClass);
-    procedure RegisterForm(APresenterClass: TPressMVPFormPresenterClass; AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterType: TPressMVPFormPresenterType);
+    procedure RegisterForm(APresenterClass: TPressMVPFormPresenterClass; AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes);
     procedure RegisterModel(AModelClass: TPressMVPModelClass);
     procedure RegisterPresenter(APresenterClass: TPressMVPPresenterClass);
     procedure RegisterView(AViewClass: TPressMVPViewClass);
@@ -124,13 +124,13 @@ end;
 constructor TPressMVPRegisteredForm.Create(
   APresenterClass: TPressMVPFormPresenterClass;
   AObjectClass: TPressObjectClass; AFormClass: TFormClass;
-  AFormPresenterType: TPressMVPFormPresenterType);
+  AFormPresenterTypes: TPressMVPFormPresenterTypes);
 begin
   inherited Create;
   FPresenterClass := APresenterClass;
   FObjectClass := AObjectClass;
   FFormClass := AFormClass;
-  FFormPresenterType := AFormPresenterType;
+  FFormPresenterTypes := AFormPresenterTypes;
 end;
 
 { TPressMVPRegisteredFormList }
@@ -165,7 +165,7 @@ begin
   for Result := 0 to Pred(Count) do
     with Items[Result] do
       if (ObjectClass = AObjectClass) and
-       (FormPresenterType in [AFormPresenterType, fpIncludePresent]) then
+       (AFormPresenterType in FormPresenterTypes) then
         Exit;
   { TODO : Notify ambiguous presenter class }
   Result := -1;
@@ -187,8 +187,8 @@ function TPressMVPRegisteredFormList.IndexOfQueryItemObject(
   function Match(ARegForm: TPressMVPRegisteredForm): Boolean;
   begin
     Result := Assigned(ARegForm.ObjectClass) and
+     (AFormPresenterType in ARegForm.FormPresenterTypes) and
      (ARegForm.ObjectClass.InheritsFrom(TPressQuery)) and
-     (ARegForm.FormPresenterType in [AFormPresenterType, fpIncludePresent]) and
      (TPressQueryClass(ARegForm.ObjectClass).ClassMetadata.ItemObjectClass =
       AObjectClass);
   end;
@@ -382,10 +382,10 @@ end;
 procedure TPressMVPFactory.RegisterForm(
   APresenterClass: TPressMVPFormPresenterClass;
   AObjectClass: TPressObjectClass; AFormClass: TFormClass;
-  AFormPresenterType: TPressMVPFormPresenterType);
+  AFormPresenterTypes: TPressMVPFormPresenterTypes);
 begin
   Forms.Add(TPressMVPRegisteredForm.Create(
-   APresenterClass, AObjectClass, AFormClass, AFormPresenterType));
+   APresenterClass, AObjectClass, AFormClass, AFormPresenterTypes));
 end;
 
 procedure TPressMVPFactory.RegisterInteractor(

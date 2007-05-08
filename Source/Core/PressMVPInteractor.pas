@@ -1122,7 +1122,7 @@ begin
     VPresenterIndex := PressDefaultMVPFactory.Forms.IndexOfObjectClass(
      VObject.ClassType, AFormPresenterType);
     if VPresenterIndex >= 0 then
-      RunPresenter(VPresenterIndex, VObject, AFormPresenterType = fpInclude);
+      RunPresenter(VPresenterIndex, VObject, AFormPresenterType = fpNew);
   end;
 end;
 
@@ -1159,7 +1159,7 @@ end;
 procedure TPressMVPCreateIncludeFormInteractor.Notify(AEvent: TPressEvent);
 begin
   inherited;
-  ExecuteFormPresenter(fpInclude);
+  ExecuteFormPresenter(fpNew);
 end;
 
 { TPressMVPCreatePresentFormInteractor }
@@ -1181,7 +1181,7 @@ procedure TPressMVPCreatePresentFormInteractor.Notify(AEvent: TPressEvent);
 begin
   inherited;
   TPressMVPModelUpdateDataEvent.Create(Owner.Model).Notify;
-  ExecuteFormPresenter(fpPresent);
+  ExecuteFormPresenter(fpExisting);
 end;
 
 { TPressMVPCreateSearchFormInteractor }
@@ -1197,7 +1197,7 @@ var
   VPresenterIndex: Integer;
 begin
   VPresenterIndex := PressDefaultMVPFactory.Forms.IndexOfQueryItemObject(
-   Model.Subject.ObjectClass, fpInclude);
+   Model.Subject.ObjectClass, fpQuery);
   if VPresenterIndex >= 0 then
     RunPresenter(VPresenterIndex, nil, False);
 end;
