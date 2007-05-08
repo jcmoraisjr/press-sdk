@@ -65,7 +65,7 @@ Formulários conhecem seus objetos de negócio, controles visuais conhecem seus
 atributos. Desta forma configurar controles complexos, tal como um grid, é uma
 questão de informar ao controle qual é o atributo ao qual ele se refere. A
 partir deste ponto o controle visual estará apto a encontrar classes de
-formulários, instanciá-los e apresentálos sem que seja necessária qualquer outra
+formulários, instanciá-los e apresentá-los sem que seja necessária qualquer outra
 intervenção do programador.
 
 
