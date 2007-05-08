@@ -8,11 +8,15 @@ available.
  
 1. Create a new project;
 
-2. Create the Presenter of the main form (see 'MVP.txt');
+2. If required, create the Presenter of the main form (see 'MVP.txt');
 
 3. Modify the main project file, by substituting the call to 'Application.Run'
-with '<MainPresenterClass>.Run';
+with:
 
+'<MainPresenterClass>.Run' - if the application has a main Presenter class, 
+or
+'PressApp.Run' - if the application doesn't have a main Presenter class.
+  
 4. Include the persistence service in the project (see 'Persistence.txt');
 
 5. Create a business class model (see 'BusinessClasses.txt'). Note that the 
@@ -23,7 +27,7 @@ database, and to retrieve and store persistent objects);
 
 6. Create forms for the business classes;
 
-7. Create the Presenter for each form (see 'MVP.txt');
+7. Create a Presenter for each form (see 'MVP.txt');
 
 8. Create Commands and connect them as desired - with the Model through its 
 context menu, and/or with visual components and/or menu items (see 'MVP.txt').
