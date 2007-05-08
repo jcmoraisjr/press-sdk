@@ -7,10 +7,16 @@ Project Explorer, em desenvolvimento, esteja disponível.
 
 1. Crie um novo projeto;
 
-2. Crie o Presenter do formulário principal (vide 'MVP-ptbr.txt');
+2. Se necessário, crie o Presenter do formulário principal
+(vide 'MVP-ptbr.txt');
 
 3. Modifique o arquivo principal do projeto, substituindo a chamada
-'Application.Run' por '<MainPresenterClass>.Run';
+'Application.Run' por:
+
+'<MainPresenterClass>.Run' - se a aplicação possui um main form Presenter,
+ou
+'PressApp.Run' (unit PressApplication) - se a aplicação não possui um
+main form Presenter.
 
 4. Inclua o serviço de persistência no projeto (vide 'Persistence-ptbr.txt');
 
