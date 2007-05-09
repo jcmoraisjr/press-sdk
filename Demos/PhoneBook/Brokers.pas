@@ -6,7 +6,7 @@ interface
 
 {$IFDEF UseInstantObjects}
 uses
-  InstantIBX, InstantBDE,
+  InstantIBX, // currently navigational brokers (like BDE) aren't supported
   PressInstantObjectsBroker;
 {$ENDIF}
 
@@ -21,7 +21,7 @@ type
   protected
     procedure InternalCommit; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
-    procedure InternalExecuteStatement(const AStatement: string); override;
+    function InternalExecuteStatement(const AStatement: string): Integer; override;
     function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
     function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
@@ -43,9 +43,10 @@ procedure TPressPhoneBookPersistence.InternalDispose(
 begin
 end;
 
-procedure TPressPhoneBookPersistence.InternalExecuteStatement(
-  const AStatement: string);
+function TPressPhoneBookPersistence.InternalExecuteStatement(
+  const AStatement: string): Integer;
 begin
+  Result := 0;
 end;
 
 function TPressPhoneBookPersistence.InternalOQLQuery(
