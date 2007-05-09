@@ -1,8 +1,8 @@
-This is the file LICENSE.txt, it applies to the PressObjects Framework,
+This is the file LICENSE.txt, it applies to the PressObjects SDK,
 distributed by Laserpress Ltda.
 
-The source code of the PressObjects Framework is distributed under the
-GNU Lesser General Public License (see the file LGPL.2.1.txt) with the
+The source code of the PressObjects SDK is distributed under the GNU
+Lesser General Public License (see the file LGPL.2.1.txt) with the
 following modification:
 
 As a special exception, the copyright holders of this library give you
