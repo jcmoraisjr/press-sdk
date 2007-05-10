@@ -375,6 +375,7 @@ end;
 
 procedure TPressInstantObjectsPersistence.InternalStartTransaction;
 begin
+  Connector.Connect;
   Connector.StartTransaction;
 end;
 
