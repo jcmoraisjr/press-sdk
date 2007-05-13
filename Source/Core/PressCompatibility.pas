@@ -55,8 +55,8 @@ uses
 function FormatMaskText(const EditMask: string; const Value: string): string;
 begin
   Result :=
-   {$IFDEF FPC}MaskEdit{$ELSE}{$IFDEF D6+}MaskUtils{$ELSE}Mask{$ENDIF}{$ENDIF}.
-   FormatMaskText(EditMask, Value);
+   {$IFDEF FPC}Value{$ELSE}{$IFDEF D6+}MaskUtils{$ELSE}Mask{$ENDIF}
+   .FormatMaskText(EditMask, Value){$ENDIF};
 end;
 
 {$IFDEF FPC}
