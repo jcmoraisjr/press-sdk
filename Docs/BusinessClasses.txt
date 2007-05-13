@@ -48,8 +48,8 @@ end;
 
 This approach generates more code but won't break the encapsulation.
 
-Using validation
-----------------
+Using member accessor properties
+--------------------------------
 
 The PressObjects' subject framework will look for published properties with the
 same name as its attributes.
