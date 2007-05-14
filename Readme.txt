@@ -35,7 +35,7 @@ can be implemented by a persistence class (OPF) or a web service.
 Notification
 ------------
 The PressObjects notification framework is based on the publish-subscriber 
-pattern, a more flexible pattern than the observer pattern. Some of its 
+pattern, which is more flexible than the observer pattern. Some of its 
 features are: the publishers and the subscribers can have a many to many (NxN) 
 relationship; events can be queued for processing when the application is 
 idle; events are objects, therefore they can contain and transport data; event 
