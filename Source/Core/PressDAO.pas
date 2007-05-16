@@ -39,6 +39,7 @@ type
     procedure AddObject(AObject: TPressObject); virtual;
     function CreateIterator: TPressObjectIterator;
     function FindObject(AClass: TPressObjectClass; const AId: string): TPressObject;
+    function HasObject: Boolean;
     procedure ReleaseObjects; virtual;
     function RemoveObject(AObject: TPressObject): Integer; virtual;
   end;
@@ -133,6 +134,11 @@ begin
         Exit;
     end;
   Result := nil;
+end;
+
+function TPressDAOCache.HasObject: Boolean;
+begin
+  Result := Assigned(FObjectList) and (FObjectList.Count > 0);
 end;
 
 procedure TPressDAOCache.ReleaseObjects;
