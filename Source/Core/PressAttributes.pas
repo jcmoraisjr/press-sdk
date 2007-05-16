@@ -1265,7 +1265,7 @@ end;
 procedure TPressString.SetAsVariant(AValue: Variant);
 begin
   try
-    if AValue = Null then
+    if VarIsEmpty(AValue) or VarIsNull(AValue) then
       Clear
     else
       PubValue := AValue;
@@ -1463,7 +1463,7 @@ end;
 procedure TPressInteger.SetAsVariant(AValue: Variant);
 begin
   try
-    if AValue = Null then
+    if VarIsEmpty(AValue) or VarIsNull(AValue) then
       Clear
     else
       PubValue := AValue;
@@ -1594,7 +1594,7 @@ end;
 procedure TPressFloat.SetAsVariant(AValue: Variant);
 begin
   try
-    if AValue = Null then
+    if VarIsEmpty(AValue) or VarIsNull(AValue) then
       Clear
     else
       PubValue := AValue;
@@ -1745,7 +1745,7 @@ end;
 procedure TPressCurrency.SetAsVariant(AValue: Variant);
 begin
   try
-    if AValue = Null then
+    if VarIsEmpty(AValue) or VarIsNull(AValue) then
       Clear
     else
       PubValue := AValue;
@@ -1925,7 +1925,7 @@ end;
 procedure TPressEnum.SetAsVariant(AValue: Variant);
 begin
   try
-    if AValue = Null then
+    if VarIsEmpty(AValue) or VarIsNull(AValue) then
       Clear
     else
       PubValue := AValue;
@@ -2088,7 +2088,7 @@ end;
 procedure TPressBoolean.SetAsVariant(AValue: Variant);
 begin
   try
-    if AValue = Null then
+    if VarIsEmpty(AValue) or VarIsNull(AValue) then
       Clear
     else
       PubValue := AValue;
@@ -2258,7 +2258,7 @@ end;
 procedure TPressDate.SetAsVariant(AValue: Variant);
 begin
   try
-    if AValue = Null then
+    if VarIsEmpty(AValue) or VarIsNull(AValue) then
       Clear
     else
       PubValue := AValue;
@@ -2427,7 +2427,7 @@ end;
 procedure TPressTime.SetAsVariant(AValue: Variant);
 begin
   try
-    if AValue = Null then
+    if VarIsEmpty(AValue) or VarIsNull(AValue) then
       Clear
     else
       PubValue := AValue;
@@ -2601,7 +2601,7 @@ end;
 procedure TPressDateTime.SetAsVariant(AValue: Variant);
 begin
   try
-    if AValue = Null then
+    if VarIsEmpty(AValue) or VarIsNull(AValue) then
       Clear
     else
       PubValue := AValue;
@@ -2847,7 +2847,7 @@ begin
   if IsNull or (FValue <> AValue) then
   begin
     Changing;
-    if AValue = Null then
+    if VarIsEmpty(AValue) or VarIsNull(AValue) then
       Clear
     else
     begin
@@ -2963,7 +2963,7 @@ end;
 procedure TPressBlob.SetAsVariant(AValue: Variant);
 begin
   try
-    if AValue = Null then
+    if VarIsEmpty(AValue) or VarIsNull(AValue) then
       Clear
     else
       PubValue := AValue;
