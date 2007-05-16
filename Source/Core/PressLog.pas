@@ -1,6 +1,6 @@
 (*
   PressObjects, Log Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -19,8 +19,7 @@ unit PressLog;
 interface
 
 uses
-  Classes,
-  PressClasses;
+  PressApplication;
 
 resourcestring
   { TODO : Move to PressConsts }
@@ -31,22 +30,21 @@ resourcestring
   SLogNotifyingEvent =            'Notifying event  %:-32s';
   SLogReleasingEvent =            'Releasing event  %:-32s';
 
-type
-  TPressLogClass = class of TPressLog;
+const
+  CPressLogService = CPressLogServicesBase + $0001;
 
-  TPressLog = class(TPressSingleton)
+type
+  TPressLog = class(TPressService)
   { TODO : Create an abstract PressCustomLog;
     Refactor parameters to array of const }
   protected
     function ArrayToString(const AParams: array of TObject): string;
     function FormatClassName(const AMsg: string; AObj: TObject): string;
     function InternalBuildMsg(Sender: TObject; const AMsg: string; const AParams: array of TObject): string; virtual;
+    class function InternalServiceType: TPressServiceType; override;    
   public
     procedure RegisterMsg(Sender: TObject; const AMsg: string; const AParams: array of TObject); virtual;
   end;
-
-var
-  PressLogClass: TPressLogClass;
 
 procedure PressLogMsg(Sender: TObject; const AMsg: string); overload;
 procedure PressLogMsg(Sender: TObject; const AMsg: string; const AParams: array of TObject); overload;
@@ -58,28 +56,19 @@ uses
   PressConsts,
   PressCompatibility;
 
-var
-  _PressLogInstance: TPressLog;
-
-function PressLogInstance: TPressLog;
+function PressDefaultLog: TPressLog;
 begin
-  if not Assigned(_PressLogInstance) then
-  begin
-    if not Assigned(PressLogClass) then
-      PressLogClass := TPressLog;
-    _PressLogInstance := PressLogClass.Instance;
-  end;
-  Result := _PressLogInstance;
+  Result := TPressLog(PressApp.DefaultService(TPressLog));
 end;
 
 procedure PressLogMsg(Sender: TObject; const AMsg: string);
 begin
-  PressLogInstance.RegisterMsg(Sender, AMsg, []);
+  PressDefaultLog.RegisterMsg(Sender, AMsg, []);
 end;
 
 procedure PressLogMsg(Sender: TObject; const AMsg: string; const AParams: array of TObject);
 begin
-  PressLogInstance.RegisterMsg(Sender, AMsg, AParams);
+  PressDefaultLog.RegisterMsg(Sender, AMsg, AParams);
 end;
 
 { TPressLog }
@@ -122,6 +111,11 @@ begin
    FormatClassName(AMsg, Sender),
    ArrayToString(AParams)]);
   OutputDebugString(Result);
+end;
+
+class function TPressLog.InternalServiceType: TPressServiceType;
+begin
+  Result := CPressLogService;
 end;
 
 procedure TPressLog.RegisterMsg(
