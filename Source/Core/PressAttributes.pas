@@ -3456,6 +3456,26 @@ end;
 procedure TPressItems.ChangedList(
   Sender: TPressProxyList; Item: TPressProxy; Action: TListNotification);
 
+  procedure AddedProxy;
+  begin
+    AddedProxies.Add(Item);
+  end;
+
+  procedure RemovedProxy;
+  var
+    VIndex: Integer;
+  begin
+    if Assigned(FAddedProxies) then
+    begin
+      VIndex := FAddedProxies.IndexOf(Item);
+      if VIndex >= 0 then
+        FAddedProxies.Delete(VIndex);
+    end else
+      VIndex := -1;
+    if VIndex = -1 then
+      RemovedProxies.Add(Item);
+  end;
+
   procedure DoChanges;
   var
     VEventType: TPressItemsEventType;
@@ -3476,6 +3496,7 @@ procedure TPressItems.ChangedList(
             VIndex := Sender.IndexOf(Item);
           end;
           BindProxy(Item);
+          AddedProxy;
           NotifyMementos(Item, isAdded);
         end;
       else {lnExtracted, lnDeleted}
@@ -3484,6 +3505,7 @@ procedure TPressItems.ChangedList(
             ReleaseInstance(Item.Instance);
           VEventType := ietRemove;
           VIndex := -1;
+          RemovedProxy;
           { TODO : OldIndex? }
           NotifyMementos(Item, isDeleted, -1);
         end;
@@ -3498,9 +3520,13 @@ procedure TPressItems.ChangedList(
     begin
       ValidateProxy(Item);
       BindProxy(Item);
+      AddedProxy;
     end else {lnExtracted, lnDeleted}
+    begin
       if Item.HasInstance then
         ReleaseInstance(Item.Instance);
+      RemovedProxy;
+    end;
   end;
 
 begin
