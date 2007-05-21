@@ -469,7 +469,8 @@ begin
   begin
     if not Assigned(AOwner) then
       AOwner := Self;
-    Result := VRule.Create(AOwner);
+    Result := VRule.Create(Self);
+    Result.FOwner := AOwner;  // friend class
     Result.Read(Reader);
   end else
   begin
