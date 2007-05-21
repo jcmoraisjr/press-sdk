@@ -46,7 +46,9 @@ type
 
   TPressDAO = class(TPressService, IPressDAO)
   private
+    { TODO : Implement transacted object control }
     FCache: TPressDAOCache;
+    FTransactionLevel: Integer;
     procedure DisposeObject(AObject: TPressObject);
   protected
     procedure DoneService; override;
@@ -160,8 +162,9 @@ end;
 
 procedure TPressDAO.Commit;
 begin
-  { TODO : Implement transaction control }
-  InternalCommit;
+  Dec(FTransactionLevel);
+  if FTransactionLevel = 0 then
+    InternalCommit;
 end;
 
 constructor TPressDAO.Create;
@@ -347,8 +350,9 @@ end;
 
 procedure TPressDAO.Rollback;
 begin
-  { TODO : Implement transaction control }
-  InternalRollback;
+  Dec(FTransactionLevel);
+  if FTransactionLevel = 0 then
+    InternalRollback;
 end;
 
 procedure TPressDAO.ShowConnectionManager;
@@ -369,8 +373,9 @@ end;
 
 procedure TPressDAO.StartTransaction;
 begin
-  { TODO : Implement transaction control }
-  InternalStartTransaction;
+  Inc(FTransactionLevel);
+  if FTransactionLevel = 1 then
+    InternalStartTransaction;
 end;
 
 procedure TPressDAO.Store(AObject: TPressObject);
