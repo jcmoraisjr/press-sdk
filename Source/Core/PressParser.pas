@@ -196,6 +196,8 @@ begin
     VStr[VLen] := Ch;
     if Ch = Delimiter then
     begin
+      if Eof then
+        Break;
       Ch := ReadChar;
       if Ch <> Delimiter then
       begin
