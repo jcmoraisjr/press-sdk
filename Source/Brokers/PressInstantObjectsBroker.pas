@@ -554,13 +554,13 @@ procedure TPressInstantObjectsPersistence.ReadPressObject(
   procedure ReadPressReference(APressReference: TPressReference;
     AInstantReference: TInstantReference);
   begin
-    if APressReference.HasInstance and
+    if APressReference.Proxy.HasInstance and
      not APressReference.Value.IsPersistent then
       APressReference.Value.Store;
-    if (APressReference.ObjectClassName <> '') and
-     (APressReference.ObjectId <> '') then
+    if (APressReference.Proxy.ObjectClassName <> '') and
+     (APressReference.Proxy.ObjectId <> '') then
       AInstantReference.ReferenceObject(
-       APressReference.ObjectClassName, APressReference.ObjectId)
+       APressReference.Proxy.ObjectClassName, APressReference.Proxy.ObjectId)
     else
       AInstantReference.Value := nil;
   end;

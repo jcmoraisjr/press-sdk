@@ -533,8 +533,6 @@ type
   TPressItem = class(TPressStructure)
   private
     FProxy: TPressProxy;
-    function GetObjectClassName: string;
-    function GetObjectId: string;
     function GetProxy: TPressProxy;
     function GetPubValue: TPressObject;
     function GetValue: TPressObject;
@@ -549,16 +547,13 @@ type
     function InternalCreateMemento: TPressAttributeMemento; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure InternalUnassignObject(AObject: TPressObject); override;
-    property Proxy: TPressProxy read GetProxy;
   public
     procedure Assign(Source: TPersistent); override;
     procedure AssignReference(const AClassName, AId: string);
-    function HasInstance: Boolean;
     procedure Reset; override;
     function SameReference(AObject: TPressObject): Boolean; overload;
     function SameReference(const ARefClass, ARefID: string): Boolean; overload;
-    property ObjectClassName: string read GetObjectClassName;
-    property ObjectId: string read GetObjectId;
+    property Proxy: TPressProxy read GetProxy;
     property PubValue: TPressObject read GetPubValue write SetPubValue;
     property Value: TPressObject read GetValue write SetValue;
   end;
@@ -3130,16 +3125,6 @@ begin
   Result := not Assigned(FProxy) or FProxy.IsEmpty; 
 end;
 
-function TPressItem.GetObjectClassName: string;
-begin
-  Result := Proxy.ObjectClassName;
-end;
-
-function TPressItem.GetObjectId: string;
-begin
-  Result := Proxy.ObjectId;
-end;
-
 function TPressItem.GetProxy: TPressProxy;
 begin
   if not Assigned(FProxy) then
@@ -3176,11 +3161,6 @@ function TPressItem.GetValue: TPressObject;
 begin
   VerifyCalcAttribute;
   Result := Proxy.Instance;
-end;
-
-function TPressItem.HasInstance: Boolean;
-begin
-  Result := Proxy.HasInstance;
 end;
 
 procedure TPressItem.InternalAssignObject(AObject: TPressObject);
