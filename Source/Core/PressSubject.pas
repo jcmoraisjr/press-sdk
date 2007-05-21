@@ -103,7 +103,7 @@ type
   private
     { TODO : Refactor attribute metadatas to use attribute class inheritance,
       instead of object class inheritance. }
-    { TODO : Refactor, moving persistent items to the persistence unit }
+    { TODO : Implement data packet in the dao/persistence unit }
     FAttributeClass: TPressAttributeClass;
     FCalcMetadata: TPressCalcMetadata;
     FDefaultValue: string;
@@ -114,10 +114,11 @@ type
     FName: string;
     FObjectClass: TPressObjectClass;
     FOwner: TPressObjectMetadata;
-    FPersistentChildName: string;
-    FPersistentLinkName: string;
     FPersistentName: string;
-    FPersistentParentName: string;
+    FPersLinkIdName: string;
+    FPersLinkChildName: string;
+    FPersLinkName: string;
+    FPersLinkParentName: string;
     FSize: Integer;
     function GetAttributeName: string;
     function GetObjectClassName: string;
@@ -147,10 +148,11 @@ type
     property DefaultValue: string read FDefaultValue write FDefaultValue;
     property EditMask: string read FEditMask write FEditMask;
     property IsPersistent: Boolean read FIsPersistent write FIsPersistent default True;
-    property PersistentChildName: string read FPersistentChildName write FPersistentChildName;
-    property PersistentLinkName: string read FPersistentLinkName write FPersistentLinkName;
     property PersistentName: string read FPersistentName write FPersistentName;
-    property PersistentParentName: string read FPersistentParentName write FPersistentParentName;
+    property PersLinkChildName: string read FPersLinkChildName write FPersLinkChildName;
+    property PersLinkIdName: string read FPersLinkIdName write FPersLinkIdName;
+    property PersLinkName: string read FPersLinkName write FPersLinkName;
+    property PersLinkParentName: string read FPersLinkParentName write FPersLinkParentName;
     property Size: Integer read FSize write FSize;
   end;
 
@@ -218,6 +220,7 @@ type
   TPressObjectMetadata = class(TPressStreamable)
   private
     FAttributeMetadatas: TPressAttributeMetadataList;
+    FClassIdName: string;
     FIdMetadata: TPressAttributeMetadata;
     FIsPersistent: Boolean;
     FKeyName: string;
@@ -228,6 +231,7 @@ type
     FObjectClassName: string;
     FParent: TPressObjectMetadata;
     FPersistentName: string;
+    FUpdateCountName: string;
     function GetAttributeMetadatas: TPressAttributeMetadataList;
     function GetIdMetadata: TPressAttributeMetadata;
     function GetMap: TPressClassMap;
@@ -247,10 +251,12 @@ type
     property ObjectClassName: string read FObjectClassName;
     property Parent: TPressObjectMetadata read FParent;
   published
+    property ClassIdName: string read FClassIdName write FClassIdName;
     property KeyName: string read FKeyName write FKeyName;
     property KeyType: string read FKeyType write FKeyType;
     property IsPersistent: Boolean read FIsPersistent write SetIsPersistent;
     property PersistentName: string read FPersistentName write FPersistentName;
+    property UpdateCountName: string read FUpdateCountName write FUpdateCountName;
   end;
 
   TPressObjectMetadataIterator = class;
@@ -524,6 +530,7 @@ type
     FNotifying: Boolean;
     FOwnerAttribute: TPressStructure;
     FPersistentId: string;
+    FUpdateCount: Integer;
     procedure CreateAttributes;
     function EnsureDataAccess: IPressDAO;
     function GetAttributes(AIndex: Integer): TPressAttribute;
@@ -607,6 +614,7 @@ type
     property OwnerAttribute: TPressStructure read FOwnerAttribute;
     property PersistentId: string read FPersistentId;
     property PersistentName: string read GetPersistentName;
+    property UpdateCount: Integer read FUpdateCount;
     property UpdatesDisabled: Boolean read GetUpdatesDisabled;
   end;
 
@@ -995,6 +1003,8 @@ type
   end;
 
 procedure PressAssignPersistentId(AObject: TPressObject; const AId: string);
+procedure PressAssignUpdateCount(AObject: TPressObject; ANewValue: Integer);
+procedure PressEvolveUpdateCount(AObject: TPressObject);
 function PressModel: TPressModel;
 function PressDefaultDAO(const AForce: Boolean = True): IPressDAO;
 
@@ -1043,6 +1053,19 @@ begin
       AObject.FId.AsString := AId;  // friend class
     AObject.FPersistentId := AId;  // friend class
   end;
+end;
+
+procedure PressAssignUpdateCount(AObject: TPressObject; ANewValue: Integer);
+begin
+  AObject.FUpdateCount := ANewValue;  // friend class
+end;
+
+procedure PressEvolveUpdateCount(AObject: TPressObject);
+begin
+  if AObject.UpdateCount < Pred(High(AObject.UpdateCount)) then
+    Inc(AObject.FUpdateCount)  // friend class
+  else
+    AObject.FUpdateCount := 1;  // friend class
 end;
 
 function PressDefaultDAO(const AForce: Boolean): IPressDAO;
@@ -1341,21 +1364,21 @@ begin
   begin
     if FPersistentName = '' then
       FPersistentName := FName;
-    if FPersistentLinkName = '' then
+    if FPersLinkName = '' then
       if Assigned(Owner) then
-        FPersistentLinkName := Owner.PersistentName + '_' + FPersistentName
+        FPersLinkName := Owner.PersistentName + '_' + FPersistentName
       else
-        FPersistentLinkName := '_' + FPersistentName;
-    if FPersistentParentName = '' then
+        FPersLinkName := '_' + FPersistentName;
+    if FPersLinkParentName = '' then
       if Assigned(Owner) then
-        FPersistentParentName := Owner.PersistentName + SPressIdString
+        FPersLinkParentName := Owner.PersistentName + SPressIdString
       else
-        FPersistentParentName := SPressParentIdString;
-    if FPersistentChildName = '' then
+        FPersLinkParentName := SPressParentString + SPressIdString;
+    if FPersLinkChildName = '' then
       if Assigned(Owner) then
-        FPersistentChildName := FPersistentName + SPressIdString
+        FPersLinkChildName := FPersistentName + SPressIdString
       else
-        FPersistentChildName := SPressChildIdString;
+        FPersLinkChildName := SPressChildString + SPressIdString;
   end;
 end;
 
@@ -1521,6 +1544,8 @@ begin
   inherited Create;
   FObjectClassName := AObjectClassName;
   FPersistentName := FObjectClassName;
+  FClassIdName := SPressClassIdString;
+  FUpdateCountName := SPressUpdateCountString;
   FModel := AModel;
   FParent := FModel.ParentMetadataOf(Self);
   if Assigned(FParent) then
@@ -1554,9 +1579,11 @@ function TPressObjectMetadata.GetIdMetadata: TPressAttributeMetadata;
 begin
   if not Assigned(FIdMetadata) then
   begin
+    { TODO : Inherited synchronization }
     FIdMetadata := InternalAttributeMetadataClass.Create(nil);
     FIdMetadata.Name := KeyName;
     FIdMetadata.AttributeName := KeyType;
+    FIdMetadata.Size := 32;
   end;
   Result := FIdMetadata;
 end;
