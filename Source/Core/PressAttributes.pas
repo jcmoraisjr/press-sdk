@@ -3439,6 +3439,7 @@ procedure TPressItems.ChangedList(
   procedure AddedProxy;
   begin
     AddedProxies.Add(Item);
+    Item.AddRef;
   end;
 
   procedure RemovedProxy;
@@ -3453,7 +3454,10 @@ procedure TPressItems.ChangedList(
     end else
       VIndex := -1;
     if VIndex = -1 then
+    begin
       RemovedProxies.Add(Item);
+      Item.AddRef;
+    end;
   end;
 
   procedure DoChanges;
@@ -3500,12 +3504,10 @@ procedure TPressItems.ChangedList(
     begin
       ValidateProxy(Item);
       BindProxy(Item);
-      AddedProxy;
     end else {lnExtracted, lnDeleted}
     begin
       if Item.HasInstance then
         ReleaseInstance(Item.Instance);
-      RemovedProxy;
     end;
   end;
 
@@ -3528,6 +3530,10 @@ begin
     end;
     TPressItemsChangedEvent.Create(Self, nil, -1, ietClear).Notify;
   end;
+  if Assigned(FAddedProxies) then
+    FAddedProxies.Clear;
+  if Assigned(FRemovedProxies) then
+    FRemovedProxies.Clear;
 end;
 
 function TPressItems.Count: Integer;
