@@ -634,11 +634,10 @@ begin
   begin
     FTokenPos := Position;
     if not Eof then
-    begin
-      FCurrentToken := InternalReadToken;
-      Result := FCurrentToken;
-    end else
-      Result := '';
+      FCurrentToken := InternalReadToken
+    else
+      FCurrentToken := '';
+    Result := FCurrentToken;
   end;
 end;
 
