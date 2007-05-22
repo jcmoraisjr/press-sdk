@@ -878,6 +878,7 @@ type
     procedure Initialize; virtual;
     function InternalCreateMemento: TPressAttributeMemento; virtual; abstract;
     function InternalTypeKinds: TTypeKinds; virtual;
+    procedure InternalUnchange; virtual;
     procedure Notify(AEvent: TPressEvent); virtual;
     procedure NotifyChange;
     procedure NotifyInvalidate;
@@ -3787,6 +3788,10 @@ begin
   Result := [];
 end;
 
+procedure TPressAttribute.InternalUnchange;
+begin
+end;
+
 function TPressAttribute.InvalidClassError(const AClassName: string): EPressError;
 begin
   Result := EPressError.CreateFmt(
@@ -3899,8 +3904,10 @@ begin
     if Assigned(Owner) then
       Owner.Changed(Self);
   end else
-    { TODO : Unchange item(s) of structure classes }
+  begin
     NotifyUnchange;
+    InternalUnchange;
+  end;
 end;
 
 function TPressAttribute.ValidateChars(

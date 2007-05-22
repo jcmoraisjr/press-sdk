@@ -567,6 +567,7 @@ type
     procedure BindInstance(AInstance: TPressObject); override;
     procedure InternalAssignItem(AProxy: TPressProxy); override;
     function InternalProxyType: TPressProxyType; override;
+    procedure InternalUnchange; override;
     procedure ReleaseInstance(AInstance: TPressObject); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
@@ -618,12 +619,14 @@ type
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
     procedure ChangedItem(AItem: TPressObject; ASubjectChanged: Boolean = True);
     procedure ChangedList(Sender: TPressProxyList; Item: TPressProxy; Action: TListNotification);
+    procedure ClearObjectCache;
     procedure Finit; override;
     function GetIsEmpty: Boolean; override;
     procedure InternalAssignObject(AObject: TPressObject); override;
     function InternalCreateIterator: TPressItemsIterator; virtual;
     function InternalCreateMemento: TPressAttributeMemento; override;
     procedure InternalUnassignObject(AObject: TPressObject); override;
+    procedure InternalUnchange; override;
     procedure NotifyMementos(AProxy: TPressProxy; AItemState: TPressItemState; AOldIndex: Integer = -1);
     procedure NotifyRebuild;
     property Mementos: TPressItemsMementoList read GetMementos;
@@ -682,6 +685,7 @@ type
     procedure BindInstance(AInstance: TPressObject); override;
     procedure InternalAssignItem(AProxy: TPressProxy); override;
     function InternalProxyType: TPressProxyType; override;
+    procedure InternalUnchange; override;
     procedure ReleaseInstance(AInstance: TPressObject); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
@@ -3276,6 +3280,13 @@ begin
   Result := ptOwned;
 end;
 
+procedure TPressPart.InternalUnchange;
+begin
+  inherited;
+  if Assigned(FProxy) and FProxy.HasInstance then
+    FProxy.Instance.Unchanged;
+end;
+
 procedure TPressPart.ReleaseInstance(AInstance: TPressObject);
 begin
   inherited;
@@ -3530,6 +3541,11 @@ begin
     end;
     TPressItemsChangedEvent.Create(Self, nil, -1, ietClear).Notify;
   end;
+  ClearObjectCache;
+end;
+
+procedure TPressItems.ClearObjectCache;
+begin
   if Assigned(FAddedProxies) then
     FAddedProxies.Clear;
   if Assigned(FRemovedProxies) then
@@ -3646,6 +3662,12 @@ end;
 procedure TPressItems.InternalUnassignObject(AObject: TPressObject);
 begin
   ProxyList.RemoveInstance(AObject);
+end;
+
+procedure TPressItems.InternalUnchange;
+begin
+  inherited;
+  ClearObjectCache;
 end;
 
 procedure TPressItems.NotifyMementos(
@@ -3765,6 +3787,16 @@ end;
 function TPressParts.InternalProxyType: TPressProxyType;
 begin
   Result := ptOwned;
+end;
+
+procedure TPressParts.InternalUnchange;
+var
+  I: Integer;
+begin
+  inherited;
+  for I := 0 to Pred(Count) do
+    if Proxies[I].HasInstance then
+      Proxies[I].Instance.Unchanged;
 end;
 
 procedure TPressParts.ReleaseInstance(AInstance: TPressObject);

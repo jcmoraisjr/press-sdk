@@ -390,10 +390,10 @@ begin
         {$IFDEF PressLogDAOInterface}PressLogMsg(Self, 'Storing', [AObject]);{$ENDIF}
         TPressObjectFriend(AObject).InternalStore(InternalStore);
         PressAssignPersistentId(AObject, AObject.Id);
-        AObject.Unchanged;
       finally
         AObject.EnableChanges;
       end;
+      AObject.Unchanged;
       Commit;
     except
       Rollback;
