@@ -4067,7 +4067,8 @@ end;
 procedure TPressStructure.BeforeChangeReference(
   Sender: TPressProxy; const AClassName, AId: string);
 begin
-  ValidateObjectClass(AClassName);
+  if AClassName <> '' then
+    ValidateObjectClass(AClassName);
   Changing;
 end;
 
