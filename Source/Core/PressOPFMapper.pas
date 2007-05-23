@@ -356,6 +356,7 @@ function PressStorageModel: TPressOPFStorageModel;
 implementation
 
 uses
+  {$IFDEF D6+}Variants,{$ENDIF}
   SysUtils,
   TypInfo,
   {$IFDEF PressLog}PressLog,{$ENDIF}
