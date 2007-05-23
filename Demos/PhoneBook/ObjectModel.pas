@@ -14,6 +14,8 @@ type
   {$M-}
 
   TCustomObject = class(TPressObject)
+  protected
+    class function InternalMetadataStr: string; override;
   end;
 
   TContact = class(TCustomObject)
@@ -150,6 +152,13 @@ implementation
 
 uses
   PressPersistence;
+
+{ TCustomObject }
+
+class function TCustomObject.InternalMetadataStr: string;
+begin
+  Result := 'TCustomObject IsPersistent';
+end;
 
 { TContact }
 

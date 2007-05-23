@@ -2,17 +2,68 @@ unit Brokers;
 
 {$I PhoneBook.inc}
 
+{$IFDEF UseInstantObjects}
+
 interface
 
-{$IFDEF UseInstantObjects}
 uses
   InstantIBX, // currently navigational brokers (like BDE) aren't supported
   PressInstantObjectsBroker;
-{$ENDIF}
 
 implementation
 
-{$IFNDEF UseInstantObjects}
+{$ENDIF}
+{$IFDEF UsePressOPF}
+
+interface
+
+uses
+  PressUIBBroker;
+
+type
+  TBroker = class(TPressUIBBroker)
+  protected
+    procedure InitService; override;
+    procedure InternalShowConnectionManager; override;
+  end;
+
+implementation
+
+uses
+  SysUtils,
+  Clipbrd,
+  PressDialogs,
+  PressOPF,
+  jvuiblib;
+
+procedure TBroker.InitService;
+begin
+  with Connector.Database do
+  begin
+    LibraryName :=  // 'fbclient';
+    DatabaseName := // 'servername:/path/to/database.fb';
+    CharacterSet := // csISO8859_1;
+    UserName :=     // 'sysdba';
+    PassWord :=     // 'masterkey';
+  end;
+end;
+
+procedure TBroker.InternalShowConnectionManager;
+begin
+  if PressDialog.ConfirmDlg(
+   'Copy the database metadata to the clipboard?') then
+    Clipboard.AsText :=
+     AdjustLineBreaks(PressOPFService.Mapper.CreateDatabaseStatement);
+end;
+
+initialization
+  TBroker.RegisterService(True);
+
+{$ENDIF}
+{$IFDEF DontUsePersistence}
+
+interface
+
 uses
   PressSubject, PressPersistence;
 
@@ -33,6 +84,8 @@ type
   end;
 
 { TPressPhoneBookPersistence }
+
+implementation
 
 procedure TPressPhoneBookPersistence.InternalCommit;
 begin
@@ -114,6 +167,7 @@ end;
 
 initialization
   TPressPhoneBookPersistence.RegisterService;
+
 {$ENDIF}
 
 end.

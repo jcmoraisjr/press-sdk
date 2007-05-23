@@ -47,7 +47,7 @@ procedure TMainPresenter.Running;
 begin
   inherited;
   PressUserData.Logon;
-  {$IFNDEF UseInstantObjects}
+  {$IFDEF DontUsePersistence}
   FInternalCache := TPressObjectList.Create(True);
   PopulatePhoneBook(FInternalCache);
   {$ENDIF}
