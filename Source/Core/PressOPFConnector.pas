@@ -367,9 +367,12 @@ begin
     PressLogMsg(Self, 'OPF: ' + FSQL);
     for I := 0 to Pred(Params.Count) do
       PressLogMsg(Self, Format('OPFParam: %s = %s', [
-       Params[I].Name, Params[I].AsVariant]));
+       Params[I].Name, Params[I].AsString]));
   {$ENDIF}
   Result := InternalExecute;
+  {$IFDEF PressLogDAOPersistence}
+  PressLogMsg(Self, 'OPFResult: ' + InttoStr(Result) + ' row(s) affected');
+  {$ENDIF}
 end;
 
 function TPressOPFDataset.GetFieldDefs: TPressOPFFieldDefList;
