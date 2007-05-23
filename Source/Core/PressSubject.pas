@@ -403,10 +403,12 @@ type
     FDefaultKeyType: string;
     FEnumMetadatas: TPressEnumMetadataList;
     FMetadatas: TPressObjectMetadataList;
+    FMetadatasFetched: Boolean;
     {$IFNDEF PressRelease}
     FNotifier: TPressNotifier;
     procedure Notify(AEvent: TPressEvent);
     {$ENDIF}
+    procedure FetchAllMetadatas;
   protected
     function InternalFindAttribute(const AAttributeName: string): TPressAttributeClass; virtual;
     function InternalFindClass(const AClassName: string): TPressObjectClass; virtual;
@@ -1974,7 +1976,7 @@ function TPressModel.ClassByPersistentName(
 var
   I: Integer;
 begin
-  // first pass -- by instantiated metadatas
+  FetchAllMetadatas;
   for I := 0 to Pred(Metadatas.Count) do
     with Metadatas[I] do
       if SameText(PersistentName, APersistentName) then
@@ -1982,17 +1984,6 @@ begin
         Result := ClassByName(ObjectClassName);
         Exit;
       end;
-
-  // second pass -- by registered classes
-  for I := 0 to Pred(FClasses.Count) do
-    with TPressObjectClass(FClasses[I]).ClassMetadata do
-      if SameText(PersistentName, APersistentName) then
-      begin
-        Result := ClassByName(ObjectClassName);
-        Exit;
-      end;
-
-  // All metadatas was instantiated, this PersistentName doesn't exist
   raise EPressError.CreateFmt(SPersistentClassNotFound, [APersistentName]);
 end;
 
@@ -2033,6 +2024,18 @@ begin
   Result := FindEnumMetadata(AEnumName);
   if not Assigned(Result) then
     raise EPressError.CreateFmt(SEnumMetadataNotFound, [AEnumName]);
+end;
+
+procedure TPressModel.FetchAllMetadatas;
+var
+  I: Integer;
+begin
+  if not FMetadatasFetched then
+  begin
+    FMetadatasFetched := True;
+    for I := 0 to Pred(FClasses.Count) do
+      TPressObjectClass(FClasses[I]).ClassMap;
+  end;
 end;
 
 function TPressModel.FindAttribute(
@@ -2080,6 +2083,7 @@ function TPressModel.FindMetadata(
 var
   I: Integer;
 begin
+  FetchAllMetadatas;
   for I := 0 to Pred(Metadatas.Count) do
   begin
     Result := Metadatas[I];
@@ -2139,11 +2143,8 @@ end;
 
 {$IFNDEF PressRelease}
 procedure TPressModel.Notify(AEvent: TPressEvent);
-var
-  I: Integer;
 begin
-  for I := 0 to Pred(FClasses.Count) do
-    TPressObjectClass(FClasses[I]).ClassMap;
+  FetchAllMetadatas;
 end;
 {$ENDIF}
 
