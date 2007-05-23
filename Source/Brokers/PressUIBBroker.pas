@@ -163,7 +163,9 @@ begin
     FQuery.Database := Connector.Database;
     FQuery.Transaction := Connector.Transaction;
     FQuery.FetchBlobs := True;
+    {$IFNDEF FPC}
     FQuery.UniDirectional := True;
+    {$ENDIF}
   end;
   Result := FQuery;
 end;
