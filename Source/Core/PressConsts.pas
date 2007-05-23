@@ -31,10 +31,17 @@ const
   SPressFalseString = 'False';
   SPressNilString = 'nil';
   SPressIdString = 'Id';
-  SPressClassIdString = 'ClassId';  
+  SPressClassIdString = 'ClassId';
+  SPressLinkIdString = 'Id';
   SPressParentString = 'Parent';
   SPressChildString = 'Child';
-  SPressUpdateCountString = 'UpdateCount';  
+  SPressUpdateCountString = 'UpdateCount';
+  SPressPrimaryKeyNamePrefix = 'PK_';
+  SPressForeignKeyNamePrefix = 'FK_';
+  SPressUniqueKeyNamePrefix = 'UK_';
+  SPressIndexNamePrefix = 'IDX_';
+  SPressTableAliasPrefix = 't_';
+  SPressPersistentIdParamString = 'PressPersistId';
   SPressCalcString = 'Calc';
   SPressQueryItemsString = 'QueryItems';
   SPressReportNativeValueSuffix = 'Value';
@@ -48,6 +55,8 @@ resourcestring
   SAttributeIsNotValue = 'O atributo %s(''%s'') não é Value';
   SAttributeNotFound = 'O atributo %s(''%s'') não foi encontrado';
   SAttributeTypeNotFound = 'O atributo %s não foi encontrado';
+  SCannotChangeOPFBroker = 'Não é possível alterar o Broker de acesso a dados';
+  SClassIsNotPersistent = 'Classe ''%s'' não é persistente';
   SClassNotFound = 'Classe %s não encontrada';
   SColumnDataParseError = 'Erro ao interpretar dados da coluna %s(''%s''): "%s"';
   SComponentIsNotAControl = 'O componente %s(''%s'') não é um controle';
@@ -57,6 +66,7 @@ resourcestring
   SEnumItemNotFound = 'Enumeration ''%s'' não encontrado';
   SEnumMetadataNotFound = 'Enumeration metadata %s não encontrado';
   SEnumOutOfBounds = 'Enumeration ''%s'' fora do limite (%d)';
+  SFieldNotFound = 'Campo ''%s'' não foi encontrado';
   SInstanceNotFound = 'Instance not found: %s(%s)';
   SInvalidAttributeClass = 'O atributo %s(''%s'') requer objetos da classe %s';
   SInvalidAttributeValue = 'Valor ''%s'' inválido para %s(''%s'')';
@@ -79,6 +89,7 @@ resourcestring
   SUnassignedMainPresenter = 'Presenter principal não está associado';
   SUnassignedModel = 'Model não está associado';
   SUnassignedPersistenceConnector = 'Conector de persistência não foi associado';
+  SUnassignedPersistenceService = 'Serviço de persistência não foi associado ou não é do PressObjects';
   SUnassignedServiceType = 'Nenhum serviço %s foi associado ou registrado';
   SUnassignedSubject = 'Subject não foi associado';
   SUnexpectedEof = 'Final de arquivo inesperado';
@@ -89,6 +100,7 @@ resourcestring
   SUnsupportedControl = 'O controle %s(''%s'') não é suportado';
   SUnsupportedDisplayNames = 'DisplayNames não é suportado para o atributo %s(''%s.%s'')';
   SUnsupportedFeature = 'Feature %s não é suportada';
+  SUnsupportedFieldType = 'O tipo de campo ''%s'' não é suportado';
   SUnsupportedModel = 'Model %s não é suportado por %s';
   SUnsupportedObject = 'Nenhuma classe %s suporta objetos %s';
   SViewAccessError = 'Não é possível acessar a view %s(''%s'') como %s';
