@@ -18,5 +18,5 @@
 {$ENDIF}
 
 {$IFDEF FPC}
-  {$MODE ObjFPC}
+  {$MODE ObjFPC}{$H+}
 {$ENDIF}
