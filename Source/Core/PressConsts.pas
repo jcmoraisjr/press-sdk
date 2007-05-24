@@ -84,6 +84,7 @@ resourcestring
   STokenExpected = '''%s'' esperado, mas ''%s'' foi encontrado';
   STokenLengthOutOfBounds = 'Token muito grande';
   SUnassignedAttributeType = 'Tipo de atributo não associado para %s(''%s'')';
+  SUnassignedDatabase = 'Conector do banco de dados não foi associado';
   SUnassignedItemObjectClass = 'Classe de negócio dos itens da Query ''%s'' não está associado';
   SUnassignedMainForm = 'Formulário principal não está associado';
   SUnassignedMainPresenter = 'Presenter principal não está associado';
