@@ -53,6 +53,7 @@ implementation
 
 uses
   TypInfo,
+  {$IFDEF FPC}PressConsts,{$ENDIF}
   {$IFDEF FPC}MaskEdit{$ELSE}{$IFDEF D6+}MaskUtils{$ELSE}Mask{$ENDIF}{$ENDIF},
   {$IFDEF FPC}SysUtils{$ELSE}ActiveX, ComObj{$ENDIF};
 
@@ -81,8 +82,27 @@ end;
 
 function SetProperty(AObject: TPersistent; const APropName: string;
   AValue: Variant): Boolean;
+{$IFDEF FPC}
+var
+  VPropInfo: PPropInfo;
+  VPropValue: Variant;
+{$ENDIF}
 begin
   {$IFDEF FPC}
+  VPropInfo := GetPropInfo(AObject, APropName);
+  Result := Assigned(VPropInfo);
+  if Result then
+  begin
+    case VPropInfo^.PropType^.Kind of
+      tkEnumeration:
+        VPropValue := GetEnumValue(VPropInfo^.PropType, AValue);
+      tkBool:
+        VPropValue := not SameText(AValue, SPressFalseString);
+      else
+        VPropValue := AValue;
+    end;
+    SetPropValue(AObject, APropName, VPropValue);
+  end;
   {$ELSE}
   Result := Assigned(GetPropInfo(AObject, APropName));
   if Result then
