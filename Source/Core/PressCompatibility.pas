@@ -19,6 +19,8 @@ unit PressCompatibility;
 interface
 
 uses
+  Classes,
+  {$IFDEF D6+}Variants,{$ENDIF}
   {$IFDEF FPC}Calendar{$ELSE}ComCtrls{$ENDIF}, Grids
   {$IFDEF DELPHI}, Windows{$ENDIF};
 
@@ -42,6 +44,7 @@ type
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
 procedure GenerateGUID(out AGUID: TGUID);
+function SetProperty(AObject: TPersistent; const APropName: string; AValue: Variant): Boolean;
 procedure OutputDebugString(const AStr: string);
 procedure ThreadSafeIncrement(var AValue: Integer);
 procedure ThreadSafeDecrement(var AValue: Integer);
@@ -49,6 +52,7 @@ procedure ThreadSafeDecrement(var AValue: Integer);
 implementation
 
 uses
+  TypInfo,
   {$IFDEF FPC}MaskEdit{$ELSE}{$IFDEF D6+}MaskUtils{$ELSE}Mask{$ENDIF}{$ENDIF},
   {$IFDEF FPC}SysUtils{$ELSE}ActiveX, ComObj{$ENDIF};
 
@@ -75,9 +79,21 @@ begin
   {$ENDIF}
 end;
 
+function SetProperty(AObject: TPersistent; const APropName: string;
+  AValue: Variant): Boolean;
+begin
+  {$IFDEF FPC}
+  {$ELSE}
+  Result := Assigned(GetPropInfo(AObject, APropName));
+  if Result then
+    SetPropValue(AObject, APropName, AValue);
+  {$ENDIF}
+end;
+
 procedure OutputDebugString(const AStr: string);
 begin
-  {$IFNDEF FPC}
+  {$IFDEF FPC}
+  {$ELSE}
   Windows.OutputDebugString(PChar(AStr));
   {$ENDIF}
 end;

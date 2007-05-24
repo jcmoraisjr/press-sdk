@@ -19,7 +19,7 @@ unit PressMetadata;
 interface
 
 uses
-  Classes,
+  PressClasses,
   PressParser,
   PressSubject;
 
@@ -46,7 +46,12 @@ type
     class function ParseMetadata(const AMetadataStr: string; AModel: TPressModel = nil): TPressObjectMetadata;
   end;
 
-  TPressMetaParserObject = class(TPressParserObject)
+  TPressMetaParserStreamable = class(TPressParserObject)
+  protected
+    procedure ParseProperties(Reader: TPressParserReader; ATarget: TPressStreamable);
+  end;
+
+  TPressMetaParserObject = class(TPressMetaParserStreamable)
   private
     FMetadata: TPressObjectMetadata;
   protected
@@ -68,14 +73,18 @@ type
     property Metadata: TPressQueryMetadata read GetMetadata;
   end;
 
+  TPressMetaParserAttributes = class(TPressParserObject)
+  protected
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    procedure InternalRead(Reader: TPressParserReader); override;
+  end;
+
   TPressMetaParserAttributeType = class;
   TPressMetaParserCalculated = class;
 
-  TPressMetaParserAttributes = class(TPressParserObject)
+  TPressMetaParserAttribute = class(TPressMetaParserStreamable)
   private
     FAttributeType: TPressMetaParserAttributeType;
-    FCalcMetadata: TPressMetaParserCalculated;
-    FNextAttribute: TPressMetaParserAttributes;
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalRead(Reader: TPressParserReader); override;
@@ -124,21 +133,18 @@ type
 
   TPressMetaParserProperties = class(TPressParserObject)
   private
-    FTarget: TPersistent;
+    FTarget: TPressStreamable;
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalRead(Reader: TPressParserReader); override;
-  public
-    property Target: TPersistent read FTarget write FTarget;
   end;
 
 implementation
 
 uses
   SysUtils,
-  TypInfo,
   PressConsts,
-  PressClasses,
+  PressCompatibility,
   PressAttributes;
 
 { Local routines }
@@ -165,17 +171,11 @@ end;
 procedure TPressMetaParser.InternalRead(Reader: TPressParserReader);
 begin
   inherited;
-  FObject := Parse(Reader, [
-   TPressMetaParserQuery, TPressMetaParserObject]) as TPressMetaParserObject;
-  if not Assigned(FObject) then
-    Reader.ErrorExpected(SPressClassNameMsg, Reader.ReadToken);
-  if Reader.ReadToken = '(' then
-  begin
-    FAttributes := Parse(Reader, [
-     TPressMetaParserAttributes]) as TPressMetaParserAttributes;
-    Reader.ReadMatch(')');
-  end else
-    Reader.UnreadToken;
+  FObject := TPressMetaParserObject(Parse(Reader, [
+   TPressMetaParserQuery, TPressMetaParserObject],
+   Self, True, SPressClassNameMsg));
+  FAttributes := TPressMetaParserAttributes(
+   Parse(Reader, [TPressMetaParserAttributes]));
   if not Reader.Eof then
     Reader.ReadMatch(';');
   Reader.ReadMatchEof;
@@ -213,6 +213,21 @@ begin
   end;
 end;
 
+{ TPressMetaParserStreamable }
+
+procedure TPressMetaParserStreamable.ParseProperties(
+  Reader: TPressParserReader; ATarget: TPressStreamable);
+var
+  VParser: TPressMetaParserProperties;
+begin
+  if TPressMetaParserProperties.Apply(Reader) then
+  begin
+    VParser := TPressMetaParserProperties.Create(Self);
+    VParser.FTarget := ATarget;  // friend class
+    VParser.Read(Reader);
+  end;
+end;
+
 { TPressMetaParserObject }
 
 function TPressMetaParserObject.CreateObjectMetadata(
@@ -239,14 +254,7 @@ begin
   inherited;
   FMetadata := CreateObjectMetadata(Reader);
   InternalReadParams(Reader);
-  if TPressMetaParserProperties.Apply(Reader) then
-    with TPressMetaParserProperties.Create(Self) do
-    try
-      Target := FMetadata;
-      Read(Reader);
-    finally
-      Free;
-    end;
+  ParseProperties(Reader, Metadata);
 end;
 
 procedure TPressMetaParserObject.InternalReadParams(
@@ -291,40 +299,47 @@ end;
 class function TPressMetaParserAttributes.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := IsValidIdent(Reader.ReadToken);
+  Result := Reader.ReadToken = '(';
 end;
 
 procedure TPressMetaParserAttributes.InternalRead(
   Reader: TPressParserReader);
+begin
+  inherited;
+  Reader.ReadMatch('(');
+  repeat
+    Parse(Reader, [TPressMetaParserAttribute], Self);
+  until Reader.ReadToken <> ';';
+  Reader.UnreadToken;
+  Reader.ReadMatch(')');
+end;
+
+{ TPressMetaParserAttribute }
+
+class function TPressMetaParserAttribute.InternalApply(
+  Reader: TPressParserReader): Boolean;
+begin
+  Result := IsValidIdent(Reader.ReadToken);
+end;
+
+procedure TPressMetaParserAttribute.InternalRead(
+  Reader: TPressParserReader);
 var
+  VCalcMetadata: TPressMetaParserCalculated;
   Token: string;
 begin
   inherited;
   Token := Reader.ReadIdentifier;
   Reader.ReadMatch(':');
-  FAttributeType := Parse(Reader, [TPressMetaParserSizeable,
-   TPressMetaParserEnum, TPressMetaParserStructure,
-   TPressMetaParserAttributeType]) as TPressMetaParserAttributeType;
-  if not Assigned(FAttributeType) then
-    Reader.ErrorExpected(SPressAttributeNameMsg, Reader.ReadToken);
+  FAttributeType := TPressMetaParserAttributeType(Parse(Reader, [
+   TPressMetaParserSizeable, TPressMetaParserEnum, TPressMetaParserStructure,
+   TPressMetaParserAttributeType], Self, True, SPressAttributeNameMsg));
   FAttributeType.Metadata.Name := Token;
-  FCalcMetadata := Parse(Reader, [
-   TPressMetaParserCalculated]) as TPressMetaParserCalculated;
-  if Assigned(FCalcMetadata) then
-    AttributeType.Metadata.CalcMetadata := FCalcMetadata.CalcMetadata;
-  if TPressMetaParserProperties.Apply(Reader) then
-    with TPressMetaParserProperties.Create(Self) do
-    try
-      Target := FAttributeType.Metadata;
-      Read(Reader);
-    finally
-      Free;
-    end;
-  if Reader.ReadToken = ';' then
-    FNextAttribute := Parse(Reader, [TPressMetaParserAttributes],
-     Owner) as TPressMetaParserAttributes
-  else
-    Reader.UnreadToken;
+  VCalcMetadata := TPressMetaParserCalculated(
+   Parse(Reader, [TPressMetaParserCalculated]));
+  if Assigned(VCalcMetadata) then
+    AttributeType.Metadata.CalcMetadata := VCalcMetadata.CalcMetadata;
+  ParseProperties(Reader, AttributeType.Metadata);
 end;
 
 { TPressMetaParserCalculated }
@@ -392,7 +407,7 @@ procedure TPressMetaParserAttributeType.InternalRead(
 begin
   inherited;
   FMetadata :=
-   (Owner.Owner as TPressMetaParser).Metadata.CreateAttributeMetadata;
+   (Owner.Owner.Owner as TPressMetaParser).Metadata.CreateAttributeMetadata;
   FMetadata.AttributeName := Reader.ReadIdentifier;
 end;
 
@@ -489,9 +504,9 @@ end;
 procedure TPressMetaParserProperties.InternalRead(
   Reader: TPressParserReader);
 var
-  Token: string;
   VPropertyName: string;
   VValue: string;
+  Token: string;
 begin
   inherited;
   Token := Reader.ReadToken;
@@ -508,18 +523,12 @@ begin
       Token := Reader.ReadToken;
     end else
       VValue := SPressTrueString;
-    if not Assigned(GetPropInfo(FTarget, VPropertyName)) then
+    // Workaround
+    if (VValue <> '') and (VValue[1] = VValue[Length(VValue)]) and
+     (VValue[1] in ['''', '"']) then
+      VValue := Copy(VValue, 2, Length(VValue) - 2);
+    if not SetProperty(FTarget, VPropertyName, VValue) then
       Reader.ErrorExpected(SPressPropertyNameMsg, VPropertyName);
-    { TODO : Implement FPC RTTI routines }
-    {$IFNDEF FPC}
-
-      // Workaround
-      if (VValue <> '') and (VValue[1] = VValue[Length(VValue)]) and
-       (VValue[1] in ['''', '"']) then
-        VValue := Copy(VValue, 2, Length(VValue) - 2);
-
-    SetPropValue(FTarget, VPropertyName, VValue);
-    {$ENDIF}
   end;
   Reader.UnreadToken;
 end;
