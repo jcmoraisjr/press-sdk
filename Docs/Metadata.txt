@@ -1,0 +1,348 @@
+METADATA
+========
+
+Metadata is responsible for providing information about the business
+classes to the framework at execution time. Examples of such information are:
+a list of the class attributes, attribute types, calculated attributes, default
+values and so on.
+
+The PressObjects metadata can be compared with tables and fields of a RDBMS.
+For a RDBMS it's not possible to store information in a database without
+tables and fields. Likewise, for a PressObjects project, a business class
+cannot be instantiated to receive data without its metadata.
+
+
+Attribute declaration
+---------------------
+The InternalMetadataStr method of the base business class (TPressObject)
+provides the metadata in string format to the framework. The metadata
+syntax is:
+
+'ClassName <options> (attribute1: attrtype <options>; ...)'
+
+The following example model declares two classes, each with attributes.
+
+TClient = class(TPressObject)
+  _Name: TPressString;
+  _City: TPressReference;
+protected
+  class function InternalMetadataStr: string; override;
+end;
+
+TCity = class(TPressObject)
+  _Name: TPressString;
+protected
+  class function InternalMetadataStr: string; override;
+end;
+
+...
+
+class function TClient.InternalMetadataStr: string;
+begin
+  Result := 'TClient IsPersistent (' +
+   'Name: String(40);' +
+   'City: Reference(TCity))';
+end;
+
+class function TCity.InternalMetadataStr: string;
+begin
+  Result := 'TCity (' +
+   'Name: String(30))';
+end;
+
+...
+
+initialization
+  TClient.RegisterClass;
+  TCity.RegisterClass;
+
+This example model doesn't provide attribute accessors, ie properties with
+native types of the compiler. When implemented, however, attribute accessors
+provide easier access to the attribute value. See the file
+'BusinessClasses.txt' for further details about creating a business class and
+tips about creating attribute accessors.
+
+The IsPersistent option, declared after the class name, informs the Press OPF
+that this class and its descendants should be persisted, ie the database needs
+to provide tables and records to save its data. This option can be omitted when
+using two synchronized business models, eg using an InstantObjects broker.
+
+
+Default values and edit mask
+----------------------------
+
+The following example creates a boolean attribute with customized true and
+false display strings, and a datetime attribute that is populated with the
+current date and time whenever the class is instantiated:
+
+TInvoice = class(TPressObject)
+  _Registered: TPressDateTime;
+  _Delivered: TPressBoolean;
+protected
+  class function InternalMetadataStr: string; override;
+end;
+
+...
+
+class function TInvoice.InternalMetadataStr: string;
+begin
+  Result := 'TInvoice (' +
+   'Registered: DateTime DefaultValue="now";' +
+   'Delivered: Boolean EditMask="yes;no")';
+end;
+
+
+Calculated attributes
+---------------------
+
+A calculated attribute derives its value from the values of other attributes.
+Its value changes, therefore, whenever the values of the other attributes
+change. See the following example.
+
+TInvoice = class(TPressObject)
+  _Items: TPressParts;
+  _SumOfItems: TPressCurrency;
+private
+  // SumOfItems getter and setter
+protected
+  procedure InternalCalcAttribute(AAttribute: TPressAttribute); override;
+  class function InternalMetadataStr: string; override;
+published
+  property SumOfItems: Currency read GetSumOfItems write SetSumOfItems;
+end;
+
+...
+
+procedure TInvoice.InternalCalcAttribute(AAttribute: TPressAttribute);
+var
+  VSum: Currency;
+  I: Integer;
+begin
+  if AAttribute = _SumOfItems then
+  begin
+    VSum := 0;
+    for I := 0 to Pred(Items.Count) do
+      VSum := VSum + (Items[I] as TInvoiceItem).TotalItem;
+    SumOfItems := VSum;
+  end;
+end;
+
+class function TInvoice.InternalMetadataStr: string;
+begin
+  Result := 'TInvoice (' +
+   'Items: Parts(TInvoiceItem);' +
+   'SumOfItems: Currency Calc(Items))';
+end;
+
+The Calc metadata statement declares that SumOfItems is calculated using the
+Items attribute. The actual calculation is defined in the InternalCalcAttribute
+method that is called to update the field value whenever necessary.
+
+The following example updates a calc attribute based on the values of two other
+attributes:
+
+TInvoiceItem = class(TPressObject)
+  _Price: TPressCurrency;
+  _Discount: TPressCurrency;
+  _FinalPrice: TPressCurrency;
+private
+  // getters and setters
+protected
+  procedure InternalCalcAttribute(AAttribute: TPressAttribute); override;
+  class function InternalMetadataStr: string; override;
+published
+  // attribute accessors
+end;
+
+...
+
+procedure TInvoiceItem.InternalCalcAttribute(AAttribute: TPressAttribute);
+begin
+  if AAttribute = _FinalPrice then
+    FinalPrice := Price * (100 - Discount) / 100;
+end;
+
+class function TInvoiceItem.InternalMetadataStr: string;
+begin
+  Result := 'TInvoiceItem (' +
+   'Price: Currency;' +
+   'Discount: Currency;' +
+   'FinalPrice: Currency Calc(Price, Discount))';
+end;
+
+
+Aggregations, compositions, collections
+---------------------------------------
+
+A relationship is defined in the class metadata by enclosing the target class
+name in parentheses after the name of the relationship type. PressObjects uses
+'Part' and 'Parts' to specify compositions (the target object is owned),
+'Reference' and 'References' to specify aggregations (the target object isn't
+owned). See the following example.
+
+TInvoice = class(TPressObject)
+  _Client: TPressReference;
+  _Items: TPressParts;
+
+TInvoiceItem = class(TPressObject)
+  _Product: TPressReference;
+  _Colors: TPressReferences;
+
+TClient = class(TPressObject)
+  _Name: TPressString;
+  _Address: TPressPart;
+
+TAddress = class(TPressObject)
+  _Street: TPressString;
+  _City: TPressReference;
+
+TCity = class(TPressObject)
+  _Name: TPressString;
+
+and the metadata strings:
+
+TInvoice (
+ Client: Reference(TClient);
+ Items: Parts(TInvoiceItem))
+
+TInvoiceItem (
+ Product: Reference(TProduct);
+ Colors: References(TColors))
+
+TClient (
+ Name: String(40);
+ Address: Part(TAddress))
+
+TAddress (
+ Street: String(40);
+ City: Reference(TCity))
+
+TCity (
+ Name: String(40))
+
+It is also possible to create customized containers for collection
+attributes. Here is an example of how to create a new parts attribute type.
+
+First declare a new descendant from the appropriate attribute type:
+
+TInvoiceItemParts = class(TPressParts)
+public
+  function Add: TInvoiceItem;
+  ...
+  class function ValidObjectClass: TPressObjectClass; override;
+end;
+
+...then implement at least this mandatory method:
+
+class function ValidObjectClass: TPressObjectClass;
+begin
+  Result := TInvoiceItem;
+end;
+
+...register this new attribute type:
+
+initialization
+  TInvoiceItemParts.RegisterAttribute;
+
+...and finally use this attribute type in the Invoice metadata:
+
+TInvoice (
+ Client: Reference(TClient);
+ Items: TInvoiceItemParts)
+
+
+Enumerations
+------------
+
+Enumerations are supported by the framework, provided that it is registered.
+See the following example.
+
+TPhoneType = (ptPhone, ptFax, ptMobile);
+
+TPhoneItem = class(TPressObject)
+  _Number: TPressString;
+  _PhoneType: TPressEnum;
+
+Metadata:
+
+TPhoneItem (
+ Number: String(20);
+ PhoneType: Enum(TPhoneType))
+
+Enumeration registration:
+
+initialization
+  PressModel.RegisterEnumMetadata(TypeInfo(TPhoneType), 'TPhoneType');
+
+...an alternative example of enumeration registration, changing the string
+representations of the type items, is as follows:
+
+initialization
+  PressModel.RegisterEnumMetadata(TypeInfo(TPhoneType), 'TPhoneType', [
+   'Home Phone', 'Work Fax', 'Mobile Phone']);
+
+
+Query metadata
+--------------
+
+The following query searches for clients whose names start with the
+information in the Name attribute:
+
+TClientQuery = class(TPressQuery)
+  _Name: TPressString;
+
+Metadata:
+
+TClientQuery(TClient) (
+ Name: String MatchType=mtStarting)
+
+The parameter (TClient) indicates the class type of the objects to be
+retrieved. The MatchType property sets the type of match that will be
+performed against the attribute's values during the query.
+
+The following example searches invoices whose date attribute is
+between two dates:
+
+TInvoiceQuery = class(TPressQuery)
+  _MinDate: TPressDate;
+  _MaxDate: TPressDate;
+
+Metadata:
+
+TInvoiceQuery(TInvoice) (
+ MinDate: Date DataName=Date MatchType=mtGreaterThanOrEqual;
+ MaxDate: Date DataName=Date MatchType=mtLesserThanOrEqual)
+
+The DataName property indicates the name of the persistent attribute. Use
+this syntax when two or more attributes reference the same persistent
+attribute.
+
+These are the MatchType options:
+
+Note: Case sensitivity and other character set issues should be
+assigned to the database, the OPF will just create statements like
+"<Field> = 'Value'", "<Field> like 'Value%'", based on the information
+provided by the Query.
+
+mtEqual:
+  the attribute's value must be equal to the persisted value.
+
+mtStarting:
+  for string attributes, the persisted value must start with the
+  attribute value.
+
+mtFinishing:
+  for string attributes, the persisted value must end with the
+  attribute value.
+
+mtContains:
+  for string attributes, the persisted value contains the attribute value
+  somewhere within its string value.
+
+mtGreaterThan:
+
+mtGreaterThanOrEqual:
+
+mtLesserThan:
+
+mtLesserThanOrEqual:
