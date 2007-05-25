@@ -38,8 +38,11 @@ type
     property Connector: TPressSQLdbConnector read GetConnector;
   end;
 
+  { TPressSQLdbConnector }
+
   TPressSQLdbConnector = class(TPressOPFConnector)
   private
+    FConnectionDefClass: TConnectionDefClass;
     FDatabase: TSQLConnection;
     FTransaction: TSQLTransaction;
     function GetDatabase: TSQLConnection;
@@ -53,7 +56,8 @@ type
   public
     constructor Create; override;
     destructor Destroy; override;
-    procedure AssignConnection(AConnectionClass: TSQLConnectionClass);
+    procedure AssignConnectionDef(AConnectionDefClass: TConnectionDefClass);
+    property ConnectionDefClass: TConnectionDefClass read FConnectionDefClass;
     property Database: TSQLConnection read GetDatabase;
     property Transaction: TSQLTransaction read FTransaction;
   end;
@@ -81,6 +85,7 @@ type
 implementation
 
 uses
+  SysUtils,
   db,
   PressConsts,
   PressOPFClasses,
@@ -105,10 +110,12 @@ end;
 
 { TPressSQLdbConnector }
 
-procedure TPressSQLdbConnector.AssignConnection(AConnectionClass: TSQLConnectionClass);
+procedure TPressSQLdbConnector.AssignConnectionDef(
+  AConnectionDefClass: TConnectionDefClass);
 begin
+  FConnectionDefClass := AConnectionDefClass;
   FDatabase.Free;
-  FDatabase := AConnectionClass.Create(nil);
+  FDatabase := FConnectionDefClass.ConnectionClass.Create(nil);
   FTransaction.Database := FDatabase;
 end;
 
@@ -179,11 +186,10 @@ function TPressSQLdbDataset.GetQuery: TSQLQuery;
 begin
   if not Assigned(FQuery) then
   begin
+    { TODO : Optimize }
     FQuery := TSQLQuery.Create(nil);
     FQuery.Database := Connector.Database;
     FQuery.Transaction := Connector.Transaction;
-//    FQuery.FetchBlobs := True;
-//    FQuery.IsUniDirectional := True;
     FQuery.ReadOnly := True;
   end;
   Result := FQuery;
@@ -199,7 +205,8 @@ begin
   end else
   begin
     Query.ExecSQL;
-    Result := 0; //Query.RowsAffected;
+    { TODO : Implement }
+    Result := 0;
   end;
 end;
 
@@ -253,8 +260,19 @@ end;
 { TPressSQLdbObjectMapper }
 
 function TPressSQLdbObjectMapper.InternalDDLBuilderClass: TPressOPFDDLBuilderClass;
+var
+  VConnectionDefClass: TConnectionDefClass;
+  VConnectionTypeName: string;
 begin
-  Result := TPressIBFbDDLBuilder;
+  VConnectionDefClass := (Connector as TPressSQLdbConnector).ConnectionDefClass;
+  if not Assigned(VConnectionDefClass) then
+    raise EPressOPFError.Create(SUnassignedDatabase);
+  VConnectionTypeName := VConnectionDefClass.TypeName;
+  if SameText(VConnectionTypeName, 'firebird') then
+    Result := TPressIBFbDDLBuilder
+  else
+    raise EPressOPFError.CreateFmt(
+     SUnsupportedConnector, [VConnectionTypeName]);
 end;
 
 initialization

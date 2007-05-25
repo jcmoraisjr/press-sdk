@@ -98,6 +98,7 @@ resourcestring
   SUnsupportedAttribute = 'O atributo %s(''%s'') não é suportado';
   SUnsupportedAttributeType = 'O tipo de atributo %s não é suportado';
   SUnsupportedComponent = 'O componente %s não é suportado';
+  SUnsupportedConnector = 'O conector ''%s'' não é suportado';
   SUnsupportedControl = 'O controle %s(''%s'') não é suportado';
   SUnsupportedDisplayNames = 'DisplayNames não é suportado para o atributo %s(''%s.%s'')';
   SUnsupportedFeature = 'Feature %s não é suportada';
