@@ -135,6 +135,7 @@ type
   protected
     function GetSupportTransaction: Boolean; virtual;
     procedure InternalCommit; virtual;
+    procedure InternalConnect; virtual;
     function InternalDatasetClass: TPressOPFDatasetClass; virtual;
     procedure InternalRollback; virtual;
     procedure InternalStartTransaction; virtual;
@@ -437,9 +438,14 @@ begin
   raise UnsupportedFeatureError('Commit transaction');
 end;
 
+procedure TPressOPFConnector.InternalConnect;
+begin
+  raise UnsupportedFeatureError('Connect database');
+end;
+
 function TPressOPFConnector.InternalDatasetClass: TPressOPFDatasetClass;
 begin
-  raise UnsupportedFeatureError('Dataset Class');
+  raise UnsupportedFeatureError('Dataset class');
 end;
 
 procedure TPressOPFConnector.InternalRollback;
@@ -462,6 +468,7 @@ end;
 
 procedure TPressOPFConnector.StartTransaction;
 begin
+  InternalConnect;
   {$IFDEF PressLogDAOPersistence}
   PressLogMsg(Self, 'OPF: Start transaction');
   {$ENDIF}

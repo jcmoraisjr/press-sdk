@@ -46,6 +46,7 @@ type
   protected
     function GetSupportTransaction: Boolean; override;
     procedure InternalCommit; override;
+    procedure InternalConnect; override;
     function InternalDatasetClass: TPressOPFDatasetClass; override;
     procedure InternalRollback; override;
     procedure InternalStartTransaction; override;
@@ -125,6 +126,11 @@ end;
 procedure TPressUIBConnector.InternalCommit;
 begin
   Transaction.Commit;
+end;
+
+procedure TPressUIBConnector.InternalConnect;
+begin
+  Database.Connected := True;
 end;
 
 function TPressUIBConnector.InternalDatasetClass: TPressOPFDatasetClass;
