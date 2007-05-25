@@ -18,10 +18,20 @@ implementation
 interface
 
 uses
-  PressUIBBroker;
+{$IFDEF FPC}
+  PressSQLdbBroker;
+{$ELSE}
+  PressIBXBroker;
+{$ENDIF}
 
 type
-  TBroker = class(TPressUIBBroker)
+  TBroker = class(
+{$IFDEF FPC}
+  TPressSQLdbBroker
+{$ELSE}
+  TPressIBXBroker
+{$ENDIF}
+  )
   protected
     procedure InitService; override;
     procedure InternalShowConnectionManager; override;
@@ -32,20 +42,30 @@ implementation
 uses
   SysUtils,
   Clipbrd,
+{$IFDEF FPC}
+  ibconnection,
+{$ENDIF}
   PressDialogs,
-  PressOPF,
-  jvuiblib;
+  PressOPF;
 
 procedure TBroker.InitService;
 begin
+{$IFDEF FPC}
+  AssignConnection(TIBConnection);
   with Connector.Database do
   begin
-    LibraryName :=  // 'fbclient';
-    DatabaseName := // 'servername:/path/to/database.fb';
-    CharacterSet := // csISO8859_1;
-    UserName :=     // 'sysdba';
-    PassWord :=     // 'masterkey';
+    DatabaseName := // 'servername:/path/to/database';
+    UserName     := // 'sysdba';
+    Password     := // 'masterkey';
   end;
+{$ELSE}
+  with Connector.Database do
+  begin
+    DatabaseName               := // 'servername:c:\path\to\database';
+    Params.Values['user_name'] := // 'sysdba';
+    Params.Values['password']  := // 'masterkey';
+  end;
+{$ENDIF}
 end;
 
 procedure TBroker.InternalShowConnectionManager;
