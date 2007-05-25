@@ -4,10 +4,16 @@ unit Brokers;
 
 {$IFDEF UseInstantObjects}
 
+(*******************************
+   INSTANTOBJECTS DECLARATIONS
+ *******************************)
+
 interface
 
 uses
-  InstantIBX, // currently navigational brokers (like BDE) aren't supported
+  // NOTE: navigational brokers (like BDE) aren't supported
+  InstantIBX,
+  // insert other InstantObjects' brokers here
   PressInstantObjectsBroker;
 
 implementation
@@ -15,20 +21,28 @@ implementation
 {$ENDIF}
 {$IFDEF UsePressOPF}
 
+(****************************
+   PRESSOJECTS DECLARATIONS
+ ****************************)
+
 interface
 
 uses
 {$IFDEF FPC}
+  // (step 1 of 3) select a broker for the Free Pascal Compiler
   PressSQLdbBroker;
 {$ELSE}
+  // (step 1 of 3) select a broker for Delphi
   PressIBXBroker;
 {$ENDIF}
 
 type
   TBroker = class(
 {$IFDEF FPC}
+  // (step 2 of 3) select the broker class (fpc)
   TPressSQLdbBroker
 {$ELSE}
+  // (step 2 of 3) select the broker class (delphi)
   TPressIBXBroker
 {$ENDIF}
   )
@@ -51,6 +65,7 @@ uses
 procedure TBroker.InitService;
 begin
 {$IFDEF FPC}
+  // (step 3 of 3) configure the database connector (fpc)
   Connector.AssignConnectionDef(TIBConnectionDef);
   with Connector.Database do
   begin
@@ -59,6 +74,7 @@ begin
     Password     := // 'masterkey';
   end;
 {$ELSE}
+  // (step 3 of 3) configure the database connector (delphi)
   with Connector.Database do
   begin
     DatabaseName               := // 'servername:c:\path\to\database';
