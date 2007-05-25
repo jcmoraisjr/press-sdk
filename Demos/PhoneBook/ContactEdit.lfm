@@ -1,19 +1,23 @@
 inherited ContactEditForm: TContactEditForm
   Left = 241
-  Height = 226
+  Height = 221
   Top = 175
   Width = 450
   HorzScrollBar.Page = 449
-  VertScrollBar.Page = 225
+  VertScrollBar.Page = 220
   Caption = 'ContactEditForm'
+  ClientHeight = 221
+  ClientWidth = 450
   inherited ClientPanel: TPanel
-    Height = 185
+    Height = 180
     Width = 450
+    ClientHeight = 180
+    ClientWidth = 450
     object NameLabel: TLabel[0]
       Left = 16
-      Height = 14
+      Height = 13
       Top = 8
-      Width = 32
+      Width = 36
       Caption = 'Name:'
       Color = clNone
       FocusControl = NameEdit
@@ -21,9 +25,9 @@ inherited ContactEditForm: TContactEditForm
     end
     object StreetLabel: TLabel[1]
       Left = 16
-      Height = 14
+      Height = 13
       Top = 48
-      Width = 35
+      Width = 36
       Caption = 'Street:'
       Color = clNone
       FocusControl = StreetEdit
@@ -31,9 +35,9 @@ inherited ContactEditForm: TContactEditForm
     end
     object ZipLabel: TLabel[2]
       Left = 16
-      Height = 14
+      Height = 13
       Top = 88
-      Width = 19
+      Width = 23
       Caption = 'Zip:'
       Color = clNone
       FocusControl = ZipEdit
@@ -41,16 +45,16 @@ inherited ContactEditForm: TContactEditForm
     end
     object CityLabel: TLabel[3]
       Left = 88
-      Height = 14
+      Height = 13
       Top = 88
-      Width = 24
+      Width = 26
       Caption = 'City:'
       Color = clNone
       FocusControl = CityComboBox
       ParentColor = False
     end
     inherited LinePanel: TPanel
-      Top = 183
+      Top = 178
       Width = 450
     end
     object NameEdit: TEdit
@@ -83,7 +87,6 @@ inherited ContactEditForm: TContactEditForm
       Top = 104
       Width = 145
       AutoCompleteText = [cbactEndOfLineComplete, cbactSearchAscending]
-      ItemHeight = 13
       MaxLength = 0
       TabOrder = 4
       Text = 'CityComboBox'
@@ -94,6 +97,8 @@ inherited ContactEditForm: TContactEditForm
       Top = 16
       Width = 185
       Caption = 'Phones'
+      ClientHeight = 128
+      ClientWidth = 181
       TabOrder = 5
       object PhonesStringGrid: TStringGrid
         Left = 14
@@ -102,7 +107,6 @@ inherited ContactEditForm: TContactEditForm
         Width = 153
         ColCount = 5
         FixedColor = clBtnFace
-        GridLineWidth = 0
         Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goSmoothScroll]
         RowCount = 5
         ScrollBars = ssAutoBoth
@@ -112,8 +116,9 @@ inherited ContactEditForm: TContactEditForm
     end
   end
   inherited BottomPanel: TPanel
-    Top = 185
+    Top = 180
     Width = 450
+    ClientWidth = 450
     inherited OkButton: TButton
     end
     inherited CancelButton: TButton
