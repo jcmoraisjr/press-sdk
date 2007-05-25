@@ -110,7 +110,7 @@ begin
   FDatabase.LoginPrompt := False;
   FTransaction := TIBTransaction.Create(nil);
   FTransaction.DefaultDatabase := FDatabase;
-  FTransaction.Params.Add('read_committed');
+  FTransaction.Params.Text := 'read_committed';
 end;
 
 destructor TPressIBXConnector.Destroy;

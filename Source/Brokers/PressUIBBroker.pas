@@ -109,6 +109,7 @@ begin
   FDatabase := TJvUIBDatabase.Create(nil);
   FTransaction := TJvUIBTransaction.Create(nil);
   FTransaction.DataBase := FDatabase;
+  FTransaction.Options := [tpReadCommitted];
 end;
 
 destructor TPressUIBConnector.Destroy;
