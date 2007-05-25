@@ -62,7 +62,6 @@ type
     FQuery: TIBQuery;
     function GetQuery: TIBQuery;
     function GetConnector: TPressIBXConnector;
-    procedure PopulateParams;
   protected
     function InternalExecute: Integer; override;
     procedure InternalSQLChanged; override;
@@ -178,7 +177,7 @@ end;
 
 function TPressIBXDataset.InternalExecute: Integer;
 begin
-  PopulateParams;
+  PopulateParams(Query.Params);
   if IsSelectStatement then
   begin
     PopulateOPFDataset(Query);
@@ -194,48 +193,6 @@ procedure TPressIBXDataset.InternalSQLChanged;
 begin
   inherited;
   Query.SQL.Text := SQL;
-end;
-
-procedure TPressIBXDataset.PopulateParams;
-var
-  VParam: TPressOPFParam;
-  VDBParams: TParams;
-  I: Integer;
-begin
-  for I := 0 to Pred(Params.Count) do
-  begin
-    VParam := Params[I];
-    VDBParams := Query.Params;
-    if not VParam.IsNull then
-    begin
-      case VParam.DataType of
-        oftString:
-          VDBParams.ParamByName(VParam.Name).AsString := VParam.AsString;
-        oftInt16, oftInt32:
-          VDBParams.ParamByName(VParam.Name).AsInteger := VParam.AsInt32;
-        oftInt64:
-          { TODO : Unsupported }
-          VDBParams.ParamByName(VParam.Name).AsInteger := VParam.AsInt64;
-        oftFloat:
-          VDBParams.ParamByName(VParam.Name).AsFloat := VParam.AsFloat;
-        oftCurrency:
-          VDBParams.ParamByName(VParam.Name).AsCurrency := VParam.AsCurrency;
-        oftBoolean:
-          VDBParams.ParamByName(VParam.Name).AsBoolean := VParam.AsBoolean;
-        oftDate:
-          VDBParams.ParamByName(VParam.Name).AsDate := VParam.AsDate;
-        oftTime:
-          VDBParams.ParamByName(VParam.Name).AsTime := VParam.AsTime;
-        oftDateTime:
-          VDBParams.ParamByName(VParam.Name).AsDateTime := VParam.AsDateTime;
-        oftMemo:
-          VDBParams.ParamByName(VParam.Name).AsMemo := VParam.AsMemo;
-        oftBinary:
-          VDBParams.ParamByName(VParam.Name).AsBlob := VParam.AsBinary;
-      end;
-    end else if VParam.IsAssigned then
-      VDBParams.ParamByName(VParam.Name).Value := Null;
-  end;
 end;
 
 { TPressIBXObjectMapper }
