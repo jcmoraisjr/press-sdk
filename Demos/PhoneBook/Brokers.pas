@@ -51,7 +51,7 @@ uses
 procedure TBroker.InitService;
 begin
 {$IFDEF FPC}
-  AssignConnection(TIBConnection);
+  Connector.AssignConnection(TIBConnection);
   with Connector.Database do
   begin
     DatabaseName := // 'servername:/path/to/database';
