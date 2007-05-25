@@ -24,12 +24,16 @@ uses
   PressOPFConnector;
 
 type
+
+  { TPressOPFDBDataset }
+
   TPressOPFDBDataset = class(TPressOPFDataset)
   private
     function DBTypeToOPFType(AFieldType: TFieldType): TPressOPFFieldType;
   protected
     function IsSelectStatement: Boolean;
     procedure PopulateOPFDataset(ADataSet: TDataSet);
+    procedure PopulateParams(AParams: TParams);
   end;
 
 implementation
@@ -97,6 +101,49 @@ begin
     end;
   finally
     ADataset.Active := False;
+  end;
+end;
+
+procedure TPressOPFDBDataset.PopulateParams(AParams: TParams);
+var
+  VParam: TPressOPFParam;
+  I: Integer;
+begin
+  for I := 0 to Pred(Params.Count) do
+  begin
+    VParam := Params[I];
+    if not VParam.IsNull then
+    begin
+      case VParam.DataType of
+        oftString:
+          AParams.ParamByName(VParam.Name).AsString := VParam.AsString;
+        oftInt16, oftInt32:
+          AParams.ParamByName(VParam.Name).AsInteger := VParam.AsInt32;
+        oftInt64:
+          {$IFDEF FPC}
+          AParams.ParamByName(VParam.Name).AsLargeInt := VParam.AsInt64;
+          {$ELSE}
+          AParams.ParamByName(VParam.Name).AsInteger := VParam.AsInt64;
+          {$ENDIF}
+        oftFloat:
+          AParams.ParamByName(VParam.Name).AsFloat := VParam.AsFloat;
+        oftCurrency:
+          AParams.ParamByName(VParam.Name).AsCurrency := VParam.AsCurrency;
+        oftBoolean:
+          AParams.ParamByName(VParam.Name).AsBoolean := VParam.AsBoolean;
+        oftDate:
+          AParams.ParamByName(VParam.Name).AsDate := VParam.AsDate;
+        oftTime:
+          AParams.ParamByName(VParam.Name).AsTime := VParam.AsTime;
+        oftDateTime:
+          AParams.ParamByName(VParam.Name).AsDateTime := VParam.AsDateTime;
+        oftMemo:
+          AParams.ParamByName(VParam.Name).AsMemo := VParam.AsMemo;
+        oftBinary:
+          AParams.ParamByName(VParam.Name).AsBlob := VParam.AsBinary;
+      end;
+    end else if VParam.IsAssigned then
+      AParams.ParamByName(VParam.Name).Value := Null;
   end;
 end;
 
