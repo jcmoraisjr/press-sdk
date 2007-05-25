@@ -48,7 +48,8 @@
     <Version Value="5"/>
     <PathDelim Value="\"/>
     <SearchPaths>
-      <OtherUnitFiles Value="..\..\Source\Core\"/>
+      <IncludeFiles Value="..\..\Source\Core\"/>
+      <OtherUnitFiles Value="..\..\Source\Core\;..\..\Source\Brokers"/>
       <SrcPath Value="$(LazarusDir)\lcl\;$(LazarusDir)\lcl\interfaces\$(LCLWidgetType)\"/>
     </SearchPaths>
     <CodeGeneration>
