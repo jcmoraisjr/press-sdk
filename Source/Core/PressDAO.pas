@@ -21,6 +21,7 @@ interface
 uses
   PressApplication,
   PressClasses,
+  PressNotifier,
   PressSubject;
 
 type
@@ -48,8 +49,10 @@ type
   private
     { TODO : Implement transacted object control }
     FCache: TPressDAOCache;
+    FNotifier: TPressNotifier;
     FTransactionLevel: Integer;
     procedure DisposeObject(AObject: TPressObject);
+    procedure Notify(AEvent: TPressEvent);
   protected
     procedure DoneService; override;
     function InternalCacheClass: TPressDAOCacheClass; virtual;
@@ -97,6 +100,9 @@ uses
 
 type
   TPressObjectFriend = class(TPressObject);
+
+  TPressDAOCommit = class(TPressEvent)
+  end;
 
 { TPressDAOCache }
 
@@ -162,19 +168,25 @@ end;
 
 procedure TPressDAO.Commit;
 begin
-  Dec(FTransactionLevel);
-  if FTransactionLevel = 0 then
-    InternalCommit;
+  if FTransactionLevel < 1 then
+    Exit;
+  if FTransactionLevel > 1 then
+    Dec(FTransactionLevel)
+  else
+    TPressDAOCommit.Create(Self).QueueNotification;
 end;
 
 constructor TPressDAO.Create;
 begin
   inherited;
   FCache := InternalCacheClass.Create;
+  FNotifier := TPressNotifier.Create(Notify);
+  FNotifier.AddNotificationItem(Self, [TPressDAOCommit]);
 end;
 
 destructor TPressDAO.Destroy;
 begin
+  FNotifier.Free;
   FCache.Free;
   inherited;
 end;
@@ -183,14 +195,14 @@ procedure TPressDAO.Dispose(AClass: TPressObjectClass; const AId: string);
 var
   VObject: TPressObject;
 begin
-  { TODO : Improve }
-  VObject := Retrieve(AClass, AId);
+  StartTransaction;
   try
-    if Assigned(VObject) and VObject.IsPersistent then
-    begin
-      TPressObjectFriend(VObject).BeforeDispose;
-      StartTransaction;
-      try
+    { TODO : Improve }
+    VObject := Retrieve(AClass, AId);
+    try
+      if Assigned(VObject) and VObject.IsPersistent then
+      begin
+        TPressObjectFriend(VObject).BeforeDispose;
         VObject.DisableChanges;
         try
           {$IFDEF PressLogDAOInterface}PressLogMsg(Self, 'Disposing', [VObject]);{$ENDIF}
@@ -199,15 +211,15 @@ begin
         finally
           VObject.EnableChanges;
         end;
-        Commit;
-      except
-        Rollback;
-        raise;
+        TPressObjectFriend(VObject).AfterDispose;
       end;
-      TPressObjectFriend(VObject).AfterDispose;
+    finally
+      VObject.Free;
     end;
-  finally
-    VObject.Free;
+    Commit;
+  except
+    Rollback;
+    raise;
   end;
 end;
 
@@ -224,7 +236,14 @@ end;
 
 function TPressDAO.ExecuteStatement(const AStatement: string): Integer;
 begin
-  Result := InternalExecuteStatement(AStatement);
+  StartTransaction;
+  try
+    Result := InternalExecuteStatement(AStatement);
+    Commit;
+  except
+    Rollback;
+    raise;
+  end;
 end;
 
 function TPressDAO.GenerateOID(AClass: TPressObjectClass;
@@ -315,9 +334,25 @@ begin
   raise UnsupportedFeatureError('Store object');
 end;
 
+procedure TPressDAO.Notify(AEvent: TPressEvent);
+begin
+  if FTransactionLevel = 1 then
+  begin
+    FTransactionLevel := 0;
+    InternalCommit;
+  end;
+end;
+
 function TPressDAO.OQLQuery(const AOQLStatement: string): TPressProxyList;
 begin
-  Result := InternalOQLQuery(AOQLStatement);
+  StartTransaction;
+  try
+    Result := InternalOQLQuery(AOQLStatement);
+    Commit;
+  except
+    Rollback;
+    raise;
+  end;
 end;
 
 procedure TPressDAO.Release(AObject: TPressObject);
@@ -334,10 +369,17 @@ begin
     Result.AddRef
   else
   begin
-    {$IFDEF PressLogDAOInterface}PressLogMsg(Self,
-     Format('Retrieving %s(%s)', [AClass.ClassName, AId]));{$ENDIF}
-    { TODO : Ensure the class type of the retrieved object }
-    Result := InternalRetrieve(AClass, AId, AMetadata);
+    StartTransaction;
+    try
+      {$IFDEF PressLogDAOInterface}PressLogMsg(Self,
+       Format('Retrieving %s(%s)', [AClass.ClassName, AId]));{$ENDIF}
+      { TODO : Ensure the class type of the retrieved object }
+      Result := InternalRetrieve(AClass, AId, AMetadata);
+      Commit;
+    except
+      Rollback;
+      raise;
+    end;
     if Assigned(Result) then
       TPressObjectFriend(Result).AfterRetrieve;
   end;
@@ -345,11 +387,20 @@ end;
 
 function TPressDAO.RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
 begin
-  Result := InternalRetrieveProxyList(AQuery);
+  StartTransaction;
+  try
+    Result := InternalRetrieveProxyList(AQuery);
+    Commit;
+  except
+    Rollback;
+    raise;
+  end;
 end;
 
 procedure TPressDAO.Rollback;
 begin
+  if FTransactionLevel < 1 then
+    Exit;
   Dec(FTransactionLevel);
   if FTransactionLevel = 0 then
     InternalRollback;
@@ -363,19 +414,37 @@ end;
 function TPressDAO.SQLProxy(
   const ASQLStatement: string): TPressProxyList;
 begin
-  Result := InternalSQLProxy(ASQLStatement);
+  StartTransaction;
+  try
+    Result := InternalSQLProxy(ASQLStatement);
+    Commit;
+  except
+    Rollback;
+    raise;
+  end;
 end;
 
 function TPressDAO.SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
 begin
-  Result := InternalSQLQuery(AClass, ASQLStatement);
+  StartTransaction;
+  try
+    Result := InternalSQLQuery(AClass, ASQLStatement);
+    Commit;
+  except
+    Rollback;
+    raise;
+  end;
 end;
 
 procedure TPressDAO.StartTransaction;
 begin
-  Inc(FTransactionLevel);
-  if FTransactionLevel = 1 then
+  if FTransactionLevel > 0 then
+    Inc(FTransactionLevel)
+  else
+  begin
+    FTransactionLevel := 1;
     InternalStartTransaction;
+  end;
 end;
 
 procedure TPressDAO.Store(AObject: TPressObject);
