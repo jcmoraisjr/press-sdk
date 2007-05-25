@@ -1,6 +1,6 @@
 
 // Use the PressObjects Persistence Framework
-{.$DEFINE UsePressOPF}
+{$DEFINE UsePressOPF}
 
 // Use InstantObjects broker
 {.$DEFINE UseInstantObjects}
