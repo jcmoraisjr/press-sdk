@@ -237,6 +237,7 @@ type
     function GetMap: TPressClassMap;
     function GetObjectClass: TPressObjectClass;
     procedure SetIsPersistent(AValue: Boolean);
+    procedure SetPersistentName(const Value: string);
   protected
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; virtual;
     property Model: TPressModel read FModel;
@@ -255,7 +256,7 @@ type
     property KeyName: string read FKeyName write FKeyName;
     property KeyType: string read FKeyType write FKeyType;
     property IsPersistent: Boolean read FIsPersistent write SetIsPersistent;
-    property PersistentName: string read FPersistentName write FPersistentName;
+    property PersistentName: string read FPersistentName write SetPersistentName;
     property UpdateCountName: string read FUpdateCountName write FUpdateCountName;
   end;
 
@@ -1614,6 +1615,13 @@ procedure TPressObjectMetadata.SetIsPersistent(AValue: Boolean);
 begin
   if Assigned(Parent) and not Parent.IsPersistent then
     FIsPersistent := AValue;
+end;
+
+procedure TPressObjectMetadata.SetPersistentName(const Value: string);
+begin
+  FPersistentName := Value;
+  if FPersistentName <> '' then
+    IsPersistent := True;
 end;
 
 { TPressObjectMetadataList }
