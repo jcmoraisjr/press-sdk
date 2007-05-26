@@ -31,14 +31,14 @@ private
   FName: TPressString;
 protected
   function InternalAttributeAddress(const AAttributeName: string): 
-PPressAttribute; override;
+   PPressAttribute; override;
   class function InternalMetadataStr: string; override;
 end;
 
 ...
 
 function TClient.InternalAttributeAddress(const AAttributeName: string): 
-PPressAttribute;
+  PPressAttribute;
 begin
   if SameText(AAttributeName, 'Name') then
     Result := Addr(FName)
@@ -92,8 +92,7 @@ TPressParts and
 TPressReferences = the attribute itself or a user registered attribute
 
 Note: using the Parts and References attributes in the published section has 
-no effect. Array properties cannot be published so put them in the public 
-section.
+no effect.
 
 User defined attributes
 -----------------------
@@ -145,7 +144,7 @@ PressObjects supports Enum attributes. To create an enumeration and register
 it, use:
 
 PressModel.PressRegisterEnumMetadata(TypeInfo(<EnumName>), '<EnumNameString>', 
-['<FirstItemStr>', '<SecondItemStr>', ...]);
+ ['<FirstItemStr>', '<SecondItemStr>', ...]);
 
 <EnumName> = name of enumeration for the compiler (how it was declared)
 
@@ -153,6 +152,6 @@ PressModel.PressRegisterEnumMetadata(TypeInfo(<EnumName>), '<EnumNameString>',
 confusion, it is highly recommended that the same enumeration name is used for 
 both compiler and framework.
 
-<FirstItemStr>, <SecondItemStr> = Items of a dynamic array that holds the 
+<FirstItemStr>, <SecondItemStr> = Items of an open array that holds the 
 string representation of each enum item. Optional. If missed out, a formatted 
 version of the enum item name is used.
