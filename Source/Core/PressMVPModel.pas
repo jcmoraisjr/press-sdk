@@ -681,7 +681,7 @@ class function TPressMVPReferenceQuery.InternalMetadataStr: string;
 begin
   Result :=
    TPressMVPReferenceQuery.ClassName + ' (' + TPressObject.ClassName + ') (' +
-   'Name: String Category=acPartial)';
+   'Name: String MatchType=mtContains)';
 end;
 
 procedure TPressMVPReferenceQuery.SetName(const Value: string);
@@ -1073,7 +1073,7 @@ end;
 function TPressMVPReferenceModel.GetMetadata: TPressQueryMetadata;
 const
   CQueryMetadata =
-   '%s(%s) Any Order=%s (Name: String DataName=%2:s Category=acPartial)';
+   '%s(%s) Any Order=%s (Name: String DataName=%2:s MatchType=mtContains)';
 begin
   if not Assigned(FMetadata) then
     FMetadata := TPressMetaParser.ParseMetadata(Format(

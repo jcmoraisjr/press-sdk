@@ -192,17 +192,17 @@ type
     property ObjectMetadata: TPressObjectMetadata read FObjectMetadata;
   end;
 
-  TPressQueryAttributeCategory = (
-   acNone, acMatch,
-   acStarting, acFinishing, acPartial,
-   acGreaterThan, acGreaterEqualThan,
-   acLesserThan, acLesserEqualThan);
+  TPressQueryMatchType = (
+   mtNone, mtEqual,
+   mtStarting, mtFinishing, mtContains,
+   mtGreaterThan, mtGreaterThanOrEqual,
+   mtLesserThan, mtLesserThanOrEqual);
 
   TPressQueryMetadata = class;
 
   TPressQueryAttributeMetadata = class(TPressAttributeMetadata)
   private
-    FCategory: TPressQueryAttributeCategory;
+    FMatchType: TPressQueryMatchType;
     FDataName: string;
     FIncludeIfEmpty: Boolean;
   protected
@@ -210,7 +210,7 @@ type
   public
     constructor Create(AOwner: TPressObjectMetadata); override;
   published
-    property Category: TPressQueryAttributeCategory read FCategory write FCategory default acMatch;
+    property MatchType: TPressQueryMatchType read FMatchType write FMatchType default mtNone;
     property DataName: string read FDataName write FDataName;
     property IncludeIfEmpty: Boolean read FIncludeIfEmpty write FIncludeIfEmpty default False;
   end;
@@ -1528,7 +1528,7 @@ constructor TPressQueryAttributeMetadata.Create(
   AOwner: TPressObjectMetadata);
 begin
   inherited Create(AOwner);
-  FCategory := acNone;
+  FMatchType := mtNone;
   FIncludeIfEmpty := False;
 end;
 
@@ -3016,22 +3016,22 @@ begin
   VMetadata := TPressQueryAttributeMetadata(AAttribute.Metadata);
   if not AAttribute.IsEmpty or
    (not AAttribute.IsNull and not (AAttribute is TPressString)) then
-    case VMetadata.Category of
-      acMatch:
+    case VMetadata.MatchType of
+      mtEqual:
         Result := FormatValueItem('%s = %s');
-      acStarting:
+      mtStarting:
         Result := FormatStringItem('%s LIKE %s%%%s%1:s');
-      acFinishing:
+      mtFinishing:
         Result := FormatStringItem('%s LIKE %s%s%%%1:s');
-      acPartial:
+      mtContains:
         Result := FormatStringItem('%s LIKE %s%%%s%%%1:s');
-      acGreaterThan:
+      mtGreaterThan:
         Result := FormatValueItem('%s > %s');
-      acGreaterEqualThan:
+      mtGreaterThanOrEqual:
         Result := FormatValueItem('%s >= %s');
-      acLesserThan:
+      mtLesserThan:
         Result := FormatValueItem('%s < %s');
-      acLesserEqualThan:
+      mtLesserThanOrEqual:
         Result := FormatValueItem('%s <= %s');
     end
   else if VMetadata.IncludeIfEmpty then

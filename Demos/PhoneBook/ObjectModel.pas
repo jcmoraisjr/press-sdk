@@ -400,7 +400,7 @@ class function TMainQuery.InternalMetadataStr: string;
 begin
   Result :=
    'TMainQuery(TContact) Any Order=Name (' +
-   'Name: String(40) Category=acPartial)';
+   'Name: String(40) MatchType=mtContains)';
 end;
 
 procedure TMainQuery.SetName(const Value: string);
