@@ -19,7 +19,6 @@ unit PressOPF;
 interface
 
 uses
-  PressApplication,
   PressSubject,
   PressPersistence,
   PressOPFBroker,
@@ -66,6 +65,7 @@ implementation
 
 uses
   SysUtils,
+  PressApplication,
   PressConsts,
   PressOPFClasses,
   PressOQL;
@@ -151,24 +151,12 @@ end;
 
 function TPressOPF.InternalOQLQuery(
   const AOQLStatement: string): TPressProxyList;
-
-  procedure PopulateProxyList(
-    AList: TPressProxyList; ADataset: TPressOPFDataset);
-  var
-    VDataRow: TPressOPFDataRow;
-    I: Integer;
-  begin
-    for I := 0 to Pred(ADataset.Count) do
-    begin
-      VDataRow := ADataset[I];
-      AList.AddReference(VDataRow[1].Value, VDataRow[0].Value, Self);
-    end;
-  end;
-
 var
   VOQLParser: TPressOQLSelectStatement;
   VOQLReader: TPressOQLReader;
   VDataset: TPressOPFDataset;
+  VDataRow: TPressOPFDataRow;
+  I: Integer;
 begin
   VOQLReader := TPressOQLReader.Create(AOQLStatement);
   VOQLParser := TPressOQLSelectStatement.Create(nil, PressModel);
@@ -180,7 +168,11 @@ begin
       VDataset.Execute;
       Result := TPressProxyList.Create(True, ptShared);
       try
-        PopulateProxyList(Result, VDataset);
+        for I := 0 to Pred(VDataset.Count) do
+        begin
+          VDataRow := VDataset[I];
+          Result.AddReference(VDataRow[1].Value, VDataRow[0].Value, Self);
+        end;
       except
         FreeAndNil(Result);
         raise;
