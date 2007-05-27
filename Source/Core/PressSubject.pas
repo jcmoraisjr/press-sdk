@@ -401,7 +401,7 @@ type
   private
     FAttributes: TClassList;
     FClasses: TClassList;
-    FDefaultKeyType: string;
+    FDefaultKeyType: TPressAttributeClass;
     FEnumMetadatas: TPressEnumMetadataList;
     FMetadatas: TPressObjectMetadataList;
     FMetadatasFetched: Boolean;
@@ -410,6 +410,7 @@ type
     procedure Notify(AEvent: TPressEvent);
     {$ENDIF}
     procedure FetchAllMetadatas;
+    procedure SetDefaultKeyType(Value: TPressAttributeClass);
   protected
     function InternalFindAttribute(const AAttributeName: string): TPressAttributeClass; virtual;
     function InternalFindClass(const AClassName: string): TPressObjectClass; virtual;
@@ -437,7 +438,7 @@ type
     function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string; AEnumValues: array of string): TPressEnumMetadata; overload;
     function RegisterMetadata(const AMetadataStr: string): TPressObjectMetadata;
     procedure UnregisterMetadata(AMetadata: TPressObjectMetadata);
-    property DefaultKeyType: string read FDefaultKeyType;
+    property DefaultKeyType: TPressAttributeClass read FDefaultKeyType write SetDefaultKeyType;
   end;
 
   { Abstract Subject declarations }
@@ -1555,7 +1556,7 @@ begin
   if Assigned(FParent) then
     FIsPersistent := FParent.IsPersistent;
   FKeyName := SPressIdString;
-  FKeyType := FModel.DefaultKeyType;
+  FKeyType := FModel.DefaultKeyType.AttributeName;
   FModel.Metadatas.Add(Self);
 end;
 
@@ -2002,7 +2003,7 @@ begin
   FClasses := TClassList.Create;
   FMetadatas := TPressObjectMetadataList.Create(True);
   FEnumMetadatas := TPressEnumMetadataList.Create(True);
-  FDefaultKeyType := TPressString.AttributeName;
+  FDefaultKeyType := TPressString;
   {$IFNDEF PressRelease}
   FNotifier := TPressNotifier.Create(Notify);
   FNotifier.AddNotificationItem(PressApp, [TPressApplicationRunningEvent]);
@@ -2183,6 +2184,13 @@ function TPressModel.RegisterMetadata(
   const AMetadataStr: string): TPressObjectMetadata;
 begin
   Result := TPressMetaParser.ParseMetadata(AMetadataStr, Self);
+end;
+
+procedure TPressModel.SetDefaultKeyType(Value: TPressAttributeClass);
+begin
+  if FMetadatas.Count > 0 then
+    raise EPressError.Create('ups');
+  FDefaultKeyType := Value;
 end;
 
 procedure TPressModel.UnregisterMetadata(AMetadata: TPressObjectMetadata);
