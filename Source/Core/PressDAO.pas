@@ -49,6 +49,7 @@ type
   private
     { TODO : Implement transacted object control }
     FCache: TPressDAOCache;
+    FLazyCommit: Boolean;
     FNotifier: TPressNotifier;
     FTransactionLevel: Integer;
     procedure DisposeObject(AObject: TPressObject);
@@ -90,6 +91,7 @@ type
     function SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
     procedure StartTransaction;
     procedure Store(AObject: TPressObject);
+    property LazyCommit: Boolean read FLazyCommit write FLazyCommit;
   end;
 
 implementation
@@ -172,8 +174,13 @@ begin
     Exit;
   if FTransactionLevel > 1 then
     Dec(FTransactionLevel)
+  else if LazyCommit then
+    TPressDAOCommit.Create(Self).QueueNotification
   else
-    TPressDAOCommit.Create(Self).QueueNotification;
+  begin
+    FTransactionLevel := 0;
+    InternalCommit;
+  end;
 end;
 
 constructor TPressDAO.Create;
