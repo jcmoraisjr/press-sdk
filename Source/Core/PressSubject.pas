@@ -2189,7 +2189,7 @@ end;
 procedure TPressModel.SetDefaultKeyType(Value: TPressAttributeClass);
 begin
   if FMetadatas.Count > 0 then
-    raise EPressError.Create('ups');
+    raise EPressError.Create(SMetadataAlreadyInitialized);
   FDefaultKeyType := Value;
 end;
 
