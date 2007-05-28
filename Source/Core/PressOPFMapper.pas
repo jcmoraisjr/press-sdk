@@ -89,7 +89,7 @@ type
     procedure AddClassIdParam(ADataset: TPressOPFDataset; AMetadata: TPressObjectMetadata);
     procedure AddRemovedIdParam(ADataset: TPressOPFDataset; AItems: TPressItems);
     procedure AddIntegerParam(ADataset: TPressOPFDataset; const AParamName: string; AValue: Integer);
-    procedure AddLinkParams(ADataset: TPressOPFDataset; AItems: TPressItems; AProxy: TPressProxy);
+    procedure AddLinkParams(ADataset: TPressOPFDataset; AItems: TPressItems; AProxy: TPressProxy; const AOwnerId: string; AIndex: Integer);
     procedure AddNullParam(ADataset: TPressOPFDataset; const AParamName: string);
     procedure AddPersistentIdParam(ADataset: TPressOPFDataset; const APersistentId: string);
     procedure AddStringParam(ADataset: TPressOPFDataset; const AParamName, AValue: string);
@@ -177,7 +177,7 @@ type
   protected
     function AttributeIterator: TPressAttributeMetadataIterator;
     function BuildFieldList(APrefixType: TPressOPFPrefixType; AHelperFields: TPressOPFHelperFields): string;
-    function BuildLinkList(const APrefix: string; AItems: TPressItems): string;
+    function BuildLinkList(const APrefix: string; AMetadata: TPressAttributeMetadata): string;
     function BuildTableList: string;
     function CreateAssignParamToFieldList(AObject: TPressObject): string;
     function CreateIdParamList(ACount: Integer): string;
@@ -190,9 +190,9 @@ type
     function DeleteLinkItemsStatement(AItems: TPressItems): string; virtual;
     function DeleteLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
     function DeleteStatement: string; virtual;
-    function InsertLinkStatement(AItems: TPressItems): string; virtual;
+    function InsertLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
     function InsertStatement: string; virtual;
-    function SelectLinkStatement(AItems: TPressItems): string; virtual;
+    function SelectLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
     function SelectStatement: string; virtual;
     function UpdateStatement(AObject: TPressObject): string; virtual;
   end;
@@ -639,15 +639,17 @@ begin
 end;
 
 procedure TPressOPFAttributeMapper.AddLinkParams(
-  ADataset: TPressOPFDataset; AItems: TPressItems; AProxy: TPressProxy);
+  ADataset: TPressOPFDataset; AItems: TPressItems; AProxy: TPressProxy;
+  const AOwnerId: string; AIndex: Integer);
 begin
   if AItems.Metadata.PersLinkIdName <> '' then
     ADataset.Params.ParamByName(AItems.Metadata.PersLinkIdName).AsString :=
-     Persistence.GenerateOID(AProxy.Instance.ClassType, AItems.Metadata.PersLinkIdName);
-  AddStringParam(ADataset, AItems.Metadata.PersLinkParentName,
-   AItems.Owner.Id);
+     Persistence.GenerateOID(
+     AProxy.Instance.ClassType, AItems.Metadata.PersLinkIdName);
+  AddStringParam(ADataset, AItems.Metadata.PersLinkParentName, AOwnerId);
   AddStringParam(ADataset, AItems.Metadata.PersLinkChildName,
-   AProxy.Instance.Id);
+   AProxy.ObjectId);
+  AddIntegerParam(ADataset, AItems.Metadata.PersLinkPosName, AIndex);
 end;
 
 procedure TPressOPFAttributeMapper.AddNullParam(
@@ -746,11 +748,11 @@ procedure TPressOPFAttributeMapper.DisposeObject(AObject: TPressObject);
   var
     VDataset: TPressOPFDataset;
 
-    procedure DisposeLinks(AAttribute: TPressItems);
+    procedure DisposeLinks(AItems: TPressItems);
     begin
       if not Assigned(VDataset) then
         VDataset := Connector.CreateDataset;
-      VDataset.SQL := DMLBuilder.DeleteLinkStatement(AAttribute.Metadata);
+      VDataset.SQL := DMLBuilder.DeleteLinkStatement(AItems.Metadata);
       AddPersistentIdParam(VDataset, AObject.PersistentId);
       VDataset.Execute;
     end;
@@ -857,7 +859,7 @@ var
   begin
     if not Assigned(VDataset) then
       VDataset := Connector.CreateDataset;
-    VDataset.SQL := DMLBuilder.SelectLinkStatement(AItems);
+    VDataset.SQL := DMLBuilder.SelectLinkStatement(AItems.Metadata);
     AddPersistentIdParam(VDataset, AObject.Id);
     VDataset.Execute;
     for I := 0 to Pred(VDataset.Count) do
@@ -942,23 +944,46 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
     VDataset: TPressOPFDataset;
 
     procedure UpdateLinks(AItems: TPressItems);
+
+      function NeedRebuild: Boolean;
+      begin
+        { TODO : Implement }
+        Result := True;
+      end;
+
     var
-      I: Integer;
+      VCount, I: Integer;
     begin
       if not Assigned(VDataset) and ((AItems.RemovedProxies.Count > 0) or
        (AItems.AddedProxies.Count > 0)) then
         VDataset := Connector.CreateDataset;
-      if AItems.RemovedProxies.Count > 0 then
+      if not NeedRebuild then
       begin
-        VDataset.SQL := DMLBuilder.DeleteLinkItemsStatement(AItems);
-        AddRemovedIdParam(VDataset, AItems);
-        VDataset.Execute;
-      end;
-      for I := 0 to Pred(AItems.AddedProxies.Count) do
+        if AItems.RemovedProxies.Count > 0 then
+        begin
+          VDataset.SQL := DMLBuilder.DeleteLinkItemsStatement(AItems);
+          AddRemovedIdParam(VDataset, AItems);
+          VDataset.Execute;
+        end;
+        VDataset.SQL := DMLBuilder.InsertLinkStatement(AItems.Metadata);
+        VCount := AItems.Count - AItems.AddedProxies.Count;
+        for I := 0 to Pred(AItems.AddedProxies.Count) do
+        begin
+          AddLinkParams(
+           VDataset, AItems, AItems.AddedProxies[I], AObject.Id, VCount + I);
+          VDataset.Execute;
+        end;
+      end else
       begin
-        VDataset.SQL := DMLBuilder.InsertLinkStatement(AItems);
-        AddLinkParams(VDataset, AItems, AItems.AddedProxies[I]);
+        VDataset.SQL := DMLBuilder.DeleteLinkStatement(AItems.Metadata);
+        AddPersistentIdParam(VDataset, AObject.Id);
         VDataset.Execute;
+        VDataset.SQL := DMLBuilder.InsertLinkStatement(AItems.Metadata);
+        for I := 0 to Pred(AItems.Count) do
+        begin
+          AddLinkParams(VDataset, AItems, AItems.Proxies[I], AObject.Id, I);
+          VDataset.Execute;
+        end;
       end;
     end;
 
@@ -1021,8 +1046,11 @@ begin
     VDataset := UpdateDataset(AObject)
   else
     VDataset := InsertDataset;
-  AddAttributeParams(VDataset, AObject);
-  VDataset.Execute;
+  if VDataset.SQL <> '' then
+  begin
+    AddAttributeParams(VDataset, AObject);
+    VDataset.Execute;
+  end;
   StoreItems;
 end;
 
@@ -1170,7 +1198,7 @@ const
   CUnique: array[Boolean] of string = ('', 'unique ');
   CDescending: array[Boolean] of string = ('', 'descending ');
 begin
-  Result := Format('create %s%sindex %s on %s (%s);'#10#10, [
+  Result := Format('create %s%sindex %s'#10'  on %s (%s);'#10#10, [
    CUnique[ioUnique in AIndexMetadata.Options],
    CDescending[ioDescending in AIndexMetadata.Options],
    AIndexMetadata.Name,
@@ -1299,7 +1327,7 @@ begin
 end;
 
 function TPressOPFDMLBuilder.BuildLinkList(
-  const APrefix: string; AItems: TPressItems): string;
+  const APrefix: string; AMetadata: TPressAttributeMetadata): string;
 
   procedure AddStatement(const AStatement: string);
   begin
@@ -1309,9 +1337,10 @@ function TPressOPFDMLBuilder.BuildLinkList(
 
 begin
   Result := '';
-  AddStatement(AItems.Metadata.PersLinkIdName);
-  AddStatement(AItems.Metadata.PersLinkParentName);
-  AddStatement(AItems.Metadata.PersLinkChildName);
+  AddStatement(AMetadata.PersLinkIdName);
+  AddStatement(AMetadata.PersLinkParentName);
+  AddStatement(AMetadata.PersLinkChildName);
+  AddStatement(AMetadata.PersLinkPosName);
 end;
 
 function TPressOPFDMLBuilder.BuildTableList: string;
@@ -1367,7 +1396,8 @@ begin
         if VAttribute.IsChanged then
           AddParam(VAttribute.PersistentName);
       end;
-    AddParam(Map.Metadata.UpdateCountName);
+    if (Result <> '') or (Map.Metadata = AObject.Metadata) then
+      AddParam(Map.Metadata.UpdateCountName);
   end;
 end;
 
@@ -1432,12 +1462,12 @@ begin
 end;
 
 function TPressOPFDMLBuilder.InsertLinkStatement(
-  AItems: TPressItems): string;
+  AMetadata: TPressAttributeMetadata): string;
 begin
   Result := Format('insert into %s (%s) values (%s)', [
-   AItems.Metadata.PersLinkName,
-   BuildLinkList('', AItems),
-   BuildLinkList(':', AItems)]);
+   AMetadata.PersLinkName,
+   BuildLinkList('', AMetadata),
+   BuildLinkList(':', AMetadata)]);
 end;
 
 function TPressOPFDMLBuilder.InsertStatement: string;
@@ -1449,24 +1479,26 @@ begin
 end;
 
 function TPressOPFDMLBuilder.SelectLinkStatement(
-  AItems: TPressItems): string;
+  AMetadata: TPressAttributeMetadata): string;
 var
   VObjectMetadata: TPressObjectMetadata;
 begin
-  VObjectMetadata := AItems.Metadata.ObjectClass.ClassMetadata;
+  VObjectMetadata := AMetadata.ObjectClass.ClassMetadata;
   Result := Format(
    'select %0:s.%2:s, %1:s.%3:s from %4:s %0:s ' +
    'inner join %5:s %1:s on %0:s.%2:s = %1:s.%6:s ' +
    'where %0:s.%7:s = %8:s', [
    SPressTableAliasPrefix + '0',
    SPressTableAliasPrefix + '1',
-   AItems.Metadata.PersLinkChildName,
+   AMetadata.PersLinkChildName,
    VObjectMetadata.ClassIdName,
-   AItems.Metadata.PersLinkName,
+   AMetadata.PersLinkName,
    VObjectMetadata.PersistentName,
    VObjectMetadata.IdMetadata.PersistentName,
-   AItems.Metadata.PersLinkParentName,
+   AMetadata.PersLinkParentName,
    ':' + SPressPersistentIdParamString]);
+  if AMetadata.PersLinkPosName <> '' then
+    Result := Result + ' order by ' + AMetadata.PersLinkPosName;
 end;
 
 function TPressOPFDMLBuilder.SelectStatement: string;
@@ -1481,12 +1513,19 @@ end;
 
 function TPressOPFDMLBuilder.UpdateStatement(
   AObject: TPressObject): string;
+var
+  VAssignParamList: string;
 begin
-  Result := Format('update %s set %s where %s = %s', [
-   Map.Metadata.PersistentName,
-   CreateAssignParamToFieldList(AObject),
-   Map.Metadata.KeyName,
-   ':' + SPressPersistentIdParamString]);
+  VAssignParamList := CreateAssignParamToFieldList(AObject);
+  if VAssignParamList <> '' then
+  begin
+    Result := Format('update %s set %s where %s = %s', [
+     Map.Metadata.PersistentName,
+     VAssignParamList,
+     Map.Metadata.KeyName,
+     ':' + SPressPersistentIdParamString]);
+  end else
+    Result := '';
 end;
 
 { TPressOPFStorageMap }
@@ -1632,7 +1671,7 @@ end;
 
 class function TPressInstanceClass.InternalMetadataStr: string;
 begin
-  Result := 'TPressInstanceClass (' +
+  Result := 'TPressInstanceClass KeyType=String (' +
    'ObjectClassName: String)';
 end;
 
@@ -1867,7 +1906,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
           VField :=
            VTableMetadata.AddField(AAttributeMetadata.PersLinkIdName);
           { TODO : Implement }
-          VField.DataType := attString;
+          VField.DataType := Model.DefaultKeyType.AttributeBaseType;
           VField.Size := 32;
           VField.Options := [];
           VTableMetadata.PrimaryKey.FieldNames.Text := VField.Name;
@@ -1894,6 +1933,14 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
         AddForeignKey(VTableMetadata, VField, VObjectMetadata);
         if not VHasId then
           VTableMetadata.PrimaryKey.FieldNames.Add(VField.Name);
+
+        if AAttributeMetadata.PersLinkPosName <> '' then
+        begin
+          VField :=
+           VTableMetadata.AddField(AAttributeMetadata.PersLinkPosName);
+          VField.DataType := attInteger;
+          VField.Options := [foNotNull];
+        end;
       end;
 
     begin

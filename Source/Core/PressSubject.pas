@@ -115,10 +115,11 @@ type
     FObjectClass: TPressObjectClass;
     FOwner: TPressObjectMetadata;
     FPersistentName: string;
-    FPersLinkIdName: string;
     FPersLinkChildName: string;
+    FPersLinkIdName: string;
     FPersLinkName: string;
     FPersLinkParentName: string;
+    FPersLinkPosName: string;
     FSize: Integer;
     function GetAttributeName: string;
     function GetObjectClassName: string;
@@ -153,6 +154,7 @@ type
     property PersLinkIdName: string read FPersLinkIdName write FPersLinkIdName;
     property PersLinkName: string read FPersLinkName write FPersLinkName;
     property PersLinkParentName: string read FPersLinkParentName write FPersLinkParentName;
+    property PersLinkPosName: string read FPersLinkPosName write FPersLinkPosName;
     property Size: Integer read FSize write FSize;
   end;
 
@@ -1384,6 +1386,8 @@ begin
         FPersLinkChildName := FPersistentName + SPressIdString
       else
         FPersLinkChildName := SPressChildString + SPressIdString;
+    if FPersLinkPosName = '' then
+      FPersLinkPosName := SPressItemPosString;
   end;
 end;
 

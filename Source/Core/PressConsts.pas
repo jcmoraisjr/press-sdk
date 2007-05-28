@@ -35,6 +35,7 @@ const
   SPressLinkIdString = 'Id';
   SPressParentString = 'Parent';
   SPressChildString = 'Child';
+  SPressItemPosString = 'ItemPos';
   SPressUpdateCountString = 'UpdateCount';
   SPressPrimaryKeyNamePrefix = 'PK_';
   SPressForeignKeyNamePrefix = 'FK_';
