@@ -11,4 +11,10 @@ InstantObjects
 
 To use InstantObjects (IO), a minimum of two units must be added to the uses
 clause of any project file. One must be 'PressInstantObjectsBroker' plus
-at least one of the IO broker units (eg 'InstantBDE') for database access.
+at least one of the IO broker units (eg 'InstantIBX') for database access.
+
+IO Notes:
+1. Navigational brokers (like InstantBDE) aren't supported.
+2. If IO version 2.1 (or IO from SourceForge repository SVN revision 702 or 
+   higher) then ensure that the compiler conditional symbol 'IO2.1' is defined
+   in the PressInstantObjectsBroker.pas unit.

@@ -1,8 +1,14 @@
+(*
+  Define one of the following persistence options to allow
+  the storing and retrieval of data entered into the application.
+  If no persistence is required then undefine all persistence
+  options.
+*)
 
 // Use the PressObjects Persistence Framework
 {$DEFINE UsePressOPF}
 
-// Use InstantObjects broker
+// Use InstantObjects Persistence Framework
 {.$DEFINE UseInstantObjects}
 
 
