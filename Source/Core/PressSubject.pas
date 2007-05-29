@@ -403,6 +403,8 @@ type
   private
     FAttributes: TClassList;
     FClasses: TClassList;
+    FClassIdStorageName: string;
+    FClassIdType: TPressAttributeClass;
     FDefaultKeyType: TPressAttributeClass;
     FEnumMetadatas: TPressEnumMetadataList;
     FMetadatas: TPressObjectMetadataList;
@@ -412,6 +414,8 @@ type
     procedure Notify(AEvent: TPressEvent);
     {$ENDIF}
     procedure FetchAllMetadatas;
+    function GetClassIdType: TPressAttributeClass;
+    procedure SetClassIdType(Value: TPressAttributeClass);
     procedure SetDefaultKeyType(Value: TPressAttributeClass);
   protected
     function InternalFindAttribute(const AAttributeName: string): TPressAttributeClass; virtual;
@@ -440,6 +444,8 @@ type
     function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string; AEnumValues: array of string): TPressEnumMetadata; overload;
     function RegisterMetadata(const AMetadataStr: string): TPressObjectMetadata;
     procedure UnregisterMetadata(AMetadata: TPressObjectMetadata);
+    property ClassIdType: TPressAttributeClass read GetClassIdType write SetClassIdType;
+    property ClassIdStorageName: string read FClassIdStorageName write FClassIdStorageName;
     property DefaultKeyType: TPressAttributeClass read FDefaultKeyType write SetDefaultKeyType;
   end;
 
@@ -2108,6 +2114,16 @@ begin
   Result := nil;
 end;
 
+function TPressModel.GetClassIdType: TPressAttributeClass;
+begin
+  if ClassIdStorageName = '' then
+    Result := TPressString
+  else if not Assigned(FClassIdType) then
+    Result := DefaultKeyType
+  else
+    Result := FClassIdType;
+end;
+
 function TPressModel.InternalFindAttribute(
   const AAttributeName: string): TPressAttributeClass;
 var
@@ -2190,6 +2206,13 @@ function TPressModel.RegisterMetadata(
   const AMetadataStr: string): TPressObjectMetadata;
 begin
   Result := TPressMetaParser.ParseMetadata(AMetadataStr, Self);
+end;
+
+procedure TPressModel.SetClassIdType(Value: TPressAttributeClass);
+begin
+  if not Assigned(Value) then
+    raise EPressError.CreateFmt(SUnsupportedAttributeType, [SPressNilString]);
+  FClassIdType := Value;
 end;
 
 procedure TPressModel.SetDefaultKeyType(Value: TPressAttributeClass);

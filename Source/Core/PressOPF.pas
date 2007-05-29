@@ -168,11 +168,17 @@ begin
       VDataset.Execute;
       Result := TPressProxyList.Create(True, ptShared);
       try
-        for I := 0 to Pred(VDataset.Count) do
-        begin
-          VDataRow := VDataset[I];
-          Result.AddReference(VDataRow[1].Value, VDataRow[0].Value, Self);
-        end;
+        if VDataset.FieldDefs.Count > 1 then
+          for I := 0 to Pred(VDataset.Count) do
+          begin
+            VDataRow := VDataset[I];
+            Result.AddReference(Mapper.StorageModel.ClassNameById(
+             VDataRow[1].Value), VDataRow[0].Value, Self);
+          end
+        else
+          for I := 0 to Pred(VDataset.Count) do
+            Result.AddReference(
+             VOQLParser.ObjectClassName, VDataSet[I][0].Value, Self);
       except
         FreeAndNil(Result);
         raise;

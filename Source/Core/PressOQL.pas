@@ -225,10 +225,14 @@ end;
 
 function TPressOQLSelectStatement.BuildFieldNames: string;
 begin
-  Result := Format('%s.%s, %0:s.%2:s', [
+  Result := Format('%s.%s', [
    TableAlias,
-   FMetadata.IdMetadata.PersistentName,
-   FMetadata.ClassIdName]);
+   FMetadata.IdMetadata.PersistentName]);
+  if FMetadata.ClassIdName <> '' then
+    Result := Format('%s, %s.%s', [
+     Result,
+     TableAlias,
+     FMetadata.ClassIdName]);
 end;
 
 function TPressOQLSelectStatement.BuildTableNames: string;

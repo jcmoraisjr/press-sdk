@@ -86,7 +86,7 @@ type
     FUpdateDataset: TPressOPFDataset;
     procedure AddAttributeParam(ADataset: TPressOPFDataset; AAttribute: TPressAttribute);
     procedure AddAttributeParams(ADataset: TPressOPFDataset; AObject: TPressObject);
-    procedure AddClassIdParam(ADataset: TPressOPFDataset; AMetadata: TPressObjectMetadata);
+    procedure AddClassIdParam(ADataset: TPressOPFDataset; AObject: TPressObject);
     procedure AddRemovedIdParam(ADataset: TPressOPFDataset; AItems: TPressItems);
     procedure AddIntegerParam(ADataset: TPressOPFDataset; const AParamName: string; AValue: Integer);
     procedure AddLinkParams(ADataset: TPressOPFDataset; AItems: TPressItems; AProxy: TPressProxy; const AOwnerId: string; AIndex: Integer);
@@ -97,7 +97,6 @@ type
     function DeleteDataset: TPressOPFDataset;
     function InsertDataset: TPressOPFDataset;
     procedure RetrieveAttributes(AObject: TPressObject; ADataRow: TPressOPFDataRow);
-    function RetrieveObjectClassId(AMetadata: TPressObjectMetadata): string;
     function SelectDataset: TPressOPFDataset;
     function UpdateDataset(AObject: TPressObject): TPressOPFDataset;
   protected
@@ -320,20 +319,28 @@ type
 
   TPressOPFStorageModel = class(TObject)
   private
-    FClassIdMetadata: TPressAttributeMetadata;
+    FClassIdList: TStrings;
+    FClassIdMetadata: TPressObjectMetadata;
+    FClassNameList: TStrings;
+    FHasClassIdStorage: Boolean;
     FMapsList: TObjectList;
     FModel: TPressModel;
     FTableMetadatas: TObjectList;
-    function GetClassIdMetadata: TPressAttributeMetadata;
+    procedure BuildClassLists;
+    function GetClassIdMetadata: TPressObjectMetadata;
     function CreateTableMetadatas: TObjectList;
     function GetMaps(AClass: TPressObjectClass): TPressOPFStorageMapList;
     function GetTableMetadatas(AIndex: Integer): TPressOPFTableMetadata;
   protected
-    property ClassIdMetadata: TPressAttributeMetadata read GetClassIdMetadata;
+    property ClassIdMetadata: TPressObjectMetadata read GetClassIdMetadata;
   public
     constructor Create(AModel: TPressModel);
     destructor Destroy; override;
+    function ClassById(const AClassId: string): TPressObjectClass;
+    function ClassIdByName(const AClassName: string): string;
+    function ClassNameById(const AClassId: string): string;
     function TableMetadataCount: Integer;
+    property HasClassIdStorage: Boolean read FHasClassIdStorage;
     property Maps[AClass: TPressObjectClass]: TPressOPFStorageMapList read GetMaps;
     property Model: TPressModel read FModel;
     property TableMetadatas[AIndex: Integer]: TPressOPFTableMetadata read GetTableMetadatas;
@@ -613,7 +620,7 @@ var
   I: Integer;
 begin
   if not AObject.IsPersistent then
-    AddClassIdParam(ADataset, AObject.Metadata);
+    AddClassIdParam(ADataset, AObject);
   for I := 0 to Pred(Map.Count) do
   begin
     VAttribute := AObject.AttributeByName(Map[I].Name);
@@ -626,10 +633,11 @@ begin
 end;
 
 procedure TPressOPFAttributeMapper.AddClassIdParam(
-  ADataset: TPressOPFDataset; AMetadata: TPressObjectMetadata);
+  ADataset: TPressOPFDataset; AObject: TPressObject);
 begin
-  AddStringParam(
-   ADataset, Map.Metadata.ClassIdName, RetrieveObjectClassId(AMetadata));
+  if Map.Metadata.ClassIdName <> '' then
+    AddStringParam(ADataset, Map.Metadata.ClassIdName,
+     ObjectMapper.StorageModel.ClassIdByName(AObject.ClassName));
 end;
 
 procedure TPressOPFAttributeMapper.AddIntegerParam(
@@ -849,8 +857,8 @@ var
 
   procedure LoadItem(AItem: TPressItem);
   begin
-    AItem.AssignReference(
-     ADataRow.FieldByName(DMLBuilder.ExternalFields[AItem.Metadata].FieldAlias).AsString,
+    AItem.AssignReference(ObjectMapper.StorageModel.ClassNameById(
+     ADataRow.FieldByName(DMLBuilder.ExternalFields[AItem.Metadata].FieldAlias).AsString),
      ADataRow.FieldByName(AItem.PersistentName).AsString);
   end;
 
@@ -864,8 +872,8 @@ var
     AddPersistentIdParam(VDataset, AObject.Id);
     VDataset.Execute;
     for I := 0 to Pred(VDataset.Count) do
-      AItems.AddReference(
-       VDataset[I][1].Value, VDataset[I][0].Value, Persistence);
+      AItems.AddReference(ObjectMapper.StorageModel.ClassNameById(
+       VDataset[I][1].Value), VDataset[I][0].Value, Persistence);
   end;
 
 var
@@ -889,13 +897,6 @@ begin
   end;
 end;
 
-function TPressOPFAttributeMapper.RetrieveObjectClassId(
-  AMetadata: TPressObjectMetadata): string;
-begin
-  { TODO : Implement }
-  Result := AMetadata.PersistentName;
-end;
-
 function TPressOPFAttributeMapper.RetrieveRootMap(AClass: TPressObjectClass;
   const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
 var
@@ -907,8 +908,11 @@ begin
   VDataset.Execute;
   if VDataset.Count = 1 then
   begin
-    VClass := ObjectMapper.StorageModel.Model.ClassByName(
-     VDataset[0].FieldByName(Map.Metadata.ClassIdName).Value);
+    if Map.Metadata.ClassIdName <> '' then
+      VClass := ObjectMapper.StorageModel.ClassById(
+       VDataset[0].FieldByName(Map.Metadata.ClassIdName).Value)
+    else
+      VClass := AClass;
     if not VClass.InheritsFrom(AClass) then
       { TODO : Implement }
       ;
@@ -916,8 +920,9 @@ begin
     try
       Result.DisableChanges;
       Result.Id := AId;
-      PressAssignUpdateCount(
-       Result, VDataset[0].FieldByName(Result.Metadata.UpdateCountName).Value);
+      if Result.Metadata.UpdateCountName <> '' then
+        PressAssignUpdateCount(Result,
+         VDataset[0].FieldByName(Result.Metadata.UpdateCountName).Value);
       RetrieveAttributes(Result, VDataset[0]);
       Result.EnableChanges;
     except
@@ -1306,7 +1311,7 @@ begin
   Result := '';
   with AttributeIterator do
   begin
-    FirstItem;
+    FirstItem;  // skips ID
     if hfOID in AHelperFields then
       AddStatement(CurrentItem.PersistentName);
     if hfClassId in AHelperFields then
@@ -1675,8 +1680,12 @@ end;
 
 class function TPressInstanceClass.InternalMetadataStr: string;
 begin
-  Result := 'TPressInstanceClass KeyType=String (' +
-   'ObjectClassName: String)';
+  Result := Format(
+   'TPressInstanceClass ' +
+   'KeyType=%s PersistentName="%s" ClassIdName="" UpdateCountName="" (' +
+   'ObjectClassName: String(32))', [
+   PressModel.ClassIdType.AttributeName,
+   PressModel.ClassIdStorageName]);
 end;
 
 procedure TPressInstanceClass.SetObjectClassName(AValue: string);
@@ -1818,10 +1827,91 @@ end;
 
 { TPressOPFStorageModel }
 
+procedure TPressOPFStorageModel.BuildClassLists;
+var
+  VObjects: TPressProxyList;
+  VInstance: TPressInstanceClass;
+  I: Integer;
+begin
+  { TODO : Remove coupling with the default DAO }
+  if not Assigned(FClassIdList) or not Assigned(FClassNameList) then
+  begin
+    FreeAndNil(FClassIdList);
+    FreeAndNil(FClassNameList);
+    FClassIdList := TStringList.Create;
+    FClassNameList := TStringList.Create;
+    VObjects := PressDefaultDAO.OQLQuery(
+     'select * from ' + TPressInstanceClass.ClassName);
+    try
+      for I := 0 to Pred(VObjects.Count) do
+      begin
+        VInstance := VObjects[I].Instance as TPressInstanceClass;
+        FClassIdList.Add(VInstance.Id);
+        FClassNameList.Add(VInstance.ObjectClassName);
+      end;
+    finally
+      VObjects.Free;
+    end;
+  end;
+end;
+
+function TPressOPFStorageModel.ClassById(
+  const AClassId: string): TPressObjectClass;
+begin
+  Result := Model.ClassByName(ClassNameById(AClassId));
+end;
+
+function TPressOPFStorageModel.ClassIdByName(const AClassName: string): string;
+var
+  VInstance: TPressInstanceClass;
+  VIndex: Integer;
+begin
+  { TODO : Remove coupling with the default DAO }
+  if HasClassIdStorage and (AClassName <> '') then
+  begin
+    BuildClassLists;
+    VIndex := FClassNameList.IndexOf(AClassName);
+    if VIndex >= 0 then
+      Result := FClassIdList[VIndex]
+    else
+    begin
+      Model.ClassByName(AClassName);
+      VInstance := TPressInstanceClass.Create;
+      try
+        VInstance.ObjectClassName := AClassName;
+        PressDefaultDAO.Store(VInstance);
+        Result := VInstance.Id;
+        FClassNameList.Add(AClassName);
+        FClassIdList.Add(Result);
+      finally
+        VInstance.Free;
+      end;
+    end;
+  end else
+    Result := AClassName;
+end;
+
+function TPressOPFStorageModel.ClassNameById(const AClassId: string): string;
+var
+  VIndex: Integer;
+begin
+  if HasClassIdStorage and (AClassId <> '') then
+  begin
+    BuildClassLists;
+    VIndex := FClassIdList.IndexOf(AClassId);
+    if VIndex >= 0 then
+      Result := FClassNameList[VIndex]
+    else
+      raise EPressOPFError.CreateFmt(SClassNotFound, [AClassId]);
+  end else
+    Result := AClassId;
+end;
+
 constructor TPressOPFStorageModel.Create(AModel: TPressModel);
 begin
   inherited Create;
   FModel := AModel;
+  FHasClassIdStorage := TPressInstanceClass.ClassMetadata.IsPersistent;
 end;
 
 function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
@@ -1956,11 +2046,11 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
         AddItemsMetadata;
     end;
 
-    procedure AddFieldMetadata(const AFieldName: string;
+    function AddFieldMetadata(const AFieldName: string;
       ADataType: TPressAttributeBaseType; ASize: Integer;
       AFieldOptions: TPressOPFFieldOptions;
       AIndexOptions: TPressOPFIndexOptions;
-      ATableMetadata: TPressOPFTableMetadata);
+      ATableMetadata: TPressOPFTableMetadata): TPressOPFFieldMetadata;
     var
       VField: TPressOPFFieldMetadata;
     begin
@@ -1970,10 +2060,12 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
       VField.Options := AFieldOptions;
       if foIndexed in AFieldOptions then
         AddIndex(ATableMetadata, VField, AIndexOptions);
+      Result := VField;
     end;
 
   var
     VTableMetadata: TPressOPFTableMetadata;
+    VFieldMetadata: TPressOPFFieldMetadata;
     VMetadata: TPressObjectMetadata;
     I: Integer;
   begin
@@ -1983,9 +2075,14 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
     ATableMetadatas.Add(VTableMetadata);
     AddAttributeMetadata(VMetadata.IdMetadata, VTableMetadata);
     if VMetadata.ClassIdName <> '' then
-      AddFieldMetadata(VMetadata.ClassIdName,
-       ClassIdMetadata.AttributeClass.AttributeBaseType,
-       ClassIdMetadata.Size, [foNotNull, foIndexed], [], VTableMetadata);
+    begin
+      VFieldMetadata := AddFieldMetadata(VMetadata.ClassIdName,
+       ClassIdMetadata.IdMetadata.AttributeClass.AttributeBaseType,
+       ClassIdMetadata.IdMetadata.Size,
+       [foNotNull, foIndexed], [], VTableMetadata);
+      if HasClassIdStorage then
+        AddForeignKey(VTableMetadata, VFieldMetadata, ClassIdMetadata);
+    end;
     if VMetadata.UpdateCountName <> '' then
       AddFieldMetadata(VMetadata.UpdateCountName,
        attInteger, 0, [foNotNull], [], VTableMetadata);
@@ -2013,15 +2110,17 @@ end;
 
 destructor TPressOPFStorageModel.Destroy;
 begin
+  FClassIdList.Free;
+  FClassNameList.Free;
   FMapsList.Free;
   FTableMetadatas.Free;
   inherited;
 end;
 
-function TPressOPFStorageModel.GetClassIdMetadata: TPressAttributeMetadata;
+function TPressOPFStorageModel.GetClassIdMetadata: TPressObjectMetadata;
 begin
   if not Assigned(FClassIdMetadata) then
-    FClassIdMetadata := TPressInstanceClass.ClassMetadata.IdMetadata;
+    FClassIdMetadata := TPressInstanceClass.ClassMetadata;
   Result := FClassIdMetadata;
 end;
 
