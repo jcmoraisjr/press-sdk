@@ -1376,6 +1376,7 @@ begin
         FPersLinkName := Owner.PersistentName + '_' + FPersistentName
       else
         FPersLinkName := '_' + FPersistentName;
+    FPersLinkIdName := SPressIdString;
     if FPersLinkParentName = '' then
       if Assigned(Owner) then
         FPersLinkParentName := Owner.PersistentName + SPressIdString
