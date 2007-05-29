@@ -63,6 +63,7 @@ type
   private
     FAny: Boolean;
     FMetadata: TPressObjectMetadata;
+    FObjectClassName: string;
     FOrderByClause: TPressOQLOrderByClause;
     FTableReferences: TObjectList;
     FWhereClause: TPressOQLWhereClause;
@@ -80,6 +81,7 @@ type
     function TableReference(const AReferencedAlias: string; AAttributeMetadata: TPressAttributeMetadata): string;
     property AsSQL: string read GetAsSQL;
     property Metadata: TPressObjectMetadata read FMetadata;
+    property ObjectClassName: string read FObjectClassName;
     property TableAlias: string read GetTableAlias;
   end;
 
@@ -301,6 +303,7 @@ begin
   FMetadata := Model.FindMetadata(Token);
   if not Assigned(FMetadata) then
     Reader.ErrorFmt(SClassNotFound, [Token]);
+  FObjectClassName := FMetadata.ObjectClassName;
   FWhereClause := TPressOQLWhereClause(Parse(Reader, [TPressOQLWhereClause]));
   FOrderByClause :=
    TPressOQLOrderByClause(Parse(Reader, [TPressOQLOrderByClause]));
