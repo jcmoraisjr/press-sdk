@@ -2194,6 +2194,8 @@ end;
 
 procedure TPressModel.SetDefaultKeyType(Value: TPressAttributeClass);
 begin
+  if not Assigned(Value) then
+    raise EPressError.CreateFmt(SUnsupportedAttributeType, [SPressNilString]);
   if FMetadatas.Count > 0 then
     raise EPressError.Create(SMetadataAlreadyInitialized);
   FDefaultKeyType := Value;
