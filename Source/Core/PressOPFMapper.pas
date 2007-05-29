@@ -1549,25 +1549,28 @@ procedure TPressOPFStorageMapList.BuildStorageMaps;
 
   procedure BuildMaps(AClass: TPressObjectClass);
   var
-    VMap: TPressOPFStorageMap;
+    VStorageMap: TPressOPFStorageMap;
     VMetadatas: TPressAttributeMetadataList;
     VObjectMetadata: TPressObjectMetadata;
     I: Integer;
   begin
+    { TODO : persistent base-classes' map are being duplicated
+      inside its sub-classes' map list; a very small overhead though }
     if AClass <> TPressObject then
     begin
       VObjectMetadata := AClass.ClassMetadata;
-      if VObjectMetadata.IsPersistent then
+      if VObjectMetadata.Parent.IsPersistent then
       begin
         BuildMaps(TPressObjectClass(AClass.ClassParent));
-        VMap := TPressOPFStorageMap.Create(VObjectMetadata);
-        Add(VMap);
-        VMap.Add(VObjectMetadata.IdMetadata);
+        VMetadatas := VObjectMetadata.AttributeMetadatas;
       end else
-        VMap := Last;
-      VMetadatas := VObjectMetadata.AttributeMetadatas;
+        VMetadatas := VObjectMetadata.Map;
+      VStorageMap := TPressOPFStorageMap.Create(VObjectMetadata);
+      Add(VStorageMap);
+      VStorageMap.Add(VObjectMetadata.IdMetadata);
       for I := 0 to Pred(VMetadatas.Count) do
-        VMap.Add(VMetadatas[I]);
+        if VMetadatas[I].IsPersistent then
+          VStorageMap.Add(VMetadatas[I]);
     end;
   end;
 
