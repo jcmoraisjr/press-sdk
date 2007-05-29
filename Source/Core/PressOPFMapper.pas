@@ -1827,7 +1827,7 @@ end;
 function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
 
   procedure AddObjectMetadata(
-    AObjectMetadata: TPressObjectMetadata; ATableMetadatas: TObjectList);
+    AStorageMap: TPressOPFStorageMap; ATableMetadatas: TObjectList);
 
     procedure AddIndex(ATableMetadata: TPressOPFTableMetadata;
       AFieldMetadata: TPressOPFFieldMetadata;
@@ -1869,7 +1869,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
         VField.DataType := AAttributeMetadata.AttributeClass.AttributeBaseType;
         VField.Size := AAttributeMetadata.Size;
         VField.Options := [];
-        if AObjectMetadata.IdMetadata = AAttributeMetadata then
+        if AStorageMap.Metadata.IdMetadata = AAttributeMetadata then
         begin
           ATableMetadata.PrimaryKey := TPressOPFIndexMetadata.Create(
            SPressPrimaryKeyNamePrefix + ATableMetadata.Name);
@@ -1974,22 +1974,23 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
 
   var
     VTableMetadata: TPressOPFTableMetadata;
+    VMetadata: TPressObjectMetadata;
     I: Integer;
   begin
+    VMetadata := AStorageMap.Metadata;
     VTableMetadata :=
-     TPressOPFTableMetadata.Create(AObjectMetadata.PersistentName);
+     TPressOPFTableMetadata.Create(VMetadata.PersistentName);
     ATableMetadatas.Add(VTableMetadata);
-    AddAttributeMetadata(AObjectMetadata.IdMetadata, VTableMetadata);
-    if AObjectMetadata.ClassIdName <> '' then
-      AddFieldMetadata(AObjectMetadata.ClassIdName,
+    AddAttributeMetadata(VMetadata.IdMetadata, VTableMetadata);
+    if VMetadata.ClassIdName <> '' then
+      AddFieldMetadata(VMetadata.ClassIdName,
        ClassIdMetadata.AttributeClass.AttributeBaseType,
        ClassIdMetadata.Size, [foNotNull, foIndexed], [], VTableMetadata);
-    if AObjectMetadata.UpdateCountName <> '' then
-      AddFieldMetadata(AObjectMetadata.UpdateCountName,
+    if VMetadata.UpdateCountName <> '' then
+      AddFieldMetadata(VMetadata.UpdateCountName,
        attInteger, 0, [foNotNull], [], VTableMetadata);
-    for I := 0 to Pred(AObjectMetadata.AttributeMetadatas.Count) do
-      AddAttributeMetadata(
-       AObjectMetadata.AttributeMetadatas[I], VTableMetadata);
+    for I := 1 to Pred(AStorageMap.Count) do  // skips ID
+      AddAttributeMetadata(AStorageMap[I], VTableMetadata);
   end;
 
 begin
@@ -2000,7 +2001,7 @@ begin
       BeforeFirstItem;
       while NextItem do
         if CurrentItem.IsPersistent then
-          AddObjectMetadata(CurrentItem, Result);
+          AddObjectMetadata(Maps[CurrentItem.ObjectClass].Last, Result);
     finally
       Free;
     end;
