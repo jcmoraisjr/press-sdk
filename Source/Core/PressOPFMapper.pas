@@ -2002,7 +2002,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
           { TODO : Implement }
           VField.DataType := Model.DefaultKeyType.AttributeBaseType;
           VField.Size := 32;
-          VField.Options := [];
+          VField.Options := [foNotNull];
           VTableMetadata.PrimaryKey.FieldNames.Text := VField.Name;
         end;
 
