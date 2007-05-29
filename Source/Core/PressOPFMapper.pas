@@ -77,12 +77,12 @@ type
       createdataset calls }
     FConnector: TPressOPFConnector;
     FDeleteDataset: TPressOPFDataset;
+    FDMLBuilder: TPressOPFDMLBuilder;
     FInsertDataset: TPressOPFDataset;
     FMap: TPressOPFStorageMap;
     FObjectMapper: TPressOPFObjectMapper;
     FPersistence: TPressPersistence;
     FSelectDataset: TPressOPFDataset;
-    FDMLBuilder: TPressOPFDMLBuilder;
     FUpdateDataset: TPressOPFDataset;
     procedure AddAttributeParam(ADataset: TPressOPFDataset; AAttribute: TPressAttribute);
     procedure AddAttributeParams(ADataset: TPressOPFDataset; AObject: TPressObject);
@@ -102,9 +102,9 @@ type
     function UpdateDataset(AObject: TPressObject): TPressOPFDataset;
   protected
     property Connector: TPressOPFConnector read FConnector;
+    property DMLBuilder: TPressOPFDMLBuilder read FDMLBuilder;
     property ObjectMapper: TPressOPFObjectMapper read FObjectMapper;
     property Persistence: TPressPersistence read FPersistence;
-    property DMLBuilder: TPressOPFDMLBuilder read FDMLBuilder;
   public
     constructor Create(AObjectMapper: TPressOPFObjectMapper; AMap: TPressOPFStorageMap);
     destructor Destroy; override;
