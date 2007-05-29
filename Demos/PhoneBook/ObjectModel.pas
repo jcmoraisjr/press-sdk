@@ -14,8 +14,6 @@ type
   {$M-}
 
   TCustomObject = class(TPressObject)
-  protected
-    class function InternalMetadataStr: string; override;
   end;
 
   TContact = class(TCustomObject)
@@ -153,13 +151,6 @@ implementation
 uses
   PressPersistence;
 
-{ TCustomObject }
-
-class function TCustomObject.InternalMetadataStr: string;
-begin
-  Result := 'TCustomObject IsPersistent';
-end;
-
 { TContact }
 
 function TContact.GetAddress: TAddress;
@@ -175,7 +166,7 @@ end;
 class function TContact.InternalMetadataStr: string;
 begin
   Result :=
-   'TContact (' +
+   'TContact IsPersistent (' +
    'Name: String(40);' +
    'Address: Part(TAddress);' +
    'Phones: TPhoneParts)';
@@ -201,7 +192,7 @@ end;
 class function TPerson.InternalMetadataStr: string;
 begin
   Result :=
-   'TPerson (' +
+   'TPerson IsPersistent (' +
    'NickName: String(20))';
 end;
 
@@ -220,7 +211,7 @@ end;
 class function TCompany.InternalMetadataStr: string;
 begin
   Result :=
-   'TCompany (' +
+   'TCompany IsPersistent (' +
    'Contact: Reference(TPerson))';
 end;
 
@@ -244,7 +235,7 @@ end;
 class function TPhone.InternalMetadataStr: string;
 begin
   Result :=
-   'TPhone (' +
+   'TPhone IsPersistent (' +
    'PhoneType: Enum(TPhoneType);' +
    'Number: String(15))';
 end;
@@ -338,7 +329,7 @@ end;
 class function TAddress.InternalMetadataStr: string;
 begin
   Result :=
-   'TAddress (' +
+   'TAddress IsPersistent (' +
    'Street: String(40);' +
    'Zip: String(10);' +
    'City: Reference(TCity))';
@@ -374,7 +365,7 @@ end;
 class function TCity.InternalMetadataStr: string;
 begin
   Result :=
-   'TCity (' +
+   'TCity IsPersistent (' +
    'Name: String(30);' +
    'State: String(5))';
 end;
@@ -415,6 +406,7 @@ end;
 
 procedure RegisterClasses;
 begin
+  PressModel.ClassIdStorageName := 'ClassStore';
   TCustomObject.RegisterClass;
   TContact.RegisterClass;
   TPerson.RegisterClass;
