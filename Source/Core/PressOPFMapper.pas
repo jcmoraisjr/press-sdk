@@ -57,7 +57,6 @@ type
     function InternalDDLBuilderClass: TPressOPFDDLBuilderClass; virtual;
     function InternalDMLBuilderClass: TPressOPFDMLBuilderClass; virtual;
     property AttributeMapper[AMap: TPressOPFStorageMap]: TPressOPFAttributeMapper read GetAttributeMapper;
-    property StorageModel: TPressOPFStorageModel read FStorageModel;
   public
     constructor Create(APersistence: TPressPersistence; AStorageModel: TPressOPFStorageModel; AConnector: TPressOPFConnector);
     destructor Destroy; override;
@@ -69,6 +68,7 @@ type
     property Connector: TPressOPFConnector read FConnector;
     property DDLBuilder: TPressOPFDDLBuilder read GetDDLBuilder;
     property Persistence: TPressPersistence read FPersistence;
+    property StorageModel: TPressOPFStorageModel read FStorageModel;
   end;
 
   TPressOPFAttributeMapper = class(TObject)
