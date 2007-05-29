@@ -238,18 +238,6 @@ type
     property CurrentItem: TPressOPFStorageMap read GetCurrentItem;
   end;
 
-  TPressInstanceClass = class(TPressObject)
-  private
-    FObjectClassName: TPressString;
-    function GetObjectClassName: string;
-    procedure SetObjectClassName(AValue: string);
-  protected
-    function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
-    class function InternalMetadataStr: string; override;
-  published
-    property ObjectClassName: string read GetObjectClassName write SetObjectClassName;
-  end;
-
   TPressOPFMetadata = class(TObject)
   private
     FName: string;
@@ -361,6 +349,19 @@ uses
   TypInfo,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressConsts;
+
+type
+  TPressInstanceClass = class(TPressObject)
+  private
+    FObjectClassName: TPressString;
+    function GetObjectClassName: string;
+    procedure SetObjectClassName(AValue: string);
+  protected
+    function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
+    class function InternalMetadataStr: string; override;
+  published
+    property ObjectClassName: string read GetObjectClassName write SetObjectClassName;
+  end;
 
 var
   _PressStorageModel: TPressOPFStorageModel;
