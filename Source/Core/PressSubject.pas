@@ -2016,6 +2016,7 @@ end;
 
 function TPressModel.CreateMetadataIterator: TPressObjectMetadataIterator;
 begin
+  FetchAllMetadatas;
   Result := Metadatas.CreateIterator;
 end;
 
