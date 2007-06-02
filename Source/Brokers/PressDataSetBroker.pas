@@ -56,6 +56,8 @@ begin
       Result := oftInt16;
     ftInteger, ftWord:
       Result := oftInt32;
+    ftLargeint:
+      Result := oftInt64;
     ftBoolean:
       Result := oftBoolean;
     ftFloat:
