@@ -50,6 +50,7 @@ type
   PComponent = ^TComponent;
 
   TChars = set of Char;
+  TPressStringArray = array of string;
 
   TPressReader = class(TReader)
   end;
@@ -216,6 +217,7 @@ type
     FTokenPos: TPressTextPos;
     function GetEof: Boolean;
   protected
+    procedure InitReader; virtual;
     function InternalReadToken: string; virtual; abstract;
   public
     constructor Create(AStream: TStream; AOwnsStream: Boolean = False); overload;
@@ -519,6 +521,7 @@ end;
 constructor TPressTextReader.Create(const AString: string);
 begin
   inherited Create;
+  InitReader;
   FBufferBasePos := 1;
   FBuffer := AString;
   FSize := Length(FBuffer);
@@ -553,6 +556,10 @@ end;
 function TPressTextReader.GetEof: Boolean;
 begin
   Result := FCurrentPos.Position >= FSize + FBufferBasePos;
+end;
+
+procedure TPressTextReader.InitReader;
+begin
 end;
 
 function TPressTextReader.NextChar: Char;

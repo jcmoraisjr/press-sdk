@@ -20,11 +20,14 @@ interface
 
 uses
   Contnrs,
+  PressClasses,
   PressParser,
   PressSubject;
 
 type
   TPressOQLReader = class(TPressParserReader)
+  protected
+    function InternalCreateBigSymbolsArray: TPressStringArray; override;
   end;
 
   TPressOQLObject = class(TPressParserObject)
@@ -183,6 +186,16 @@ uses
   SysUtils,
   PressConsts,
   PressAttributes;
+
+{ TPressOQLReader }
+
+function TPressOQLReader.InternalCreateBigSymbolsArray: TPressStringArray;
+begin
+  SetLength(Result, 3);
+  Result[0] := '<=';
+  Result[1] := '>=';
+  Result[2] := '<>';
+end;
 
 { TPressOQLStatement }
 

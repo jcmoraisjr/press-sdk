@@ -24,14 +24,17 @@ uses
 type
   TPressParserReader = class(TPressTextReader)
   private
+    FBigSymbols: TPressStringArray;
     procedure CheckEof(const AErrorMsg: string);
   protected
+    procedure InitReader; override;
     procedure InternalCheckComment(var AToken: string); virtual;
     function InternalReadIdentifier: string;
     function InternalReadNumber: string;
     function InternalReadString: string;
-    function InternalReadSymbol: string; virtual;
+    function InternalReadSymbol: string;
     function InternalReadToken: string; override;
+    function InternalCreateBigSymbolsArray: TPressStringArray; virtual;
     function IsIdentifierChar(Ch: Char; First: Boolean): Boolean;
     function IsNumericChar(Ch: Char; First: Boolean): Boolean;
     function IsStringDelimiter(Ch: Char): Boolean;
@@ -113,8 +116,19 @@ begin
     ErrorExpected(AErrorMsg, '');
 end;
 
+procedure TPressParserReader.InitReader;
+begin
+  inherited;
+  FBigSymbols := InternalCreateBigSymbolsArray;
+end;
+
 procedure TPressParserReader.InternalCheckComment(var AToken: string);
 begin
+end;
+
+function TPressParserReader.InternalCreateBigSymbolsArray: TPressStringArray;
+begin
+  SetLength(Result, 0);
 end;
 
 function TPressParserReader.InternalReadIdentifier: string;
@@ -215,8 +229,30 @@ begin
 end;
 
 function TPressParserReader.InternalReadSymbol: string;
+
+  function IsSymbol(const ASymbol: string): Boolean;
+  var
+    VLen: Integer;
+    I: Integer;
+  begin
+    Result := True;
+    VLen := Length(ASymbol);
+    for I := Low(FBigSymbols) to High(FBigSymbols) do
+      if Copy(FBigSymbols[I], 1, VLen) = ASymbol then
+        Exit;
+    Result := False;
+  end;
+
+var
+  Ch: Char;
 begin
-  Result := ReadChar;
+  Result := '';
+  Ch := ReadChar;
+  repeat
+    Result := Result + Ch;
+    Ch := ReadChar;
+  until not IsSymbol(Result + Ch);
+  UnreadChar;
 end;
 
 function TPressParserReader.InternalReadToken: string;
