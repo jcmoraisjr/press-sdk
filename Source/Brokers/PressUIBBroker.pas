@@ -170,6 +170,8 @@ begin
     FQuery.Database := Connector.Database;
     FQuery.Transaction := Connector.Transaction;
     FQuery.FetchBlobs := True;
+    FQuery.OnClose := etmStayIn;
+    FQuery.OnError := etmStayIn;
     {$IFNDEF FPC}
     FQuery.UniDirectional := True;
     {$ENDIF}
