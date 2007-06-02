@@ -566,7 +566,10 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
       attCurrency:
         VParam.AsCurrency := AValue.AsCurrency;
       attEnum:
-        VParam.AsInt16 := AValue.AsInteger;
+        if not AValue.IsNull then
+          VParam.AsInt16 := AValue.AsInteger
+        else
+          VParam.AsVariant := Null;
       attBoolean:
         VParam.AsBoolean := AValue.AsBoolean;
       attDate:
