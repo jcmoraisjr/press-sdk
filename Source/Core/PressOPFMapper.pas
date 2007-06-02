@@ -598,11 +598,13 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
 
   procedure AddReferenceAttribute(AReference: TPressReference);
   begin
-    if AReference.Proxy.HasInstance then
+    if not AReference.Proxy.IsEmpty then
     begin
-      if not AReference.Value.IsPersistent then
+      if AReference.Proxy.HasInstance and
+       not AReference.Value.IsPersistent then
         Persistence.Store(AReference.Value);
-      AddStringParam(ADataset, AReference.PersistentName, AReference.Value.Id);
+      AddStringParam(
+       ADataset, AReference.PersistentName, AReference.Proxy.ObjectId);
     end else
       AddNullParam(ADataset, AReference.PersistentName);
   end;
@@ -1015,12 +1017,17 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
 
     procedure StoreReferences(AReferences: TPressReferences);
     var
+      VProxy: TPressProxy;
       VObject: TPressObject;
       I: Integer;
     begin
       for I := 0 to Pred(AReferences.Count) do
       begin
-        VObject := AReferences[I];
+        VProxy := AReferences.Proxies[I];
+        if VProxy.HasInstance then
+          VObject := VProxy.Instance
+        else
+          VObject := nil;
         if Assigned(VObject) and not VObject.IsPersistent then
           Persistence.Store(VObject);
       end;
