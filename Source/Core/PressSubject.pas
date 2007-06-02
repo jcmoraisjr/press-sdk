@@ -123,13 +123,15 @@ type
     FSize: Integer;
     function GetAttributeName: string;
     function GetObjectClassName: string;
+    function GetPersLinkChildName: string;
+    function GetPersLinkName: string;
+    function GetPersLinkParentName: string;
     procedure SetAttributeClass(Value: TPressAttributeClass);
     procedure SetAttributeName(const Value: string);
     procedure SetCalcMetadata(Value: TPressCalcMetadata);
     procedure SetEnumMetadata(Value: TPressEnumMetadata);
     procedure SetObjectClass(Value: TPressObjectClass);
     procedure SetObjectClassName(const Value: string);
-    procedure UpdatePersistentNames;
   protected
     procedure SetName(const Value: string); virtual;
     property Model: TPressModel read FModel;
@@ -150,10 +152,10 @@ type
     property EditMask: string read FEditMask write FEditMask;
     property IsPersistent: Boolean read FIsPersistent write FIsPersistent default True;
     property PersistentName: string read FPersistentName write FPersistentName;
-    property PersLinkChildName: string read FPersLinkChildName write FPersLinkChildName;
+    property PersLinkChildName: string read GetPersLinkChildName write FPersLinkChildName;
     property PersLinkIdName: string read FPersLinkIdName write FPersLinkIdName;
-    property PersLinkName: string read FPersLinkName write FPersLinkName;
-    property PersLinkParentName: string read FPersLinkParentName write FPersLinkParentName;
+    property PersLinkName: string read GetPersLinkName write FPersLinkName;
+    property PersLinkParentName: string read GetPersLinkParentName write FPersLinkParentName;
     property PersLinkPosName: string read FPersLinkPosName write FPersLinkPosName;
     property Size: Integer read FSize write FSize;
   end;
@@ -1262,6 +1264,8 @@ begin
   end else
     FModel := PressModel;
   FIsPersistent := True;
+  FPersLinkIdName := SPressIdString;
+  FPersLinkPosName := SPressItemPosString;
 end;
 
 function TPressAttributeMetadata.CreateAttribute(
@@ -1298,6 +1302,36 @@ begin
     Result := '';
 end;
 
+function TPressAttributeMetadata.GetPersLinkChildName: string;
+begin
+  if FPersLinkChildName = '' then
+    if Assigned(Owner) then
+      FPersLinkChildName := PersistentName + SPressIdString
+    else
+      FPersLinkChildName := SPressChildString + SPressIdString;
+  Result := FPersLinkChildName;
+end;
+
+function TPressAttributeMetadata.GetPersLinkName: string;
+begin
+  if FPersLinkName = '' then
+    if Assigned(Owner) then
+      FPersLinkName := Owner.PersistentName + '_' + PersistentName
+    else
+      FPersLinkName := '_' + PersistentName;
+  Result := FPersLinkName;
+end;
+
+function TPressAttributeMetadata.GetPersLinkParentName: string;
+begin
+  if FPersLinkParentName = '' then
+    if Assigned(Owner) then
+      FPersLinkParentName := Owner.PersistentName + SPressIdString
+    else
+      FPersLinkParentName := SPressParentString + SPressIdString;
+  Result := FPersLinkParentName;
+end;
+
 procedure TPressAttributeMetadata.SetAttributeClass(
   Value: TPressAttributeClass);
 begin
@@ -1315,7 +1349,6 @@ begin
     if (FEditMask = '') and (FAttributeClass = TPressCurrency) then
       FEditMask := ',0.00';
 
-    UpdatePersistentNames;
   end;
 end;
 
@@ -1344,7 +1377,8 @@ end;
 procedure TPressAttributeMetadata.SetName(const Value: string);
 begin
   FName := Value;
-  UpdatePersistentNames;
+  if FPersistentName = '' then
+    FPersistentName := FName;
 end;
 
 procedure TPressAttributeMetadata.SetObjectClass(Value: TPressObjectClass);
@@ -1365,37 +1399,6 @@ procedure TPressAttributeMetadata.SetObjectClassName(const Value: string);
 begin
   if ObjectClassName <> Value then
     ObjectClass := Model.ClassByName(Value);
-end;
-
-procedure TPressAttributeMetadata.UpdatePersistentNames;
-begin
-  if (FName = '') or not Assigned(FAttributeClass) then
-    Exit;
-  if FPersistentName = '' then
-    FPersistentName := FName;
-  if FAttributeClass.InheritsFrom(TPressItems) then
-  begin
-    if FPersistentName = '' then
-      FPersistentName := FName;
-    if FPersLinkName = '' then
-      if Assigned(Owner) then
-        FPersLinkName := Owner.PersistentName + '_' + FPersistentName
-      else
-        FPersLinkName := '_' + FPersistentName;
-    FPersLinkIdName := SPressIdString;
-    if FPersLinkParentName = '' then
-      if Assigned(Owner) then
-        FPersLinkParentName := Owner.PersistentName + SPressIdString
-      else
-        FPersLinkParentName := SPressParentString + SPressIdString;
-    if FPersLinkChildName = '' then
-      if Assigned(Owner) then
-        FPersLinkChildName := FPersistentName + SPressIdString
-      else
-        FPersLinkChildName := SPressChildString + SPressIdString;
-    if FPersLinkPosName = '' then
-      FPersLinkPosName := SPressItemPosString;
-  end;
 end;
 
 { TPressAttributeMetadataList }
