@@ -64,7 +64,7 @@ type
     function Add(AObject: TPressMVPRegisteredForm): Integer;
     function CreateIterator: TPressMVPRegisteredFormIterator;
     function IndexOf(AObject: TPressMVPRegisteredForm): Integer;
-    function IndexOfObjectClass(AObjectClass: TPressObjectClass; AFormPresenterType: TPressMVPFormPresenterType): Integer;
+    function IndexOfObjectClass(AObjectClass: TPressObjectClass; AFormPresenterType: TPressMVPFormPresenterType; AIncludeDescendants: Boolean = False): Integer;
     function IndexOfPresenterClass(APresenterClass: TPressMVPFormPresenterClass): Integer;
     function IndexOfQueryItemObject(AObjectClass: TPressObjectClass; AFormPresenterType: TPressMVPFormPresenterType): Integer;
     procedure Insert(Index: Integer; AObject: TPressMVPRegisteredForm);
@@ -169,12 +169,14 @@ end;
 
 function TPressMVPRegisteredFormList.IndexOfObjectClass(
   AObjectClass: TPressObjectClass;
-  AFormPresenterType: TPressMVPFormPresenterType): Integer;
+  AFormPresenterType: TPressMVPFormPresenterType;
+  AIncludeDescendants: Boolean): Integer;
 begin
   for Result := 0 to Pred(Count) do
     with Items[Result] do
-      if (ObjectClass = AObjectClass) and
-       (AFormPresenterType in FormPresenterTypes) then
+      if (AFormPresenterType in FormPresenterTypes) and
+       ((not AIncludeDescendants and (ObjectClass = AObjectClass)) or
+       (AIncludeDescendants and ObjectClass.InheritsFrom(AObjectClass))) then
         Exit;
   { TODO : Notify ambiguous presenter class }
   Result := -1;
