@@ -91,7 +91,10 @@ type
   TPressOQLValue = class(TPressOQLObject)
   private
     FStatement: string;
+    function ReadAttributeIdentifier(Reader: TPressParserReader): string;
+    function ReadStringLiteral(Reader: TPressParserReader): string;
   protected
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalRead(Reader: TPressParserReader); override;
   public
     property Statement: string read FStatement;
@@ -359,7 +362,39 @@ end;
 
 { TPressOQLValue }
 
+class function TPressOQLValue.InternalApply(
+  Reader: TPressParserReader): Boolean;
+var
+  Token: string;
+begin
+  Token := Reader.ReadToken;
+  Result := (Length(Token) > 0) and
+   (Token[1] in ['A'..'Z', 'a'..'z', '_', '0'..'9', '''', '"']);
+end;
+
 procedure TPressOQLValue.InternalRead(Reader: TPressParserReader);
+var
+  Token: string;
+begin
+  inherited;
+  Token := Reader.ReadNextToken;
+  if Length(Token) > 0 then
+  begin
+    case Token[1] of
+      '''', '"':
+        FStatement := ReadStringLiteral(Reader);
+      '0'..'9':
+        FStatement := Reader.ReadNumber;
+      'A'..'Z', 'a'..'z', '_':
+        FStatement := ReadAttributeIdentifier(Reader)
+      else
+        FStatement := Reader.ReadToken;
+    end;
+  end else
+    FStatement := Reader.ReadToken;
+end;
+
+function TPressOQLValue.ReadAttributeIdentifier(Reader: TPressParserReader): string;
 var
   VSelect: TPressOQLSelectStatement;
   VMetadata: TPressObjectMetadata;
@@ -368,40 +403,53 @@ var
   VIndex: Integer;
   Token: string;
 begin
-  inherited;
-  Token := Reader.ReadToken;
-  if (Length(Token) > 0) and IsValidIdent(Token[1]) then
-  begin
-    VSelect := (Owner.Owner as TPressOQLSelectStatement);
-    VMetadata := VSelect.Metadata;
-    VTableAlias := VSelect.TableAlias;
-    repeat
-      VIndex := VMetadata.Map.IndexOfName(Token);
-      if VIndex = -1 then
-        Reader.ErrorExpected(SPressAttributeNameMsg, Token);
-      VAttribute := VMetadata.Map[VIndex];
-      if VAttribute.Owner <> VMetadata then
-      begin
-        VTableAlias := VSelect.TableReference(VTableAlias, VAttribute);
-        VMetadata := VAttribute.Owner;
-      end;
-      Token := Reader.ReadToken;
-      if Token <> '.' then
-        Break;
-      if not VAttribute.AttributeClass.InheritsFrom(TPressItem) then
-        Reader.ErrorFmt(SAttributeIsNotItem, [
-         VMetadata.ObjectClassName, VAttribute.Name]);
+  Token := Reader.ReadIdentifier;
+  VSelect := (Owner.Owner as TPressOQLSelectStatement);
+  VMetadata := VSelect.Metadata;
+  VTableAlias := VSelect.TableAlias;
+  repeat
+    VIndex := VMetadata.Map.IndexOfName(Token);
+    if VIndex = -1 then
+      Reader.ErrorExpected(SPressAttributeNameMsg, Token);
+    VAttribute := VMetadata.Map[VIndex];
+    if VAttribute.Owner <> VMetadata then
+    begin
       VTableAlias := VSelect.TableReference(VTableAlias, VAttribute);
-      VMetadata := VAttribute.ObjectClass.ClassMetadata;
-      Token := Reader.ReadToken;
-    until False;
-    Reader.UnreadToken;
-    if VAttribute.AttributeClass.InheritsFrom(TPressItems) then
-      Reader.ErrorFmt(SUnsupportedAttribute, [
+      VMetadata := VAttribute.Owner;
+    end;
+    Token := Reader.ReadToken;
+    if Token <> '.' then
+      Break;
+    if not VAttribute.AttributeClass.InheritsFrom(TPressItem) then
+      Reader.ErrorFmt(SAttributeIsNotItem, [
        VMetadata.ObjectClassName, VAttribute.Name]);
-    FStatement := VTableAlias + '.' + VAttribute.PersistentName;
-  end else
-    FStatement := Token;
+    VTableAlias := VSelect.TableReference(VTableAlias, VAttribute);
+    VMetadata := VAttribute.ObjectClass.ClassMetadata;
+    Token := Reader.ReadIdentifier;
+  until False;
+  Reader.UnreadToken;
+  if VAttribute.AttributeClass.InheritsFrom(TPressItems) then
+    Reader.ErrorFmt(SUnsupportedAttribute, [
+     VMetadata.ObjectClassName, VAttribute.Name]);
+  Result := VTableAlias + '.' + VAttribute.PersistentName;
+end;
+
+function TPressOQLValue.ReadStringLiteral(Reader: TPressParserReader): string;
+var
+  Token: string;
+  PToken: PChar;
+  VQuote: Char;
+begin
+  Token := Reader.ReadString;
+  PToken := PChar(Token);
+
+  { TODO : Implement }
+  VQuote := '''';
+
+  if Token[1] = VQuote then
+    Result := Token
+  else
+    Result := AnsiQuotedStr(AnsiExtractQuotedStr(PToken, Token[1]), VQuote);
 end;
 
 { TPressOQLWhereClause }
@@ -565,8 +613,7 @@ end;
 class function TPressOQLOrderByClause.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := SameText(Reader.ReadToken, 'order') and
-   SameText(Reader.ReadToken, 'by');
+  Result := SameText(Reader.ReadToken, 'order');
 end;
 
 procedure TPressOQLOrderByClause.InternalRead(Reader: TPressParserReader);
