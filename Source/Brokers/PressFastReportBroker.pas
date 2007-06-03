@@ -116,7 +116,10 @@ end;
 
 procedure TPressFRReport.InternalSaveToStream(AStream: TStream);
 begin
+  FReport.Values.Clear;
+  FReport.Variables.Clear;
   FReport.SaveToStream(AStream);
+  UpdateFields;
 end;
 
 procedure TPressFRReport.ReportGetValue(

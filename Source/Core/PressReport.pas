@@ -35,11 +35,14 @@ type
    const ADataSetName, AFieldName: string; var AValue: Variant;
    AForceData: Boolean) of object;
 
+  TPressReportNeedUpdateFields = procedure of object;
+
   TPressReportDataSet = class;
 
   TPressReport = class(TPressService)
   private
     FOnNeedValue: TPressReportNeedValueEvent;
+    FOnNeedUpdateFields: TPressReportNeedUpdateFields;
   protected
     procedure InternalCreateFields(ADataSet: TPressReportDataSet; AFields: TStrings); virtual;
     function InternalCreateReportDataSet(const AName: string): TPressReportDataSet; virtual; abstract;
@@ -55,7 +58,9 @@ type
     procedure Execute;
     procedure LoadFromStream(AStream: TStream);
     procedure SaveToStream(AStream: TStream);
+    procedure UpdateFields;
     property OnNeedValue: TPressReportNeedValueEvent read FOnNeedValue write FOnNeedValue;
+    property OnNeedUpdateFields: TPressReportNeedUpdateFields read FOnNeedUpdateFields write FOnNeedUpdateFields;
   end;
 
   TPressReportDataSource = class;
@@ -248,6 +253,12 @@ end;
 procedure TPressReport.SaveToStream(AStream: TStream);
 begin
   InternalSaveToStream(AStream);
+end;
+
+procedure TPressReport.UpdateFields;
+begin
+  if Assigned(FOnNeedUpdateFields) then
+    FOnNeedUpdateFields;
 end;
 
 { TPressReportDataSet }
@@ -485,6 +496,7 @@ begin
     FReport :=
      PressApp.CreateDefaultService(CPressReportService) as TPressReport;
     FReport.OnNeedValue := ReportNeedValue;
+    FReport.OnNeedUpdateFields := LoadFields;
     LoadReport;
     LoadMetadatas;
     LoadFields;
@@ -534,7 +546,7 @@ end;
 procedure TPressReportItem.LoadFromStream(AStream: TStream);
 begin
   Report.LoadFromStream(AStream);
-  SetReportData(AStream);
+  SaveReport;
 end;
 
 procedure TPressReportItem.LoadMetadatas;
