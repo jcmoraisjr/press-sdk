@@ -965,11 +965,11 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
     var
       VCount, I: Integer;
     begin
-      if not Assigned(VDataset) and ((AItems.RemovedProxies.Count > 0) or
-       (AItems.AddedProxies.Count > 0)) then
-        VDataset := Connector.CreateDataset;
       if not NeedRebuild then
       begin
+        if not Assigned(VDataset) and ((AItems.RemovedProxies.Count > 0) or
+         (AItems.AddedProxies.Count > 0)) then
+          VDataset := Connector.CreateDataset;
         if AItems.RemovedProxies.Count > 0 then
         begin
           VDataset.SQL := DMLBuilder.DeleteLinkItemsStatement(AItems);
@@ -986,6 +986,8 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
         end;
       end else
       begin
+        if not Assigned(VDataset) then
+          VDataset := Connector.CreateDataset;
         VDataset.SQL := DMLBuilder.DeleteLinkStatement(AItems.Metadata);
         AddPersistentIdParam(VDataset, AObject.Id);
         VDataset.Execute;
