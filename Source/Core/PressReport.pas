@@ -82,16 +82,16 @@ type
   protected
     function InternalCheckEof: Boolean; virtual; abstract;
     function InternalCurrentItem: TPressObject; virtual; abstract;
-    property DataSet: TPressReportDataSet read FDataSet;
-    property Parent: TPressReportDataSource read FParent;
   public
     constructor Create(ADataSet: TPressReportDataSet; AParent: TPressReportDataSource);
     destructor Destroy; override;
     function CheckEof: Boolean;
     procedure CreateField(const AFieldName: string);
     function CurrentItem: TPressObject;
+    property DataSet: TPressReportDataSet read FDataSet;
     property Fields: TStrings read FFields;
     property Name: string read GetName;
+    property Parent: TPressReportDataSource read FParent;
   end;
 
   TPressReportDataSourceIterator = class;
