@@ -129,6 +129,7 @@ resourcestring
   SPressSelectCurrentCommand = 'Selecionar/remover atual';
   SPressSelectInvertCommand = 'Inverter seleção';
   SPressSortByCommand = 'Ordernar por ''%s''';
+  SPressManageReportCommand = 'Gerenciar Relatório';
 
   SPressAttributeNameMsg = 'attribute name';
   SPressBooleanValueMsg = 'Valor lógico';

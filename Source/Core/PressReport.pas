@@ -1,6 +1,6 @@
 (*
   PressObjects, Report Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -144,27 +144,20 @@ type
     constructor Create(ADataSet: TPressReportDataSet; const AItemsName: string; AParent: TPressReportDataSource);
   end;
 
-  TPressReportGroup = class;
-
-  TPressReportData = class(TPressService)
-  protected
-    function InternalFindReportGroup(ADataAccess: IPressDAO; const AObjectClassName: string): TPressReportGroup; virtual; abstract;
-    class function InternalServiceType: TPressServiceType; override;
-  public
-    function FindReportGroup(ADataAccess: IPressDAO; const AObjectClassName: string): TPressReportGroup;
-  end;
+  TPressReportGroupClass = class of TPressReportGroup;
 
   TPressReportGroup = class(TPressObject)
   private
     FBusinessObj: TObject;
   protected
-    function InternalCreateReportItemIterator: TPressProxyIterator; virtual; abstract;
+    function InternalCreateReportItemIterator: TPressItemsIterator; virtual; abstract;
   public
-    function CreateReportItemIterator: TPressProxyIterator;
+    function CreateReportItemIterator: TPressItemsIterator;
+    class function ObjectClassAttributeName: string; virtual; abstract;
     property BusinessObj: TObject read FBusinessObj write FBusinessObj;
   end;
 
-  TPressReportGroupItem = class(TPressObject)
+  TPressReportItem = class(TPressObject)
   private
     FDataSources: TPressReportDataSourceList;
     FReport: TPressReport;
@@ -196,7 +189,13 @@ type
     property ReportVisible: Boolean read GetReportVisible;
   end;
 
-function PressReportData: TPressReportData;
+  TPressReportData = class(TPressService)
+  protected
+    function InternalReportGroupClass: TPressReportGroupClass; virtual; abstract;
+    class function InternalServiceType: TPressServiceType; override;
+  public
+    function FindReportGroup(ADataAccess: IPressDAO; const AObjectClassName: string): TPressReportGroup;
+  end;
 
 implementation
 
@@ -204,13 +203,6 @@ uses
   SysUtils,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressConsts;
-
-{ Global routines }
-
-function PressReportData: TPressReportData;
-begin
-  Result := PressApp.DefaultService(CPressReportDataService) as TPressReportData;
-end;
 
 { TPressReport }
 
@@ -444,47 +436,34 @@ begin
   Result := Items[DataSet.CurrentIndex];
 end;
 
-{ TPressReportData }
-
-function TPressReportData.FindReportGroup(
-  ADataAccess: IPressDAO; const AObjectClassName: string): TPressReportGroup;
-begin
-  Result := InternalFindReportGroup(ADataAccess, AObjectClassName);
-end;
-
-class function TPressReportData.InternalServiceType: TPressServiceType;
-begin
-  Result := CPressReportDataService;
-end;
-
 { TPressReportGroup }
 
-function TPressReportGroup.CreateReportItemIterator: TPressProxyIterator;
+function TPressReportGroup.CreateReportItemIterator: TPressItemsIterator;
 begin
   Result := InternalCreateReportItemIterator;
 end;
 
-{ TPressReportGroupItem }
+{ TPressReportItem }
 
-procedure TPressReportGroupItem.Design;
+procedure TPressReportItem.Design;
 begin
   Report.Design;
   SaveReport;
 end;
 
-procedure TPressReportGroupItem.Execute;
+procedure TPressReportItem.Execute;
 begin
   Report.Execute;
 end;
 
-procedure TPressReportGroupItem.Finit;
+procedure TPressReportItem.Finit;
 begin
   FReport.Free;
   FDataSources.Free;
   inherited;
 end;
 
-function TPressReportGroupItem.GetBusinessObj: TObject;
+function TPressReportItem.GetBusinessObj: TObject;
 begin
   if Owner is TPressReportGroup then
     Result := TPressReportGroup(Owner).BusinessObj
@@ -492,14 +471,14 @@ begin
     Result := nil;
 end;
 
-function TPressReportGroupItem.GetDataSources: TPressReportDataSourceList;
+function TPressReportItem.GetDataSources: TPressReportDataSourceList;
 begin
   if not Assigned(FDataSources) then
     FDataSources := TPressReportDataSourceList.Create(True);
   Result := FDataSources;
 end;
 
-function TPressReportGroupItem.GetReport: TPressReport;
+function TPressReportItem.GetReport: TPressReport;
 begin
   if not Assigned(FReport) then
   begin
@@ -513,21 +492,21 @@ begin
   Result := FReport;
 end;
 
-function TPressReportGroupItem.GetReportCaption: string;
+function TPressReportItem.GetReportCaption: string;
 begin
   Result := ClassName;
 end;
 
-procedure TPressReportGroupItem.GetReportData(AStream: TStream);
+procedure TPressReportItem.GetReportData(AStream: TStream);
 begin
 end;
 
-function TPressReportGroupItem.GetReportVisible: Boolean;
+function TPressReportItem.GetReportVisible: Boolean;
 begin
   Result := True;
 end;
 
-procedure TPressReportGroupItem.LoadFields;
+procedure TPressReportItem.LoadFields;
 begin
   with DataSources.CreateIterator do
   try
@@ -540,7 +519,7 @@ begin
   end;
 end;
 
-procedure TPressReportGroupItem.LoadFromFile(const AFileName: string);
+procedure TPressReportItem.LoadFromFile(const AFileName: string);
 var
   VStream: TFileStream;
 begin
@@ -552,13 +531,13 @@ begin
   end;
 end;
 
-procedure TPressReportGroupItem.LoadFromStream(AStream: TStream);
+procedure TPressReportItem.LoadFromStream(AStream: TStream);
 begin
   Report.LoadFromStream(AStream);
   SetReportData(AStream);
 end;
 
-procedure TPressReportGroupItem.LoadMetadatas;
+procedure TPressReportItem.LoadMetadatas;
 
   function CreateDataSet(const ADataSetName: string): TPressReportDataSet;
   begin
@@ -656,7 +635,7 @@ begin
   { TODO : else if BO has RTTI then read published fields }
 end;
 
-procedure TPressReportGroupItem.LoadReport;
+procedure TPressReportItem.LoadReport;
 var
   VStream: TStream;
 begin
@@ -669,7 +648,7 @@ begin
   end;
 end;
 
-procedure TPressReportGroupItem.ReportNeedValue(
+procedure TPressReportItem.ReportNeedValue(
   const ADataSetName, AFieldName: string; var AValue: Variant;
   AForceData: Boolean);
 type
@@ -710,7 +689,7 @@ begin
     AValue := SPressReportErrorMsg;
 end;
 
-procedure TPressReportGroupItem.SaveReport;
+procedure TPressReportItem.SaveReport;
 var
   VStream: TStream;
 begin
@@ -723,7 +702,7 @@ begin
   end;
 end;
 
-procedure TPressReportGroupItem.SaveToFile(const AFileName: string);
+procedure TPressReportItem.SaveToFile(const AFileName: string);
 var
   VStream: TFileStream;
 begin
@@ -735,19 +714,61 @@ begin
   end;
 end;
 
-procedure TPressReportGroupItem.SaveToStream(AStream: TStream);
+procedure TPressReportItem.SaveToStream(AStream: TStream);
 begin
   GetReportData(AStream);
 end;
 
-procedure TPressReportGroupItem.SetReportData(AStream: TStream);
+procedure TPressReportItem.SetReportData(AStream: TStream);
 begin
+end;
+
+{ TPressReportData }
+
+function TPressReportData.FindReportGroup(
+  ADataAccess: IPressDAO; const AObjectClassName: string): TPressReportGroup;
+var
+  VReportClass: TPressReportGroupClass;
+  VList: TPressProxyList;
+begin
+  ADataAccess.StartTransaction;
+  try
+    VReportClass := InternalReportGroupClass;
+    VList := ADataAccess.OQLQuery(Format('select * from %s where %s = "%s"', [
+     VReportClass.ClassName,
+     VReportClass.ObjectClassAttributeName,
+     AObjectClassName]));
+    try
+      if VList.Count > 0 then
+      begin
+        Result := VList[0].Instance as TPressReportGroup;
+        Result.AddRef;
+      end else
+      begin
+        Result := VReportClass.Create;
+        Result.AttributeByName(
+         VReportClass.ObjectClassAttributeName).AsString := AObjectClassName;
+        Result.Store;
+      end;
+    finally
+      VList.Free;
+    end;
+    ADataAccess.Commit;
+  except
+    ADataAccess.Rollback;
+    raise;
+  end;
+end;
+
+class function TPressReportData.InternalServiceType: TPressServiceType;
+begin
+  Result := CPressReportDataService;
 end;
 
 procedure RegisterClasses;
 begin
   TPressReportGroup.RegisterClass;
-  TPressReportGroupItem.RegisterClass;
+  TPressReportItem.RegisterClass;
 end;
 
 initialization
