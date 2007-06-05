@@ -44,7 +44,6 @@ type
     procedure InternalIsDefaultChanged; override;
     function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
-    function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
     procedure InternalRollback; override;
     procedure InternalShowConnectionManager; override;
     function InternalSQLProxy(const ASQLStatement: string): TPressProxyList; override;
@@ -196,18 +195,6 @@ function TPressOPF.InternalRetrieve(AClass: TPressObjectClass;
   const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
 begin
   Result := Mapper.Retrieve(AClass, AId, AMetadata);
-end;
-
-function TPressOPF.InternalRetrieveProxyList(
-  AQuery: TPressQuery): TPressProxyList;
-var
-  VQuery: string;
-begin
-  VQuery := AQuery.WhereClause;
-  if VQuery <> '' then
-    VQuery := ' where ' + VQuery;
-  VQuery := 'select * from ' + AQuery.FromClause + VQuery;
-  Result := OQLQuery(VQuery);
 end;
 
 procedure TPressOPF.InternalRollback;

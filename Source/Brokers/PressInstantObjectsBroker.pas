@@ -48,7 +48,6 @@ type
     function InternalExecuteStatement(const AStatement: string): Integer; override;
     function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
-    function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
     function InternalSQLProxy(const ASQLStatement: string): TPressProxyList; override;
     function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList; override;
     procedure InternalRollback; override;
@@ -253,57 +252,6 @@ begin
     end;
   end else
     Result := nil;
-end;
-
-function TPressInstantObjectsPersistence.InternalRetrieveProxyList(
-  AQuery: TPressQuery): TPressProxyList;
-
-  function SelectPart: string;
-  begin
-    Result := 'SELECT ' + AQuery.FieldNamesClause;
-  end;
-
-  function FromPart: string;
-  begin
-    Result := AQuery.FromClause;
-    if Result <> '' then
-      if (AQuery.Style = qsOQL) and AQuery.Metadata.IncludeSubClasses then
-        Result := ' FROM ANY ' + Result
-      else
-        Result := ' FROM ' + Result;
-  end;
-
-  function WherePart: string;
-  begin
-    Result := AQuery.WhereClause;
-    if Result <> '' then
-      Result := ' WHERE ' + Result;
-  end;
-
-  function GroupByPart: string;
-  begin
-    Result := AQuery.GroupByClause;
-    if Result <> '' then
-      Result := ' GROUP BY ' + Result;
-  end;
-
-  function OrderByPart: string;
-  begin
-    Result := AQuery.OrderByClause;
-    if Result <> '' then
-      Result := ' ORDER BY ' + Result;
-  end;
-
-var
-  VQueryStr: string;
-begin
-  VQueryStr := SelectPart + FromPart + WherePart + GroupByPart + OrderByPart;
-  {$IFDEF PressLogDAOPersistence}PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');{$ENDIF}
-  case AQuery.Style of
-    qsOQL: Result := OQLQuery(VQueryStr);
-    qsReference: Result := SQLProxy(VQueryStr);
-    else {qsCustom} Result := SQLQuery(AQuery.Metadata.ItemObjectClass, VQueryStr);
-  end;
 end;
 
 procedure TPressInstantObjectsPersistence.InternalRollback;
