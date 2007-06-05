@@ -246,7 +246,7 @@ type
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; virtual;
     property Model: TPressModel read FModel;
   public
-    constructor Create(AObjectClassName: string; AModel: TPressModel);
+    constructor Create(const AObjectClassName: string; AModel: TPressModel); virtual;
     destructor Destroy; override;
     function CreateAttributeMetadata: TPressAttributeMetadata;
     property AttributeMetadatas: TPressAttributeMetadataList read GetAttributeMetadatas;
@@ -288,11 +288,14 @@ type
     property CurrentItem: TPressObjectMetadata read GetCurrentItem;
   end;
 
+  TPressQueryStyle = (qsOQL, qsReference, qsCustom);
+
   TPressQueryMetadata = class(TPressObjectMetadata)
   private
     FIncludeSubClasses: Boolean;
     FItemObjectClass: TPressObjectClass;
     FOrderFieldName: string;
+    FStyle: TPressQueryStyle;
     function GetItemObjectClass: TPressObjectClass;
     function GetItemObjectClassName: string;
     procedure SetItemObjectClass(Value: TPressObjectClass);
@@ -300,6 +303,7 @@ type
   protected
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; override;
   public
+    constructor Create(const AObjectClassName: string; AModel: TPressModel); override;
     property IncludeSubClasses: Boolean read FIncludeSubClasses;
     property ItemObjectClass: TPressObjectClass read GetItemObjectClass write SetItemObjectClass;
     property ItemObjectClassName: string read GetItemObjectClassName write SetItemObjectClassName;
@@ -307,6 +311,7 @@ type
   published
     property Any: Boolean read FIncludeSubClasses write FIncludeSubClasses default False;
     property Order: string read FOrderFieldName write FOrderFieldName;
+    property Style: TPressQueryStyle read FStyle write FStyle;
   end;
 
   { Memento declarations }
@@ -658,8 +663,6 @@ type
 
   TPressProxy = class;
   TPressProxyIterator = class;
-
-  TPressQueryStyle = (qsOQL, qsReference, qsCustom);
 
   TPressQueryClass = class of TPressQuery;
   TPressQueryIterator = TPressProxyIterator;
@@ -1558,7 +1561,7 @@ end;
 { TPressObjectMetadata }
 
 constructor TPressObjectMetadata.Create(
-  AObjectClassName: string; AModel: TPressModel);
+  const AObjectClassName: string; AModel: TPressModel);
 begin
   inherited Create;
   FObjectClassName := AObjectClassName;
@@ -1695,6 +1698,13 @@ begin
 end;
 
 { TPressQueryMetadata }
+
+constructor TPressQueryMetadata.Create(
+  const AObjectClassName: string; AModel: TPressModel);
+begin
+  inherited Create(AObjectClassName, AModel);
+  FStyle := qsOQL;
+end;
 
 function TPressQueryMetadata.GetItemObjectClass: TPressObjectClass;
 begin
@@ -2993,7 +3003,7 @@ begin
   { TODO : Improve Items DAO assignment }
   FItemsDataAccess := DataAccess;
   FMatchEmptyAndNull := True;
-  FStyle := qsOQL;
+  FStyle := Metadata.Style;
 end;
 
 function TPressQuery.InternalAttributeAddress(
