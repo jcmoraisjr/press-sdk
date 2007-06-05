@@ -37,6 +37,7 @@ type
     function GetStatementDataset: TPressOPFDataset;
     procedure SetBroker(AValue: TPressOPFBroker);
   protected
+    function CreatePressObject(AClass: TPressObjectClass; ADataset: TPressOPFDataset; ADatasetIndex: Integer): TPressObject;
     procedure DoneService; override;
     procedure InternalCommit; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
@@ -84,6 +85,26 @@ begin
 end;
 
 { TPressOPF }
+
+function TPressOPF.CreatePressObject(AClass: TPressObjectClass;
+  ADataset: TPressOPFDataset; ADatasetIndex: Integer): TPressObject;
+var
+  VAttribute: TPressAttribute;
+  I: Integer;
+begin
+  Result := AClass.Create(Self);
+  try
+    for I := 0 to Pred(ADataset.FieldDefs.Count) do
+    begin
+      VAttribute := Result.FindAttribute(ADataset.FieldDefs[I].Name);
+      if Assigned(VAttribute) then
+        VAttribute.AsVariant := ADataset[ADatasetIndex][I].Value;
+    end;
+  except
+    Result.Free;
+    raise;
+  end;
+end;
 
 procedure TPressOPF.DoneService;
 begin
@@ -172,7 +193,7 @@ begin
           begin
             VDataRow := VDataset[I];
             Result.AddReference(Mapper.StorageModel.ClassNameById(
-             VDataRow[1].Value), VDataRow[0].Value, Self);
+             VDataRow[1].AsString), VDataRow[0].AsString, Self);
           end
         else
           for I := 0 to Pred(VDataset.Count) do
@@ -209,16 +230,54 @@ end;
 
 function TPressOPF.InternalSQLProxy(
   const ASQLStatement: string): TPressProxyList;
+var
+  VDataset: TPressOPFDataset;
+  I: Integer;
 begin
-  { TODO : Implement }
-  Result := nil;
+  VDataset := Connector.CreateDataset;
+  try
+    Result := TPressProxyList.Create(True, ptShared);
+    try
+      VDataset.SQL := ASQLStatement;
+      VDataset.Execute;
+      for I := 0 to Pred(VDataset.Count) do
+        Result.AddReference(
+         VDataset[I][0].AsString, VDataSet[I][1].AsString, Self);
+    except
+      Result.Free;
+      raise;
+    end;
+  finally
+    VDataset.Free;
+  end;
 end;
 
 function TPressOPF.InternalSQLQuery(AClass: TPressObjectClass;
   const ASQLStatement: string): TPressProxyList;
+var
+  VDataset: TPressOPFDataset;
+  VInstance: TPressObject;
+  I: Integer;
 begin
-  { TODO : Implement }
-  Result := nil;
+  VDataset := Connector.CreateDataset;
+  try
+    Result := TPressProxyList.Create(True, ptShared);
+    try
+      VDataset.SQL := ASQLStatement;
+      VDataset.Execute;
+      for I := 0 to Pred(VDataset.Count) do
+      begin
+        VInstance := CreatePressObject(AClass, VDataset, I);
+        Result.AddInstance(VInstance);
+        VInstance.Release;
+      end;
+    except
+      Result.Free;
+      raise;
+    end;
+  finally
+    VDataset.Free;
+  end;
 end;
 
 procedure TPressOPF.InternalStartTransaction;
