@@ -801,7 +801,8 @@ begin
   else
     VToken := AColumnItem;
   try
-    FWidth := StrtoInt(VToken)
+    if VToken <> '' then
+      FWidth := StrToInt(VToken);
   except
     on E: Exception do
       if not (E is EConvertError) then
