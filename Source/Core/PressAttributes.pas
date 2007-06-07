@@ -541,12 +541,18 @@ type
   protected
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
     procedure Finit; override;
+    function GetAsInteger: Integer; override;
+    function GetAsString: string; override;
+    function GetAsVariant: Variant; override;
     function GetIsEmpty: Boolean; override;
     function GetSignature: string; override;
     procedure InternalAssignObject(AObject: TPressObject); override;
     function InternalCreateMemento: TPressAttributeMemento; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure InternalUnassignObject(AObject: TPressObject); override;
+    procedure SetAsInteger(AValue: Integer); override;
+    procedure SetAsString(const AValue: string); override;
+    procedure SetAsVariant(AValue: Variant); override;
   public
     procedure Assign(Source: TPersistent); override;
     procedure AssignReference(const AClassName, AId: string);
@@ -3124,6 +3130,31 @@ begin
   inherited;
 end;
 
+function TPressItem.GetAsInteger: Integer;
+begin
+  try
+    Result := StrToInt(AsString);
+  except
+    on E: EConvertError do
+      raise ConversionError(E);
+    else
+      raise;
+  end;
+end;
+
+function TPressItem.GetAsString: string;
+begin
+  if Proxy.HasInstance then
+    Result := PubValue.Id
+  else
+    Result := Proxy.ObjectId;
+end;
+
+function TPressItem.GetAsVariant: Variant;
+begin
+  Result := AsString;
+end;
+
 function TPressItem.GetIsEmpty: Boolean;
 begin
   Result := not Assigned(FProxy) or FProxy.IsEmpty; 
@@ -3203,6 +3234,34 @@ end;
 function TPressItem.SameReference(const ARefClass, ARefID: string): Boolean;
 begin
   Result := Proxy.SameReference(ARefClass, ARefID);
+end;
+
+procedure TPressItem.SetAsInteger(AValue: Integer);
+begin
+  AsString := IntToStr(AValue);
+end;
+
+procedure TPressItem.SetAsString(const AValue: string);
+begin
+  if AValue = '' then
+    Proxy.Clear
+  else
+    AssignReference(ObjectClass.ClassName, AValue);
+end;
+
+procedure TPressItem.SetAsVariant(AValue: Variant);
+begin
+  try
+    if VarIsEmpty(AValue) or VarIsNull(AValue) then
+      Proxy.Clear
+    else
+      AsString := VarToStr(AValue);
+  except
+    on E: EVariantError do
+      raise InvalidValueError(AValue, E);
+    else
+      raise;
+  end;
 end;
 
 procedure TPressItem.SetPubValue(AValue: TPressObject);
