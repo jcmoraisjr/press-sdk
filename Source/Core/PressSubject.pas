@@ -750,10 +750,10 @@ type
     procedure Dereference;
     function GetInstance: TPressObject;
     function GetObjectClassName: string;
+    function GetObjectClassType: TPressObjectClass;
     function GetObjectId: string;
     function IsEmptyReference(const ARefClass, ARefID: string): Boolean;
     procedure SetInstance(Value: TPressObject);
-    function GetObjectClassType: TPressObjectClass;
   protected
     procedure Finit; virtual;
   public
