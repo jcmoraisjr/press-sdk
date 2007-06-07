@@ -183,20 +183,25 @@ type
   end;
 
   TPressNumeric = class(TPressValue)
+  { TODO : Implement formula }
   protected
     function GetAsBoolean: Boolean; override;
     function GetAsDate: TDate; override;
     function GetAsDateTime: TDateTime; override;
     function GetAsTime: TTime; override;
     function GetDisplayText: string; override;
+    function GetIsRelativelyChanged: Boolean; virtual; abstract;
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
     procedure SetAsTime(AValue: TTime); override;
+  public
+    property IsRelativelyChanged: Boolean read GetIsRelativelyChanged;
   end;
 
   TPressInteger = class(TPressNumeric)
   private
+    FDiff: Integer;
     FValue: Integer;
     function GetPubValue: Integer;
     procedure SetPubValue(AValue: Integer);
@@ -206,6 +211,7 @@ type
     function GetAsString: string; override;
     function GetAsVariant: Variant; override;
     function GetIsEmpty: Boolean; override;
+    function GetIsRelativelyChanged: Boolean; override;
     function GetValue: Integer; virtual;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsFloat(AValue: Double); override;
@@ -217,13 +223,17 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    procedure Decrement(AValue: Integer = 1); virtual;
+    procedure Increment(AValue: Integer = 1); virtual;
     procedure Reset; override;
+    property Diff: Integer read FDiff;
     property PubValue: Integer read GetPubValue write SetPubValue;
     property Value: Integer read GetValue write SetValue;
   end;
 
   TPressFloat = class(TPressNumeric)
   private
+    FDiff: Double;
     FValue: Double;
     function GetPubValue: Double;
     procedure SetPubValue(AValue: Double);
@@ -233,6 +243,7 @@ type
     function GetAsString: string; override;
     function GetAsVariant: Variant; override;
     function GetIsEmpty: Boolean; override;
+    function GetIsRelativelyChanged: Boolean; override;
     function GetValue: Double; virtual;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsFloat(AValue: Double); override;
@@ -244,13 +255,17 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    procedure Decrement(AValue: Double = 1); virtual;
+    procedure Increment(AValue: Double = 1); virtual;
     procedure Reset; override;
+    property Diff: Double read FDiff;
     property PubValue: Double read GetPubValue write SetPubValue;
     property Value: Double read GetValue write SetValue;
   end;
 
   TPressCurrency = class(TPressNumeric)
   private
+    FDiff: Currency;
     FValue: Currency;
     function GetPubValue: Currency;
     procedure SetPubValue(AValue: Currency);
@@ -261,6 +276,7 @@ type
     function GetAsString: string; override;
     function GetAsVariant: Variant; override;
     function GetIsEmpty: Boolean; override;
+    function GetIsRelativelyChanged: Boolean; override;
     function GetDisplayText: string; override;
     function GetValue: Currency; virtual;
     function InternalTypeKinds: TTypeKinds; override;
@@ -274,7 +290,10 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    procedure Decrement(AValue: Currency = 1); virtual;
+    procedure Increment(AValue: Currency = 1); virtual;
     procedure Reset; override;
+    property Diff: Currency read FDiff;
     property PubValue: Currency read GetPubValue write SetPubValue;
     property Value: Currency read GetValue write SetValue;
   end;
@@ -1387,6 +1406,11 @@ begin
   Result := 'Integer';
 end;
 
+procedure TPressInteger.Decrement(AValue: Integer);
+begin
+  Increment(-AValue);
+end;
+
 function TPressInteger.GetAsFloat: Double;
 begin
   Result := PubValue;
@@ -1415,6 +1439,11 @@ begin
   Result := PubValue = 0;
 end;
 
+function TPressInteger.GetIsRelativelyChanged: Boolean;
+begin
+  Result := FDiff <> 0;
+end;
+
 function TPressInteger.GetPubValue: Integer;
 begin
   if UsePublishedGetter then
@@ -1427,6 +1456,18 @@ function TPressInteger.GetValue: Integer;
 begin
   VerifyCalcAttribute;
   Result := FValue;
+end;
+
+procedure TPressInteger.Increment(AValue: Integer);
+begin
+  if AValue <> 0 then
+  begin
+    Changing;
+    FValue := FValue + AValue;
+    if (FDiff <> 0) or not IsChanged then
+      FDiff := FDiff + AValue;
+    Changed;
+  end;
 end;
 
 function TPressInteger.InternalTypeKinds: TTypeKinds;
@@ -1494,6 +1535,7 @@ begin
   begin
     Changing;
     FValue := AValue;
+    FDiff := 0;
     Changed;
   end;
 end;
@@ -1516,6 +1558,11 @@ end;
 class function TPressFloat.AttributeName: string;
 begin
   Result := 'Float';
+end;
+
+procedure TPressFloat.Decrement(AValue: Double);
+begin
+  Increment(-AValue);
 end;
 
 function TPressFloat.GetAsFloat: Double;
@@ -1546,6 +1593,11 @@ begin
   Result := PubValue = 0;
 end;
 
+function TPressFloat.GetIsRelativelyChanged: Boolean;
+begin
+  Result := FDiff <> 0;
+end;
+
 function TPressFloat.GetPubValue: Double;
 begin
   if UsePublishedGetter then
@@ -1558,6 +1610,18 @@ function TPressFloat.GetValue: Double;
 begin
   VerifyCalcAttribute;
   Result := FValue;
+end;
+
+procedure TPressFloat.Increment(AValue: Double);
+begin
+  if AValue <> 0 then
+  begin
+    Changing;
+    FValue := FValue + AValue;
+    if (FDiff <> 0) or not IsChanged then
+      FDiff := FDiff + AValue;
+    Changed;
+  end;
 end;
 
 function TPressFloat.InternalTypeKinds: TTypeKinds;
@@ -1625,6 +1689,7 @@ begin
   begin
     Changing;
     FValue := AValue;
+    FDiff := 0;
     Changed;
   end;
 end;
@@ -1647,6 +1712,11 @@ end;
 class function TPressCurrency.AttributeName: string;
 begin
   Result := 'Currency';
+end;
+
+procedure TPressCurrency.Decrement(AValue: Currency);
+begin
+  Increment(-AValue);
 end;
 
 function TPressCurrency.GetAsCurrency: Currency;
@@ -1692,6 +1762,11 @@ begin
   Result := PubValue = 0;
 end;
 
+function TPressCurrency.GetIsRelativelyChanged: Boolean;
+begin
+  Result := FDiff <> 0;
+end;
+
 function TPressCurrency.GetPubValue: Currency;
 begin
   if UsePublishedGetter then
@@ -1704,6 +1779,18 @@ function TPressCurrency.GetValue: Currency;
 begin
   VerifyCalcAttribute;
   Result := FValue;
+end;
+
+procedure TPressCurrency.Increment(AValue: Currency);
+begin
+  if AValue <> 0 then
+  begin
+    Changing;
+    FValue := FValue + AValue;
+    if (FDiff <> 0) or not IsChanged then
+      FDiff := FDiff + AValue;
+    Changed;
+  end;
 end;
 
 function TPressCurrency.InternalTypeKinds: TTypeKinds;
@@ -1776,6 +1863,7 @@ begin
   begin
     Changing;
     FValue := AValue;
+    FDiff := 0;
     Changed;
   end;
 end;

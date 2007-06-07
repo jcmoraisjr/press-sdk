@@ -100,6 +100,7 @@ type
     function SelectDataset: TPressOPFDataset;
     function UpdateDataset(AObject: TPressObject): TPressOPFDataset;
   protected
+    procedure DoConcurrencyError(AObject: TPressObject); virtual;
     property Connector: TPressOPFConnector read FConnector;
     property DMLBuilder: TPressOPFDMLBuilder read FDMLBuilder;
     property ObjectMapper: TPressOPFObjectMapper read FObjectMapper;
@@ -178,7 +179,7 @@ type
     function BuildFieldList(APrefixType: TPressOPFPrefixType; AHelperFields: TPressOPFHelperFields): string;
     function BuildLinkList(const APrefix: string; AMetadata: TPressAttributeMetadata): string;
     function BuildTableList: string;
-    function CreateAssignParamToFieldList(AObject: TPressObject): string;
+    function CreateAssignParamToFieldList(AObject: TPressObject; out AConcurrency: Boolean): string;
     function CreateIdParamList(ACount: Integer): string;
     property ExternalFields[AAttributeMetadata: TPressAttributeMetadata]: TPressOPFExternalField read GetExternalFields;
     property MainTableAlias: string read FMainTableAlias;
@@ -544,6 +545,7 @@ begin
   for I := Pred(VMaps.Count) downto 0 do
     AttributeMapper[VMaps[I]].Store(AObject);
   PressAssignPersistentId(AObject, AObject.Id);
+  PressAssignPersistentUpdateCount(AObject);
 end;
 
 { TPressOPFAttributeMapper }
@@ -560,11 +562,20 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
       attString:
         VParam.AsString := AValue.AsString;
       attInteger:
-        VParam.AsInt32 := AValue.AsInteger;
+        if (AValue as TPressInteger).IsRelativelyChanged then
+          VParam.AsInt32 := TPressInteger(AValue).Diff
+        else
+          VParam.AsInt32 := AValue.AsInteger;
       attFloat:
-        VParam.AsFloat := AValue.AsFloat;
+        if (AValue as TPressFloat).IsRelativelyChanged then
+          VParam.AsFloat := TPressFloat(AValue).Diff
+        else
+          VParam.AsFloat := AValue.AsFloat;
       attCurrency:
-        VParam.AsCurrency := AValue.AsCurrency;
+        if (AValue as TPressCurrency).IsRelativelyChanged then
+          VParam.AsCurrency := TPressCurrency(AValue).Diff
+        else
+          VParam.AsCurrency := AValue.AsCurrency;
       attEnum:
         if not AValue.IsNull then
           VParam.AsInt16 := AValue.AsInteger
@@ -827,6 +838,14 @@ begin
   VDataset.Execute;
 end;
 
+procedure TPressOPFAttributeMapper.DoConcurrencyError(
+  AObject: TPressObject);
+begin
+  { TODO : Implement }
+  raise EPressOPFError.CreateFmt(SObjectChangedError, [
+   AObject.ClassName, AObject.Signature]);
+end;
+
 function TPressOPFAttributeMapper.InsertDataset: TPressOPFDataset;
 begin
   if not Assigned(FInsertDataset) then
@@ -1067,7 +1086,8 @@ begin
   if VDataset.SQL <> '' then
   begin
     AddAttributeParams(VDataset, AObject);
-    VDataset.Execute;
+    if VDataset.Execute = 0 then
+      DoConcurrencyError(AObject);
   end;
   StoreItems;
 end;
@@ -1391,30 +1411,49 @@ begin
 end;
 
 function TPressOPFDMLBuilder.CreateAssignParamToFieldList(
-  AObject: TPressObject): string;
+  AObject: TPressObject; out AConcurrency: Boolean): string;
+
+  procedure AddRelativeChange(AAttribute: TPressNumeric);
+  begin
+    { TODO : Relative changes might break obj x db synchronization }
+    ConcatStatements(Format('%s = %0:s + :%0:s', [
+     AAttribute.PersistentName]), ', ', Result);
+  end;
 
   procedure AddParam(const AParamName: string);
   begin
-    if AParamName <> '' then
-      ConcatStatements(Format('%s = :%0:s', [AParamName]), ', ', Result);
+    ConcatStatements(Format('%s = :%0:s', [AParamName]), ', ', Result);
   end;
 
 var
   VAttribute: TPressAttribute;
 begin
-  { TODO : Implement Inc and Dec updates }
+  AConcurrency := False;
   Result := '';
   with AttributeIterator do
   begin
     BeforeFirstItem;
     while NextItem do
-      if not CurrentItem.AttributeClass.InheritsFrom(TPressItems) then
+    begin
+      VAttribute := AObject.AttributeByName(CurrentItem.Name);
+      if not (VAttribute is TPressItems) then
       begin
-        VAttribute := AObject.AttributeByName(CurrentItem.Name);
-        if VAttribute.IsChanged then
-          AddParam(VAttribute.PersistentName);
-      end;
-    if (Result <> '') or (Map.Metadata = AObject.Metadata) then
+        if VAttribute.IsChanged and (VAttribute.PersistentName <> '') then
+        begin
+          if (VAttribute is TPressNumeric) and
+           TPressNumeric(VAttribute).IsRelativelyChanged then
+            AddRelativeChange(TPressNumeric(VAttribute))
+          else
+          begin
+            AddParam(VAttribute.PersistentName);
+            AConcurrency := True;
+          end;
+        end;
+      end else if VAttribute.IsChanged and
+       (VAttribute.PersistentName <> '') then
+        AConcurrency := True;
+    end;
+    if AConcurrency or (Result <> '') or (Map.Metadata = AObject.Metadata) then
       AddParam(Map.Metadata.UpdateCountName);
   end;
 end;
@@ -1533,15 +1572,21 @@ function TPressOPFDMLBuilder.UpdateStatement(
   AObject: TPressObject): string;
 var
   VAssignParamList: string;
+  VConcurrency: Boolean;
 begin
-  VAssignParamList := CreateAssignParamToFieldList(AObject);
+  VAssignParamList := CreateAssignParamToFieldList(AObject, VConcurrency);
   if VAssignParamList <> '' then
   begin
-    Result := Format('update %s set %s where %s = %s', [
+    Result := Format('update %s set %s where (%s = %s)', [
      Map.Metadata.PersistentName,
      VAssignParamList,
      Map.Metadata.KeyName,
      ':' + SPressPersistentIdParamString]);
+    if VConcurrency and (Map.Metadata.UpdateCountName <> '') then
+      Result := Format('%s and (%s = %d)', [
+       Result,
+       Map.Metadata.UpdateCountName,
+       AObject.PersUpdateCount]);
   end else
     Result := '';
 end;

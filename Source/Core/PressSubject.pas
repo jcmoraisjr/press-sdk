@@ -536,6 +536,7 @@ type
   TPressStructure = class;
 
   TPressObject = class(TPressSubject)
+  { TODO : Remove persistence members }
   private
     FAttributes: TPressAttributeList;
     FDataAccess: IPressDAO;
@@ -549,6 +550,7 @@ type
     FNotifying: Boolean;
     FOwnerAttribute: TPressStructure;
     FPersistentId: string;
+    FPersUpdateCount: Integer;
     FUpdateCount: Integer;
     procedure CreateAttributes;
     function EnsureDataAccess: IPressDAO;
@@ -633,6 +635,7 @@ type
     property OwnerAttribute: TPressStructure read FOwnerAttribute;
     property PersistentId: string read FPersistentId;
     property PersistentName: string read GetPersistentName;
+    property PersUpdateCount: Integer read FPersUpdateCount;
     property UpdateCount: Integer read FUpdateCount;
     property UpdatesDisabled: Boolean read GetUpdatesDisabled;
   end;
@@ -1022,6 +1025,7 @@ type
 
 procedure PressAssignPersistentId(AObject: TPressObject; const AId: string);
 procedure PressAssignUpdateCount(AObject: TPressObject; ANewValue: Integer);
+procedure PressAssignPersistentUpdateCount(AObject: TPressObject);
 procedure PressEvolveUpdateCount(AObject: TPressObject);
 function PressModel: TPressModel;
 function PressDefaultDAO(const AForce: Boolean = True): IPressDAO;
@@ -1076,6 +1080,12 @@ end;
 procedure PressAssignUpdateCount(AObject: TPressObject; ANewValue: Integer);
 begin
   AObject.FUpdateCount := ANewValue;  // friend class
+  AObject.FPersUpdateCount := ANewValue;  // friend class
+end;
+
+procedure PressAssignPersistentUpdateCount(AObject: TPressObject);
+begin
+  AObject.FPersUpdateCount := AObject.FUpdateCount;  // friend classes
 end;
 
 procedure PressEvolveUpdateCount(AObject: TPressObject);
