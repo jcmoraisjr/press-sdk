@@ -558,44 +558,45 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
     VParam: TPressOPFParam;
   begin
     VParam := ADataset.Params.ParamByName(AValue.PersistentName);
-    case AValue.AttributeBaseType of
-      attString:
-        VParam.AsString := AValue.AsString;
-      attInteger:
-        if (AValue as TPressInteger).IsRelativelyChanged then
-          VParam.AsInt32 := TPressInteger(AValue).Diff
+    if not AValue.IsNull then
+    begin
+      case AValue.AttributeBaseType of
+        attString:
+          VParam.AsString := AValue.AsString;
+        attInteger:
+          if (AValue as TPressInteger).IsRelativelyChanged then
+            VParam.AsInt32 := TPressInteger(AValue).Diff
+          else
+            VParam.AsInt32 := AValue.AsInteger;
+        attFloat:
+          if (AValue as TPressFloat).IsRelativelyChanged then
+            VParam.AsFloat := TPressFloat(AValue).Diff
+          else
+            VParam.AsFloat := AValue.AsFloat;
+        attCurrency:
+          if (AValue as TPressCurrency).IsRelativelyChanged then
+            VParam.AsCurrency := TPressCurrency(AValue).Diff
+          else
+            VParam.AsCurrency := AValue.AsCurrency;
+        attEnum:
+          VParam.AsInt16 := AValue.AsInteger;
+        attBoolean:
+          VParam.AsBoolean := AValue.AsBoolean;
+        attDate:
+          VParam.AsDate := AValue.AsDate;
+        attTime:
+          VParam.AsTime := AValue.AsTime;
+        attDateTime:
+          VParam.AsDateTime := AValue.AsDateTime;
+        attMemo:
+          VParam.AsMemo := AValue.AsString;
+        attBinary, attPicture:
+          VParam.AsBinary := AValue.AsString;
         else
-          VParam.AsInt32 := AValue.AsInteger;
-      attFloat:
-        if (AValue as TPressFloat).IsRelativelyChanged then
-          VParam.AsFloat := TPressFloat(AValue).Diff
-        else
-          VParam.AsFloat := AValue.AsFloat;
-      attCurrency:
-        if (AValue as TPressCurrency).IsRelativelyChanged then
-          VParam.AsCurrency := TPressCurrency(AValue).Diff
-        else
-          VParam.AsCurrency := AValue.AsCurrency;
-      attEnum:
-        if not AValue.IsNull then
-          VParam.AsInt16 := AValue.AsInteger
-        else
-          VParam.AsVariant := Null;
-      attBoolean:
-        VParam.AsBoolean := AValue.AsBoolean;
-      attDate:
-        VParam.AsDate := AValue.AsDate;
-      attTime:
-        VParam.AsTime := AValue.AsTime;
-      attDateTime:
-        VParam.AsDateTime := AValue.AsDateTime;
-      attMemo:
-        VParam.AsMemo := AValue.AsString;
-      attBinary, attPicture:
-        VParam.AsBinary := AValue.AsString;
-      else
-        VParam.AsVariant := AValue.AsVariant;
-    end;
+          VParam.AsVariant := AValue.AsVariant;
+      end;
+    end else
+      VParam.AsVariant := Null;
   end;
 
   procedure AddPartAttribute(APart: TPressPart);
