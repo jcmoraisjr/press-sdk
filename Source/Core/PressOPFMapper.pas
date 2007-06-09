@@ -148,7 +148,7 @@ type
     function CreateTableStatement(ATableMetadata: TPressOPFTableMetadata): string; virtual;
   end;
 
-  TPressOPFFieldListType = (ftSimple, ftParams, ftMaps);
+  TPressOPFFieldListType = (ftSimple, ftParams);
   TPressOPFHelperField = (hfOID, hfClassId, hfUpdateCount);
   TPressOPFHelperFields = set of TPressOPFHelperField;
 
@@ -1294,7 +1294,7 @@ function TPressOPFDMLBuilder.BuildFieldList(
   begin
     if AStatement <> '' then
       case AFieldListType of
-        ftSimple, ftMaps:
+        ftSimple:
           ConcatStatements(AStatement, ', ', ABuffer);
         ftParams:
           ConcatStatements(':' + AStatement, ', ', ABuffer);
@@ -1552,7 +1552,7 @@ var
 begin
   VMaps := BuildMapArray(ABaseMap);
   Result := Format('select %s from %s where %s = %s', [
-   BuildFieldList(ftMaps, [hfClassId, hfUpdateCount], VMaps),
+   BuildFieldList(ftSimple, [hfClassId, hfUpdateCount], VMaps),
    BuildTableList(VMaps),
    BuildKeyName(VMaps),
    ':' + SPressPersistentIdParamString]);
