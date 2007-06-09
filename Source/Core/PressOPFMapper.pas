@@ -1353,7 +1353,8 @@ begin
     BuildRootMap(AMaps[0], Result, Length(AMaps) > 1);
     for I := 1 to Pred(Length(AMaps)) do
       BuildMap(AMaps[I], I, Result);
-  end;
+  end else
+    BuildRootMap(Map, Result, False);
 end;
 
 function TPressOPFDMLBuilder.BuildLinkList(
