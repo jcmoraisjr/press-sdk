@@ -36,13 +36,13 @@ type
   TPressOPFDMLBuilder = class;
   TPressOPFDMLBuilderClass = class of TPressOPFDMLBuilder;
   TPressOPFStorageMap = class;
+  TPressOPFStorageMapArray = array of TPressOPFStorageMap;
   TPressOPFStorageModel = class;
 
   TPressOPFObjectMapperClass = class of TPressOPFObjectMapper;
 
   TPressOPFObjectMapper = class(TObject)
   private
-    { TODO : Implement concurrency control }
     { TODO : Implement owned Part(s) objects mapping }
     FAttributeMapperList: TObjectList;
     FConnector: TPressOPFConnector;
@@ -71,6 +71,8 @@ type
     property StorageModel: TPressOPFStorageModel read FStorageModel;
   end;
 
+  TPressOPFStorageMapList = class;
+
   TPressOPFAttributeMapper = class(TObject)
   private
     { TODO : Maximize dataset caches, minimize dmlbuild and
@@ -80,9 +82,11 @@ type
     FDMLBuilder: TPressOPFDMLBuilder;
     FInsertDataset: TPressOPFDataset;
     FMap: TPressOPFStorageMap;
+    FMaps: TPressOPFStorageMapList;
     FObjectMapper: TPressOPFObjectMapper;
     FPersistence: TPressPersistence;
-    FSelectDataset: TPressOPFDataset;
+    FSelectBaseDataset: TPressOPFDataset;
+    FSelectComplementaryDataset: TPressOPFDataset;
     FUpdateDataset: TPressOPFDataset;
     procedure AddAttributeParam(ADataset: TPressOPFDataset; AAttribute: TPressAttribute);
     procedure AddAttributeParams(ADataset: TPressOPFDataset; AObject: TPressObject);
@@ -96,8 +100,8 @@ type
     procedure AddUpdateCountParam(ADataset: TPressOPFDataset; AObject: TPressObject);
     function DeleteDataset: TPressOPFDataset;
     function InsertDataset: TPressOPFDataset;
-    procedure RetrieveAttributes(AObject: TPressObject; ADataRow: TPressOPFDataRow);
-    function SelectDataset: TPressOPFDataset;
+    function SelectBaseDataset: TPressOPFDataset;
+    function SelectComplementaryDataset(ABaseMap: TPressOPFStorageMap): TPressOPFDataset;
     function UpdateDataset(AObject: TPressObject): TPressOPFDataset;
   protected
     procedure DoConcurrencyError(AObject: TPressObject); virtual;
@@ -110,10 +114,12 @@ type
     destructor Destroy; override;
     procedure DisposeObject(AObject: TPressObject);
     procedure DisposeRecord(const AId: string);
-    function Retrieve(AObject: TPressObject; const AId: string): Boolean;
-    function RetrieveRootMap(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
+    procedure RetrieveAttributes(AObject: TPressObject; ADataRow: TPressOPFDataRow);
+    function RetrieveBaseMaps(const AId: string; AMetadata: TPressObjectMetadata; out ADataset: TPressOPFDataset): TPressObject;
+    function RetrieveComplementaryMaps(AObject: TPressObject; ABaseMap: TPressOPFStorageMap; out ADataset: TPressOPFDataset): Boolean;
     procedure Store(AObject: TPressObject);
     property Map: TPressOPFStorageMap read FMap;
+    property Maps: TPressOPFStorageMapList read FMaps;
   end;
 
   TPressOPFSQLBuilder = class(TObject)
@@ -142,58 +148,33 @@ type
     function CreateTableStatement(ATableMetadata: TPressOPFTableMetadata): string; virtual;
   end;
 
-  TPressOPFExternalField = class(TObject)
-  private
-    FAttributeMetadata: TPressAttributeMetadata;
-    FId: Integer;
-    FObjectMetadata: TPressObjectMetadata;
-    function GetAsSQLField: string;
-    function GetFieldAlias: string;
-    function GetTableName: string;
-    function GetTableAlias: string;
-    function GetFieldName: string;
-  public
-    constructor Create(AAttributeMetadata: TPressAttributeMetadata; AId: Integer);
-    property AsSQLField: string read GetAsSQLField;
-    property AttributeMetadata: TPressAttributeMetadata read FAttributeMetadata;
-    property FieldAlias: string read GetFieldAlias;
-    property FieldName: string read GetFieldName;
-    property ObjectMetadata: TPressObjectMetadata read FObjectMetadata;
-    property TableAlias: string read GetTableAlias;
-    property TableName: string read GetTableName;
-  end;
-
+  TPressOPFFieldListType = (ftSimple, ftParams, ftMaps);
   TPressOPFHelperField = (hfOID, hfClassId, hfUpdateCount);
   TPressOPFHelperFields = set of TPressOPFHelperField;
-  TPressOPFPrefixType = (ptNone, ptColon, ptTableAlias);
 
   TPressOPFDMLBuilder = class(TPressOPFSQLBuilder)
   private
-    FAttributeIterator: TPressAttributeMetadataIterator;
-    FExternalFields: TObjectList;
-    FMainTableAlias: string;
     FMap: TPressOPFStorageMap;
-    function GetExternalFields(AAttributeMetadata: TPressAttributeMetadata): TPressOPFExternalField;
+    FMaps: TPressOPFStorageMapList;
   protected
-    function AttributeIterator: TPressAttributeMetadataIterator;
-    function BuildFieldList(APrefixType: TPressOPFPrefixType; AHelperFields: TPressOPFHelperFields): string;
+    function BuildFieldList(AFieldListType: TPressOPFFieldListType; AHelperFields: TPressOPFHelperFields; AMaps: TPressOPFStorageMapArray = nil): string;
     function BuildLinkList(const APrefix: string; AMetadata: TPressAttributeMetadata): string;
-    function BuildTableList: string;
+    function BuildMapArray(ABaseMap: TPressOPFStorageMap): TPressOPFStorageMapArray;
+    function BuildTableAlias(AIndex: Integer): string;
+    function BuildTableList(AMaps: TPressOPFStorageMapArray): string;
     function CreateAssignParamToFieldList(AObject: TPressObject; out AConcurrency: Boolean): string;
     function CreateIdParamList(ACount: Integer): string;
-    property ExternalFields[AAttributeMetadata: TPressAttributeMetadata]: TPressOPFExternalField read GetExternalFields;
-    property MainTableAlias: string read FMainTableAlias;
     property Map: TPressOPFStorageMap read FMap;
+    property Maps: TPressOPFStorageMapList read FMaps;
   public
-    constructor Create(AMap: TPressOPFStorageMap);
-    destructor Destroy; override;
+    constructor Create(AMaps: TPressOPFStorageMapList);
     function DeleteLinkItemsStatement(AItems: TPressItems): string; virtual;
     function DeleteLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
     function DeleteStatement: string; virtual;
     function InsertLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
     function InsertStatement: string; virtual;
     function SelectLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
-    function SelectStatement: string; virtual;
+    function SelectStatement(ABaseMap: TPressOPFStorageMap = nil): string; virtual;
     function UpdateStatement(AObject: TPressObject): string; virtual;
   end;
 
@@ -507,29 +488,49 @@ end;
 function TPressOPFObjectMapper.Retrieve(AClass: TPressObjectClass;
   const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
 var
-  VMaps: TPressOPFStorageMapList;
-  VRootMapIndex, I: Integer;
+  VMaps, VComplementaryMaps: TPressOPFStorageMapList;
+  VRootMap: TPressOPFStorageMap;
+  I: Integer;
+  VBaseDataset, VComplementaryDataset: TPressOPFDataset;
+  VObject: TPressObject;
 begin
-  { TODO : Improve, building one inner join with all maps }
   VMaps := StorageModel.Maps[AClass];
+  VRootMap := VMaps.Last;
   if VMaps.Count > 0 then
   begin
-    VRootMapIndex := Pred(VMaps.Count);
-    Result := AttributeMapper[VMaps[VRootMapIndex]].RetrieveRootMap(
-     AClass, AId, AMetadata);
-    if Assigned(Result) then
+    VObject := AttributeMapper[VRootMap].RetrieveBaseMaps(
+     AId, AMetadata, VBaseDataset);
+    if Assigned(VObject) then
     begin
       try
-        Result.DisableChanges;
-        for I := Pred(VRootMapIndex) downto 0 do
-          AttributeMapper[VMaps[I]].Retrieve(Result, AId);
-        PressAssignPersistentId(Result, AId);
-        Result.EnableChanges;
+        VObject.DisableChanges;
+        if (VObject.ClassType <> AClass) and (VObject is AClass) then
+        begin
+          VComplementaryMaps := StorageModel.Maps[VObject.ClassType];
+          if
+           AttributeMapper[VComplementaryMaps.Last].RetrieveComplementaryMaps(
+           VObject, VRootMap, VComplementaryDataset) then
+          begin
+            I := Pred(VComplementaryMaps.Count);
+            while (I >= 0) and (VComplementaryMaps[I] <> VRootMap) do
+            begin
+              AttributeMapper[VComplementaryMaps[I]].RetrieveAttributes(
+               VObject, VComplementaryDataset[0]);
+              Dec(I);
+            end;
+          end;
+        end;
+        for I := Pred(VMaps.Count) downto 0 do
+          AttributeMapper[VMaps[I]].RetrieveAttributes(
+           VObject, VBaseDataset[0]);
+        PressAssignPersistentId(VObject, AId);
+        VObject.EnableChanges;
       except
-        FreeAndNil(Result);
+        VObject.Free;
         raise;
       end;
     end;
+    Result := VObject;
   end else
     Result := nil;
 end;
@@ -721,8 +722,9 @@ begin
   FObjectMapper := AObjectMapper;
   FConnector := FObjectMapper.Connector;
   FPersistence := FObjectMapper.Persistence;
-  FDMLBuilder := FObjectMapper.DMLBuilderClass.Create(AMap);
   FMap := AMap;
+  FMaps := ObjectMapper.StorageModel.Maps[FMap.Metadata.ObjectClass];
+  FDMLBuilder := FObjectMapper.DMLBuilderClass.Create(Maps);
 end;
 
 function TPressOPFAttributeMapper.DeleteDataset: TPressOPFDataset;
@@ -739,8 +741,9 @@ destructor TPressOPFAttributeMapper.Destroy;
 begin
   FDeleteDataset.Free;
   FInsertDataset.Free;
-  FSelectDataset.Free;
   FUpdateDataset.Free;
+  FSelectBaseDataset.Free;
+  FSelectComplementaryDataset.Free;
   FDMLBuilder.Free;
   inherited;
 end;
@@ -857,19 +860,6 @@ begin
   Result := FInsertDataset;
 end;
 
-function TPressOPFAttributeMapper.Retrieve(
-  AObject: TPressObject; const AId: string): Boolean;
-var
-  VDataset: TPressOPFDataset;
-begin
-  VDataset := SelectDataset;
-  AddPersistentIdParam(VDataset, AId);
-  VDataset.Execute;
-  Result := VDataset.Count = 1;
-  if Result then
-    RetrieveAttributes(AObject, VDataset[0]);
-end;
-
 procedure TPressOPFAttributeMapper.RetrieveAttributes(
   AObject: TPressObject; ADataRow: TPressOPFDataRow);
 var
@@ -882,8 +872,7 @@ var
 
   procedure LoadItem(AItem: TPressItem);
   begin
-    AItem.AssignReference(ObjectMapper.StorageModel.ClassNameById(
-     ADataRow.FieldByName(DMLBuilder.ExternalFields[AItem.Metadata].FieldAlias).AsString),
+    AItem.AssignReference(AItem.ObjectClass.ClassName,
      ADataRow.FieldByName(AItem.PersistentName).AsString);
   end;
 
@@ -897,8 +886,8 @@ var
     AddPersistentIdParam(VDataset, AObject.Id);
     VDataset.Execute;
     for I := 0 to Pred(VDataset.Count) do
-      AItems.AddReference(ObjectMapper.StorageModel.ClassNameById(
-       VDataset[I][1].Value), VDataset[I][0].Value, Persistence);
+      AItems.AddReference(AItems.ObjectClass.ClassName,
+       VDataset[I][0].Value, Persistence);
   end;
 
 var
@@ -922,50 +911,71 @@ begin
   end;
 end;
 
-function TPressOPFAttributeMapper.RetrieveRootMap(AClass: TPressObjectClass;
-  const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
+function TPressOPFAttributeMapper.RetrieveBaseMaps(
+  const AId: string; AMetadata: TPressObjectMetadata;
+  out ADataset: TPressOPFDataset): TPressObject;
 var
-  VClass: TPressObjectClass;
-  VDataset: TPressOPFDataset;
+  VBaseClass, VClass: TPressObjectClass;
 begin
-  VDataset := SelectDataset;
-  AddPersistentIdParam(VDataset, AId);
-  VDataset.Execute;
-  if VDataset.Count = 1 then
+  Result := nil;
+  ADataset := SelectBaseDataset;
+  AddPersistentIdParam(ADataset, AId);
+  ADataset.Execute;
+  if ADataset.Count <> 1 then
+    Exit;
+  VBaseClass := Map.Metadata.ObjectClass;
+  if Map.Metadata.ClassIdName <> '' then
   begin
-    if Map.Metadata.ClassIdName <> '' then
-      VClass := ObjectMapper.StorageModel.ClassById(
-       VDataset[0].FieldByName(Map.Metadata.ClassIdName).Value)
-    else
-      VClass := AClass;
-    if not VClass.InheritsFrom(AClass) then
-      { TODO : Implement }
-      ;
-    Result := VClass.Create(Persistence, AMetadata);
-    try
-      Result.DisableChanges;
-      Result.Id := AId;
-      if Result.Metadata.UpdateCountName <> '' then
-        PressAssignUpdateCount(Result,
-         VDataset[0].FieldByName(Result.Metadata.UpdateCountName).Value);
-      RetrieveAttributes(Result, VDataset[0]);
-      Result.EnableChanges;
-    except
-      FreeAndNil(Result);
-      raise;
-    end;
+    VClass := ObjectMapper.StorageModel.ClassById(
+     ADataset[0].FieldByName(Map.Metadata.ClassIdName).Value);
+    if not VClass.InheritsFrom(VBaseClass) then
+      Exit;
   end else
-    Result := nil;
+    VClass := VBaseClass;
+  Result := VClass.Create(Persistence, AMetadata);
+  try
+    Result.DisableChanges;
+    Result.Id := AId;
+    if Result.Metadata.UpdateCountName <> '' then
+      PressAssignUpdateCount(Result,
+       ADataset[0].FieldByName(Result.Metadata.UpdateCountName).Value);
+    Result.EnableChanges;
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
 end;
 
-function TPressOPFAttributeMapper.SelectDataset: TPressOPFDataset;
+function TPressOPFAttributeMapper.RetrieveComplementaryMaps(
+  AObject: TPressObject; ABaseMap: TPressOPFStorageMap;
+  out ADataset: TPressOPFDataset): Boolean;
 begin
-  if not Assigned(FSelectDataset) then
+  ADataset := SelectComplementaryDataset(ABaseMap);
+  AddPersistentIdParam(ADataset, AObject.Id);
+  ADataset.Execute;
+  Result := ADataset.Count = 1;
+  if Result and (AObject.Metadata.UpdateCountName <> '') then
+    PressAssignUpdateCount(AObject,
+     ADataset[0].FieldByName(AObject.Metadata.UpdateCountName).Value);
+end;
+
+function TPressOPFAttributeMapper.SelectBaseDataset: TPressOPFDataset;
+begin
+  if not Assigned(FSelectBaseDataset) then
   begin
-    FSelectDataset := Connector.CreateDataset;
-    FSelectDataset.SQL := DMLBuilder.SelectStatement;
+    FSelectBaseDataset := Connector.CreateDataset;
+    FSelectBaseDataset.SQL := DMLBuilder.SelectStatement;
   end;
-  Result := FSelectDataset;
+  Result := FSelectBaseDataset;
+end;
+
+function TPressOPFAttributeMapper.SelectComplementaryDataset(
+  ABaseMap: TPressOPFStorageMap): TPressOPFDataset;
+begin
+  if not Assigned(FSelectComplementaryDataset) then
+    FSelectComplementaryDataset := Connector.CreateDataset;
+  FSelectComplementaryDataset.SQL := DMLBuilder.SelectStatement(ABaseMap);
+  Result := FSelectComplementaryDataset;
 end;
 
 procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
@@ -1273,95 +1283,76 @@ begin
   raise EPressOPFError.CreateFmt(SUnsupportedFeature, ['field type str']);
 end;
 
-{ TPressOPFExternalField }
-
-constructor TPressOPFExternalField.Create(
-  AAttributeMetadata: TPressAttributeMetadata; AId: Integer);
-begin
-  inherited Create;
-  FAttributeMetadata := AAttributeMetadata;
-  FObjectMetadata := AAttributeMetadata.ObjectClass.ClassMetadata;
-  FId := AId;
-end;
-
-function TPressOPFExternalField.GetAsSQLField: string;
-begin
-  Result := Format('%s.%s as %s', [
-   TableAlias,
-   FieldName,
-   FieldAlias]);
-end;
-
-function TPressOPFExternalField.GetFieldAlias: string;
-begin
-  Result := TableName + SPressIdentifierSeparator + FieldName;
-end;
-
-function TPressOPFExternalField.GetFieldName: string;
-begin
-  Result := ObjectMetadata.ClassIdName;
-end;
-
-function TPressOPFExternalField.GetTableAlias: string;
-begin
-  Result := SPressTableAliasPrefix + InttoStr(FId);
-end;
-
-function TPressOPFExternalField.GetTableName: string;
-begin
-  Result := ObjectMetadata.PersistentName;
-end;
-
 { TPressOPFDMLBuilder }
 
-function TPressOPFDMLBuilder.AttributeIterator: TPressAttributeMetadataIterator;
-begin
-  if not Assigned(FAttributeIterator) then
-    FAttributeIterator := Map.CreateIterator;
-  Result := FAttributeIterator;
-end;
+function TPressOPFDMLBuilder.BuildFieldList(
+  AFieldListType: TPressOPFFieldListType;
+  AHelperFields: TPressOPFHelperFields;
+  AMaps: TPressOPFStorageMapArray): string;
 
-function TPressOPFDMLBuilder.BuildFieldList(APrefixType: TPressOPFPrefixType;
-  AHelperFields: TPressOPFHelperFields): string;
-
-  procedure AddStatement(const AStatement: string);
-  const
-    CPrefix: array[TPressOPFPrefixType] of string = (
-     '', ':', SPressTableAliasPrefix + '0.');
+  procedure AddStatement(const AStatement: string; var ABuffer: string);
   begin
     if AStatement <> '' then
-      ConcatStatements(CPrefix[APrefixType] + AStatement, ', ', Result);
+      case AFieldListType of
+        ftSimple, ftMaps:
+          ConcatStatements(AStatement, ', ', ABuffer);
+        ftParams:
+          ConcatStatements(':' + AStatement, ', ', ABuffer);
+      end;
   end;
 
-  procedure AddExternalClassField(AAttribute: TPressAttributeMetadata);
+  procedure BuildRootMap(
+    AMap: TPressOPFStorageMap; var ABuffer: string; ANeedTableAlias: Boolean);
+  var
+    VAttribute: TPressAttributeMetadata;
+    VFieldPrefix: string;
+    I: Integer;
   begin
-    ConcatStatements(ExternalFields[AAttribute].AsSQLField, ', ', Result);
+    if ANeedTableAlias then
+      VFieldPrefix := BuildTableAlias(0) + '.'
+    else
+      VFieldPrefix := '';
+    if AMap.Count > 0 then
+    begin
+      if hfOID in AHelperFields then
+        AddStatement(VFieldPrefix + AMap[0].PersistentName, ABuffer);
+      if hfClassId in AHelperFields then
+        AddStatement(VFieldPrefix + AMap.Metadata.ClassIdName, ABuffer);
+      if hfUpdateCount in AHelperFields then
+        AddStatement(VFieldPrefix + AMap.Metadata.UpdateCountName, ABuffer);
+    end;
+    for I := 1 to Pred(AMap.Count) do  // skips ID
+    begin
+      VAttribute := AMap[I];
+      if not VAttribute.AttributeClass.InheritsFrom(TPressItems) then
+        AddStatement(VFieldPrefix + VAttribute.PersistentName, ABuffer);
+    end;
+  end;
+
+  procedure BuildMap(
+    AMap: TPressOPFStorageMap; AIndex: Integer; var ABuffer: string);
+  var
+    VAttribute: TPressAttributeMetadata;
+    I: Integer;
+  begin
+    for I := 1 to Pred(AMap.Count) do  // skips ID
+    begin
+      VAttribute := AMap[I];
+      if not VAttribute.AttributeClass.InheritsFrom(TPressItems) then
+        AddStatement(
+         BuildTableAlias(AIndex) + '.' + VAttribute.PersistentName, ABuffer);
+    end;
   end;
 
 var
-  VAttribute: TPressAttributeMetadata;
+  I: Integer;
 begin
   Result := '';
-  with AttributeIterator do
+  if Length(AMaps) > 0 then
   begin
-    FirstItem;  // skips ID
-    if hfOID in AHelperFields then
-      AddStatement(CurrentItem.PersistentName);
-    if hfClassId in AHelperFields then
-      AddStatement(Map.Metadata.ClassIdName);
-    if hfUpdateCount in AHelperFields then
-      AddStatement(Map.Metadata.UpdateCountName);
-    while NextItem do
-    begin
-      VAttribute := CurrentItem;
-      if not VAttribute.AttributeClass.InheritsFrom(TPressItems) then
-      begin
-        AddStatement(VAttribute.PersistentName);
-        if (APrefixType = ptTableAlias) and
-         VAttribute.AttributeClass.InheritsFrom(TPressItem) then
-          AddExternalClassField(VAttribute);
-      end;
-    end;
+    BuildRootMap(AMaps[0], Result, Length(AMaps) > 1);
+    for I := 1 to Pred(Length(AMaps)) do
+      BuildMap(AMaps[I], I, Result);
   end;
 end;
 
@@ -1382,33 +1373,57 @@ begin
   AddStatement(AMetadata.PersLinkPosName);
 end;
 
-function TPressOPFDMLBuilder.BuildTableList: string;
-
-  procedure AddExternalTable(AExternalField: TPressOPFExternalField);
+function TPressOPFDMLBuilder.BuildMapArray(
+  ABaseMap: TPressOPFStorageMap): TPressOPFStorageMapArray;
+var
+  I, J: Integer;
+begin
+  SetLength(Result, Maps.Count);
+  J := 0;
+  for I := Pred(Maps.Count) downto 0 do
   begin
-    Result := Format('%s left outer join %s %s on %s.%s = %2:s.%5:s', [
-     Result,
-     AExternalField.TableName,
-     AExternalField.TableAlias,
-     MainTableAlias,
-     AExternalField.AttributeMetadata.PersistentName,
-     AExternalField.ObjectMetadata.IdMetadata.PersistentName]);
+    Result[J] := Maps[I];
+    if Result[J] = ABaseMap then
+    begin
+      SetLength(Result, J);
+      Exit;
+    end;
+    Inc(J);
   end;
+end;
 
+function TPressOPFDMLBuilder.BuildTableAlias(AIndex: Integer): string;
+begin
+  Result := SPressTableAliasPrefix + IntToStr(AIndex);
+end;
+
+function TPressOPFDMLBuilder.BuildTableList(
+  AMaps: TPressOPFStorageMapArray): string;
 var
   I: Integer;
 begin
-  Result := Map.Metadata.PersistentName + ' ' + MainTableAlias;
-  if Assigned(FExternalFields) then
-    for I := 0 to Pred(FExternalFields.Count) do
-      AddExternalTable(FExternalFields[I] as TPressOPFExternalField);
+  if Length(AMaps) > 0 then
+  begin
+    Result := AMaps[0].Metadata.PersistentName;
+    if Length(AMaps) > 1 then
+      Result := Result + ' ' + BuildTableAlias(0);
+    for I := 1 to Pred(Length(AMaps)) do
+      Result := Format('%s inner join %3:s %2:s on %1:s.%4:s = %2:s.%5:s', [
+       Result,
+       BuildTableAlias(0),
+       BuildTableAlias(I),
+       AMaps[I].Metadata.PersistentName,
+       AMaps[0].Metadata.IdMetadata.PersistentName,
+       AMaps[I].Metadata.IdMetadata.PersistentName]);
+  end else
+    Result := '';
 end;
 
-constructor TPressOPFDMLBuilder.Create(AMap: TPressOPFStorageMap);
+constructor TPressOPFDMLBuilder.Create(AMaps: TPressOPFStorageMapList);
 begin
   inherited Create;
-  FMap := AMap;
-  FMainTableAlias := SPressTableAliasPrefix + '0';
+  FMaps := AMaps;
+  FMap := FMaps.Last;
 end;
 
 function TPressOPFDMLBuilder.CreateAssignParamToFieldList(
@@ -1428,35 +1443,32 @@ function TPressOPFDMLBuilder.CreateAssignParamToFieldList(
 
 var
   VAttribute: TPressAttribute;
+  I: Integer;
 begin
   AConcurrency := False;
   Result := '';
-  with AttributeIterator do
+  for I := 0 to Pred(Map.Count) do
   begin
-    BeforeFirstItem;
-    while NextItem do
+    VAttribute := AObject.AttributeByName(Map[I].Name);
+    if not (VAttribute is TPressItems) then
     begin
-      VAttribute := AObject.AttributeByName(CurrentItem.Name);
-      if not (VAttribute is TPressItems) then
+      if VAttribute.IsChanged and (VAttribute.PersistentName <> '') then
       begin
-        if VAttribute.IsChanged and (VAttribute.PersistentName <> '') then
+        if (VAttribute is TPressNumeric) and
+         TPressNumeric(VAttribute).IsRelativelyChanged then
+          AddRelativeChange(TPressNumeric(VAttribute))
+        else
         begin
-          if (VAttribute is TPressNumeric) and
-           TPressNumeric(VAttribute).IsRelativelyChanged then
-            AddRelativeChange(TPressNumeric(VAttribute))
-          else
-          begin
-            AddParam(VAttribute.PersistentName);
-            AConcurrency := True;
-          end;
+          AddParam(VAttribute.PersistentName);
+          AConcurrency := True;
         end;
-      end else if VAttribute.IsChanged and
-       (VAttribute.PersistentName <> '') then
-        AConcurrency := True;
-    end;
-    if AConcurrency or (Result <> '') or (Map.Metadata = AObject.Metadata) then
-      AddParam(Map.Metadata.UpdateCountName);
+      end;
+    end else if VAttribute.IsChanged and
+     (VAttribute.PersistentName <> '') then
+      AConcurrency := True;
   end;
+  if AConcurrency or (Result <> '') or (Map.Metadata = AObject.Metadata) then
+    AddParam(Map.Metadata.UpdateCountName);
 end;
 
 function TPressOPFDMLBuilder.CreateIdParamList(ACount: Integer): string;
@@ -1494,31 +1506,6 @@ begin
    ':' + SPressPersistentIdParamString]);
 end;
 
-destructor TPressOPFDMLBuilder.Destroy;
-begin
-  FAttributeIterator.Free;
-  FExternalFields.Free;
-  inherited;
-end;
-
-function TPressOPFDMLBuilder.GetExternalFields(
-  AAttributeMetadata: TPressAttributeMetadata): TPressOPFExternalField;
-var
-  I: Integer;
-begin
-  if not Assigned(FExternalFields) then
-    FExternalFields := TObjectList.Create(True);
-  for I := 0 to Pred(FExternalFields.Count) do
-  begin
-    Result := FExternalFields[I] as TPressOPFExternalField;
-    if Result.AttributeMetadata = AAttributeMetadata then
-      Exit;
-  end;
-  Result := TPressOPFExternalField.Create(
-   AAttributeMetadata, Succ(FExternalFields.Count));
-  FExternalFields.Add(Result);
-end;
-
 function TPressOPFDMLBuilder.InsertLinkStatement(
   AMetadata: TPressAttributeMetadata): string;
 begin
@@ -1532,40 +1519,41 @@ function TPressOPFDMLBuilder.InsertStatement: string;
 begin
   Result := Format('insert into %s (%s) values (%s)', [
    Map.Metadata.PersistentName,
-   BuildFieldList(ptNone, [hfOID, hfClassId, hfUpdateCount]),
-   BuildFieldList(ptColon, [hfOID, hfClassId, hfUpdateCount])]);
+   BuildFieldList(ftSimple, [hfOID, hfClassId, hfUpdateCount]),
+   BuildFieldList(ftParams, [hfOID, hfClassId, hfUpdateCount])]);
 end;
 
 function TPressOPFDMLBuilder.SelectLinkStatement(
   AMetadata: TPressAttributeMetadata): string;
-var
-  VObjectMetadata: TPressObjectMetadata;
 begin
-  VObjectMetadata := AMetadata.ObjectClass.ClassMetadata;
-  Result := Format(
-   'select %0:s.%2:s, %1:s.%3:s from %4:s %0:s ' +
-   'inner join %5:s %1:s on %0:s.%2:s = %1:s.%6:s ' +
-   'where %0:s.%7:s = %8:s', [
-   SPressTableAliasPrefix + '0',
-   SPressTableAliasPrefix + '1',
+  Result := Format('select %s from %s where %s = %s', [
    AMetadata.PersLinkChildName,
-   VObjectMetadata.ClassIdName,
    AMetadata.PersLinkName,
-   VObjectMetadata.PersistentName,
-   VObjectMetadata.IdMetadata.PersistentName,
    AMetadata.PersLinkParentName,
    ':' + SPressPersistentIdParamString]);
   if AMetadata.PersLinkPosName <> '' then
     Result := Result + ' order by ' + AMetadata.PersLinkPosName;
 end;
 
-function TPressOPFDMLBuilder.SelectStatement: string;
+function TPressOPFDMLBuilder.SelectStatement(
+  ABaseMap: TPressOPFStorageMap): string;
+
+  function BuildKeyName(AMaps: TPressOPFStorageMapArray): string;
+  begin
+    if Length(AMaps) > 1 then
+      Result := BuildTableAlias(0) + '.' + Map.Metadata.KeyName
+    else
+      Result := Map.Metadata.KeyName;
+  end;
+
+var
+  VMaps: TPressOPFStorageMapArray;
 begin
-  Result := Format('select %s from %s where %s.%s = %s', [
-   BuildFieldList(ptTableAlias, [hfClassId, hfUpdateCount]),
-   BuildTableList,
-   MainTableAlias,
-   Map.Metadata.KeyName,
+  VMaps := BuildMapArray(ABaseMap);
+  Result := Format('select %s from %s where %s = %s', [
+   BuildFieldList(ftMaps, [hfClassId, hfUpdateCount], VMaps),
+   BuildTableList(VMaps),
+   BuildKeyName(VMaps),
    ':' + SPressPersistentIdParamString]);
 end;
 
