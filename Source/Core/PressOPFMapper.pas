@@ -995,11 +995,10 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
     var
       VCount, I: Integer;
     begin
+      if not Assigned(VDataset) then
+        VDataset := Connector.CreateDataset;
       if not NeedRebuild then
       begin
-        if not Assigned(VDataset) and ((AItems.RemovedProxies.Count > 0) or
-         (AItems.AddedProxies.Count > 0)) then
-          VDataset := Connector.CreateDataset;
         if AItems.RemovedProxies.Count > 0 then
         begin
           VDataset.SQL := DMLBuilder.DeleteLinkItemsStatement(AItems);
@@ -1016,8 +1015,6 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
         end;
       end else
       begin
-        if not Assigned(VDataset) then
-          VDataset := Connector.CreateDataset;
         VDataset.SQL := DMLBuilder.DeleteLinkStatement(AItems.Metadata);
         AddPersistentIdParam(VDataset, AObject.Id);
         VDataset.Execute;
@@ -1033,13 +1030,18 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
     procedure StoreParts(AParts: TPressParts);
     var
       VProxy: TPressProxy;
+      VObject: TPressObject;
       I: Integer;
     begin
       for I := 0 to Pred(AParts.Count) do
       begin
         VProxy := AParts.Proxies[I];
-        if VProxy.HasInstance and VProxy.Instance.IsChanged then
-          ObjectMapper.Store(VProxy.Instance);
+        if VProxy.HasInstance then
+        begin
+          VObject := VProxy.Instance;
+          if not VObject.IsPersistent or VObject.IsChanged then
+            ObjectMapper.Store(VObject);
+        end;
       end;
       UpdateLinks(AParts);
       for I := 0 to Pred(AParts.RemovedProxies.Count) do
@@ -1057,11 +1059,11 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
       begin
         VProxy := AReferences.Proxies[I];
         if VProxy.HasInstance then
-          VObject := VProxy.Instance
-        else
-          VObject := nil;
-        if Assigned(VObject) and not VObject.IsPersistent then
-          Persistence.Store(VObject);
+        begin
+          VObject := VProxy.Instance;
+          if not VObject.IsPersistent then
+            Persistence.Store(VObject);
+        end;
       end;
       UpdateLinks(AReferences);
     end;
