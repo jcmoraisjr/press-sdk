@@ -205,7 +205,7 @@ begin
   begin
     Query.ExecSQL;
     { TODO : Implement }
-    Result := 0;
+    Result := 1;  // dont raise conflict exception
   end;
 end;
 
