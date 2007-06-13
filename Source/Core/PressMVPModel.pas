@@ -810,7 +810,7 @@ begin
   end;
   if VPos > 0 then
   begin
-    VToken := Copy(AColumnItem, VPos + 1, Length(AColumnItem) - VPos);
+    VToken := Trim(Copy(AColumnItem, VPos + 1, Length(AColumnItem) - VPos));
     VPToken := PChar(VToken);
     if (VToken[1] in ['''', '"']) and (VToken[1] = VToken[Length(VToken)]) then
       VToken := AnsiExtractQuotedStr(VPToken, VToken[1]);
