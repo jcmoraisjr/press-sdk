@@ -1776,7 +1776,8 @@ function TPressMVPCustomFormView.ComponentByName(
 begin
   Result := Control.FindComponent(AComponentName);
   if not Assigned(Result) then
-    raise EPressMVPError.CreateFmt(SComponentNotFound, [AComponentName]);
+    raise EPressMVPError.CreateFmt(SComponentNotFound,
+     [Control.Name, AComponentName]);
 end;
 
 function TPressMVPCustomFormView.ControlByName(
