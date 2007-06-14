@@ -126,7 +126,7 @@ class function TPressDefaultReportItem.InternalMetadataStr: string;
 begin
   Result := 'TPressDefaultReportItem PersistentName="TReportItem" (' +
    'Caption: String(40);' +
-   'Visible: Boolean;' +
+   'Visible: Boolean DefaultValue=True;' +
    'ReportMetadata: Binary)';
 end;
 
