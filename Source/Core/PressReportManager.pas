@@ -211,14 +211,17 @@ begin
 end;
 
 function TPressReportManager.GetReportGroup: TPressReportGroup;
+var
+  VObject: TPressObject;
 begin
   if not Assigned(FReportGroup) then
   begin
     { TODO : Cache report group objects; include refresh option }
+    VObject := Model.Subject;
     FReportGroup :=
      (PressApp.DefaultService(CPressReportDataService) as TPressReportData).
-      FindReportGroup(Model.Subject.DataAccess, Model.Subject.ClassName);
-    FReportGroup.BusinessObj := Model.Subject;
+      FindReportGroup(VObject.DataAccess, VObject.ClassName);
+    FReportGroup.BusinessObj := VObject;
   end;
   Result := FReportGroup;
 end;
