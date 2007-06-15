@@ -1,15 +1,13 @@
-(*
-  Define one of the following persistence options to allow
-  the storing and retrieval of data entered into the application.
-  If no persistence is required then undefine all persistence
-  options.
-*)
-
-// Use the PressObjects Persistence Framework
+// Define one of the following persistence options to allow
+// the storing and retrieval of data entered into the application.
+// If no persistence is required then undefine all persistence
+// options.
 {$DEFINE UsePressOPF}
-
-// Use InstantObjects Persistence Framework
 {.$DEFINE UseInstantObjects}
+
+// Define the following directive to enable runtime report
+// management.
+{.$DEFINE UseReport}
 
 
 (************ Do not change directives below this line ************)

@@ -36,7 +36,7 @@ procedure TMainPresenter.InitPresenter;
 begin
   inherited;
   CreateQueryItemsPresenter(
-   'ItemsStringGrid', 'Name(240);Address.City.Name(160)', TMainModel);
+   'ItemsStringGrid', 'Name(240);Address.City.Name(160)', TMainGridModel);
   BindCommand(TPressMVPExecuteQueryCommand, 'QuerySpeedButton');
   BindCommand(TMainConnectorCommand, 'ConnectorMenuItem');
   BindCommand(TPressMVPCloseApplicationCommand, 'CloseMenuItem');
@@ -54,6 +54,7 @@ begin
 end;
 
 initialization
-  TMainPresenter.RegisterFormPresenter(TMainQuery, TMainForm);
+  TMainPresenter.RegisterFormPresenter(
+   TMainQuery, TMainForm, [], TMainModel);
 
 end.

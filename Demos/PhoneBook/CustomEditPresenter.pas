@@ -5,18 +5,19 @@ unit CustomEditPresenter;
 interface
 
 uses
-  PressMVPPresenter;
+  PressMVPModel, PressMVPPresenter;
 
 type
   TCustomEditPresenter = class(TPressMVPFormPresenter)
   protected
     procedure InitPresenter; override;
+    class function InternalModelClass: TPressMVPObjectModelClass; override;
   end;
 
 implementation
 
 uses
-  PressMVPCommand;
+  PressMVPCommand, CustomEditModel;
 
 { TCustomEditPresenter }
 
@@ -25,6 +26,11 @@ begin
   inherited;
   BindCommand(TPressMVPSaveObjectCommand, 'OkButton');
   BindCommand(TPressMVPCancelObjectCommand, 'CancelButton');
+end;
+
+class function TCustomEditPresenter.InternalModelClass: TPressMVPObjectModelClass;
+begin
+  Result := TCustomEditModel;
 end;
 
 end.

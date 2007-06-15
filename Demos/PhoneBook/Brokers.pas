@@ -28,6 +28,9 @@ implementation
 interface
 
 uses
+{$IFDEF UseReport}
+  PressFastReportBroker,
+{$ENDIF}
 {$IFDEF FPC}
   // (step 1 of 3) select a broker for the Free Pascal Compiler
   PressSQLdbBroker;

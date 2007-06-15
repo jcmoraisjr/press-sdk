@@ -5,10 +5,21 @@ unit MainModel;
 interface
 
 uses
-  PressMVPModel;
+  PressMVPModel, PressReportManager;
 
 type
-  TMainModel = class(TPressMVPReferencesModel)
+  TMainModel = class(TPressMVPQueryModel)
+  private
+    {$IFDEF UseReport}
+    FReportManager: TPressReportManager;
+    {$ENDIF}
+  protected
+    procedure InitCommands; override;
+  public
+    destructor Destroy; override;
+  end;
+
+  TMainGridModel = class(TPressMVPReferencesModel)
   protected
     procedure InternalCreateAddCommands; override;
   end;
@@ -20,7 +31,25 @@ uses
 
 { TMainModel }
 
-procedure TMainModel.InternalCreateAddCommands;
+destructor TMainModel.Destroy;
+begin
+  {$IFDEF UseReport}
+  FReportManager.Free;
+  {$ENDIF}
+  inherited;
+end;
+
+procedure TMainModel.InitCommands;
+begin
+  inherited;
+  {$IFDEF UseReport}
+  FReportManager := TPressReportManager.Create(Self);
+  {$ENDIF}
+end;
+
+{ TMainGridModel }
+
+procedure TMainGridModel.InternalCreateAddCommands;
 begin
   //inherited;
   AddCommands([TMainAddPersonCommand, TMainAddCompanyCommand]);
