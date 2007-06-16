@@ -51,7 +51,6 @@ type
   protected
     function InternalCreateIterator: TPressCustomIterator; override;
   public
-    destructor Destroy; override;
     function Add(AObject: TPressEvent): Integer;
     function CreateIterator: TPressEventIterator;
     function Extract(AObject: TPressEvent): TPressEvent;
@@ -91,6 +90,7 @@ type
   TPressNotifierList = class(TPressList)
   private
     function GetItems(AIndex: Integer): TPressNotifier;
+    procedure SetItems(AIndex: Integer; AValue: TPressNotifier);
   protected
     function InternalCreateIterator: TPressCustomIterator; override;
   public
@@ -99,7 +99,8 @@ type
     function IndexOf(AObject: TPressNotifier): Integer;
     procedure Insert(Index: Integer; AObject: TPressNotifier);
     function Remove(AObject: TPressNotifier): Integer;
-    property Items[AIndex: Integer]: TPressNotifier read GetItems; default;
+    function UnassignNotifiers(ANotifier: TPressNotifier): Boolean;
+    property Items[AIndex: Integer]: TPressNotifier read GetItems write SetItems; default;
   end;
 
   TPressNotifierIterator = class(TPressIterator)
@@ -136,7 +137,7 @@ type
     function IndexOf(AObject: TPressNotificationItem): Integer;
     procedure Insert(Index: Integer; AObject: TPressNotificationItem);
     function Remove(AObject: TPressNotificationItem): Integer;
-    procedure RemoveNotification(ANotifier: TPressNotifier; AObservedObject: TObject);
+    function RemoveNotification(ANotifier: TPressNotifier; AObservedObject: TObject): Boolean;
     property Items[AIndex: Integer]: TPressNotificationItem read GetItems; default;
     property ObservedObjectItem[AObservedObject: TObject]: TPressNotificationItem read GetObservedObjectItem;
   end;
@@ -164,6 +165,7 @@ type
 
   TPressEventClassList = class(TPressList)
   private
+    FHasRemovedNotifiers: Boolean;
     function GetClassItem(AEventClass: TPressEventClass): TPressEventClassItem;
     function GetItems(AIndex: Integer): TPressEventClassItem;
   protected
@@ -177,6 +179,7 @@ type
     function Remove(AObject: TPressEventClassItem): Integer;
     procedure RemoveNotification(ANotifier: TPressNotifier; AObservedObject: TObject);
     property EventClassItem[AEventClass: TPressEventClass]: TPressEventClassItem read GetClassItem;
+    property HasRemovedNotifiers: Boolean read FHasRemovedNotifiers;
     property Items[AIndex: Integer]: TPressEventClassItem read GetItems; default;
   end;
 
@@ -196,6 +199,7 @@ type
     property EventClasses: TPressEventClassList read GetEventClasses;
   public
     procedure NotifyEvent(AEvent: TPressEvent);
+    procedure ShrinkEventClasses;
     procedure Subscribe(ANotifier: TPressNotifier; AObservedObject: TObject; AEventClass: TPressEventClass);
     procedure Unsubscribe(ANotifier: TPressNotifier; AObservedObject: TObject = nil);
   end;
@@ -241,6 +245,7 @@ begin
       _PressEventQueue.Extract(VEvent);
       VEvent.Notify;
     end;
+  PressNotifiers.ShrinkEventClasses;
 end;
 
 { TPressEvent }
@@ -307,13 +312,6 @@ end;
 function TPressEventList.CreateIterator: TPressEventIterator;
 begin
   Result := TPressEventIterator.Create(Self);
-end;
-
-destructor TPressEventList.Destroy;
-begin
-  { TODO : Only critical events }
-  PressProcessEventQueue;
-  inherited;
 end;
 
 function TPressEventList.Extract(AObject: TPressEvent): TPressEvent;
@@ -446,6 +444,26 @@ begin
   Result := inherited Remove(AObject);
 end;
 
+procedure TPressNotifierList.SetItems(
+  AIndex: Integer; AValue: TPressNotifier);
+begin
+  inherited Items[AIndex] := AValue;
+end;
+
+function TPressNotifierList.UnassignNotifiers(
+  ANotifier: TPressNotifier): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 0 to Pred(Count) do
+    if Items[I] = ANotifier then
+    begin
+      Items[I] := nil;
+      Result := True;
+    end;
+end;
+
 { TPressNotifierIterator }
 
 function TPressNotifierIterator.GetCurrentItem: TPressNotifier;
@@ -536,16 +554,17 @@ begin
   Result := inherited Remove(AObject);
 end;
 
-procedure TPressNotificationList.RemoveNotification(ANotifier: TPressNotifier;
-  AObservedObject: TObject);
+function TPressNotificationList.RemoveNotification(
+  ANotifier: TPressNotifier; AObservedObject: TObject): Boolean;
 var
   I: Integer;
 begin
+  Result := False;
   for I := 0 to Pred(Count) do
     with Items[I] do
       if not Assigned(AObservedObject) or (ObservedObject = AObservedObject) then
-        while Notifiers.Remove(ANotifier) >= 0 do
-          ;
+        if Notifiers.UnassignNotifiers(ANotifier) then
+          Result := True;
 end;
 
 { TPressNotificationIterator }
@@ -642,7 +661,8 @@ var
   I: Integer;
 begin
   for I := 0 to Pred(Count) do
-    Items[I].Notifications.RemoveNotification(ANotifier, AObservedObject);
+    if Items[I].Notifications.RemoveNotification(ANotifier, AObservedObject) then
+      FHasRemovedNotifiers := True;
 end;
 
 { TPressEventClassIterator }
@@ -670,27 +690,64 @@ end;
 procedure TPressNotifiers.NotifyEvent(AEvent: TPressEvent);
 var
   I, J, K: Integer;
+  VEventClasses: TPressEventClassList;
   VEventClass: TPressEventClassItem;
+  VNotifications: TPressNotificationList;
   VNotification: TPressNotificationItem;
+  VNotifiers: TPressNotifierList;
+  VNotifier: TPressNotifier;
 begin
-  { TODO : Test and fix crash if an event is removed within the
-    notification process }
-  for I := 0 to Pred(EventClasses.Count) do
+  VEventClasses := EventClasses;
+  for I := 0 to Pred(VEventClasses.Count) do
   begin
-    VEventClass := EventClasses[I];
+    VEventClass := VEventClasses[I];
     if AEvent is VEventClass.EventClass then
     begin
-      for J := 0 to Pred(VEventClass.Notifications.Count) do
+      VNotifications := VEventClass.Notifications;
+      for J := 0 to Pred(VNotifications.Count) do
       begin
-        VNotification := VEventClass.Notifications[J];
+        VNotification := VNotifications[J];
         if not Assigned(VNotification.ObservedObject) or
          (VNotification.ObservedObject = AEvent.Owner) then
         begin
-          for K := 0 to Pred(VNotification.Notifiers.Count) do
-            VNotification.Notifiers[K].ProcessEvent(AEvent);
+          VNotifiers := VNotification.Notifiers;
+          for K := 0 to Pred(VNotifiers.Count) do
+          begin
+            VNotifier := VNotifiers[K];
+            if Assigned(VNotifier) then
+              VNotifier.ProcessEvent(AEvent);
+          end;
         end;
       end;
     end;
+  end;
+  ShrinkEventClasses;
+end;
+
+procedure TPressNotifiers.ShrinkEventClasses;
+var
+  VEventClasses: TPressEventClassList;
+  VNotifications: TPressNotificationList;
+  VNotifiers: TPressNotifierList;
+  I, J: Integer;
+begin
+  VEventClasses := EventClasses;
+  if VEventClasses.HasRemovedNotifiers then
+  begin
+    for I := Pred(VEventClasses.Count) downto 0 do
+    begin
+      VNotifications := VEventClasses[I].Notifications;
+      for J := Pred(VNotifications.Count) downto 0 do
+      begin
+        VNotifiers := VNotifications[J].Notifiers;
+        VNotifiers.Pack;
+        if VNotifiers.Count = 0 then
+          VNotifications.Delete(J);
+      end;
+      if VNotifications.Count = 0 then
+        VEventClasses.Delete(I);
+    end;
+    VEventClasses.FHasRemovedNotifiers := False;  // friend class
   end;
 end;
 
@@ -704,7 +761,6 @@ end;
 procedure TPressNotifiers.Unsubscribe(
   ANotifier: TPressNotifier; AObservedObject: TObject);
 begin
-  { TODO : Remove empty EventClassItem item }
   EventClasses.RemoveNotification(ANotifier, AObservedObject);
 end;
 

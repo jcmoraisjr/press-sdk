@@ -701,6 +701,7 @@ procedure TPressApplication.DoneApplication;
   end;
 
 begin
+  PressProcessEventQueue;
   FRunning := False;
   TPressApplicationDoneEvent.Create(Self).Notify;
   DoneAllServices;
