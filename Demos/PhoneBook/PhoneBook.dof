@@ -1,2 +1,2 @@
 [Directories]
-SearchPath=..\..\Source\Core
+SearchPath=..\..\Source\Core;..\..\Source\Brokers
