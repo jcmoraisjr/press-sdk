@@ -17,7 +17,7 @@
   {.$DEFINE PressLogReport}
   {.$DEFINE PressLogDAO}
     {.$DEFINE PressLogDAOInterface}
-    {$DEFINE PressLogDAOPersistence}
+    {.$DEFINE PressLogDAOPersistence}
 
 {.$DEFINE PressDebugBaseUnits}
 
