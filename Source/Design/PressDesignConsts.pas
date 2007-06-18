@@ -27,15 +27,14 @@ const
   SPressFrameClassNameStr = 'TFrame';
   SPressOIDGeneratorClassNameStr = 'TPressOIDGenerator';
 
-resourcestring
-  SClassNameAndMetadataMismatch = 'Metadata do método %s.' + SPressMetadataMethodName + ' não percente à classe %0:s';
-  SInterfaceAlreadyInstalled = 'Interface %s já está instalada';
+  SClassNameAndMetadataMismatch = 'The metadata declared in the ''%0:s.' + SPressMetadataMethodName + ''' method does not belong to the ''%0:s'' class';
+  SInterfaceAlreadyInstalled = 'Interface ''%s'' was already installed';
   SModuleNotFound = 'Module ''%s'' not found';
-  SUninstalledIDEInterface = 'Nenhuma interface para a IDE foi instalada';
+  SUninstalledIDEInterface = 'An IDE interface is not installed';
 
-  SPressDataTypeDeclarationMsg = 'Declaração de tipo de dado';
-  SPressProcMethodDeclMsg = 'Declaração de procedimento, função ou método';
-  SPressStringConstMsg = 'Constante string';
+  SPressDataTypeDeclarationMsg = 'Data type declaration';
+  SPressProcMethodDeclMsg = 'Procedure, function or method declaration';
+  SPressStringConstMsg = 'String constant';
 
   SPressProjectBusinessClasses = 'Business classes';
   SPressProjectPersistentClasses = 'Persistent classes';
