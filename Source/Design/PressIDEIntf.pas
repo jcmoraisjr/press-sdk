@@ -49,8 +49,9 @@ type
 
   IPressIDEInterface = interface(IInterface)
   ['{0369D063-F29D-4C2C-9F4C-B80736B31F67}']
+    procedure ClearModules;
     function GetName: string;
-    function ProjectModuleByName(const AName: string): IPressIDEModule;
+    function FindModule(const AName: string): IPressIDEModule;
     procedure ProjectModuleNames(AList: TStrings);
     property Name: string read GetName;
   end;

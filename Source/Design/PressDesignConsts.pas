@@ -23,10 +23,14 @@ const
   SPressMetadataMethodName = 'InternalMetadataStr';
   SPressRegisterEnumMethodName = 'RegisterEnumMetadata';
   SPressResultStr = 'Result';
+  SPressFormClassNameStr = 'TForm';
+  SPressFrameClassNameStr = 'TFrame';
+  SPressOIDGeneratorClassNameStr = 'TPressOIDGenerator';
 
 resourcestring
   SClassNameAndMetadataMismatch = 'Metadata do método %s.' + SPressMetadataMethodName + ' não percente à classe %0:s';
   SInterfaceAlreadyInstalled = 'Interface %s já está instalada';
+  SModuleNotFound = 'Module ''%s'' not found';
   SUninstalledIDEInterface = 'Nenhuma interface para a IDE foi instalada';
 
   SPressDataTypeDeclarationMsg = 'Declaração de tipo de dado';
@@ -42,7 +46,8 @@ resourcestring
   SPressProjectPresenters = 'Presenters';
   SPressProjectCommands = 'Commands';
   SPressProjectInteractors = 'Interactors';
-  SPressProjectRegistries = 'Registries';
+  SPressProjectRegisteredClasses = 'Registered classes';
+  SPressProjectRegisteredItems = 'Registered items';
   SPressProjectUserAttributes = 'User attributes';
   SPressProjectUserEnumerations = 'User enumerations';
   SPressProjectUserOIDGenerators = 'User OID generators';

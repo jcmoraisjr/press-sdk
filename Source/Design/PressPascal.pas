@@ -19,6 +19,7 @@ unit PressPascal;
 interface
 
 uses
+  Contnrs,
   PressClasses,
   PressParser;
 
@@ -26,7 +27,7 @@ type
   TPressPascalReader = class(TPressParserReader)
   protected
     procedure InternalCheckComment(var AToken: string); override;
-    function InternalReadSymbol: string; override;
+    function InternalCreateBigSymbolsArray: TPressStringArray; override;
   public
     function ReadConcatString: string;
   end;
@@ -63,36 +64,47 @@ type
   TPressPascalSection = class(TPressPascalObject)
   protected
     procedure InternalRead(Reader: TPressParserReader); override;
-    function IsDeclarationSection: Boolean; virtual; abstract;
     function IsFinished(Reader: TPressParserReader): Boolean; override;
     class function NextSection: TPressPascalObjectClass; virtual; abstract;
   end;
 
-  TPressPascalInterfaceSection = class(TPressPascalSection)
+  TPressPascalUsesDeclaration = class;
+
+  TPressPascalDeclarationSection = class(TPressPascalSection)
+  private
+    FUses: TPressPascalUsesDeclaration;
+  protected
+    procedure InternalRead(Reader: TPressParserReader); override;
+  public
+    property UsesDeclaration: TPressPascalUsesDeclaration read FUses;
+  end;
+
+  TPressPascalBlockSection = class(TPressPascalSection)
+  protected
+    procedure InternalRead(Reader: TPressParserReader); override;
+  end;
+
+  TPressPascalInterfaceSection = class(TPressPascalDeclarationSection)
   protected
     class function Identifier: string; override;
-    function IsDeclarationSection: Boolean; override;
     class function NextSection: TPressPascalObjectClass; override;
   end;
 
-  TPressPascalImplementationSection = class(TPressPascalSection)
+  TPressPascalImplementationSection = class(TPressPascalDeclarationSection)
   protected
     class function Identifier: string; override;
-    function IsDeclarationSection: Boolean; override;
     class function NextSection: TPressPascalObjectClass; override;
   end;
 
-  TPressPascalInitializationSection = class(TPressPascalSection)
+  TPressPascalInitializationSection = class(TPressPascalBlockSection)
   protected
     class function Identifier: string; override;
-    function IsDeclarationSection: Boolean; override;
     class function NextSection: TPressPascalObjectClass; override;
   end;
 
-  TPressPascalFinalizationSection = class(TPressPascalSection)
+  TPressPascalFinalizationSection = class(TPressPascalBlockSection)
   protected
     class function Identifier: string; override;
-    function IsDeclarationSection: Boolean; override;
     class function NextSection: TPressPascalObjectClass; override;
   end;
 
@@ -102,10 +114,31 @@ type
     function IsFinished(Reader: TPressParserReader): Boolean; override;
   end;
 
+  TPressPascalUsedUnit = class;
+
   TPressPascalUsesDeclaration = class(TPressPascalDeclaration)
+  private
+    FUsedUnits: TObjectList;
+    function GetUsedUnits: TObjectList;
+    function GetUsedUnit(AIndex: Integer): TPressPascalUsedUnit;
   protected
     class function Identifier: string; override;
     procedure InternalRead(Reader: TPressParserReader); override;
+    property UsedUnits: TObjectList read GetUsedUnits;
+  public
+    destructor Destroy; override;
+    function UsedUnitCount: Integer;
+    property UsedUnit[AIndex: Integer]: TPressPascalUsedUnit read GetUsedUnit;
+  end;
+
+  TPressPascalUsedUnit = class(TObject)
+  private
+    FUnitName: string;
+    FUnitPath: string;
+  public
+    constructor Create(const AUnitName, AUnitPath: string);
+    property UnitName: string read FUnitName;
+    property UnitPath: string read FUnitPath;
   end;
 
   TPressPascalConstsDeclaration = class(TPressPascalDeclaration)
@@ -288,34 +321,16 @@ begin
   AToken := ReadToken;
 end;
 
-function TPressPascalReader.InternalReadSymbol: string;
-
-  function IsSymbol(const ASymbol: string): Boolean;
-  const
-    CBigSymbols: array [0..6] of string = (
-     ':=', '<=', '>=', '<>', '(*', '*)', '//');
-  var
-    I: Integer;
-    VLen: Integer;
-  begin
-    Result := True;
-    VLen := Length(ASymbol);
-    for I := Low(CBigSymbols) to High(CBigSymbols) do
-      if Copy(CBigSymbols[I], 1, VLen) = ASymbol then
-        Exit;
-    Result := False;
-  end;
-
-var
-  Ch: Char;
+function TPressPascalReader.InternalCreateBigSymbolsArray: TPressStringArray;
 begin
-  Result := '';
-  Ch := ReadChar;
-  repeat
-    Result := Result + Ch;
-    Ch := ReadChar;
-  until not IsSymbol(Result + Ch);
-  UnreadChar;
+  SetLength(Result, 7);
+  Result[0] := ':=';
+  Result[1] := '<=';
+  Result[2] := '>=';
+  Result[3] := '<>';
+  Result[4] := '(*';
+  Result[5] := '*)';
+  Result[6] := '//';
 end;
 
 function TPressPascalReader.ReadConcatString: string;
@@ -406,17 +421,6 @@ procedure TPressPascalSection.InternalRead(Reader: TPressParserReader);
 begin
   inherited;
   Reader.ReadMatchText(Identifier);
-  if IsDeclarationSection then
-  begin
-    Parse(Reader, [TPressPascalUsesDeclaration]);
-    while not IsFinished(Reader) do
-      Parse(Reader, [TPressPascalConstsDeclaration,
-       TPressPascalResStringsDeclaration, TPressPascalTypesDeclaration,
-       TPressPascalVarsDeclaration, TPressPascalProcDeclaration],
-       Self, True, NextSection.Identifier);
-  end else
-    while not IsFinished(Reader) do
-      Reader.ReadToken;
 end;
 
 function TPressPascalSection.IsFinished(Reader: TPressParserReader): Boolean;
@@ -428,16 +432,36 @@ begin
    ((NextSection <> nil) and SameText(Token, NextSection.Identifier));
 end;
 
+{ TPressPascalDeclarationSection }
+
+procedure TPressPascalDeclarationSection.InternalRead(
+  Reader: TPressParserReader);
+begin
+  inherited;
+  FUses := TPressPascalUsesDeclaration(Parse(Reader, [
+   TPressPascalUsesDeclaration]));
+  while not IsFinished(Reader) do
+    Parse(Reader, [TPressPascalConstsDeclaration,
+     TPressPascalResStringsDeclaration, TPressPascalTypesDeclaration,
+     TPressPascalVarsDeclaration, TPressPascalProcDeclaration],
+     Self, True, NextSection.Identifier);
+end;
+
+{ TPressPascalBlockSection }
+
+procedure TPressPascalBlockSection.InternalRead(
+  Reader: TPressParserReader);
+begin
+  inherited;
+  while not IsFinished(Reader) do
+    Reader.ReadToken;
+end;
+
 { TPressPascalInterfaceSection }
 
 class function TPressPascalInterfaceSection.Identifier: string;
 begin
   Result := 'interface';
-end;
-
-function TPressPascalInterfaceSection.IsDeclarationSection: Boolean;
-begin
-  Result := True;
 end;
 
 class function TPressPascalInterfaceSection.NextSection: TPressPascalObjectClass;
@@ -452,11 +476,6 @@ begin
   Result := 'implementation';
 end;
 
-function TPressPascalImplementationSection.IsDeclarationSection: Boolean;
-begin
-  Result := True;
-end;
-
 class function TPressPascalImplementationSection.NextSection: TPressPascalObjectClass;
 begin
   Result := TPressPascalInitializationSection;
@@ -469,11 +488,6 @@ begin
   Result := 'initialization';
 end;
 
-function TPressPascalInitializationSection.IsDeclarationSection: Boolean;
-begin
-  Result := False;
-end;
-
 class function TPressPascalInitializationSection.NextSection: TPressPascalObjectClass;
 begin
   Result := TPressPascalFinalizationSection;
@@ -484,11 +498,6 @@ end;
 class function TPressPascalFinalizationSection.Identifier: string;
 begin
   Result := 'finalization';
-end;
-
-function TPressPascalFinalizationSection.IsDeclarationSection: Boolean;
-begin
-  Result := False;
 end;
 
 class function TPressPascalFinalizationSection.NextSection: TPressPascalObjectClass;
@@ -528,6 +537,25 @@ end;
 
 { TPressPascalUsesDeclaration }
 
+destructor TPressPascalUsesDeclaration.Destroy;
+begin
+  FUsedUnits.Free;
+  inherited;
+end;
+
+function TPressPascalUsesDeclaration.GetUsedUnit(
+  AIndex: Integer): TPressPascalUsedUnit;
+begin
+  Result := UsedUnits[AIndex] as TPressPascalUsedUnit;
+end;
+
+function TPressPascalUsesDeclaration.GetUsedUnits: TObjectList;
+begin
+  if not Assigned(FUsedUnits) then
+    FUsedUnits := TObjectList.Create(True);
+  Result := FUsedUnits;
+end;
+
 class function TPressPascalUsesDeclaration.Identifier: string;
 begin
   Result := 'uses';
@@ -535,9 +563,45 @@ end;
 
 procedure TPressPascalUsesDeclaration.InternalRead(
   Reader: TPressParserReader);
+var
+  VUnitName, VUnitPath: string;
 begin
   inherited;
-  Reader.ReadNext(';', True);
+  while True do
+  begin
+    VUnitName := Reader.ReadIdentifier;
+    if not SameText(Reader.ReadToken, 'in') then
+    begin
+      VUnitPath := '';
+      Reader.UnreadToken;
+    end else
+      VUnitPath := Reader.ReadUnquotedString;
+    UsedUnits.Add(TPressPascalUsedUnit.Create(VUnitName, VUnitPath));
+    if Reader.ReadNextToken <> ',' then
+    begin
+      Reader.ReadMatch(';');
+      Exit;
+    end else
+      Reader.ReadToken;
+  end;
+end;
+
+function TPressPascalUsesDeclaration.UsedUnitCount: Integer;
+begin
+  if Assigned(FUsedUnits) then
+    Result := FUsedUnits.Count
+  else
+    Result := 0;
+end;
+
+{ TPressPascalUsedUnit }
+
+constructor TPressPascalUsedUnit.Create(const AUnitName,
+  AUnitPath: string);
+begin
+  inherited Create;
+  FUnitName := AUnitName;
+  FUnitPath := AUnitPath;
 end;
 
 { TPressPascalConstsDeclaration }
