@@ -1,5 +1,5 @@
 (*
-  PressObjects, Data Access Object Classes
+  PressObjects, Data Access Classes
   Copyright (C) 2007 Laserpress Ltda.
 
   http://www.pressobjects.org
