@@ -193,13 +193,16 @@ type
   TPressNotifiers = class(TPressSingleton)
   private
     FEventClasses: TPressEventClassList;
+    FLockShrinkListCount: Integer;
     function GetEventClasses: TPressEventClassList;
+    procedure LockShrinkList;
+    procedure ShrinkEventClasses;
+    procedure UnlockShrinkList;
   protected
     procedure Finit; override;
     property EventClasses: TPressEventClassList read GetEventClasses;
   public
     procedure NotifyEvent(AEvent: TPressEvent);
-    procedure ShrinkEventClasses;
     procedure Subscribe(ANotifier: TPressNotifier; AObservedObject: TObject; AEventClass: TPressEventClass);
     procedure Unsubscribe(ANotifier: TPressNotifier; AObservedObject: TObject = nil);
   end;
@@ -245,7 +248,6 @@ begin
       _PressEventQueue.Extract(VEvent);
       VEvent.Notify;
     end;
-  PressNotifiers.ShrinkEventClasses;
 end;
 
 { TPressEvent }
@@ -687,6 +689,11 @@ begin
   Result := FEventClasses;
 end;
 
+procedure TPressNotifiers.LockShrinkList;
+begin
+  Inc(FLockShrinkListCount);
+end;
+
 procedure TPressNotifiers.NotifyEvent(AEvent: TPressEvent);
 var
   I, J, K: Integer;
@@ -697,31 +704,35 @@ var
   VNotifiers: TPressNotifierList;
   VNotifier: TPressNotifier;
 begin
-  VEventClasses := EventClasses;
-  for I := 0 to Pred(VEventClasses.Count) do
-  begin
-    VEventClass := VEventClasses[I];
-    if AEvent is VEventClass.EventClass then
+  LockShrinkList;
+  try
+    VEventClasses := EventClasses;
+    for I := 0 to Pred(VEventClasses.Count) do
     begin
-      VNotifications := VEventClass.Notifications;
-      for J := 0 to Pred(VNotifications.Count) do
+      VEventClass := VEventClasses[I];
+      if AEvent is VEventClass.EventClass then
       begin
-        VNotification := VNotifications[J];
-        if not Assigned(VNotification.ObservedObject) or
-         (VNotification.ObservedObject = AEvent.Owner) then
+        VNotifications := VEventClass.Notifications;
+        for J := 0 to Pred(VNotifications.Count) do
         begin
-          VNotifiers := VNotification.Notifiers;
-          for K := 0 to Pred(VNotifiers.Count) do
+          VNotification := VNotifications[J];
+          if not Assigned(VNotification.ObservedObject) or
+           (VNotification.ObservedObject = AEvent.Owner) then
           begin
-            VNotifier := VNotifiers[K];
-            if Assigned(VNotifier) then
-              VNotifier.ProcessEvent(AEvent);
+            VNotifiers := VNotification.Notifiers;
+            for K := 0 to Pred(VNotifiers.Count) do
+            begin
+              VNotifier := VNotifiers[K];
+              if Assigned(VNotifier) then
+                VNotifier.ProcessEvent(AEvent);
+            end;
           end;
         end;
       end;
     end;
+  finally
+    UnlockShrinkList;
   end;
-  ShrinkEventClasses;
 end;
 
 procedure TPressNotifiers.ShrinkEventClasses;
@@ -756,6 +767,13 @@ procedure TPressNotifiers.Subscribe(
   AEventClass: TPressEventClass);
 begin
   EventClasses.AddNotification(ANotifier, AObservedObject, AEventClass);
+end;
+
+procedure TPressNotifiers.UnlockShrinkList;
+begin
+  Dec(FLockShrinkListCount);
+  if FLockShrinkListCount = 0 then
+    ShrinkEventClasses;
 end;
 
 procedure TPressNotifiers.Unsubscribe(
