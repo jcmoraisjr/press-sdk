@@ -273,6 +273,7 @@ var
   VModuleIntf: IPressIDEModule;
   I: Integer;
 begin
+  BOModel.ClearMetadatas;
   CodeUpdater.ClearProjectModules;
   Project.DisableChanges;
   VModuleNames := TStringList.Create;
