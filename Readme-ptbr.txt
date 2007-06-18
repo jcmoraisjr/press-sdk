@@ -86,6 +86,7 @@ Para construir uma nova aplicação:
 ($Press)/Docs/CreatingApplication-ptbr.txt
 
 Consulte o aplicativo demonstração:
+($Press)/Demos/Readme.txt
 ($Press)/Demos/
 
 

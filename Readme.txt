@@ -83,6 +83,7 @@ To construct a new application:
 ($Press)/Docs/CreatingApplication.txt
 
 Study the demonstration application:
+($Press)/Demos/Readme.txt
 ($Press)/Demos/
 
 
