@@ -599,8 +599,6 @@ procedure TPressMVPPointerUpdaterInteractor.InternalUpdateModel;
 var
   VIndex: Integer;
 begin
-  if Owner.View.ReferencesVisible then
-    Exit;
   if View.AsString = '' then
     Model.Subject.Clear
   else
