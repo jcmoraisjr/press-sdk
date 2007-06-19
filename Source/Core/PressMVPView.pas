@@ -121,6 +121,9 @@ type
   TPressMVPViewDropDownEvent = class(TPressMVPViewEvent)
   end;
 
+  TPressMVPViewSelectEvent = class(TPressMVPViewEvent)
+  end;
+
   TPressMVPGridView = class;
 
   {$IFDEF PressViewNotification}
@@ -366,12 +369,20 @@ type
     FViewChangeEvent: TNotifyEvent;
     FViewDrawItemEvent: TDrawItemEvent;
     FViewDropDownEvent: TNotifyEvent;
+    {$IFDEF FPC}
+    FViewSelectEvent: TNotifyEvent;
+    {$ENDIF}
     function GetControl: TCustomComboBox;
   protected
     procedure ViewChangeEvent(Sender: TObject); virtual;
+    {$IFNDEF FPC}
     procedure ViewClickEvent(Sender: TObject); override;
+    {$ENDIF}
     procedure ViewDrawItemEvent(AControl: TWinControl; AIndex: Integer; ARect: TRect; AState: TOwnerDrawState); virtual;
     procedure ViewDropDownEvent(Sender: TObject); virtual;
+    {$IFDEF FPC}
+    procedure ViewSelectEvent(Sender: TObject); virtual;
+    {$ENDIF}
   protected
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
@@ -1306,9 +1317,15 @@ begin
     FViewChangeEvent := OnChange;
     FViewDrawItemEvent := OnDrawItem;
     FViewDropDownEvent := OnDropDown;
+    {$IFDEF FPC}
+    FViewSelectEvent := OnSelect;
+    {$ENDIF}
     OnChange := ViewChangeEvent;
     OnDrawItem := ViewDrawItemEvent;
     OnDropDown := ViewDropDownEvent;
+    {$IFDEF FPC}
+    OnSelect := ViewSelectEvent;
+    {$ENDIF}
   end;
 end;
 
@@ -1382,13 +1399,16 @@ begin
     FViewChangeEvent(Sender);
 end;
 
+{$IFNDEF FPC}
 procedure TPressMVPComboBoxView.ViewClickEvent(Sender: TObject);
 begin
   if EventsDisabled then
     Exit;
   Changed;
+  TPressMVPViewSelectEvent.Create(Self).Notify;
   inherited;
 end;
+{$ENDIF}
 
 procedure TPressMVPComboBoxView.ViewDrawItemEvent(AControl: TWinControl;
   AIndex: Integer; ARect: TRect; AState: TOwnerDrawState);
@@ -1415,6 +1435,18 @@ begin
   if Assigned(FViewDropDownEvent) then
     FViewDropDownEvent(Sender);
 end;
+
+{$IFDEF FPC}
+procedure TPressMVPComboBoxView.ViewSelectEvent(Sender: TObject);
+begin
+  if EventsDisabled then
+    Exit;
+  Changed;
+  TPressMVPViewSelectEvent.Create(Self).Notify;
+  if Assigned(FViewSelectEvent) then
+    FViewSelectEvent(Sender);
+end;
+{$ENDIF}
 
 { TPressMVPItemsView }
 

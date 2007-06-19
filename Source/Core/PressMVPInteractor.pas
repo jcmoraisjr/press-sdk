@@ -592,7 +592,7 @@ end;
 procedure TPressMVPPointerUpdaterInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewClickEvent]);
+  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewSelectEvent]);
 end;
 
 procedure TPressMVPPointerUpdaterInteractor.InternalUpdateModel;
