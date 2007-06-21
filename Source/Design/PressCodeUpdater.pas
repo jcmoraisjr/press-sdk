@@ -232,7 +232,7 @@ procedure TPressCodeUpdater.ExtractClassDeclarations(
       if not Assigned(Result) then
       begin
         Result := AItems.Add;
-        Result.Name := AClassName;
+        Result.ObjectClassName := AClassName;
       end;
     end;
 
@@ -251,7 +251,7 @@ procedure TPressCodeUpdater.ExtractClassDeclarations(
       //
     else
       Result := Project.RootUnknownClasses;
-    if not SameText(Result.Name, AClassName) then
+    if not SameText(Result.ObjectClassName, AClassName) then
       Result := FindChildItem(Result.ChildItems);
   end;
 
@@ -296,7 +296,7 @@ begin
       VClassDecl := TPressPascalClassType(ATypes[I]);
       VParentClass := ClassDeclarationByName(VClassDecl.ParentName);
       VClass := VParentClass.ChildItems.Add as TPressProjectClass;
-      VClass.Name := VClassDecl.Name;
+      VClass.ObjectClassName := VClassDecl.Name;
       VClass.ParentClass := VParentClass;
       AModule.Items.Add(VClass);
     end;

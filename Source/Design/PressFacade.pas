@@ -139,18 +139,19 @@ begin
   Result := PressModel.FindAttribute(AAttributeName);
   if not Assigned(Result) then
   begin
-    VClass := TPressProjectClass(Project.RootUserAttributes.ChildItems.FindItem(
+    VClass := TPressProjectClass(
+     Project.RootUserAttributes.ChildItems.FindItem(
      AAttributeName, TPressProjectClass));
     if Assigned(VClass) then
     begin
       while Assigned(VClass.ParentClass) do
         VClass := VClass.ParentClass;
-      if SameText(VClass.Name, TPressParts.ClassName) then
+      if SameText(VClass.ObjectClassName, TPressParts.ClassName) then
         Result := TPressRuntimeParts
-      else if SameText(VClass.Name, TPressReferences.ClassName) then
+      else if SameText(VClass.ObjectClassName, TPressReferences.ClassName) then
         Result := TPressRuntimeReferences
       else
-        Result := PressModel.FindAttributeClass(VClass.Name);
+        Result := PressModel.FindAttributeClass(VClass.ObjectClassName);
     end;
   end;
 end;
@@ -170,12 +171,12 @@ begin
     begin
       while Assigned(VClass.ParentClass) do
         VClass := VClass.ParentClass;
-      if SameText(VClass.Name, TPressObject.ClassName) then
+      if SameText(VClass.ObjectClassName, TPressObject.ClassName) then
         Result := TPressRuntimeObject
-      else if SameText(VClass.Name, TPressQuery.ClassName) then
+      else if SameText(VClass.ObjectClassName, TPressQuery.ClassName) then
         Result := TPressRuntimeQuery
       else
-        Result := PressModel.FindClass(VClass.Name);
+        Result := PressModel.FindClass(VClass.ObjectClassName);
     end;
   end;
 end;
@@ -189,9 +190,10 @@ begin
    AMetadata.ObjectClassName, TPressProjectClass));
   if Assigned(VClass) and Assigned(VClass.ParentClass) then
     if Assigned(VClass.ParentClass.ParentClass) then
-      Result := MetadataByName(VClass.ParentClass.Name)
+      Result := MetadataByName(VClass.ParentClass.ObjectClassName)
     else
-      Result := PressModel.ClassByName(VClass.ParentClass.Name).ClassMetadata
+      Result := PressModel.ClassByName(
+       VClass.ParentClass.ObjectClassName).ClassMetadata
   else
     Result := PressModel.ParentMetadataOf(AMetadata);
 end;

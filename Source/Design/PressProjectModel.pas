@@ -31,11 +31,8 @@ type
   TPressProjectItem = class(TPressObject)
   private
     FName: TPressString;
-    FCaption: TPressString;
     FChildItems: TPressProjectItemReferences;
-    function GetCaption: string;
     function GetName: string;
-    procedure SetCaption(const Value: string);
     procedure SetName(const Value: string);
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
@@ -44,7 +41,6 @@ type
     property ChildItems: TPressProjectItemReferences read FChildItems;
   published
     property Name: string read GetName write SetName;
-    property Caption: string read GetCaption write SetCaption;
   end;
 
   TPressProjectItemIterator = class;
@@ -80,10 +76,13 @@ type
 
   TPressProjectClass = class(TPressProjectItem)
   private
+    FObjectClassName: TPressString;
     FWeakRefParentClass: TPressProjectClass;
     FParentClass: TPressReference;
     function GetChildItems: TPressProjectClassReferences;
+    function GetObjectClassName: string;
     function GetParentClass: TPressProjectClass;
+    procedure SetObjectClassName(const Value: string);
     procedure SetParentClass(Value: TPressProjectClass);
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
@@ -91,6 +90,7 @@ type
   public
     property ChildItems: TPressProjectClassReferences read GetChildItems;
   published
+    property ObjectClassName: string read GetObjectClassName write SetObjectClassName;
     property ParentClass: TPressProjectClass read GetParentClass write SetParentClass;
   end;
 
@@ -127,7 +127,6 @@ type
   private
     FRuntimeMetadata: TPressObjectMetadata;
   private
-    FObjectClassName: TPressString;
     FModule: TPressReference;
     FMetadataStr: TPressString;
     FKeyName: TPressString;
@@ -135,12 +134,10 @@ type
     function GetKeyName: string;
     function GetMetadataStr: string;
     function GetModule: TPressProjectModule;
-    function GetObjectClassName: string;
     function GetParentClass: TPressObjectMetadataRegistry;
     procedure SetKeyName(const Value: string);
     procedure SetMetadataStr(const Value: string);
     procedure SetModule(Value: TPressProjectModule);
-    procedure SetObjectClassName(const Value: string);
     procedure SetParentClass(Value: TPressObjectMetadataRegistry);
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
@@ -152,7 +149,6 @@ type
     property KeyName: string read GetKeyName write SetKeyName;
     property MetadataStr: string read GetMetadataStr write SetMetadataStr;
     property Module: TPressProjectModule read GetModule write SetModule;
-    property ObjectClassName: string read GetObjectClassName write SetObjectClassName;
     property ParentClass: TPressObjectMetadataRegistry read GetParentClass write SetParentClass;
   end;
 
@@ -360,11 +356,6 @@ uses
 
 { TPressProjectItem }
 
-function TPressProjectItem.GetCaption: string;
-begin
-  Result := FCaption.Value;
-end;
-
 function TPressProjectItem.GetName: string;
 begin
   Result := FName.Value;
@@ -375,8 +366,6 @@ function TPressProjectItem.InternalAttributeAddress(
 begin
   if SameText(AAttributeName, 'Name') then
     Result := Addr(FName)
-  else if SameText(AAttributeName, 'Caption') then
-    Result := Addr(FCaption)
   else if SameText(AAttributeName, 'ChildItems') then
     Result := Addr(FChildItems)
   else
@@ -387,22 +376,12 @@ class function TPressProjectItem.InternalMetadataStr: string;
 begin
   Result := 'TPressProjectItem (' +
    'Name: String;' +
-   'Caption: String;' +
    'ChildItems: TPressProjectItemReferences)';
-end;
-
-procedure TPressProjectItem.SetCaption(const Value: string);
-begin
-  FCaption.Value := Value;
-  if Name = '' then
-    Name := Value;
 end;
 
 procedure TPressProjectItem.SetName(const Value: string);
 begin
   FName.Value := Value;
-  if Caption = '' then
-    Caption := Value;
 end;
 
 { TPressProjectItemReferences }
@@ -499,6 +478,11 @@ begin
   Result := inherited ChildItems as TPressProjectClassReferences;
 end;
 
+function TPressProjectClass.GetObjectClassName: string;
+begin
+  Result := FObjectClassName.Value;
+end;
+
 function TPressProjectClass.GetParentClass: TPressProjectClass;
 begin
   Result := FWeakRefParentClass;
@@ -508,7 +492,9 @@ end;
 function TPressProjectClass.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
-  if SameText(AAttributeName, 'ParentClass') then
+  if SameText(AAttributeName, 'ObjectClassName') then
+    Result := Addr(FObjectClassName)
+  else if SameText(AAttributeName, 'ParentClass') then
     Result := Addr(FParentClass)
   else
     Result := inherited InternalAttributeAddress(AAttributeName);
@@ -518,7 +504,15 @@ class function TPressProjectClass.InternalMetadataStr: string;
 begin
   Result := 'TPressProjectClass (' +
    'ChildItems: TPressProjectClassReferences;' +
+   'ObjectClassName: String;' +
    'ParentClass: Reference(TPressProjectClass))';
+end;
+
+procedure TPressProjectClass.SetObjectClassName(const Value: string);
+begin
+  FObjectClassName.Value := Value;
+  if Name = '' then
+    Name := Value;
 end;
 
 procedure TPressProjectClass.SetParentClass(Value: TPressProjectClass);
@@ -606,7 +600,7 @@ begin
   Result := FMetadataStr.Value;
   if Result = '' then
   begin
-    Result := Name;
+    Result := ObjectClassName;
     FMetadataStr.Value := Result;
   end;
 end;
@@ -614,11 +608,6 @@ end;
 function TPressObjectMetadataRegistry.GetModule: TPressProjectModule;
 begin
   Result := FModule.Value as TPressProjectModule;
-end;
-
-function TPressObjectMetadataRegistry.GetObjectClassName: string;
-begin
-  Result := FObjectClassName.Value;
 end;
 
 function TPressObjectMetadataRegistry.GetParentClass: TPressObjectMetadataRegistry;
@@ -629,9 +618,7 @@ end;
 function TPressObjectMetadataRegistry.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
-  if SameText(AAttributeName, 'ObjectClassName') then
-    Result := Addr(FObjectClassName)
-  else if SameText(AAttributeName, 'Module') then
+  if SameText(AAttributeName, 'Module') then
     Result := Addr(FModule)
   else if SameText(AAttributeName, 'MetadataStr') then
     Result := Addr(FMetadataStr)
@@ -647,7 +634,6 @@ class function TPressObjectMetadataRegistry.InternalMetadataStr: string;
 begin
   Result := 'TPressObjectMetadataRegistry (' +
    'ChildItems: TPressProjectClassReferences(TPressObjectMetadataRegistry);' +
-   'ObjectClassName: String;' +
    'ParentClass: Reference(TPressObjectMetadataRegistry);' +
    'Module: Reference(TPressProjectModule);' +
    'MetadataStr: String;' +
@@ -668,13 +654,6 @@ end;
 procedure TPressObjectMetadataRegistry.SetModule(Value: TPressProjectModule);
 begin
   FModule.Value := Value;
-end;
-
-procedure TPressObjectMetadataRegistry.SetObjectClassName(const Value: string);
-begin
-  FObjectClassName.Value := Value;
-  if Name = '' then
-    Name := Value;
 end;
 
 procedure TPressObjectMetadataRegistry.SetParentClass(
@@ -1058,56 +1037,56 @@ end;
 
 procedure TPressProject.CreateRootItems;
 begin
-  RootItems.Add(TPressProjectClass).Caption := SPressProjectBusinessClasses;
+  RootItems.Add(TPressProjectClass).Name := SPressProjectBusinessClasses;
   FRootBusinessClasses := RootItems[0] as TPressProjectClass;
-  with RootItems[0].ChildItems as TPressProjectClassReferences do
+  with FRootBusinessClasses.ChildItems as TPressProjectClassReferences do
   begin
-    Add(TPressObjectMetadataRegistry).Caption := SPressProjectPersistentClasses;
-    Add(TPressObjectMetadataRegistry).Caption := SPressProjectQueryClasses;
+    Add(TPressObjectMetadataRegistry).Name := SPressProjectPersistentClasses;
+    Add(TPressObjectMetadataRegistry).Name := SPressProjectQueryClasses;
     FRootPersistentClasses := Objects[0] as TPressObjectMetadataRegistry;
-    FRootPersistentClasses.Name := TPressObject.ClassName;
+    FRootPersistentClasses.ObjectClassName := TPressObject.ClassName;
     FRootQueryClasses := Objects[1] as TPressObjectMetadataRegistry;
-    FRootQueryClasses.Name := TPressQuery.ClassName;
+    FRootQueryClasses.ObjectClassName := TPressQuery.ClassName;
   end;
-  RootItems.Add(TPressProjectClass).Caption := SPressProjectMVPClasses;
+  RootItems.Add(TPressProjectClass).Name := SPressProjectMVPClasses;
   with RootItems[1].ChildItems as TPressProjectClassReferences do
   begin
-    Add.Caption := SPressProjectModels;
-    Add.Caption := SPressProjectViews;
-    Add.Caption := SPressProjectPresenters;
-    Add.Caption := SPressProjectCommands;
-    Add.Caption := SPressProjectInteractors;
+    Add.Name := SPressProjectModels;
+    Add.Name := SPressProjectViews;
+    Add.Name := SPressProjectPresenters;
+    Add.Name := SPressProjectCommands;
+    Add.Name := SPressProjectInteractors;
     FRootModels := Objects[0];
     FRootViews := Objects[1];
     FRootPresenters := Objects[2];
     FRootCommands := Objects[3];
     FRootInteractors := Objects[4];
   end;
-  RootItems.Add(TPressProjectClass).Caption := SPressProjectRegisteredClasses;
+  RootItems.Add(TPressProjectClass).Name := SPressProjectRegisteredClasses;
   with RootItems[2].ChildItems as TPressProjectClassReferences do
   begin
-    Add(TPressAttributeTypeRegistry).Caption := SPressProjectUserAttributes;
-    Add.Caption := SPressProjectUserOIDGenerators;
+    Add(TPressAttributeTypeRegistry).Name := SPressProjectUserAttributes;
+    Add.Name := SPressProjectUserOIDGenerators;
     FRootUserAttributes := Objects[0] as TPressAttributeTypeRegistry;
     FRootUserGenerators := Objects[1];
-    FRootUserGenerators.Name := SPressOIDGeneratorClassNameStr;
+    FRootUserGenerators.ObjectClassName := SPressOIDGeneratorClassNameStr;
   end;
-  RootItems.Add(TPressProjectItem).Caption := SPressProjectRegisteredItems;
+  RootItems.Add(TPressProjectItem).Name := SPressProjectRegisteredItems;
   with RootItems[3].ChildItems do
   begin
-    Add.Caption := SPressProjectUserEnumerations;
+    Add.Name := SPressProjectUserEnumerations;
     FRootUserEnumerations := Objects[0];
   end;
-  RootItems.Add(TPressProjectClass).Caption := SPressProjectOtherClasses;
+  RootItems.Add(TPressProjectClass).Name := SPressProjectOtherClasses;
   with RootItems[4].ChildItems as TPressProjectClassReferences do
   begin
-    Add.Caption := SPressProjectForms;
-    Add.Caption := SPressProjectFrames;
-    Add.Caption := SPressProjectUnknown;
+    Add.Name := SPressProjectForms;
+    Add.Name := SPressProjectFrames;
+    Add.Name := SPressProjectUnknown;
     FRootForms := Objects[0];
-    FRootForms.Name := SPressFormClassNameStr;
+    FRootForms.ObjectClassName := SPressFormClassNameStr;
     FRootFrames := Objects[1];
-    FRootFrames.Name := SPressFrameClassNameStr;
+    FRootFrames.ObjectClassName := SPressFrameClassNameStr;
     FRootUnknownClasses := Objects[2];
   end;
 end;
