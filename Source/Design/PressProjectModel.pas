@@ -351,7 +351,6 @@ implementation
 uses
   SysUtils,
   PressClasses,
-  PressPersistence,
   PressDesignConsts;
 
 { TPressProjectItem }
