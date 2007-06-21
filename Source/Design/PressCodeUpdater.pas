@@ -213,7 +213,7 @@ procedure TPressCodeUpdater.ExtractClassDeclarations(
         if not Assigned(AClass) then
         begin
           AClass := VItems.Add;
-          AClass.ObjectClassName := AClassName;
+          AClass.ObjectClassName := VAttributeClass.ClassName;
           AClass.Name := VAttributeClass.AttributeName;
         end;
       end;
