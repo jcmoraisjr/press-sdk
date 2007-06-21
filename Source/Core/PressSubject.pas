@@ -121,18 +121,18 @@ type
     FPersLinkParentName: string;
     FPersLinkPosName: string;
     FSize: Integer;
-    function GetAttributeName: string;
     function GetObjectClassName: string;
     function GetPersLinkChildName: string;
     function GetPersLinkName: string;
     function GetPersLinkParentName: string;
     procedure SetAttributeClass(Value: TPressAttributeClass);
-    procedure SetAttributeName(const Value: string);
     procedure SetCalcMetadata(Value: TPressCalcMetadata);
     procedure SetEnumMetadata(Value: TPressEnumMetadata);
     procedure SetObjectClass(Value: TPressObjectClass);
     procedure SetObjectClassName(const Value: string);
   protected
+    function GetAttributeName: string; virtual;
+    procedure SetAttributeName(const Value: string); virtual;
     procedure SetName(const Value: string); virtual;
     property Model: TPressModel read FModel;
   public
