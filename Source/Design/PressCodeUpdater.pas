@@ -198,6 +198,27 @@ procedure TPressCodeUpdater.ExtractClassDeclarations(
       Result := Assigned(AClass);
     end;
 
+    function FindAttributeClass(var AClass: TPressProjectClass): Boolean;
+    var
+      VAttributeClass: TPressAttributeClass;
+      VItems: TPressProjectClassReferences;
+    begin
+      VAttributeClass := PressModel.FindAttributeClass(AClassName);
+      Result := Assigned(VAttributeClass);
+      if Result then
+      begin
+        VItems := Project.RootUserAttributes.ChildItems;
+        AClass := TPressProjectClass(VItems.FindItem(
+         VAttributeClass.AttributeName, TPressAttributeTypeRegistry));
+        if not Assigned(AClass) then
+        begin
+          AClass := VItems.Add;
+          AClass.ObjectClassName := AClassName;
+          AClass.Name := VAttributeClass.AttributeName;
+        end;
+      end;
+    end;
+
     function FindMVPClass(var AClass: TPressProjectClass): Boolean;
 
       function IsMVP(const ASuffix: string): Boolean;
@@ -239,8 +260,8 @@ procedure TPressCodeUpdater.ExtractClassDeclarations(
   begin
     if FindBOClass(Result) then
       //
-    else if Assigned(PressModel.FindAttributeClass(AClassName)) then
-      Result := Project.RootUserAttributes
+    else if FindAttributeClass(Result) then
+      //
     else if SameText(AClassName, SPressOIDGeneratorClassNameStr) then
       Result := Project.RootUserGenerators
     else if SameText(AClassName, SPressFormClassNameStr) then

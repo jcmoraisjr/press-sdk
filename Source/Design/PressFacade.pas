@@ -28,10 +28,40 @@ uses
 type
   TPressRuntimeEnum = (reRuntime);
 
+  TPressRuntimeAttributeMetadata = class(TPressAttributeMetadata)
+  private
+    FRealAttributeName: string;
+  public
+    function GetAttributeName: string; override;
+    procedure SetAttributeName(const Value: string); override;
+  end;
+
+  TPressRuntimeQueryAttributeMetadata = class(TPressQueryAttributeMetadata)
+  private
+    FRealAttributeName: string;
+  public
+    function GetAttributeName: string; override;
+    procedure SetAttributeName(const Value: string); override;
+  end;
+
+  TPressRuntimeObjectMetadata = class(TPressObjectMetadata)
+  public
+    function InternalAttributeMetadataClass: TPressAttributeMetadataClass; override;
+  end;
+
+  TPressRuntimeQueryMetadata = class(TPressQueryMetadata)
+  public
+    function InternalAttributeMetadataClass: TPressAttributeMetadataClass; override;
+  end;
+
   TPressRuntimeObject = class(TPressObject)
+  public
+    class function ObjectMetadataClass: TPressObjectMetadataClass; override;
   end;
 
   TPressRuntimeQuery = class(TPressQuery)
+  public
+    class function ObjectMetadataClass: TPressObjectMetadataClass; override;
   end;
 
   TPressRuntimeParts = class(TPressParts)
@@ -101,6 +131,61 @@ var
 function PressDesignFacade: TPressFacade;
 begin
   Result := _PressDesignFacade;
+end;
+
+{ TPressRuntimeAttributeMetadata }
+
+function TPressRuntimeAttributeMetadata.GetAttributeName: string;
+begin
+  Result := FRealAttributeName;
+end;
+
+procedure TPressRuntimeAttributeMetadata.SetAttributeName(const Value: string);
+begin
+  inherited;
+  FRealAttributeName := Value;
+end;
+
+{ TPressRuntimeQueryAttributeMetadata }
+
+function TPressRuntimeQueryAttributeMetadata.GetAttributeName: string;
+begin
+  Result := FRealAttributeName;
+end;
+
+procedure TPressRuntimeQueryAttributeMetadata.SetAttributeName(
+  const Value: string);
+begin
+  inherited;
+  FRealAttributeName := Value;
+end;
+
+{ TPressRuntimeObjectMetadata }
+
+function TPressRuntimeObjectMetadata.InternalAttributeMetadataClass: TPressAttributeMetadataClass;
+begin
+  Result := TPressRuntimeAttributeMetadata;
+end;
+
+{ TPressRuntimeQueryMetadata }
+
+function TPressRuntimeQueryMetadata.InternalAttributeMetadataClass: TPressAttributeMetadataClass;
+begin
+  Result := TPressRuntimeQueryAttributeMetadata;
+end;
+
+{ TPressRuntimeObject }
+
+class function TPressRuntimeObject.ObjectMetadataClass: TPressObjectMetadataClass;
+begin
+  Result := TPressRuntimeObjectMetadata;
+end;
+
+{ TPressRuntimeQuery }
+
+class function TPressRuntimeQuery.ObjectMetadataClass: TPressObjectMetadataClass;
+begin
+  Result := TPressRuntimeQueryMetadata;
 end;
 
 { TPressRuntimeParts }
@@ -259,13 +344,43 @@ procedure TPressFacade.ParseProject;
   procedure AddClasses(AClasses: TPressProjectClassReferences);
   var
     VRegistry: TPressObjectMetadataRegistry;
-    I: Integer;
+    VMetadata: TPressObjectMetadata;
+    VAttributeMetadata: TPressAttributeMetadata;
+    VAttributeRegistry: TPressAttributeMetadataRegistry;
+    I, J: Integer;
   begin
     for I := 0 to Pred(AClasses.Count) do
     begin
       VRegistry := AClasses[I] as TPressObjectMetadataRegistry;
-      VRegistry.RuntimeMetadata :=
-       BOModel.RegisterMetadata(VRegistry.MetadataStr);
+      VRegistry.DisableChanges;
+      try
+        VMetadata := BOModel.RegisterMetadata(VRegistry.MetadataStr);
+        VRegistry.RuntimeMetadata := VMetadata;
+        VRegistry.KeyName := VMetadata.KeyName;
+        VRegistry.ObjectClassName := VMetadata.ObjectClassName;
+        { TODO : Fix parent class assignment }
+        for J := 0 to Pred(VMetadata.AttributeMetadatas.Count) do
+        begin
+          VAttributeMetadata := VMetadata.AttributeMetadatas[J];
+          VAttributeRegistry := VRegistry.AttributeList.Add;
+          VAttributeRegistry.RuntimeMetadata := VAttributeMetadata;
+          VAttributeRegistry.AttributeType := TPressAttributeTypeRegistry(
+           Project.RootUserAttributes.ChildItems.FindItem(
+           VAttributeMetadata.AttributeName, TPressAttributeTypeRegistry));
+          VAttributeRegistry.ContainerType := TPressObjectMetadataRegistry(
+           Project.RootPersistentClasses.ChildItems.FindItem(
+           VAttributeMetadata.ObjectClassName, TPressObjectMetadataRegistry));
+          VAttributeRegistry.DefaultValue := VAttributeMetadata.DefaultValue;
+          VAttributeRegistry.EditMask := VAttributeMetadata.EditMask;
+          VAttributeRegistry.IsPersistent := VAttributeMetadata.IsPersistent;
+          VAttributeRegistry.Name := VAttributeMetadata.Name;
+          VAttributeRegistry.PersistentName :=
+           VAttributeMetadata.PersistentName;
+          VAttributeRegistry.Size := VAttributeMetadata.Size;
+        end;
+      finally
+        VRegistry.EnableChanges;
+      end;
       AddClasses(VRegistry.ChildItems);
     end;
   end;
