@@ -130,15 +130,21 @@ type
     FModule: TPressReference;
     FMetadataStr: TPressString;
     FKeyName: TPressString;
+    FIsPersistent: TPressBoolean;
+    FPersistentName: TPressString;
     FAttributeList: TPressAttributeMetadataRegistryParts;
+    function GetIsPersistent: Boolean;
     function GetKeyName: string;
     function GetMetadataStr: string;
     function GetModule: TPressProjectModule;
     function GetParentClass: TPressObjectMetadataRegistry;
+    function GetPersistentName: string;
+    procedure SetIsPersistent(Value: Boolean);
     procedure SetKeyName(const Value: string);
     procedure SetMetadataStr(const Value: string);
     procedure SetModule(Value: TPressProjectModule);
     procedure SetParentClass(Value: TPressObjectMetadataRegistry);
+    procedure SetPersistentName(const Value: string);
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
@@ -146,10 +152,12 @@ type
     property AttributeList: TPressAttributeMetadataRegistryParts read FAttributeList;
     property RuntimeMetadata: TPressObjectMetadata read FRuntimeMetadata write FRuntimeMetadata;
   published
+    property IsPersistent: Boolean read GetIsPersistent write SetIsPersistent;
     property KeyName: string read GetKeyName write SetKeyName;
     property MetadataStr: string read GetMetadataStr write SetMetadataStr;
     property Module: TPressProjectModule read GetModule write SetModule;
     property ParentClass: TPressObjectMetadataRegistry read GetParentClass write SetParentClass;
+    property PersistentName: string read GetPersistentName write SetPersistentName;
   end;
 
   TPressAttributeTypeRegistry = class;
@@ -166,21 +174,18 @@ type
     FEditMask: TPressString;
     FIsPersistent: TPressBoolean;
     FPersistentName: TPressString;
+    FPersLinkName: TPressString;
+    FPersLinkIdName: TPressString;
+    FPersLinkParentName: TPressString;
+    FPersLinkChildName: TPressString;
+    FPersLinkPosName: TPressString;
     function GetAttributeType: TPressAttributeTypeRegistry;
     function GetContainerType: TPressObjectMetadataRegistry;
-    function GetDefaultValue: string;
-    function GetEditMask: string;
-    function GetIsPersistent: Boolean;
     function GetName: string;
-    function GetPersistentName: string;
     function GetSize: Integer;
     procedure SetAttributeType(Value: TPressAttributeTypeRegistry);
     procedure SetContainerType(Value: TPressObjectMetadataRegistry);
-    procedure SetDefaultValue(const Value: string);
-    procedure SetEditMask(const Value: string);
-    procedure SetIsPersistent(Value: Boolean);
     procedure SetName(const Value: string);
-    procedure SetPersistentName(const Value: string);
     procedure SetSize(Value: Integer);
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
@@ -190,11 +195,16 @@ type
   published
     property AttributeType: TPressAttributeTypeRegistry read GetAttributeType write SetAttributeType;
     property ContainerType: TPressObjectMetadataRegistry read GetContainerType write SetContainerType;
-    property DefaultValue: string read GetDefaultValue write SetDefaultValue;
-    property EditMask: string read GetEditMask write SetEditMask;
-    property IsPersistent: Boolean read GetIsPersistent write SetIsPersistent;
+    property DefaultValue: TPressString read FDefaultValue;
+    property EditMask: TPressString read FEditMask;
+    property IsPersistent: TPressBoolean read FIsPersistent;
     property Name: string read GetName write SetName;
-    property PersistentName: string read GetPersistentName write SetPersistentName;
+    property PersistentName: TPressString read FPersistentName;
+    property PersLinkChildName: TPressString read FPersLinkChildName;
+    property PersLinkIdName: TPressString read FPersLinkIdName;
+    property PersLinkName: TPressString read FPersLinkName;
+    property PersLinkParentName: TPressString read FPersLinkParentName;
+    property PersLinkPosName: TPressString read FPersLinkPosName;
     property Size: Integer read GetSize write SetSize;
   end;
 
@@ -313,10 +323,12 @@ type
     FRootFrames: TPressProjectClass;
     FRootUnknownClasses: TPressProjectClass;
     procedure CreateRootItems;
+    procedure PopulatePressAttributeRegistry;
   private
     FName: TPressString;
     FRootItems: TPressProjectItemReferences;
     FModules: TPressProjectModuleParts;
+    FPressAttributeRegistry: TPressProjectClassReferences;
     function GetName: string;
     procedure SetName(const Value: string);
   protected
@@ -342,6 +354,7 @@ type
   public
     property Modules: TPressProjectModuleParts read FModules;
     property RootItems: TPressProjectItemReferences read FRootItems;
+    property PressAttributeRegistry: TPressProjectClassReferences read FPressAttributeRegistry;
   published
     property Name: string read GetName write SetName;
   end;
@@ -407,19 +420,20 @@ function TPressProjectItemReferences.FindItem(
 var
   I: Integer;
 begin
-  for I := 0 to Pred(Count) do
-  begin
-    Result := Objects[I];
-    if ((not Assigned(AClass)) or (Result is AClass)) and
-     SameText(Result.Name, AName) then
-      Exit;
-    if ARecursively then
+  if AName <> '' then
+    for I := 0 to Pred(Count) do
     begin
-      Result := Result.ChildItems.FindItem(AName, AClass);
-      if Assigned(Result) then
+      Result := Objects[I];
+      if ((not Assigned(AClass)) or (Result is AClass)) and
+       SameText(Result.Name, AName) then
         Exit;
+      if ARecursively then
+      begin
+        Result := Result.ChildItems.FindItem(AName, AClass);
+        if Assigned(Result) then
+          Exit;
+      end;
     end;
-  end;
   Result := nil;
 end;
 
@@ -589,6 +603,11 @@ end;
 
 { TPressObjectMetadataRegistry }
 
+function TPressObjectMetadataRegistry.GetIsPersistent: Boolean;
+begin
+  Result := FIsPersistent.Value;
+end;
+
 function TPressObjectMetadataRegistry.GetKeyName: string;
 begin
   Result := FKeyName.Value;
@@ -614,6 +633,11 @@ begin
   Result := inherited ParentClass as TPressObjectMetadataRegistry;
 end;
 
+function TPressObjectMetadataRegistry.GetPersistentName: string;
+begin
+  Result := FPersistentName.Value;
+end;
+
 function TPressObjectMetadataRegistry.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
@@ -623,6 +647,10 @@ begin
     Result := Addr(FMetadataStr)
   else if SameText(AAttributeName, 'KeyName') then
     Result := Addr(FKeyName)
+  else if SameText(AAttributeName, 'IsPersistent') then
+    Result := Addr(FIsPersistent)
+  else if SameText(AAttributeName, 'PersistentName') then
+    Result := Addr(FPersistentName)
   else if SameText(AAttributeName, 'AttributeList') then
     Result := Addr(FAttributeList)
   else
@@ -637,7 +665,14 @@ begin
    'Module: Reference(TPressProjectModule);' +
    'MetadataStr: String;' +
    'KeyName: String;' +
+   'IsPersistent: Boolean;' +
+   'PersistentName: String;' +
    'AttributeList: TPressAttributeMetadataRegistryParts)';
+end;
+
+procedure TPressObjectMetadataRegistry.SetIsPersistent(Value: Boolean);
+begin
+  FIsPersistent.Value := Value;
 end;
 
 procedure TPressObjectMetadataRegistry.SetKeyName(const Value: string);
@@ -661,6 +696,11 @@ begin
   inherited ParentClass := Value;
 end;
 
+procedure TPressObjectMetadataRegistry.SetPersistentName(const Value: string);
+begin
+  FPersistentName.Value := Value;
+end;
+
 { TPressAttributeMetadataRegistry }
 
 function TPressAttributeMetadataRegistry.GetAttributeType: TPressAttributeTypeRegistry;
@@ -673,29 +713,9 @@ begin
   Result := FContainerType.Value as TPressObjectMetadataRegistry;
 end;
 
-function TPressAttributeMetadataRegistry.GetDefaultValue: string;
-begin
-  Result := FDefaultValue.Value;
-end;
-
-function TPressAttributeMetadataRegistry.GetEditMask: string;
-begin
-  Result := FEditMask.Value;
-end;
-
-function TPressAttributeMetadataRegistry.GetIsPersistent: Boolean;
-begin
-  Result := FIsPersistent.Value;
-end;
-
 function TPressAttributeMetadataRegistry.GetName: string;
 begin
   Result := FName.Value;
-end;
-
-function TPressAttributeMetadataRegistry.GetPersistentName: string;
-begin
-  Result := FPersistentName.Value;
 end;
 
 function TPressAttributeMetadataRegistry.GetSize: Integer;
@@ -722,6 +742,16 @@ begin
     Result := Addr(FIsPersistent)
   else if SameText(AAttributeName, 'PersistentName') then
     Result := Addr(FPersistentName)
+  else if SameText(AAttributeName, 'PersLinkName') then
+    Result := Addr(FPersLinkName)
+  else if SameText(AAttributeName, 'PersLinkIdName') then
+    Result := Addr(FPersLinkIdName)
+  else if SameText(AAttributeName, 'PersLinkParentName') then
+    Result := Addr(FPersLinkParentName)
+  else if SameText(AAttributeName, 'PersLinkChildName') then
+    Result := Addr(FPersLinkChildName)
+  else if SameText(AAttributeName, 'PersLinkPosName') then
+    Result := Addr(FPersLinkPosName)
   else
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
@@ -736,7 +766,12 @@ begin
    'DefaultValue: String;' +
    'EditMask: String;' +
    'IsPersistent: Boolean;' +
-   'PersistentName: String)';
+   'PersistentName: String;' +
+   'PersLinkName: String;' +
+   'PersLinkIdName: String;' +
+   'PersLinkParentName: String;' +
+   'PersLinkChildName: String;' +
+   'PersLinkPosName: String)';
 end;
 
 procedure TPressAttributeMetadataRegistry.SetAttributeType(
@@ -751,29 +786,9 @@ begin
   FContainerType.Value := Value;
 end;
 
-procedure TPressAttributeMetadataRegistry.SetDefaultValue(const Value: string);
-begin
-  FDefaultValue.Value := Value;
-end;
-
-procedure TPressAttributeMetadataRegistry.SetEditMask(const Value: string);
-begin
-  FEditMask.Value := Value;
-end;
-
-procedure TPressAttributeMetadataRegistry.SetIsPersistent(Value: Boolean);
-begin
-  FIsPersistent.Value := Value;
-end;
-
 procedure TPressAttributeMetadataRegistry.SetName(const Value: string);
 begin
   FName.Value := Value;
-end;
-
-procedure TPressAttributeMetadataRegistry.SetPersistentName(const Value: string);
-begin
-  FPersistentName.Value := Value;
 end;
 
 procedure TPressAttributeMetadataRegistry.SetSize(Value: Integer);
@@ -1030,12 +1045,14 @@ end;
 procedure TPressProject.ClearItems;
 begin
   RootItems.Clear;
+  PressAttributeRegistry.Clear;
   Modules.Clear;
   CreateRootItems;
 end;
 
 procedure TPressProject.CreateRootItems;
 begin
+  PopulatePressAttributeRegistry;
   RootItems.Add(TPressProjectClass).Name := SPressProjectBusinessClasses;
   FRootBusinessClasses := RootItems[0] as TPressProjectClass;
   with FRootBusinessClasses.ChildItems as TPressProjectClassReferences do
@@ -1110,6 +1127,8 @@ begin
     Result := Addr(FRootItems)
   else if SameText(AAttributeName, 'Modules') then
     Result := Addr(FModules)
+  else if SameText(AAttributeName, 'PressAttributeRegistry') then
+    Result := Addr(FPressAttributeRegistry)
   else
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
@@ -1119,7 +1138,32 @@ begin
   Result := 'TPressProject (' +
    'Name: String;' +
    'RootItems: TPressProjectItemReferences;' +
-   'Modules: TPressProjectModuleParts)';
+   'Modules: TPressProjectModuleParts;' +
+   'PressAttributeRegistry: TPressProjectClassReferences(TPressAttributeTypeRegistry))';
+end;
+
+procedure TPressProject.PopulatePressAttributeRegistry;
+
+  procedure IncludeAttributeClasses(
+    AAttributes: array of TPressAttributeClass);
+  var
+    VItem: TPressProjectClass;
+    I: Integer;
+  begin
+    for I := 0 to Pred(Length(AAttributes)) do
+    begin
+      VItem := PressAttributeRegistry.Add;
+      VItem.Name := AAttributes[I].AttributeName;
+      VItem.ObjectClassName := AAttributes[I].ClassName;
+    end;
+  end;
+
+begin
+  IncludeAttributeClasses([TPressString, TPressInteger, TPressFloat,
+   TPressCurrency, TPressEnum, TPressBoolean,
+   TPressDate, TPressTime, TPressDateTime,
+   TPressVariant, TPressMemo, TPressBinary, TPressPicture,
+   TPressPart, TPressReference, TPressParts, TPressReferences]);
 end;
 
 procedure TPressProject.SetName(const Value: string);

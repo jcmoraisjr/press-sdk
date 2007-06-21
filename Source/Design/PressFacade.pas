@@ -31,17 +31,23 @@ type
   TPressRuntimeAttributeMetadata = class(TPressAttributeMetadata)
   private
     FRealAttributeName: string;
+    FRealObjectClassName: string;
   public
     function GetAttributeName: string; override;
+    function GetObjectClassName: string; override;
     procedure SetAttributeName(const Value: string); override;
+    procedure SetObjectClassName(const Value: string); override;
   end;
 
   TPressRuntimeQueryAttributeMetadata = class(TPressQueryAttributeMetadata)
   private
     FRealAttributeName: string;
+    FRealObjectClassName: string;
   public
     function GetAttributeName: string; override;
+    function GetObjectClassName: string; override;
     procedure SetAttributeName(const Value: string); override;
+    procedure SetObjectClassName(const Value: string); override;
   end;
 
   TPressRuntimeObjectMetadata = class(TPressObjectMetadata)
@@ -103,18 +109,15 @@ type
     FCodeUpdater: TPressCodeUpdater;
     FMVPModel: TPressRuntimeMVPModel;
     FProject: TPressProject;
-    function GetBOModel: TPressRuntimeBOModel;
-    function GetCodeUpdater: TPressCodeUpdater;
-    function GetMVPModel: TPressRuntimeMVPModel;
-    function GetProject: TPressProject;
   protected
-    property BOModel: TPressRuntimeBOModel read GetBOModel;
-    property MVPModel: TPressRuntimeMVPModel read GetMVPModel;
+    property BOModel: TPressRuntimeBOModel read FBOModel;
+    property MVPModel: TPressRuntimeMVPModel read FMVPModel;
   public
-    property CodeUpdater: TPressCodeUpdater read GetCodeUpdater;
+    constructor Create;
     destructor Destroy; override;
     procedure ParseProject;
-    property Project: TPressProject read GetProject;
+    property CodeUpdater: TPressCodeUpdater read FCodeUpdater;
+    property Project: TPressProject read FProject;
   end;
 
 function PressDesignFacade: TPressFacade;
@@ -140,10 +143,22 @@ begin
   Result := FRealAttributeName;
 end;
 
+function TPressRuntimeAttributeMetadata.GetObjectClassName: string;
+begin
+  Result := FRealObjectClassName;
+end;
+
 procedure TPressRuntimeAttributeMetadata.SetAttributeName(const Value: string);
 begin
   inherited;
   FRealAttributeName := Value;
+end;
+
+procedure TPressRuntimeAttributeMetadata.SetObjectClassName(
+  const Value: string);
+begin
+  inherited;
+  FRealObjectClassName := Value;
 end;
 
 { TPressRuntimeQueryAttributeMetadata }
@@ -153,11 +168,23 @@ begin
   Result := FRealAttributeName;
 end;
 
+function TPressRuntimeQueryAttributeMetadata.GetObjectClassName: string;
+begin
+  Result := FRealObjectClassName;
+end;
+
 procedure TPressRuntimeQueryAttributeMetadata.SetAttributeName(
   const Value: string);
 begin
   inherited;
   FRealAttributeName := Value;
+end;
+
+procedure TPressRuntimeQueryAttributeMetadata.SetObjectClassName(
+  const Value: string);
+begin
+  inherited;
+  FRealObjectClassName := Value;
 end;
 
 { TPressRuntimeObjectMetadata }
@@ -293,6 +320,15 @@ end;
 
 { TPressFacade }
 
+constructor TPressFacade.Create;
+begin
+  inherited Create;
+  FProject := TPressProject.Create;
+  FBOModel := TPressRuntimeBOModel.Create(FProject);
+  FMVPModel := TPressRuntimeMVPModel.Create(FProject);
+  FCodeUpdater := TPressCodeUpdater.Create(FProject);
+end;
+
 destructor TPressFacade.Destroy;
 begin
   FCodeUpdater.Free;
@@ -300,34 +336,6 @@ begin
   FBOModel.Free;
   FProject.Free;
   inherited;
-end;
-
-function TPressFacade.GetBOModel: TPressRuntimeBOModel;
-begin
-  if not Assigned(FBOModel) then
-    FBOModel := TPressRuntimeBOModel.Create(Project);
-  Result := FBOModel;
-end;
-
-function TPressFacade.GetCodeUpdater: TPressCodeUpdater;
-begin
-  if not Assigned(FCodeUpdater) then
-    FCodeUpdater := TPressCodeUpdater.Create(Project);
-  Result := FCodeUpdater;
-end;
-
-function TPressFacade.GetMVPModel: TPressRuntimeMVPModel;
-begin
-  if not Assigned(FMVPModel) then
-    FMVPModel := TPressRuntimeMVPModel.Create(Project);
-  Result := FMVPModel;
-end;
-
-function TPressFacade.GetProject: TPressProject;
-begin
-  if not Assigned(FProject) then
-    FProject := TPressProject.Create;
-  Result := FProject;
 end;
 
 procedure TPressFacade.ParseProject;
@@ -347,6 +355,7 @@ procedure TPressFacade.ParseProject;
     VMetadata: TPressObjectMetadata;
     VAttributeMetadata: TPressAttributeMetadata;
     VAttributeRegistry: TPressAttributeMetadataRegistry;
+    VAttributeType: TPressAttributeTypeRegistry;
     I, J: Integer;
   begin
     for I := 0 to Pred(AClasses.Count) do
@@ -358,24 +367,43 @@ procedure TPressFacade.ParseProject;
         VRegistry.RuntimeMetadata := VMetadata;
         VRegistry.KeyName := VMetadata.KeyName;
         VRegistry.ObjectClassName := VMetadata.ObjectClassName;
+        VRegistry.IsPersistent := VMetadata.IsPersistent;
+        VRegistry.PersistentName := VMetadata.PersistentName;
         { TODO : Fix parent class assignment }
         for J := 0 to Pred(VMetadata.AttributeMetadatas.Count) do
         begin
           VAttributeMetadata := VMetadata.AttributeMetadatas[J];
           VAttributeRegistry := VRegistry.AttributeList.Add;
           VAttributeRegistry.RuntimeMetadata := VAttributeMetadata;
-          VAttributeRegistry.AttributeType := TPressAttributeTypeRegistry(
-           Project.RootUserAttributes.ChildItems.FindItem(
+          VAttributeType := TPressAttributeTypeRegistry(
+           Project.PressAttributeRegistry.FindItem(
            VAttributeMetadata.AttributeName, TPressAttributeTypeRegistry));
+          if not Assigned(VAttributeType) then
+            VAttributeType := TPressAttributeTypeRegistry(
+             Project.RootUserAttributes.ChildItems.FindItem(
+             VAttributeMetadata.AttributeName, TPressAttributeTypeRegistry));
+          VAttributeRegistry.AttributeType := VAttributeType;
           VAttributeRegistry.ContainerType := TPressObjectMetadataRegistry(
            Project.RootPersistentClasses.ChildItems.FindItem(
            VAttributeMetadata.ObjectClassName, TPressObjectMetadataRegistry));
-          VAttributeRegistry.DefaultValue := VAttributeMetadata.DefaultValue;
-          VAttributeRegistry.EditMask := VAttributeMetadata.EditMask;
-          VAttributeRegistry.IsPersistent := VAttributeMetadata.IsPersistent;
+          VAttributeRegistry.DefaultValue.Value :=
+           VAttributeMetadata.DefaultValue;
+          VAttributeRegistry.EditMask.Value := VAttributeMetadata.EditMask;
+          VAttributeRegistry.IsPersistent.Value :=
+           VAttributeMetadata.IsPersistent;
           VAttributeRegistry.Name := VAttributeMetadata.Name;
-          VAttributeRegistry.PersistentName :=
+          VAttributeRegistry.PersistentName.Value :=
            VAttributeMetadata.PersistentName;
+          VAttributeRegistry.PersLinkChildName.Value :=
+           VAttributeMetadata.PersLinkChildName;
+          VAttributeRegistry.PersLinkIdName.Value :=
+           VAttributeMetadata.PersLinkIdName;
+          VAttributeRegistry.PersLinkName.Value :=
+           VAttributeMetadata.PersLinkName;
+          VAttributeRegistry.PersLinkParentName.Value :=
+           VAttributeMetadata.PersLinkParentName;
+          VAttributeRegistry.PersLinkPosName.Value :=
+           VAttributeMetadata.PersLinkPosName;
           VAttributeRegistry.Size := VAttributeMetadata.Size;
         end;
       finally
