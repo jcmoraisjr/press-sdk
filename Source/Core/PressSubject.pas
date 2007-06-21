@@ -121,7 +121,6 @@ type
     FPersLinkParentName: string;
     FPersLinkPosName: string;
     FSize: Integer;
-    function GetObjectClassName: string;
     function GetPersLinkChildName: string;
     function GetPersLinkName: string;
     function GetPersLinkParentName: string;
@@ -129,11 +128,12 @@ type
     procedure SetCalcMetadata(Value: TPressCalcMetadata);
     procedure SetEnumMetadata(Value: TPressEnumMetadata);
     procedure SetObjectClass(Value: TPressObjectClass);
-    procedure SetObjectClassName(const Value: string);
   protected
     function GetAttributeName: string; virtual;
+    function GetObjectClassName: string; virtual;
     procedure SetAttributeName(const Value: string); virtual;
     procedure SetName(const Value: string); virtual;
+    procedure SetObjectClassName(const Value: string); virtual;
     property Model: TPressModel read FModel;
   public
     constructor Create(AOwner: TPressObjectMetadata); virtual;
@@ -1575,7 +1575,6 @@ constructor TPressObjectMetadata.Create(
 begin
   inherited Create;
   FObjectClassName := AObjectClassName;
-  FPersistentName := FObjectClassName;
   FClassIdName := SPressClassIdString;
   FUpdateCountName := SPressUpdateCountString;
   FModel := AModel;
@@ -1643,6 +1642,10 @@ procedure TPressObjectMetadata.SetIsPersistent(AValue: Boolean);
 begin
   if Assigned(Parent) and not Parent.IsPersistent then
     FIsPersistent := AValue;
+  if not IsPersistent then
+    FPersistentName := ''
+  else if FPersistentName = '' then
+    FPersistentName := FObjectClassName;
 end;
 
 procedure TPressObjectMetadata.SetPersistentName(const Value: string);
