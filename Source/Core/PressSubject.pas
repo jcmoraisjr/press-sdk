@@ -994,6 +994,7 @@ type
 
   TPressStructure = class(TPressAttribute)
   private
+    FNotifying: Boolean;
     function GetObjectClass: TPressObjectClass;
   protected
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); virtual;
@@ -4185,15 +4186,27 @@ end;
 procedure TPressStructure.Notify(AEvent: TPressEvent);
 begin
   inherited;
-  if AEvent.Owner is TPressObject then
-    AfterChangeItem(TPressObject(AEvent.Owner));
+  if not FNotifying then
+    try
+      FNotifying := True;
+      if AEvent.Owner is TPressObject then
+        AfterChangeItem(TPressObject(AEvent.Owner));
+    finally
+      FNotifying := False;
+    end;
 end;
 
 procedure TPressStructure.NotifyReferenceChange;
 begin
   NotifyInvalidate;
-  if Assigned(Owner) then
-    Owner.NotifyInvalidate;  // friend class
+  if not FNotifying then
+    try
+      FNotifying := True;
+      if Assigned(Owner) then
+        Owner.NotifyInvalidate;  // friend class
+    finally
+      FNotifying := False;
+    end;
 end;
 
 function TPressStructure.ProxyType: TPressProxyType;
