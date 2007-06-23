@@ -3465,7 +3465,10 @@ end;
 
 function TPressReference.InternalProxyType: TPressProxyType;
 begin
-  Result := ptShared;
+  if Assigned(Metadata) and Metadata.WeakReference then
+    Result := ptWeakReference
+  else
+    Result := ptShared;
 end;
 
 { TPressItemsChangedEvent }
@@ -3981,7 +3984,10 @@ end;
 
 function TPressReferences.InternalProxyType: TPressProxyType;
 begin
-  Result := ptShared;
+  if Assigned(Metadata) and Metadata.WeakReference then
+    Result := ptWeakReference
+  else
+    Result := ptShared;
 end;
 
 { Initialization routines }

@@ -121,6 +121,7 @@ type
     FPersLinkParentName: string;
     FPersLinkPosName: string;
     FSize: Integer;
+    FWeakReference: Boolean;
     function GetPersLinkChildName: string;
     function GetPersLinkName: string;
     function GetPersLinkParentName: string;
@@ -158,6 +159,7 @@ type
     property PersLinkParentName: string read GetPersLinkParentName write FPersLinkParentName;
     property PersLinkPosName: string read FPersLinkPosName write FPersLinkPosName;
     property Size: Integer read FSize write FSize;
+    property WeakReference: Boolean read FWeakReference write FWeakReference;
   end;
 
   TPressAttributeMetadataIterator = class;
@@ -723,7 +725,7 @@ type
 
   { Proxy declarations }
 
-  TPressProxyType = (ptOwned, ptShared);
+  TPressProxyType = (ptOwned, ptShared, ptWeakReference);
 
   TPressProxyChangeType = (pctAssigning, pctDereferencing);
 
@@ -3231,7 +3233,10 @@ begin
     Exit;
   if Assigned(FBeforeChangeInstance) then
     FBeforeChangeInstance(Self, nil, pctAssigning);
-  FreeAndNil(FInstance);
+  if ProxyType <> ptWeakReference then
+    FreeAndNil(FInstance)
+  else
+    FInstance := nil;
   if Assigned(FAfterChangeInstance) then
     FAfterChangeInstance(Self, nil, pctAssigning);
 end;
@@ -3250,7 +3255,7 @@ end;
 
 function TPressProxy.Clone: TPressProxy;
 begin
-  Result := TPressProxy.Create(FProxyType);
+  Result := TPressProxy.Create(ProxyType);
   Result.Assign(Self);
 end;
 
@@ -3275,7 +3280,10 @@ begin
       raise EPressError.CreateFmt(SInstanceNotFound, [FRefClass, FRefID]);
     if Assigned(FBeforeChangeInstance) then
       FBeforeChangeInstance(Self, VInstance, pctDereferencing);
-    FInstance.Free;
+    if ProxyType <> ptWeakReference then
+      FreeAndNil(FInstance)
+    else
+      VInstance.Release;
     FInstance := VInstance;
     FRefClass := '';
     FRefID := '';
@@ -3287,9 +3295,8 @@ end;
 
 procedure TPressProxy.Finit;
 begin
-  { TODO : Removed to avoid events and AVs }
-  //ClearInstance;
-  FInstance.Free;
+  if ProxyType <> ptWeakReference then
+    FInstance.Free;
 end;
 
 procedure TPressProxy.FreeInstance;
@@ -3395,14 +3402,15 @@ begin
   begin
     if Assigned(FBeforeChangeInstance) then
       FBeforeChangeInstance(Self, Value, pctAssigning);
-    FInstance.Free;
+    if ProxyType <> ptWeakReference then
+      FreeAndNil(FInstance);
     FInstance := Value;
     FRefClass := '';
     FRefID := '';
     if HasInstance then
     begin
       FDataAccess := FInstance.DataAccess;
-      if FProxyType = ptShared then
+      if ProxyType = ptShared then
         FInstance.AddRef;
     end;
     if Assigned(FAfterChangeInstance) then
