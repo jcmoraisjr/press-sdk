@@ -24,6 +24,7 @@ uses
   PressIDEIntf;
 
 type
+  TPressProjectModule = class;
   TPressProjectItemReferences = class;
 
   TPressProjectItemClass = class of TPressProjectItem;
@@ -31,9 +32,12 @@ type
   TPressProjectItem = class(TPressObject)
   private
     FName: TPressString;
+    FModule: TPressReference;
     FChildItems: TPressProjectItemReferences;
     function GetName: string;
     procedure SetName(const Value: string);
+    function GetModule: TPressProjectModule;
+    procedure SetModule(Value: TPressProjectModule);
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
@@ -41,6 +45,7 @@ type
     property ChildItems: TPressProjectItemReferences read FChildItems;
   published
     property Name: string read GetName write SetName;
+    property Module: TPressProjectModule read GetModule write SetModule;
   end;
 
   TPressProjectItemIterator = class;
@@ -77,7 +82,6 @@ type
   TPressProjectClass = class(TPressProjectItem)
   private
     FObjectClassName: TPressString;
-    FWeakRefParentClass: TPressProjectClass;
     FParentClass: TPressReference;
     function GetChildItems: TPressProjectClassReferences;
     function GetObjectClassName: string;
@@ -121,13 +125,11 @@ type
   end;
 
   TPressAttributeMetadataRegistryParts = class;
-  TPressProjectModule = class;
 
   TPressObjectMetadataRegistry = class(TPressProjectClass)
   private
     FRuntimeMetadata: TPressObjectMetadata;
   private
-    FModule: TPressReference;
     FMetadataStr: TPressString;
     FKeyName: TPressString;
     FIsPersistent: TPressBoolean;
@@ -136,13 +138,11 @@ type
     function GetIsPersistent: Boolean;
     function GetKeyName: string;
     function GetMetadataStr: string;
-    function GetModule: TPressProjectModule;
     function GetParentClass: TPressObjectMetadataRegistry;
     function GetPersistentName: string;
     procedure SetIsPersistent(Value: Boolean);
     procedure SetKeyName(const Value: string);
     procedure SetMetadataStr(const Value: string);
-    procedure SetModule(Value: TPressProjectModule);
     procedure SetParentClass(Value: TPressObjectMetadataRegistry);
     procedure SetPersistentName(const Value: string);
   protected
@@ -155,7 +155,6 @@ type
     property IsPersistent: Boolean read GetIsPersistent write SetIsPersistent;
     property KeyName: string read GetKeyName write SetKeyName;
     property MetadataStr: string read GetMetadataStr write SetMetadataStr;
-    property Module: TPressProjectModule read GetModule write SetModule;
     property ParentClass: TPressObjectMetadataRegistry read GetParentClass write SetParentClass;
     property PersistentName: string read GetPersistentName write SetPersistentName;
   end;
@@ -279,7 +278,7 @@ type
 
   TPressProjectModuleIterator = class;
 
-  TPressProjectModuleParts = class(TPressParts)
+  TPressProjectModuleReferences = class(TPressReferences)
   private
     function GetObjects(AIndex: Integer): TPressProjectModule;
     procedure SetObjects(AIndex: Integer; const Value: TPressProjectModule);
@@ -327,7 +326,7 @@ type
   private
     FName: TPressString;
     FRootItems: TPressProjectItemReferences;
-    FModules: TPressProjectModuleParts;
+    FModules: TPressProjectModuleReferences;
     FPressAttributeRegistry: TPressProjectClassReferences;
     function GetName: string;
     procedure SetName(const Value: string);
@@ -352,7 +351,7 @@ type
     property RootUserGenerators: TPressProjectClass read FRootUserGenerators;
     property RootViews: TPressProjectClass read FRootViews;
   public
-    property Modules: TPressProjectModuleParts read FModules;
+    property Modules: TPressProjectModuleReferences read FModules;
     property RootItems: TPressProjectItemReferences read FRootItems;
     property PressAttributeRegistry: TPressProjectClassReferences read FPressAttributeRegistry;
   published
@@ -368,6 +367,11 @@ uses
 
 { TPressProjectItem }
 
+function TPressProjectItem.GetModule: TPressProjectModule;
+begin
+  Result := FModule.Value as TPressProjectModule;
+end;
+
 function TPressProjectItem.GetName: string;
 begin
   Result := FName.Value;
@@ -378,6 +382,8 @@ function TPressProjectItem.InternalAttributeAddress(
 begin
   if SameText(AAttributeName, 'Name') then
     Result := Addr(FName)
+  else if SameText(AAttributeName, 'Module') then
+    Result := Addr(FModule)
   else if SameText(AAttributeName, 'ChildItems') then
     Result := Addr(FChildItems)
   else
@@ -388,7 +394,13 @@ class function TPressProjectItem.InternalMetadataStr: string;
 begin
   Result := 'TPressProjectItem (' +
    'Name: String;' +
+   'Module: Reference(TPressProjectModule) WeakReference;' +
    'ChildItems: TPressProjectItemReferences)';
+end;
+
+procedure TPressProjectItem.SetModule(Value: TPressProjectModule);
+begin
+  FModule.Value := Value;
 end;
 
 procedure TPressProjectItem.SetName(const Value: string);
@@ -498,8 +510,7 @@ end;
 
 function TPressProjectClass.GetParentClass: TPressProjectClass;
 begin
-  Result := FWeakRefParentClass;
-  //Result := FParentClass.Value as TPressProjectClass;
+  Result := FParentClass.Value as TPressProjectClass;
 end;
 
 function TPressProjectClass.InternalAttributeAddress(
@@ -518,7 +529,7 @@ begin
   Result := 'TPressProjectClass (' +
    'ChildItems: TPressProjectClassReferences;' +
    'ObjectClassName: String;' +
-   'ParentClass: Reference(TPressProjectClass))';
+   'ParentClass: Reference(TPressProjectClass) WeakReference)';
 end;
 
 procedure TPressProjectClass.SetObjectClassName(const Value: string);
@@ -530,9 +541,7 @@ end;
 
 procedure TPressProjectClass.SetParentClass(Value: TPressProjectClass);
 begin
-  { TODO : Fix leakage with circular reference, fix BO overhead }
-  FWeakRefParentClass := Value;
-  //FParentClass.Value := Value;
+  FParentClass.Value := Value;
 end;
 
 { TPressProjectClassReferences }
@@ -623,11 +632,6 @@ begin
   end;
 end;
 
-function TPressObjectMetadataRegistry.GetModule: TPressProjectModule;
-begin
-  Result := FModule.Value as TPressProjectModule;
-end;
-
 function TPressObjectMetadataRegistry.GetParentClass: TPressObjectMetadataRegistry;
 begin
   Result := inherited ParentClass as TPressObjectMetadataRegistry;
@@ -641,9 +645,7 @@ end;
 function TPressObjectMetadataRegistry.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
-  if SameText(AAttributeName, 'Module') then
-    Result := Addr(FModule)
-  else if SameText(AAttributeName, 'MetadataStr') then
+  if SameText(AAttributeName, 'MetadataStr') then
     Result := Addr(FMetadataStr)
   else if SameText(AAttributeName, 'KeyName') then
     Result := Addr(FKeyName)
@@ -661,8 +663,7 @@ class function TPressObjectMetadataRegistry.InternalMetadataStr: string;
 begin
   Result := 'TPressObjectMetadataRegistry (' +
    'ChildItems: TPressProjectClassReferences(TPressObjectMetadataRegistry);' +
-   'ParentClass: Reference(TPressObjectMetadataRegistry);' +
-   'Module: Reference(TPressProjectModule);' +
+   'ParentClass: Reference(TPressObjectMetadataRegistry) WeakReference;' +
    'MetadataStr: String;' +
    'KeyName: String;' +
    'IsPersistent: Boolean;' +
@@ -683,11 +684,6 @@ end;
 procedure TPressObjectMetadataRegistry.SetMetadataStr(const Value: string);
 begin
   FMetadataStr.Value := Value;
-end;
-
-procedure TPressObjectMetadataRegistry.SetModule(Value: TPressProjectModule);
-begin
-  FModule.Value := Value;
 end;
 
 procedure TPressObjectMetadataRegistry.SetParentClass(
@@ -941,24 +937,24 @@ begin
   FName.Value := Value;
 end;
 
-{ TPressProjectModuleParts }
+{ TPressProjectModuleReferences }
 
-function TPressProjectModuleParts.Add: TPressProjectModule;
+function TPressProjectModuleReferences.Add: TPressProjectModule;
 begin
   Result := inherited Add as TPressProjectModule;
 end;
 
-function TPressProjectModuleParts.Add(AObject: TPressProjectModule): Integer;
+function TPressProjectModuleReferences.Add(AObject: TPressProjectModule): Integer;
 begin
   Result := inherited Add(AObject);
 end;
 
-function TPressProjectModuleParts.CreateIterator: TPressItemsIterator;
+function TPressProjectModuleReferences.CreateIterator: TPressItemsIterator;
 begin
   Result := TPressProjectModuleIterator.Create(ProxyList);
 end;
 
-function TPressProjectModuleParts.FindClass(
+function TPressProjectModuleReferences.FindClass(
   const AName: string): TPressProjectClass;
 var
   VModule: TPressProjectModule;
@@ -974,7 +970,7 @@ begin
   Result := nil;
 end;
 
-function TPressProjectModuleParts.FindModule(
+function TPressProjectModuleReferences.FindModule(
   AModule: IPressIDEModule): TPressProjectModule;
 var
   I: Integer;
@@ -988,28 +984,28 @@ begin
   Result := nil;
 end;
 
-function TPressProjectModuleParts.GetObjects(AIndex: Integer): TPressProjectModule;
+function TPressProjectModuleReferences.GetObjects(AIndex: Integer): TPressProjectModule;
 begin
   Result := inherited Objects[AIndex] as TPressProjectModule;
 end;
 
-function TPressProjectModuleParts.IndexOf(AObject: TPressProjectModule): Integer;
+function TPressProjectModuleReferences.IndexOf(AObject: TPressProjectModule): Integer;
 begin
   Result := IndexOf(AObject);
 end;
 
-procedure TPressProjectModuleParts.Insert(
+procedure TPressProjectModuleReferences.Insert(
   AIndex: Integer; AObject: TPressProjectModule);
 begin
   inherited Insert(AIndex, AObject);
 end;
 
-function TPressProjectModuleParts.InternalCreateIterator: TPressItemsIterator;
+function TPressProjectModuleReferences.InternalCreateIterator: TPressItemsIterator;
 begin
   Result := CreateIterator;
 end;
 
-function TPressProjectModuleParts.ModuleByIntf(
+function TPressProjectModuleReferences.ModuleByIntf(
   AModule: IPressIDEModule): TPressProjectModule;
 begin
   Result := FindModule(AModule);
@@ -1017,18 +1013,18 @@ begin
     raise EPressError.CreateFmt(SModuleNotFound, [AModule.Name]);
 end;
 
-function TPressProjectModuleParts.Remove(AObject: TPressProjectModule): Integer;
+function TPressProjectModuleReferences.Remove(AObject: TPressProjectModule): Integer;
 begin
   Result := inherited Remove(AObject);
 end;
 
-procedure TPressProjectModuleParts.SetObjects(
+procedure TPressProjectModuleReferences.SetObjects(
   AIndex: Integer; const Value: TPressProjectModule);
 begin
   inherited Objects[AIndex] := Value;
 end;
 
-class function TPressProjectModuleParts.ValidObjectClass: TPressObjectClass;
+class function TPressProjectModuleReferences.ValidObjectClass: TPressObjectClass;
 begin
   Result := TPressProjectModule;
 end;
@@ -1138,7 +1134,7 @@ begin
   Result := 'TPressProject (' +
    'Name: String;' +
    'RootItems: TPressProjectItemReferences;' +
-   'Modules: TPressProjectModuleParts;' +
+   'Modules: TPressProjectModuleReferences;' +
    'PressAttributeRegistry: TPressProjectClassReferences(TPressAttributeTypeRegistry))';
 end;
 
@@ -1188,7 +1184,7 @@ begin
   TPressProjectItemReferences.RegisterAttribute;
   TPressProjectClassReferences.RegisterAttribute;
   TPressAttributeMetadataRegistryParts.RegisterAttribute;
-  TPressProjectModuleParts.RegisterAttribute;
+  TPressProjectModuleReferences.RegisterAttribute;
 end;
 
 initialization

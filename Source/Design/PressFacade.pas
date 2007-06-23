@@ -350,12 +350,65 @@ procedure TPressFacade.ParseProject;
   end;
 
   procedure AddClasses(AClasses: TPressProjectClassReferences);
+
+    procedure AddObjectMetadata(
+      VReg: TPressObjectMetadataRegistry; VMeta: TPressObjectMetadata);
+    begin
+      { TODO : Fix parent class assignment }
+      VReg.RuntimeMetadata := VMeta;
+      VReg.KeyName := VMeta.KeyName;
+      VReg.ObjectClassName := VMeta.ObjectClassName;
+      VReg.IsPersistent := VMeta.IsPersistent;
+      VReg.PersistentName := VMeta.PersistentName;
+    end;
+
+    procedure AddValueAttributeMetadata(
+      VReg: TPressAttributeMetadataRegistry; VMeta: TPressAttributeMetadata);
+    var
+      VType: TPressAttributeTypeRegistry;
+    begin
+      VReg.RuntimeMetadata := VMeta;
+      VReg.Name := VMeta.Name;
+      VType := TPressAttributeTypeRegistry(
+       Project.PressAttributeRegistry.FindItem(
+       VMeta.AttributeName, TPressAttributeTypeRegistry));
+      if not Assigned(VType) then
+        VType := TPressAttributeTypeRegistry(
+         Project.RootUserAttributes.ChildItems.FindItem(
+         VMeta.AttributeName, TPressAttributeTypeRegistry));
+      VReg.AttributeType := VType;
+      VReg.DefaultValue.Value := VMeta.DefaultValue;
+      VReg.EditMask.Value := VMeta.EditMask;
+      VReg.IsPersistent.Value := VMeta.IsPersistent;
+    end;
+
+    procedure AddStructureAttributeMetadata(
+      VReg: TPressAttributeMetadataRegistry; VMeta: TPressAttributeMetadata);
+    begin
+      { TODO : Get Container type from customized items attributes }
+      VReg.ContainerType := TPressObjectMetadataRegistry(
+       Project.RootPersistentClasses.ChildItems.FindItem(
+       VMeta.ObjectClassName,
+       TPressObjectMetadataRegistry));
+    end;
+
+    procedure AddItemsAttributeMetadata(
+      VReg: TPressAttributeMetadataRegistry; VMeta: TPressAttributeMetadata);
+    begin
+      VReg.PersistentName.Value := VMeta.PersistentName;
+      VReg.PersLinkChildName.Value := VMeta.PersLinkChildName;
+      VReg.PersLinkIdName.Value := VMeta.PersLinkIdName;
+      VReg.PersLinkName.Value := VMeta.PersLinkName;
+      VReg.PersLinkParentName.Value := VMeta.PersLinkParentName;
+      VReg.PersLinkPosName.Value := VMeta.PersLinkPosName;
+      VReg.Size := VMeta.Size;
+    end;
+
   var
     VRegistry: TPressObjectMetadataRegistry;
     VMetadata: TPressObjectMetadata;
     VAttributeMetadata: TPressAttributeMetadata;
     VAttributeRegistry: TPressAttributeMetadataRegistry;
-    VAttributeType: TPressAttributeTypeRegistry;
     I, J: Integer;
   begin
     for I := 0 to Pred(AClasses.Count) do
@@ -364,47 +417,16 @@ procedure TPressFacade.ParseProject;
       VRegistry.DisableChanges;
       try
         VMetadata := BOModel.RegisterMetadata(VRegistry.MetadataStr);
-        VRegistry.RuntimeMetadata := VMetadata;
-        VRegistry.KeyName := VMetadata.KeyName;
-        VRegistry.ObjectClassName := VMetadata.ObjectClassName;
-        VRegistry.IsPersistent := VMetadata.IsPersistent;
-        VRegistry.PersistentName := VMetadata.PersistentName;
-        { TODO : Fix parent class assignment }
+        AddObjectMetadata(VRegistry, VMetadata);
         for J := 0 to Pred(VMetadata.AttributeMetadatas.Count) do
         begin
           VAttributeMetadata := VMetadata.AttributeMetadatas[J];
           VAttributeRegistry := VRegistry.AttributeList.Add;
-          VAttributeRegistry.RuntimeMetadata := VAttributeMetadata;
-          VAttributeType := TPressAttributeTypeRegistry(
-           Project.PressAttributeRegistry.FindItem(
-           VAttributeMetadata.AttributeName, TPressAttributeTypeRegistry));
-          if not Assigned(VAttributeType) then
-            VAttributeType := TPressAttributeTypeRegistry(
-             Project.RootUserAttributes.ChildItems.FindItem(
-             VAttributeMetadata.AttributeName, TPressAttributeTypeRegistry));
-          VAttributeRegistry.AttributeType := VAttributeType;
-          VAttributeRegistry.ContainerType := TPressObjectMetadataRegistry(
-           Project.RootPersistentClasses.ChildItems.FindItem(
-           VAttributeMetadata.ObjectClassName, TPressObjectMetadataRegistry));
-          VAttributeRegistry.DefaultValue.Value :=
-           VAttributeMetadata.DefaultValue;
-          VAttributeRegistry.EditMask.Value := VAttributeMetadata.EditMask;
-          VAttributeRegistry.IsPersistent.Value :=
-           VAttributeMetadata.IsPersistent;
-          VAttributeRegistry.Name := VAttributeMetadata.Name;
-          VAttributeRegistry.PersistentName.Value :=
-           VAttributeMetadata.PersistentName;
-          VAttributeRegistry.PersLinkChildName.Value :=
-           VAttributeMetadata.PersLinkChildName;
-          VAttributeRegistry.PersLinkIdName.Value :=
-           VAttributeMetadata.PersLinkIdName;
-          VAttributeRegistry.PersLinkName.Value :=
-           VAttributeMetadata.PersLinkName;
-          VAttributeRegistry.PersLinkParentName.Value :=
-           VAttributeMetadata.PersLinkParentName;
-          VAttributeRegistry.PersLinkPosName.Value :=
-           VAttributeMetadata.PersLinkPosName;
-          VAttributeRegistry.Size := VAttributeMetadata.Size;
+          AddValueAttributeMetadata(VAttributeRegistry, VAttributeMetadata);
+          if VAttributeMetadata.AttributeClass.InheritsFrom(TPressStructure) then
+            AddStructureAttributeMetadata(VAttributeRegistry, VAttributeMetadata);
+          if VAttributeMetadata.AttributeClass.InheritsFrom(TPressItems) then
+            AddItemsAttributeMetadata(VAttributeRegistry, VAttributeMetadata);
         end;
       finally
         VRegistry.EnableChanges;

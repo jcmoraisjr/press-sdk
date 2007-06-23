@@ -161,13 +161,18 @@ begin
   VProjectClass := AModule.FindClass(AProc.Header.ClassTypeName);
   if Assigned(VProjectClass) then
   begin
-    VClassMethodName := AProc.Header.ClassMethodName;
-    if (VProjectClass is TPressObjectMetadataRegistry) and
-     SameText(VClassMethodName, SPressMetadataMethodName) then
-      ExtractBOMetadata(TPressObjectMetadataRegistry(VProjectClass), VBlock)
-    else if (VProjectClass is TPressAttributeTypeRegistry) and
-     SameText(VClassMethodName, SPressAttributeNameMethodName) then
-      ExtractAttributeName(TPressAttributeTypeRegistry(VProjectClass), VBlock);
+    VProjectClass.DisableChanges;
+    try
+      VClassMethodName := AProc.Header.ClassMethodName;
+      if (VProjectClass is TPressObjectMetadataRegistry) and
+       SameText(VClassMethodName, SPressMetadataMethodName) then
+        ExtractBOMetadata(TPressObjectMetadataRegistry(VProjectClass), VBlock)
+      else if (VProjectClass is TPressAttributeTypeRegistry) and
+       SameText(VClassMethodName, SPressAttributeNameMethodName) then
+        ExtractAttributeName(TPressAttributeTypeRegistry(VProjectClass), VBlock);
+    finally
+      VProjectClass.EnableChanges;
+    end;
   end;
 
   { TODO : Improve }
@@ -316,10 +321,21 @@ begin
     begin
       VClassDecl := TPressPascalClassType(ATypes[I]);
       VParentClass := ClassDeclarationByName(VClassDecl.ParentName);
-      VClass := VParentClass.ChildItems.Add as TPressProjectClass;
-      VClass.ObjectClassName := VClassDecl.Name;
-      VClass.ParentClass := VParentClass;
-      AModule.Items.Add(VClass);
+      VParentClass.DisableChanges;
+      try
+        VClass := VParentClass.ChildItems.Add as TPressProjectClass;
+        VClass.DisableChanges;
+        try
+          VClass.ObjectClassName := VClassDecl.Name;
+          VClass.ParentClass := VParentClass;
+          VClass.Module := AModule;
+          AModule.Items.Add(VClass);
+        finally
+          VClass.EnableChanges;
+        end;
+      finally
+        VParentClass.EnableChanges;
+      end;
     end;
 end;
 
@@ -409,20 +425,25 @@ begin
   end;
   if ParsedModules.IndexOf(AModuleIntf) = -1 then
   begin
-    VReader := TPressPascalReader.Create(AModuleIntf.SourceCode);
-    VUnit := TPressPascalUnit.Create(nil);
+    VModule.DisableChanges;
     try
-      VUnit.Read(VReader);
-      VIntfUses := ReadUnitList(VUnit.InterfaceSection.UsesDeclaration);
-      VModule.IntfUses := VIntfUses;
-      ReadInterfaceSection(VModule, VReader, VUnit.InterfaceSection);
-      ParsedModules.Add(AModuleIntf);
-      VImplUses := ReadUnitList(VUnit.ImplementationSection.UsesDeclaration);
-      VModule.ImplUses := VImplUses;
-      ReadImplementationSection(VModule, VReader, VUnit.ImplementationSection);
+      VReader := TPressPascalReader.Create(AModuleIntf.SourceCode);
+      VUnit := TPressPascalUnit.Create(nil);
+      try
+        VUnit.Read(VReader);
+        VIntfUses := ReadUnitList(VUnit.InterfaceSection.UsesDeclaration);
+        VModule.IntfUses := VIntfUses;
+        ReadInterfaceSection(VModule, VReader, VUnit.InterfaceSection);
+        ParsedModules.Add(AModuleIntf);
+        VImplUses := ReadUnitList(VUnit.ImplementationSection.UsesDeclaration);
+        VModule.ImplUses := VImplUses;
+        ReadImplementationSection(VModule, VReader, VUnit.ImplementationSection);
+      finally
+        VUnit.Free;
+        VReader.Free;
+      end;
     finally
-      VUnit.Free;
-      VReader.Free;
+      VModule.EnableChanges;
     end;
   end;
   Result := VModule;
