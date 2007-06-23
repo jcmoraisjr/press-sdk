@@ -32,6 +32,7 @@ type
   private
     FConnectionManager: TInstantConnectionManager;
     FConnector: TInstantConnector;
+    procedure CheckIsPersistent(AMetadata: TPressObjectMetadata);
     procedure ConnectionManagerConnect(Sender: TObject; var ConnectionDef: TInstantConnectionDef; var Result: Boolean);
     function CreateInstantObject(AObject: TPressObject): TInstantObject;
     function CreatePressObject(AClass: TPressObjectClass; ADataSet: TDataSet): TPressObject;
@@ -82,6 +83,14 @@ begin
 end;
 
 { TPressInstantObjectsPersistence }
+
+procedure TPressInstantObjectsPersistence.CheckIsPersistent(
+  AMetadata: TPressObjectMetadata);
+begin
+  if not AMetadata.IsPersistent then
+    raise EPressError.CreateFmt(SClassIsNotPersistent, [
+     AMetadata.ObjectClassName]);
+end;
 
 procedure TPressInstantObjectsPersistence.ConnectionManagerConnect(Sender: TObject;
   var ConnectionDef: TInstantConnectionDef; var Result: Boolean);
@@ -183,10 +192,13 @@ end;
 procedure TPressInstantObjectsPersistence.InternalDispose(
   AClass: TPressObjectClass; const AId: string);
 var
+  VMetadata: TPressObjectMetadata;
   VInstantObject: TInstantObject;
 begin
+  VMetadata := AClass.ClassMetadata;
+  CheckIsPersistent(VMetadata);
   VInstantObject := InstantFindClass(
-   AClass.ClassMetadata.PersistentName).Retrieve(AId, False);
+    VMetadata.PersistentName).Retrieve(AId, False);
   if Assigned(VInstantObject) then
     try
       VInstantObject.Dispose;
@@ -236,10 +248,13 @@ function TPressInstantObjectsPersistence.InternalRetrieve(
   AClass: TPressObjectClass; const AId: string;
   AMetadata: TPressObjectMetadata): TPressObject;
 var
+  VMetadata: TPressObjectMetadata;
   VInstantObject: TInstantObject;
 begin
+  VMetadata := AClass.ClassMetadata;
+  CheckIsPersistent(VMetadata);
   VInstantObject := InstantFindClass(
-   AClass.ClassMetadata.PersistentName).Retrieve(AId, False);
+   VMetadata.PersistentName).Retrieve(AId, False);
   if Assigned(VInstantObject) then
   begin
     Result := AClass.Create(Self, AMetadata);
@@ -332,6 +347,7 @@ var
   VPersistentObject: TObject;
   VInstantObject: TInstantObject;
 begin
+  CheckIsPersistent(AObject.Metadata);
   VPersistentObject := PersistentObject[AObject];
   if VPersistentObject is TInstantObject then
   begin
