@@ -2323,6 +2323,8 @@ end;
 function TPressSubject.Release: Integer;
 begin
   ThreadSafeDecrement(FRefCount);
+  if FRefCount < 0 then
+    raise EPressError.CreateFmt(SCannotReleaseInstance, [Signature]);
   Result := FRefCount;
 end;
 
