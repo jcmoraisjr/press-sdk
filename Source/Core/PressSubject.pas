@@ -1580,7 +1580,7 @@ begin
   FModel := AModel;
   FParent := FModel.ParentMetadataOf(Self);
   if Assigned(FParent) then
-    FIsPersistent := FParent.IsPersistent;
+    IsPersistent := FParent.IsPersistent;
   FKeyName := SPressIdString;
   FKeyType := FModel.DefaultKeyType.AttributeName;
   FModel.Metadatas.Add(Self);
@@ -1641,7 +1641,9 @@ end;
 procedure TPressObjectMetadata.SetIsPersistent(AValue: Boolean);
 begin
   if Assigned(Parent) and not Parent.IsPersistent then
-    FIsPersistent := AValue;
+    FIsPersistent := AValue
+  else
+    FIsPersistent := True;
   if not IsPersistent then
     FPersistentName := ''
   else if FPersistentName = '' then
