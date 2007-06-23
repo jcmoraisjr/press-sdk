@@ -3557,16 +3557,21 @@ begin
   if Assigned(FProxyList) then
   begin
     FProxyList.OnChangeList := ChangedList;
-    with FProxyList.CreateIterator do
+    DisableChanges;
     try
-      BeforeFirstItem;
-      while NextItem do
-      begin
-        ValidateProxy(CurrentItem);
-        BindProxy(CurrentItem);
+      with FProxyList.CreateIterator do
+      try
+        BeforeFirstItem;
+        while NextItem do
+        begin
+          ValidateProxy(CurrentItem);
+          BindProxy(CurrentItem);
+        end;
+      finally
+        Free;
       end;
     finally
-      Free;
+      EnableChanges;
     end;
     NotifyRebuild;
   end;
@@ -3836,6 +3841,8 @@ end;
 
 procedure TPressItems.NotifyRebuild;
 begin
+  if ChangesDisabled then
+    Exit;
   TPressItemsChangedEvent.Create(Self, nil, -1, ietRebuild).Notify;
   if Assigned(Owner) then
     TPressObjectFriend(Owner).NotifyInvalidate;

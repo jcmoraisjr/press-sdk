@@ -3127,13 +3127,8 @@ end;
 
 procedure TPressQuery.InternalUpdateReferenceList;
 begin
-  FQueryItems.DisableChanges;
-  try
-    TPressReferences(FQueryItems).
-     AssignProxyList(EnsureItemsDataAccess.RetrieveProxyList(Self));
-  finally
-    FQueryItems.EnableChanges;
-  end;
+  TPressReferences(FQueryItems).AssignProxyList(
+   EnsureItemsDataAccess.RetrieveProxyList(Self));
 end;
 
 class function TPressQuery.ObjectMetadataClass: TPressObjectMetadataClass;
