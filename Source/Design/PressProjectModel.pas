@@ -362,7 +362,7 @@ implementation
 
 uses
   SysUtils,
-  PressClasses,
+  PressDesignClasses,
   PressDesignConsts;
 
 { TPressProjectItem }
@@ -1010,7 +1010,7 @@ function TPressProjectModuleReferences.ModuleByIntf(
 begin
   Result := FindModule(AModule);
   if not Assigned(Result) then
-    raise EPressError.CreateFmt(SModuleNotFound, [AModule.Name]);
+    raise EPressDesignError.CreateFmt(SModuleNotFound, [AModule.Name]);
 end;
 
 function TPressProjectModuleReferences.Remove(AObject: TPressProjectModule): Integer;

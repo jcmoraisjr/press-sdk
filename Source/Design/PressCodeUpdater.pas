@@ -46,9 +46,8 @@ implementation
 
 uses
   SysUtils,
-  PressClasses,
-  PressConsts,
   PressSubject,
+  PressDesignClasses,
   PressDesignConsts;
 
 { TPressCodeUpdater }
@@ -123,7 +122,7 @@ procedure TPressCodeUpdater.ExtractBODeclarations(AModule: TPressProjectModule;
     VClassTypeName := AProc.Header.ClassTypeName;
     if (VMetadataStr <> '') and
      not SameText(ExtractClassTypeName(VMetadataStr), VClassTypeName) then
-      raise EPressError.CreateFmt(
+      raise EPressDesignError.CreateFmt(
        SClassNameAndMetadataMismatch, [VClassTypeName]);
     AMetadata.MetadataStr := VMetadataStr;
   end;
