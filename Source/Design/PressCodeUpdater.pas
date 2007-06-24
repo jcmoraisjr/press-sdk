@@ -1,5 +1,5 @@
 (*
-  PressObjects, Code Updater Class
+  PressObjects, Code Updater Classes
   Copyright (C) 2007 Laserpress Ltda.
 
   http://www.pressobjects.org
@@ -20,15 +20,80 @@ interface
 
 uses
   Classes,
+  Contnrs,
+  PressClasses,
   PressPascal,
   PressIDEIntf,
   PressProjectModel;
 
 type
+  TPressCodeUpdate = class(TObject)
+  private
+    FDeleteCount: Integer;
+    FInsertText: string;
+    FPosition: TPressTextPos;
+  public
+    constructor Create(ADeleteCount: Integer; const AInsertText: string; APosition: TPressTextPos);
+    property DeleteCount: Integer read FDeleteCount;
+    property InsertText: string read FInsertText;
+    property Position: TPressTextPos read FPosition;
+  end;
+
+  TPressCodeUpdates = class(TObject)
+  private
+    FCodeUpdates: TObjectList;
+    FUnitParser: TPressPascalUnit;
+    FUnitReader: TPressPascalReader;
+    function GetCodeUpdate(AIndex: Integer): TPressCodeUpdate;
+    function GetCount: Integer;
+  protected
+    function InternalGetItem: TPressProjectItem; virtual; abstract;
+    procedure InternalProcessItem; virtual;
+    property UnitParser: TPressPascalUnit read FUnitParser;
+    property UnitReader: TPressPascalReader read FUnitReader;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure ProcessItem;
+    property CodeUpdate[AIndex: Integer]: TPressCodeUpdate read GetCodeUpdate; default;
+    property Count: Integer read GetCount;
+  end;
+
+  TPressCodeObjectUpdates = class(TPressCodeUpdates)
+  private
+    FItem: TPressObjectMetadataRegistry;
+  protected
+    function InternalGetItem: TPressProjectItem; override;
+    procedure InternalProcessItem; override;
+  public
+    constructor Create(AItem: TPressObjectMetadataRegistry);
+  end;
+
+  TPressCodeAttributeTypeUpdates = class(TPressCodeUpdates)
+  private
+    FItem: TPressAttributeTypeRegistry;
+  protected
+    function InternalGetItem: TPressProjectItem; override;
+    procedure InternalProcessItem; override;
+  public
+    constructor Create(AItem: TPressAttributeTypeRegistry);
+  end;
+
+  TPressCodeEnumUpdates = class(TPressCodeUpdates)
+  private
+    FItem: TPressEnumerationRegistry;
+  protected
+    function InternalGetItem: TPressProjectItem; override;
+    procedure InternalProcessItem; override;
+  public
+    constructor Create(AItem: TPressEnumerationRegistry);
+  end;
+
   TPressCodeUpdater = class(TObject)
   private
     FParsedModules: TInterfaceList;
     FProject: TPressProject;
+    function CreateCodeUpdates(AItem: TPressProjectItem): TPressCodeUpdates;
   protected
     procedure ExtractBODeclarations(AModule: TPressProjectModule; Reader: TPressPascalReader; AProc: TPressPascalProcDeclaration);
     procedure ExtractClassDeclarations(AModule: TPressProjectModule; Reader: TPressPascalReader; ATypes: TPressPascalTypesDeclaration);
@@ -40,6 +105,7 @@ type
     destructor Destroy; override;
     procedure ClearProjectModules;
     function ParseModule(AModuleIntf: IPressIDEModule): TPressProjectModule;
+    procedure StoreProjectItem(AItem: TPressProjectItem);
   end;
 
 implementation
@@ -49,6 +115,114 @@ uses
   PressSubject,
   PressDesignClasses,
   PressDesignConsts;
+
+{ TPressCodeUpdate }
+
+constructor TPressCodeUpdate.Create(ADeleteCount: Integer;
+  const AInsertText: string; APosition: TPressTextPos);
+begin
+
+end;
+
+{ TPressCodeUpdates }
+
+constructor TPressCodeUpdates.Create;
+begin
+  inherited Create;
+  FCodeUpdates := TObjectList.Create(True);
+  FUnitParser := TPressPascalUnit.Create(nil);
+end;
+
+destructor TPressCodeUpdates.Destroy;
+begin
+  FUnitParser.Free;
+  FUnitReader.Free;
+  FCodeUpdates.Free;
+  inherited;
+end;
+
+function TPressCodeUpdates.GetCodeUpdate(AIndex: Integer): TPressCodeUpdate;
+begin
+  Result := FCodeUpdates[AIndex] as TPressCodeUpdate;
+end;
+
+function TPressCodeUpdates.GetCount: Integer;
+begin
+  Result := FCodeUpdates.Count;
+end;
+
+procedure TPressCodeUpdates.InternalProcessItem;
+begin
+end;
+
+procedure TPressCodeUpdates.ProcessItem;
+begin
+  FCodeUpdates.Clear;
+  FreeAndNil(FUnitReader);
+  FUnitReader := TPressPascalReader.Create(
+   InternalGetItem.Module.ModuleIntf.SourceCode);
+  FUnitParser.Read(FUnitReader);
+  InternalProcessItem;
+end;
+
+{ TPressCodeObjectUpdates }
+
+constructor TPressCodeObjectUpdates.Create(
+  AItem: TPressObjectMetadataRegistry);
+begin
+  inherited Create;
+  FItem := AItem;
+end;
+
+function TPressCodeObjectUpdates.InternalGetItem: TPressProjectItem;
+begin
+  Result := FItem;
+end;
+
+procedure TPressCodeObjectUpdates.InternalProcessItem;
+begin
+  inherited;
+  { TODO : Implement }
+end;
+
+{ TPressCodeAttributeTypeUpdates }
+
+constructor TPressCodeAttributeTypeUpdates.Create(
+  AItem: TPressAttributeTypeRegistry);
+begin
+  inherited Create;
+  FItem := AItem;
+end;
+
+function TPressCodeAttributeTypeUpdates.InternalGetItem: TPressProjectItem;
+begin
+  Result := FItem;
+end;
+
+procedure TPressCodeAttributeTypeUpdates.InternalProcessItem;
+begin
+  inherited;
+  { TODO : Implement }
+end;
+
+{ TPressCodeEnumUpdates }
+
+constructor TPressCodeEnumUpdates.Create(AItem: TPressEnumerationRegistry);
+begin
+  inherited Create;
+  FItem := AItem;
+end;
+
+function TPressCodeEnumUpdates.InternalGetItem: TPressProjectItem;
+begin
+  Result := FItem;
+end;
+
+procedure TPressCodeEnumUpdates.InternalProcessItem;
+begin
+  inherited;
+  { TODO : Implement }
+end;
 
 { TPressCodeUpdater }
 
@@ -64,6 +238,23 @@ begin
   inherited Create;
   FProject := AProject;
   FParsedModules := TInterfaceList.Create;
+end;
+
+function TPressCodeUpdater.CreateCodeUpdates(
+  AItem: TPressProjectItem): TPressCodeUpdates;
+begin
+  if AItem is TPressObjectMetadataRegistry then
+    Result :=
+     TPressCodeObjectUpdates.Create(TPressObjectMetadataRegistry(AItem))
+  else if AItem is TPressAttributeTypeRegistry then
+    Result :=
+     TPressCodeAttributeTypeUpdates.Create(TPressAttributeTypeRegistry(AItem))
+  else if AItem is TPressEnumerationRegistry then
+    Result :=
+     TPressCodeEnumUpdates.Create(TPressEnumerationRegistry(AItem))
+  else
+    raise EPressDesignError.CreateFmt(
+     SUnsupportedProjectItemClass, [AItem.ClassName]);
 end;
 
 destructor TPressCodeUpdater.Destroy;
@@ -446,6 +637,38 @@ begin
     end;
   end;
   Result := VModule;
+end;
+
+procedure TPressCodeUpdater.StoreProjectItem(AItem: TPressProjectItem);
+var
+  VUpdates: TPressCodeUpdates;
+  VUpdate: TPressCodeUpdate;
+  VModuleIntf: IPressIDEModule;
+  I: Integer;
+begin
+  VUpdates := CreateCodeUpdates(AItem);
+  try
+    VUpdates.ProcessItem;
+    VModuleIntf := AItem.Module.ModuleIntf;
+    VModuleIntf.StartEdition;
+    try
+      for I := 0 to Pred(VUpdates.Count) do
+      begin
+        VUpdate := VUpdates[I];
+        VModuleIntf.SetPosition(VUpdate.Position);
+        if VUpdate.DeleteCount > 0 then
+          VModuleIntf.DeleteText(VUpdate.DeleteCount);
+        if VUpdate.InsertText <> '' then
+          VModuleIntf.InsertText(VUpdate.InsertText);
+      end;
+      VModuleIntf.FinishEdition(True);
+    except
+      VModuleIntf.FinishEdition(False);
+      raise;
+    end;
+  finally
+    VUpdates.Free;
+  end;
 end;
 
 end.

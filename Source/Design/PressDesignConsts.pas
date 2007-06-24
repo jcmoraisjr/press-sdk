@@ -31,6 +31,8 @@ const
   SInterfaceAlreadyInstalled = 'Interface ''%s'' was already installed';
   SModuleNotFound = 'Module ''%s'' not found';
   SUninstalledIDEInterface = 'An IDE interface is not installed';
+  SUnsupportedClass = 'Unsupported class ''%s''';
+  SUnsupportedProjectItemClass = 'Project item ''%s'' is not supported';
 
   SPressDataTypeDeclarationMsg = 'Data type declaration';
   SPressProcMethodDeclMsg = 'Procedure, function or method declaration';

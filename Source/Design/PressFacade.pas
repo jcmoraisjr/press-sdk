@@ -23,7 +23,8 @@ uses
   PressSubject,
   PressAttributes,
   PressProjectModel,
-  PressCodeUpdater;
+  PressCodeUpdater,
+  PressDesignDAO;
 
 type
   TPressRuntimeEnum = (reRuntime);
@@ -107,6 +108,7 @@ type
   private
     FBOModel: TPressRuntimeBOModel;
     FCodeUpdater: TPressCodeUpdater;
+    FDesignDAO: TPressDesignDAO;
     FMVPModel: TPressRuntimeMVPModel;
     FProject: TPressProject;
   protected
@@ -327,6 +329,8 @@ begin
   FBOModel := TPressRuntimeBOModel.Create(FProject);
   FMVPModel := TPressRuntimeMVPModel.Create(FProject);
   FCodeUpdater := TPressCodeUpdater.Create(FProject);
+  FDesignDAO := TPressDesignDAO.Create(FProject, FCodeUpdater);
+  FDesignDAO.IsDefault := True;
 end;
 
 destructor TPressFacade.Destroy;
@@ -334,6 +338,7 @@ begin
   FCodeUpdater.Free;
   FMVPModel.Free;
   FBOModel.Free;
+  FDesignDAO.Free;
   FProject.Free;
   inherited;
 end;

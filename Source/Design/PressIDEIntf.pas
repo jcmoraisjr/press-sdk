@@ -37,12 +37,14 @@ type
   IPressIDEModule = interface(IInterface)
   ['{B4DF6D97-A048-4ADD-9A90-9A773691F2D4}']
     procedure DeleteText(ACount: Integer);
+    procedure FinishEdition(ACommitChanges: Boolean);
     function GetName: string;
     function GetPosition: TPressTextPos;
     procedure InsertText(const AText: string);
     function Read(AChars: Integer): string;
     procedure SetPosition(Value: TPressTextPos);
     function SourceCode: string;
+    procedure StartEdition;
     property Name: string read GetName;
     property Position: TPressTextPos read GetPosition write SetPosition;
   end;
