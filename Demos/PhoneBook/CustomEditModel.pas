@@ -5,8 +5,8 @@ unit CustomEditModel;
 interface
 
 uses
-  PressMVPModel,
-  PressReportManager;
+  PressMVPModel
+  {$IFDEF UseReport}, PressReportManager{$ENDIF};
 
 type
   TCustomEditModel = class(TPressMVPObjectModel)

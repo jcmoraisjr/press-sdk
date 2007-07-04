@@ -5,7 +5,8 @@ unit MainModel;
 interface
 
 uses
-  PressMVPModel, PressReportManager;
+  PressMVPModel
+  {$IFDEF UseReport}, PressReportManager{$ENDIF};
 
 type
   TMainModel = class(TPressMVPQueryModel)
