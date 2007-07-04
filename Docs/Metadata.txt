@@ -46,7 +46,7 @@ end;
 
 class function TCity.InternalMetadataStr: string;
 begin
-  Result := 'TCity (' +
+  Result := 'TCity IsPersistent (' +
    'Name: String(30))';
 end;
 
@@ -64,7 +64,7 @@ tips about creating attribute accessors.
 
 The IsPersistent option, declared after the class name, informs the Press OPF
 that this class and its descendants should be persisted, ie the database needs
-to provide tables and records to save its data. This option can be omitted when
+to provide tables and fields to save its data. This option can be omitted when
 using two synchronized business models, eg using an InstantObjects broker.
 
 
@@ -134,9 +134,10 @@ begin
    'SumOfItems: Currency Calc(Items))';
 end;
 
-The Calc metadata statement declares that SumOfItems is calculated using the
-Items attribute. The actual calculation is defined in the InternalCalcAttribute
-method that is called to update the field value whenever necessary.
+The TInvoice metadata statement declares that SumOfItems is calculated using
+the Items attribute. The actual calculation is defined in the
+InternalCalcAttribute method that is called to update the field value whenever
+necessary.
 
 The following example updates a calc attribute based on the values of two other
 attributes:
