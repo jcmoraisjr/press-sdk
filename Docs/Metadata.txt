@@ -56,12 +56,6 @@ initialization
   TClient.RegisterClass;
   TCity.RegisterClass;
 
-This example model doesn't provide attribute accessors, ie properties with
-native types of the compiler. When implemented, however, attribute accessors
-provide easier access to the attribute value. See the file
-'BusinessClasses.txt' for further details about creating a business class and
-tips about creating attribute accessors.
-
 The IsPersistent option, declared after the class name, informs the Press OPF
 that this class and its descendants should be persisted, ie the database needs
 to provide tables and fields to save its data. This option can be omitted when

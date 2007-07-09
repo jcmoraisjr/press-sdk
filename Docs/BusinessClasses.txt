@@ -1,10 +1,12 @@
 BUSINESS CLASSES
 ================
 
-Business classes must be descendants of the TPressObject class. The business 
-class attributes are registered through its metadata. Attribute pointers must 
-be created so that an attribute can be reached using a business object. See 
-the file Metadata.txt for instructions about creating class metadata.
+Business classes must be descendants of the TPressObject class. Business class 
+attributes are registered through its metadata, see the file 'Metadata.txt' 
+for more information about creating class metadata. If an attribute needs to 
+be referenced elsewhere in code, attribute pointers can be created. While not 
+mandatory, as the inherited AttributeByName method can be used, attribute 
+pointers provide a faster and less error prone way to reference attributes.
 
 Creating attribute pointers
 ---------------------------
@@ -51,8 +53,10 @@ This approach generates more code but won't break the encapsulation.
 Using member accessor properties
 --------------------------------
 
-The PressObjects' subject framework will look for published properties with the
-same name as its attributes.
+Attribute accessors are Business class properties with native types of the 
+compiler. They provide easier access to attribute values. The PressObjects' 
+subject framework will look for published properties with the same name as its 
+attributes.
 
 TClient = class(TPressObject)
   _Name: TPressString;
@@ -65,7 +69,7 @@ published
   property Name: string read GetName write SetName;
 end;
 
-In this sample, whenever the Name attribute is fetched by the internals of the 
+In this example, whenever the Name attribute is fetched by the internals of the 
 framework, the GetName method is called. Similarly the SetName method is 
 called whenever the Name attribute is changed. If the getter, setter or the 
 whole property isn't declared or isn't published, the framework will fetch or 
