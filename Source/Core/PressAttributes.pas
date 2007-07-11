@@ -2142,7 +2142,7 @@ end;
 
 function TPressBoolean.InternalTypeKinds: TTypeKinds;
 begin
-  Result := [tkEnumeration];
+  Result := [{$IFDEF FPC}tkBool{$ELSE}tkEnumeration{$ENDIF}];
 end;
 
 procedure TPressBoolean.Reset;
