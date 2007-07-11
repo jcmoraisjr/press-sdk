@@ -2188,7 +2188,7 @@ function TPressModel.InternalParentMetadataOf(
 var
   VObjectClass: TPressObjectClass;
 begin
-  VObjectClass := ClassByName(AMetadata.ObjectClassName);
+  VObjectClass := AMetadata.ObjectClass;
   if VObjectClass <> TPressObject then
     Result := TPressObjectClass(VObjectClass.ClassParent).ClassMetadata
   else
