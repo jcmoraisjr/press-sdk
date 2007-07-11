@@ -527,7 +527,7 @@ begin
     if (VValue <> '') and (VValue[1] = VValue[Length(VValue)]) and
      (VValue[1] in ['''', '"']) then
       VValue := Copy(VValue, 2, Length(VValue) - 2);
-    if not SetProperty(FTarget, VPropertyName, VValue) then
+    if not SetPropertyValue(FTarget, VPropertyName, VValue) then
       Reader.ErrorExpected(SPressPropertyNameMsg, VPropertyName);
   end;
   Reader.UnreadToken;

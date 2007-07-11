@@ -1,6 +1,6 @@
 (*
-  PressObjects, Compatibility unit
-  Copyright (C) 2006 Laserpress Ltda.
+  PressObjects, Compatibility and Utilities unit
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -13,6 +13,7 @@
 *)
 
 unit PressCompatibility;
+{ TODO : Rename to PressUtils }
 
 {$I Press.inc}
 
@@ -44,7 +45,7 @@ type
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
 procedure GenerateGUID(out AGUID: TGUID);
-function SetProperty(AObject: TPersistent; const APropName: string; AValue: Variant): Boolean;
+function SetPropertyValue(AObject: TObject; const APathName, AValue: string): Boolean;
 procedure OutputDebugString(const AStr: string);
 procedure ThreadSafeIncrement(var AValue: Integer);
 procedure ThreadSafeDecrement(var AValue: Integer);
@@ -80,34 +81,61 @@ begin
   {$ENDIF}
 end;
 
-function SetProperty(AObject: TPersistent; const APropName: string;
-  AValue: Variant): Boolean;
-{$IFDEF FPC}
+function SetPropertyValue(AObject: TObject;
+  const APathName, AValue: string): Boolean;
 var
   VPropInfo: PPropInfo;
+  VPropName, VPathName: string;
+  VField: Pointer;
+  VPos: Integer;
+{$IFDEF FPC}
   VPropValue: Variant;
 {$ENDIF}
 begin
-  {$IFDEF FPC}
-  VPropInfo := GetPropInfo(AObject, APropName);
-  Result := Assigned(VPropInfo);
-  if Result then
+  Result := False;
+  if Assigned(AObject) then
   begin
-    case VPropInfo^.PropType^.Kind of
-      tkEnumeration:
-        VPropValue := GetEnumValue(VPropInfo^.PropType, AValue);
-      tkBool:
-        VPropValue := not SameText(AValue, SPressFalseString);
-      else
-        VPropValue := AValue;
+    VPos := Pos(SPressAttributeSeparator, APathName);
+    if VPos > 0 then
+    begin
+      VPropName := Copy(APathName, 1, VPos - 1);
+      VPathName := Copy(APathName, VPos + 1, Length(APathName) - VPos);
+      VPropInfo := GetPropInfo(AObject, VPropName);
+      if Assigned(VPropInfo) and (VPropInfo^.PropType^.Kind = tkClass) then
+      begin
+        Result := SetPropertyValue(
+         GetObjectProp(AObject, VPropInfo), VPathName, AValue);
+      end else
+      begin
+        VField := AObject.FieldAddress(VPropName);
+        { TODO : VField might point to an interface }
+        if Assigned(VField) and Assigned(TObject(VField^)) then
+          Result := SetPropertyValue(TObject(VField^), VPathName, AValue);
+      end;
+    end else
+    begin
+      {$IFDEF FPC}
+      VPropInfo := GetPropInfo(AObject, APathName);
+      Result := Assigned(VPropInfo);
+      if Result then
+      begin
+        case VPropInfo^.PropType^.Kind of
+          tkEnumeration:
+            VPropValue := GetEnumValue(VPropInfo^.PropType, AValue);
+          tkBool:
+            VPropValue := not SameText(AValue, SPressFalseString);
+          else
+            VPropValue := AValue;
+        end;
+        SetPropValue(AObject, APathName, VPropValue);
+      end;
+      {$ELSE}
+      Result := Assigned(GetPropInfo(AObject, APathName));
+      if Result then
+        SetPropValue(AObject, APathName, AValue);
+      {$ENDIF}
     end;
-    SetPropValue(AObject, APropName, VPropValue);
   end;
-  {$ELSE}
-  Result := Assigned(GetPropInfo(AObject, APropName));
-  if Result then
-    SetPropValue(AObject, APropName, AValue);
-  {$ENDIF}
 end;
 
 procedure OutputDebugString(const AStr: string);
