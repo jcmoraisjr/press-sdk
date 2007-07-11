@@ -54,7 +54,7 @@ implementation
 
 uses
   TypInfo,
-  {$IFDEF FPC}PressConsts,{$ENDIF}
+  PressConsts,
   {$IFDEF FPC}MaskEdit{$ELSE}{$IFDEF D6+}MaskUtils{$ELSE}Mask{$ENDIF}{$ENDIF},
   {$IFDEF FPC}SysUtils{$ELSE}ActiveX, ComObj{$ENDIF};
 
