@@ -147,7 +147,7 @@ Registering Enumerations
 PressObjects supports Enum attributes. To create an enumeration and register 
 it, use:
 
-PressModel.PressRegisterEnumMetadata(TypeInfo(<EnumName>), '<EnumNameString>', 
+PressModel.RegisterEnumMetadata(TypeInfo(<EnumName>), '<EnumNameString>', 
  ['<FirstItemStr>', '<SecondItemStr>', ...]);
 
 <EnumName> = name of enumeration for the compiler (how it was declared)
