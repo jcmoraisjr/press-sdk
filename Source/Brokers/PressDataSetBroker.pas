@@ -66,7 +66,9 @@ begin
       Result := oftCurrency;
     ftDate, ftTime, ftDateTime:
       Result := oftDateTime;
-    ftBlob, ftMemo, ftGraphic:
+    ftMemo, ftOraClob:
+      Result := oftMemo;
+    ftBlob, ftOraBlob, ftGraphic:
       Result := oftBinary;
     else
       raise EPressOPFError.CreateFmt(SUnsupportedFieldType, [
