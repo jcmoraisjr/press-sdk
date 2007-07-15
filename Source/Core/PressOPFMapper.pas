@@ -94,7 +94,7 @@ type
     procedure AddRemovedIdParam(ADataset: TPressOPFDataset; AItems: TPressItems);
     procedure AddIntegerParam(ADataset: TPressOPFDataset; const AParamName: string; AValue: Integer);
     procedure AddLinkParams(ADataset: TPressOPFDataset; AItems: TPressItems; AProxy: TPressProxy; const AOwnerId: string; AIndex: Integer);
-    procedure AddNullParam(ADataset: TPressOPFDataset; const AParamName: string);
+    procedure AddNullParam(ADataset: TPressOPFDataset; const AParamName: string; AIsBlob: Boolean);
     procedure AddPersistentIdParam(ADataset: TPressOPFDataset; const APersistentId: string);
     procedure AddStringParam(ADataset: TPressOPFDataset; const AParamName, AValue: string);
     procedure AddUpdateCountParam(ADataset: TPressOPFDataset; AObject: TPressObject);
@@ -597,7 +597,7 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
           VParam.AsVariant := AValue.AsVariant;
       end;
     end else
-      VParam.AsVariant := Null;
+      VParam.Clear(AAttribute is TPressBlob);
   end;
 
   procedure AddPartAttribute(APart: TPressPart);
@@ -619,7 +619,7 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
       AddStringParam(
        ADataset, AReference.PersistentName, AReference.Proxy.ObjectId);
     end else
-      AddNullParam(ADataset, AReference.PersistentName);
+      AddNullParam(ADataset, AReference.PersistentName, False);
   end;
 
 begin
@@ -680,10 +680,10 @@ begin
 end;
 
 procedure TPressOPFAttributeMapper.AddNullParam(
-  ADataset: TPressOPFDataset; const AParamName: string);
+  ADataset: TPressOPFDataset; const AParamName: string; AIsBlob: Boolean);
 begin
   if AParamName <> '' then
-    ADataset.Params.ParamByName(AParamName).Clear;
+    ADataset.Params.ParamByName(AParamName).Clear(AIsBlob);
 end;
 
 procedure TPressOPFAttributeMapper.AddPersistentIdParam(
