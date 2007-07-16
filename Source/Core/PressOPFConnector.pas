@@ -138,6 +138,7 @@ type
     procedure InternalCommit; virtual;
     procedure InternalConnect; virtual;
     function InternalDatasetClass: TPressOPFDatasetClass; virtual;
+    function InternalDBMSName: string; virtual;
     procedure InternalRollback; virtual;
     procedure InternalStartTransaction; virtual;
     function UnsupportedFeatureError(const AFeatureName: string): EPressOPFError;
@@ -145,6 +146,7 @@ type
     constructor Create; virtual;
     procedure Commit;
     function CreateDataset: TPressOPFDataset;
+    function DBMSName: string;
     procedure Rollback;
     procedure StartTransaction;
     property SupportTransaction: Boolean read GetSupportTransaction;
@@ -429,6 +431,11 @@ begin
   Result := InternalDatasetClass.Create(Self);
 end;
 
+function TPressOPFConnector.DBMSName: string;
+begin
+  Result := InternalDBMSName;
+end;
+
 function TPressOPFConnector.GetSupportTransaction: Boolean;
 begin
   raise UnsupportedFeatureError('Transaction support');
@@ -447,6 +454,11 @@ end;
 function TPressOPFConnector.InternalDatasetClass: TPressOPFDatasetClass;
 begin
   raise UnsupportedFeatureError('Dataset class');
+end;
+
+function TPressOPFConnector.InternalDBMSName: string;
+begin
+  raise UnsupportedFeatureError('DBMS class');
 end;
 
 procedure TPressOPFConnector.InternalRollback;

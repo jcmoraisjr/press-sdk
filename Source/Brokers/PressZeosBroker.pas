@@ -49,6 +49,7 @@ type
     procedure InternalCommit; override;
     procedure InternalConnect; override;
     function InternalDatasetClass: TPressOPFDatasetClass; override;
+    function InternalDBMSName: string; override;
     procedure InternalRollback; override;
     procedure InternalStartTransaction; override;
   public
@@ -141,6 +142,14 @@ end;
 function TPressZeosConnector.InternalDatasetClass: TPressOPFDatasetClass;
 begin
   Result := TPressZeosDataset;
+end;
+
+function TPressZeosConnector.InternalDBMSName: string;
+begin
+  if Database.Connected then
+    Result := Database.DbcConnection.GetMetadata.GetDatabaseProductName
+  else
+    Result := Database.Protocol;
 end;
 
 procedure TPressZeosConnector.InternalRollback;

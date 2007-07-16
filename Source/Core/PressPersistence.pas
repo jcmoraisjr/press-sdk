@@ -47,11 +47,13 @@ type
     FOIDGenerator: TPressOIDGenerator;
     function GetOIDGenerator: TPressOIDGenerator;
   protected
+    function InternalDBMSName: string; virtual;
     function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; override;
     function InternalOIDGeneratorClass: TPressOIDGeneratorClass; virtual;
     property OIDGenerator: TPressOIDGenerator read GetOIDGenerator;
   public
     destructor Destroy; override;
+    function DBMSName: string;
   end;
 
   TPressPersistentObjectLink = class(TObject)
@@ -140,6 +142,11 @@ end;
 
 { TPressPersistence }
 
+function TPressPersistence.DBMSName: string;
+begin
+  Result := InternalDBMSName;
+end;
+
 destructor TPressPersistence.Destroy;
 begin
   FOIDGenerator.Free;
@@ -151,6 +158,11 @@ begin
   if not Assigned(FOIDGenerator) then
     FOIDGenerator := InternalOIDGeneratorClass.Create;
   Result := FOIDGenerator;
+end;
+
+function TPressPersistence.InternalDBMSName: string;
+begin
+  raise UnsupportedFeatureError('DBMS name');
 end;
 
 function TPressPersistence.InternalGenerateOID(AClass: TPressObjectClass;

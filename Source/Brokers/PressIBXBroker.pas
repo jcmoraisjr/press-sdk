@@ -52,6 +52,7 @@ type
     procedure InternalCommit; override;
     procedure InternalConnect; override;
     function InternalDatasetClass: TPressOPFDatasetClass; override;
+    function InternalDBMSName: string; override;
     procedure InternalRollback; override;
     procedure InternalStartTransaction; override;
   public
@@ -150,6 +151,11 @@ end;
 function TPressIBXConnector.InternalDatasetClass: TPressOPFDatasetClass;
 begin
   Result := TPressIBXDataset;
+end;
+
+function TPressIBXConnector.InternalDBMSName: string;
+begin
+  Result := 'InterBase';
 end;
 
 procedure TPressIBXConnector.InternalRollback;

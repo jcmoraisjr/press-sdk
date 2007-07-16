@@ -40,6 +40,7 @@ type
     function CreatePressObject(AClass: TPressObjectClass; ADataset: TPressOPFDataset; ADatasetIndex: Integer): TPressObject;
     procedure DoneService; override;
     procedure InternalCommit; override;
+    function InternalDBMSName: string; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
     function InternalExecuteStatement(const AStatement: string): Integer; override;
     procedure InternalIsDefaultChanged; override;
@@ -146,6 +147,11 @@ end;
 procedure TPressOPF.InternalCommit;
 begin
   Connector.Commit;
+end;
+
+function TPressOPF.InternalDBMSName: string;
+begin
+  Result := Connector.DBMSName;
 end;
 
 procedure TPressOPF.InternalDispose(AClass: TPressObjectClass;

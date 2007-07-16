@@ -50,6 +50,7 @@ type
     procedure InternalCommit; override;
     procedure InternalConnect; override;
     function InternalDatasetClass: TPressOPFDatasetClass; override;
+    function InternalDBMSName: string; override;
     procedure InternalRollback; override;
     procedure InternalStartTransaction; override;
   public
@@ -143,6 +144,11 @@ end;
 function TPressDOAConnector.InternalDatasetClass: TPressOPFDatasetClass;
 begin
   Result := TPressDOADataset;
+end;
+
+function TPressDOAConnector.InternalDBMSName: string;
+begin
+  Result := 'Oracle';
 end;
 
 procedure TPressDOAConnector.InternalRollback;
