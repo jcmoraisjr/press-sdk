@@ -45,18 +45,21 @@ type
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
 procedure GenerateGUID(out AGUID: TGUID);
-function SetPropertyValue(AObject: TObject; const APathName, AValue: string): Boolean;
+function SetPropertyValue(AObject: TPersistent; const APathName, AValue: string; AError: Boolean = False): Boolean;
 procedure OutputDebugString(const AStr: string);
 procedure ThreadSafeIncrement(var AValue: Integer);
 procedure ThreadSafeDecrement(var AValue: Integer);
+function UnquotedStr(const AStr: string): string;
 
 implementation
 
 uses
+  SysUtils,
   TypInfo,
+  PressClasses,
   PressConsts,
-  {$IFDEF FPC}MaskEdit{$ELSE}{$IFDEF D6+}MaskUtils{$ELSE}Mask{$ENDIF}{$ENDIF},
-  {$IFDEF FPC}SysUtils{$ELSE}ActiveX, ComObj{$ENDIF};
+  {$IFDEF FPC}MaskEdit{$ELSE}ActiveX, ComObj,
+  {$IFDEF D6+}MaskUtils{$ELSE}Mask{$ENDIF}{$ENDIF};
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
 begin
@@ -81,16 +84,14 @@ begin
   {$ENDIF}
 end;
 
-function SetPropertyValue(AObject: TObject;
-  const APathName, AValue: string): Boolean;
+function SetPropertyValue(AObject: TPersistent;
+  const APathName, AValue: string; AError: Boolean): Boolean;
 var
   VPropInfo: PPropInfo;
   VPropName, VPathName: string;
   VField: Pointer;
   VPos: Integer;
-{$IFDEF FPC}
   VPropValue: Variant;
-{$ENDIF}
 begin
   Result := False;
   if Assigned(AObject) then
@@ -103,38 +104,48 @@ begin
       VPropInfo := GetPropInfo(AObject, VPropName);
       if Assigned(VPropInfo) and (VPropInfo^.PropType^.Kind = tkClass) then
       begin
-        Result := SetPropertyValue(
-         GetObjectProp(AObject, VPropInfo), VPathName, AValue);
+        Result := SetPropertyValue(TPersistent(
+         GetObjectProp(AObject, VPropInfo, TPersistent)), VPathName, AValue);
       end else
       begin
         VField := AObject.FieldAddress(VPropName);
         { TODO : VField might point to an interface }
-        if Assigned(VField) and Assigned(TObject(VField^)) then
-          Result := SetPropertyValue(TObject(VField^), VPathName, AValue);
+        if Assigned(VField) and Assigned(TObject(VField^)) and
+         (TObject(VField^) is TPersistent) then
+          Result := SetPropertyValue(TPersistent(VField^), VPathName, AValue);
       end;
     end else
     begin
-      {$IFDEF FPC}
       VPropInfo := GetPropInfo(AObject, APathName);
       Result := Assigned(VPropInfo);
       if Result then
       begin
+        if not Assigned(VPropInfo^.SetProc) then
+          raise EPressError.CreateFmt(SPropertyIsReadOnly, [
+           AObject.ClassName, APathName]);
         case VPropInfo^.PropType^.Kind of
+        {$IFDEF FPC}
+          tkSString, tkLString, tkWString, tkAString:
+        {$ELSE}
+          tkString, tkLString, tkWString:
+        {$ENDIF}
+            VPropValue := UnquotedStr(AValue);
           tkEnumeration:
-            VPropValue := GetEnumValue(VPropInfo^.PropType, AValue);
+            VPropValue := GetEnumValue(
+             VPropInfo^.PropType{$IFNDEF FPC}^{$ENDIF}, AValue);
+        {$IFDEF FPC}
           tkBool:
             VPropValue := not SameText(AValue, SPressFalseString);
+        {$ENDIF}
           else
             VPropValue := AValue;
         end;
         SetPropValue(AObject, APathName, VPropValue);
       end;
-      {$ELSE}
-      Result := Assigned(GetPropInfo(AObject, APathName));
-      if Result then
-        SetPropValue(AObject, APathName, AValue);
-      {$ENDIF}
     end;
+    if AError and not Result then
+      raise EPressError.CreateFmt(SPropertyNotFound, [
+       AObject.ClassName, APathName]);
   end;
 end;
 
@@ -162,6 +173,19 @@ begin
   {$ELSE}
   InterlockedDecrement(AValue);
   {$ENDIF}
+end;
+
+function UnquotedStr(const AStr: string): string;
+var
+  PStr: PChar;
+begin
+  if (AStr <> '') and (AStr[1] in ['''', '"']) and
+   (AStr[1] = AStr[Length(AStr)]) then
+  begin
+    PStr := PChar(AStr);
+    Result := AnsiExtractQuotedStr(PStr, AStr[1]);
+  end else
+    Result := AStr;
 end;
 
 end.
