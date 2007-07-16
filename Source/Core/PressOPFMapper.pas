@@ -92,6 +92,7 @@ type
     procedure AddAttributeParams(ADataset: TPressOPFDataset; AObject: TPressObject);
     procedure AddClassIdParam(ADataset: TPressOPFDataset; AObject: TPressObject);
     procedure AddRemovedIdParam(ADataset: TPressOPFDataset; AItems: TPressItems);
+    procedure AddIdParam(ADataset: TPressOPFDataset; const AParamName, AValue: string);
     procedure AddIntegerParam(ADataset: TPressOPFDataset; const AParamName: string; AValue: Integer);
     procedure AddLinkParams(ADataset: TPressOPFDataset; AItems: TPressItems; AProxy: TPressProxy; const AOwnerId: string; AIndex: Integer);
     procedure AddNullParam(ADataset: TPressOPFDataset; const AParamName: string; AIsBlob: Boolean);
@@ -654,8 +655,28 @@ procedure TPressOPFAttributeMapper.AddClassIdParam(
   ADataset: TPressOPFDataset; AObject: TPressObject);
 begin
   if Map.Metadata.ClassIdName <> '' then
-    AddStringParam(ADataset, Map.Metadata.ClassIdName,
+    AddIdParam(ADataset, Map.Metadata.ClassIdName,
      ObjectMapper.StorageModel.ClassIdByName(AObject.ClassName));
+end;
+
+procedure TPressOPFAttributeMapper.AddIdParam(
+  ADataset: TPressOPFDataset; const AParamName, AValue: string);
+var
+  VAttributeType: TPressAttributeBaseType;
+begin
+  if AParamName <> '' then
+  begin
+    VAttributeType := Map.Metadata.IdMetadata.AttributeClass.AttributeBaseType;
+    case VAttributeType of
+      attString:
+        ADataset.Params.ParamByName(AParamName).AsString := AValue;
+      attInteger:
+        ADataset.Params.ParamByName(AParamName).AsInt32 := StrToInt(AValue);
+      else
+        raise EPressOPFError.CreateFmt(SUnsupportedFieldType, [
+         GetEnumName(TypeInfo(TPressAttributeBaseType), Ord(VAttributeType))]);
+    end;
+  end;
 end;
 
 procedure TPressOPFAttributeMapper.AddIntegerParam(
@@ -689,7 +710,7 @@ end;
 procedure TPressOPFAttributeMapper.AddPersistentIdParam(
   ADataset: TPressOPFDataset; const APersistentId: string);
 begin
-  AddStringParam(ADataset, SPressPersistentIdParamString, APersistentId);
+  AddIdParam(ADataset, SPressPersistentIdParamString, APersistentId);
 end;
 
 procedure TPressOPFAttributeMapper.AddRemovedIdParam(
