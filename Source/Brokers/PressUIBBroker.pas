@@ -36,6 +36,8 @@ type
     function InternalConnectorClass: TPressOPFConnectorClass; override;
     function InternalMapperClass: TPressOPFObjectMapperClass; override;
   public
+    class function ServiceName: string; override;
+  published
     property Connector: TPressUIBConnector read GetConnector;
   end;
 
@@ -53,6 +55,7 @@ type
   public
     constructor Create; override;
     destructor Destroy; override;
+  published
     property Database: TJvUIBDatabase read FDatabase;
     property Transaction: TJvUIBTransaction read FTransaction;
   end;
@@ -99,6 +102,11 @@ end;
 function TPressUIBBroker.InternalMapperClass: TPressOPFObjectMapperClass;
 begin
   Result := TPressUIBObjectMapper;
+end;
+
+class function TPressUIBBroker.ServiceName: string;
+begin
+  Result := 'UIB';
 end;
 
 { TPressUIBConnector }

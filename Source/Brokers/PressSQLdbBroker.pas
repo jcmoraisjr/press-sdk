@@ -35,6 +35,8 @@ type
     function InternalConnectorClass: TPressOPFConnectorClass; override;
     function InternalMapperClass: TPressOPFObjectMapperClass; override;
   public
+    class function ServiceName: string; override;
+  published
     property Connector: TPressSQLdbConnector read GetConnector;
   end;
 
@@ -42,10 +44,14 @@ type
 
   TPressSQLdbConnector = class(TPressOPFConnector)
   private
-    FConnectionDefClass: TConnectionDefClass;
+    FConnectionDef: TConnectionDef;
     FDatabase: TSQLConnection;
     FTransaction: TSQLTransaction;
+    function GetConnectionDef: TConnectionDef;
+    function GetConnectionDefName: string;
     function GetDatabase: TSQLConnection;
+    procedure SetConnectionDef(const AValue: TConnectionDef);
+    procedure SetConnectionDefName(const AValue: string);
   protected
     function GetSupportTransaction: Boolean; override;
     procedure InternalCommit; override;
@@ -56,8 +62,9 @@ type
   public
     constructor Create; override;
     destructor Destroy; override;
-    procedure AssignConnectionDef(AConnectionDefClass: TConnectionDefClass);
-    property ConnectionDefClass: TConnectionDefClass read FConnectionDefClass;
+    property ConnectionDef: TConnectionDef read GetConnectionDef write SetConnectionDef;
+  published
+    property ConnectionDefName: string read GetConnectionDefName write SetConnectionDefName;
     property Database: TSQLConnection read GetDatabase;
     property Transaction: TSQLTransaction read FTransaction;
   end;
@@ -88,7 +95,8 @@ uses
   db,
   PressConsts,
   PressOPFClasses,
-  PressIBFbBroker;
+  PressIBFbBroker,
+  PressOracleBroker;
 
 { TPressSQLdbBroker }
 
@@ -107,16 +115,12 @@ begin
   Result := TPressSQLdbObjectMapper;
 end;
 
-{ TPressSQLdbConnector }
-
-procedure TPressSQLdbConnector.AssignConnectionDef(
-  AConnectionDefClass: TConnectionDefClass);
+class function TPressSQLdbBroker.ServiceName: string;
 begin
-  FConnectionDefClass := AConnectionDefClass;
-  FDatabase.Free;
-  FDatabase := FConnectionDefClass.ConnectionClass.Create(nil);
-  FTransaction.Database := FDatabase;
+  Result := 'SQLdb';
 end;
+
+{ TPressSQLdbConnector }
 
 constructor TPressSQLdbConnector.Create;
 begin
@@ -136,6 +140,40 @@ begin
   if not Assigned(FDatabase) then
     raise EPressOPFError.Create(SUnassignedDatabase);
   Result := FDatabase;
+end;
+
+procedure TPressSQLdbConnector.SetConnectionDef(const AValue: TConnectionDef);
+begin
+  if FConnectionDef <> AValue then
+  begin
+    FConnectionDef := AValue;
+    FreeAndNil(FDatabase);
+    if Assigned(FConnectionDef) then
+      FDatabase := FConnectionDef.ConnectionClass.Create(nil);
+    FTransaction.Database := FDatabase;
+  end;
+end;
+
+function TPressSQLdbConnector.GetConnectionDef: TConnectionDef;
+begin
+  if not Assigned(FConnectionDef) then
+    raise EPressOPFError.Create(SUnassignedDatabase);
+  Result := FConnectionDef;
+end;
+
+function TPressSQLdbConnector.GetConnectionDefName: string;
+begin
+  Result := ConnectionDef.TypeName;
+end;
+
+procedure TPressSQLdbConnector.SetConnectionDefName(const AValue: string);
+var
+  VConnectionDef: TConnectionDef;
+begin
+  VConnectionDef := SQLdb.GetConnectionDef(AValue);
+  if not Assigned(VConnectionDef) then
+    raise EPressOPFError.CreateFmt(SConnectionNotFound, [AValue]);
+  ConnectionDef := VConnectionDef;
 end;
 
 function TPressSQLdbConnector.GetSupportTransaction: Boolean;
@@ -219,15 +257,13 @@ end;
 
 function TPressSQLdbObjectMapper.InternalDDLBuilderClass: TPressOPFDDLBuilderClass;
 var
-  VConnectionDefClass: TConnectionDefClass;
   VConnectionTypeName: string;
 begin
-  VConnectionDefClass := (Connector as TPressSQLdbConnector).ConnectionDefClass;
-  if not Assigned(VConnectionDefClass) then
-    raise EPressOPFError.Create(SUnassignedDatabase);
-  VConnectionTypeName := VConnectionDefClass.TypeName;
+  VConnectionTypeName := (Connector as TPressSQLdbConnector).ConnectionDefName;
   if SameText(VConnectionTypeName, 'firebird') then
     Result := TPressIBFbDDLBuilder
+  else if SameText(VConnectionTypeName, 'oracle') then
+    Result := TPressOracleDDLBuilder
   else
     raise EPressOPFError.CreateFmt(
      SUnsupportedConnector, [VConnectionTypeName]);

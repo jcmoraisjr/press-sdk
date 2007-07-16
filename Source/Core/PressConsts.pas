@@ -37,6 +37,7 @@ const
   SPressChildString = 'Child';
   SPressItemPosString = 'ItemPos';
   SPressUpdateCountString = 'UpdateCount';
+  SPressConfigFileExt = '.cf';
   SPressPrimaryKeyNamePrefix = 'PK_';
   SPressForeignKeyNamePrefix = 'FK_';
   SPressUniqueKeyNamePrefix = 'UK_';
@@ -47,6 +48,7 @@ const
   SPressQueryItemsString = 'QueryItems';
   SPressReportNativeValueSuffix = 'Value';
   SPressReportDisplayTextSuffix = 'DisplayText';
+  SPressOPFBrokerServiceName = 'OPFBroker';
 
 resourcestring
   SAmbiguousClass = 'Ambiguidade entre as classes ''%s'' e ''%s''';
@@ -63,6 +65,7 @@ resourcestring
   SColumnDataParseError = 'Erro ao interpretar dados da coluna %s(''%s''): "%s"';
   SComponentIsNotAControl = 'O componente %s(''%s'') não é um controle';
   SComponentNotFound = 'O componente %s(''%s'') não foi encontrado';
+  SConnectionNotFound = 'A conexão ''%s'' não foi encontrada.';
   SDialogClassIsAssigned = 'Classe do objeto de diálogo já está associado';
   SDisplayNamesAlreadyAssigned = 'DisplayNames já foi associado';
   SEnumItemNotFound = 'Enumeration ''%s'' não encontrado';
@@ -84,6 +87,7 @@ resourcestring
   SPersistentClassNotFound = 'Classe persistente %s não encontrada';
   SPropertyIsReadOnly = 'A propriedade ''%s.%s'' é somente leitura';
   SPropertyNotFound = 'A propriedade ''%s.%s'' não foi encontrada';
+  SServiceRegistryNotFound = 'O registro de serviços ''%s'' não foi encontrado';
   SSingletonClassNotFound = 'Classe Singleton %s não encontrada';
   SStringLengthOutOfBounds = 'String muito grande';
   SStringOverflow = 'String overflow: %s(%s)';

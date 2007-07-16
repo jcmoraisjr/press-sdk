@@ -36,6 +36,8 @@ type
     function InternalConnectorClass: TPressOPFConnectorClass; override;
     function InternalMapperClass: TPressOPFObjectMapperClass; override;
   public
+    class function ServiceName: string; override;
+  published
     property Connector: TPressIBXConnector read GetConnector;
   end;
 
@@ -43,6 +45,8 @@ type
   private
     FDatabase: TIBDatabase;
     FTransaction: TIBTransaction;
+    procedure SetPassword(const Value: string);
+    procedure SetUserName(const Value: string);
   protected
     function GetSupportTransaction: Boolean; override;
     procedure InternalCommit; override;
@@ -53,8 +57,11 @@ type
   public
     constructor Create; override;
     destructor Destroy; override;
+  published
     property Database: TIBDatabase read FDatabase;
+    property Password: string write SetPassword;
     property Transaction: TIBTransaction read FTransaction;
+    property UserName: string write SetUserName;
   end;
 
   TPressIBXDataset = class(TPressOPFDBDataset)
@@ -98,6 +105,11 @@ end;
 function TPressIBXBroker.InternalMapperClass: TPressOPFObjectMapperClass;
 begin
   Result := TPressIBXObjectMapper;
+end;
+
+class function TPressIBXBroker.ServiceName: string;
+begin
+  Result := 'IBX';
 end;
 
 { TPressIBXConnector }
@@ -148,6 +160,16 @@ end;
 procedure TPressIBXConnector.InternalStartTransaction;
 begin
   Transaction.StartTransaction;
+end;
+
+procedure TPressIBXConnector.SetPassword(const Value: string);
+begin
+  Database.Params.Values['password'] := Value;
+end;
+
+procedure TPressIBXConnector.SetUserName(const Value: string);
+begin
+  Database.Params.Values['user_name'] := Value;
 end;
 
 { TPressIBXDataset }

@@ -20,6 +20,7 @@ interface
 
 uses
   {$IFDEF D6+}Variants,{$ENDIF}
+  Classes,
   Contnrs,
   PressClasses,
   PressOPFClasses;
@@ -131,7 +132,7 @@ type
     property Rows[AIndex: Integer]: TPressOPFDataRow read GetRows; default;
   end;
 
-  TPressOPFConnector = class(TObject)
+  TPressOPFConnector = class(TPersistent)
   protected
     function GetSupportTransaction: Boolean; virtual;
     procedure InternalCommit; virtual;

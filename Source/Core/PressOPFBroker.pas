@@ -46,6 +46,7 @@ type
 implementation
 
 uses
+  PressConsts,
   PressOPF;
 
 { TPressOPFBroker }
@@ -91,5 +92,9 @@ procedure TPressOPFBroker.ShowConnectionManager;
 begin
   InternalShowConnectionManager;
 end;
+
+initialization
+  PressApp.Registry[CPressOPFBrokerService].ServiceTypeName :=
+   SPressOPFBrokerServiceName;
 
 end.

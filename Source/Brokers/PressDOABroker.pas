@@ -37,6 +37,8 @@ type
     function InternalConnectorClass: TPressOPFConnectorClass; override;
     function InternalMapperClass: TPressOPFObjectMapperClass; override;
   public
+    class function ServiceName: string; override;
+  published
     property Connector: TPressDOAConnector read GetConnector;
   end;
 
@@ -53,6 +55,7 @@ type
   public
     constructor Create; override;
     destructor Destroy; override;
+  published
     property Session: TOracleSession read FSession;
   end;
 
@@ -99,6 +102,11 @@ end;
 function TPressDOABroker.InternalMapperClass: TPressOPFObjectMapperClass;
 begin
   Result := TPressDOAObjectMapper;
+end;
+
+class function TPressDOABroker.ServiceName: string;
+begin
+  Result := 'DOA';
 end;
 
 { TPressDOAConnector }

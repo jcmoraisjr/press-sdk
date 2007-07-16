@@ -36,6 +36,8 @@ type
     function InternalConnectorClass: TPressOPFConnectorClass; override;
     function InternalMapperClass: TPressOPFObjectMapperClass; override;
   public
+    class function ServiceName: string; override;
+  published
     property Connector: TPressZeosConnector read GetConnector;
   end;
 
@@ -52,6 +54,7 @@ type
   public
     constructor Create; override;
     destructor Destroy; override;
+  published
     property Database: TZConnection read FDatabase;
   end;
 
@@ -98,6 +101,11 @@ end;
 function TPressZeosBroker.InternalMapperClass: TPressOPFObjectMapperClass;
 begin
   Result := TPressZeosObjectMapper;
+end;
+
+class function TPressZeosBroker.ServiceName: string;
+begin
+  Result := 'Zeos';
 end;
 
 { TPressZeosConnector }
