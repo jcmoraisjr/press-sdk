@@ -37,7 +37,7 @@ type
   private
     FModel: TPressModel;
   public
-    constructor Create(AOwner: TPressParserObject; AModel: TPressModel = nil);
+    constructor Create(AOwner: TPressParserObject; AModel: TPressModel = nil); reintroduce;
     property Model: TPressModel read FModel;
   end;
 

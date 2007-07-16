@@ -68,7 +68,7 @@ type
     function Parse(Reader: TPressParserReader; AParserClasses: array of TPressParserClass; AOwner: TPressParserObject = nil; ANecessary: Boolean = False; const AErrorExpectedMsg: string = ''): TPressParserObject;
     property ItemList: TPressParserList read GetItemList;
   public
-    constructor Create(AOwner: TPressParserObject);
+    constructor Create(AOwner: TPressParserObject); virtual;
     destructor Destroy; override;
     class function Apply(Reader: TPressParserReader): Boolean;
     function ItemCount: Integer;
