@@ -76,7 +76,7 @@ type
   public
     constructor Create; override;
     destructor Destroy; override;
-    procedure Assign(AObject: TPressObject);
+    procedure AssignObject(AObject: TPressObject);
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function ExecuteStatement(const AStatement: string): Integer;
@@ -163,7 +163,7 @@ end;
 
 { TPressDAO }
 
-procedure TPressDAO.Assign(AObject: TPressObject);
+procedure TPressDAO.AssignObject(AObject: TPressObject);
 begin
   FCache.AddObject(AObject);
 end;

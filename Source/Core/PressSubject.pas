@@ -517,7 +517,7 @@ type
 
   IPressDAO = interface(IInterface)
   ['{8B46DE54-6987-477B-8AA4-9176D66018D4}']
-    procedure Assign(AObject: TPressObject);
+    procedure AssignObject(AObject: TPressObject);
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function ExecuteStatement(const AStatement: string): Integer;
@@ -2663,7 +2663,7 @@ begin
   if not Assigned(FDataAccess) then
   begin
     FDataAccess := PressDefaultDAO;
-    FDataAccess.Assign(Self);
+    FDataAccess.AssignObject(Self);
   end;
   Result := FDataAccess;
 end;
@@ -2807,7 +2807,7 @@ begin
   try
     CreateAttributes;
     if Assigned(FDataAccess) then
-      FDataAccess.Assign(Self);
+      FDataAccess.AssignObject(Self);
   finally
     EnableChanges;
   end;
