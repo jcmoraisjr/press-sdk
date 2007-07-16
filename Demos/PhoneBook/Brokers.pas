@@ -28,30 +28,28 @@ implementation
 interface
 
 uses
+  PressSubject, PressPersistence,
 {$IFDEF UseReport}
   PressFastReportBroker,
 {$ENDIF}
 {$IFDEF FPC}
-  // (step 1 of 3) select a broker for the Free Pascal Compiler
-  PressSQLdbBroker;
+  PressSQLdbBroker,
+  // Insert other Free Pascal connection brokers and SQLdb connections here
 {$ELSE}
-  // (step 1 of 3) select a broker for Delphi
-  PressIBXBroker;
+  PressIBXBroker,
+  // Insert other Delphi connection brokers here
 {$ENDIF}
+  PressOPF;
 
 type
-  TBroker = class(
-{$IFDEF FPC}
-  // (step 2 of 3) select the broker class (fpc)
-  TPressSQLdbBroker
-{$ELSE}
-  // (step 2 of 3) select the broker class (delphi)
-  TPressIBXBroker
-{$ENDIF}
-  )
+  TPhoneBookPersistence = class(TPressOPF)
   protected
-    procedure InitService; override;
     procedure InternalShowConnectionManager; override;
+  end;
+
+  TPhoneBookGenerator = class(TPressOIDGenerator)
+  protected
+    function InternalGenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string; override;
   end;
 
 implementation
@@ -59,35 +57,11 @@ implementation
 uses
   SysUtils,
   Clipbrd,
-{$IFDEF FPC}
-  ibconnection,
-{$ENDIF}
-  PressDialogs,
-  PressOPF;
+  PressDialogs;
 
-procedure TBroker.InitService;
-begin
-{$IFDEF FPC}
-  // (step 3 of 3) configure the database connector (fpc)
-  Connector.AssignConnectionDef(TIBConnectionDef);
-  with Connector.Database do
-  begin
-    DatabaseName := // 'servername:/path/to/database';
-    UserName     := // 'sysdba';
-    Password     := // 'masterkey';
-  end;
-{$ELSE}
-  // (step 3 of 3) configure the database connector (delphi)
-  with Connector.Database do
-  begin
-    DatabaseName               := // 'servername:c:\path\to\database';
-    Params.Values['user_name'] := // 'sysdba';
-    Params.Values['password']  := // 'masterkey';
-  end;
-{$ENDIF}
-end;
+{ TPhoneBookPersistence }
 
-procedure TBroker.InternalShowConnectionManager;
+procedure TPhoneBookPersistence.InternalShowConnectionManager;
 begin
   if PressDialog.ConfirmDlg(
    'Copy the database metadata to the clipboard?') then
@@ -95,8 +69,19 @@ begin
      AdjustLineBreaks(PressOPFService.Mapper.CreateDatabaseStatement);
 end;
 
+{ TPhoneBookGenerator }
+
+function TPhoneBookGenerator.InternalGenerateOID(
+  Sender: TPressPersistence; AObjectClass: TPressObjectClass;
+  const AAttributeName: string): string;
+begin
+  Result :=
+   inherited InternalGenerateOID(Sender, AObjectClass, AAttributeName);
+end;
+
 initialization
-  TBroker.RegisterService(True);
+  TPhoneBookPersistence.RegisterService(True);
+  TPhoneBookGenerator.RegisterService(True);
 
 {$ENDIF}
 {$IFDEF DontUsePersistence}

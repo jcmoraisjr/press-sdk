@@ -1,0 +1,30 @@
+[OPFBroker]
+DefaultServiceName := '';
+
+[OPFBroker.SQLdb]
+Connector.ConnectionDefName := '';
+Connector.Database.DatabaseName := '';
+Connector.Database.UserName := '';
+Connector.Database.Password := '';
+
+[OPFBroker.IBX]
+Connector.Database.DatabaseName := '';
+Connector.UserName := '';
+Connector.Password := '';
+
+[OPFBroker.UIB]
+Connector.Database.DatabaseName := '';
+Connector.Database.UserName := '';
+Connector.Database.PassWord := '';
+
+[OPFBroker.DOA]
+Connector.Session.LogonUsername := '';
+Connector.Session.LogonPassword := '';
+Connector.Session.LogonDatabase := '';
+
+[OPFBroker.Zeos]
+Connector.Database.Protocol := '';
+Connector.Database.Hostname := '';
+Connector.Database.Database := '';
+Connector.Database.User := '';
+Connector.Database.Password := '';
