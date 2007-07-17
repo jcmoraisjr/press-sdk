@@ -82,7 +82,7 @@ end;
 
 class function TPressDefaultReportGroup.InternalMetadataStr: string;
 begin
-  Result := 'TPressDefaultReportGroup PersistentName="TReportGroup" ('+
+  Result := 'TPressDefaultReportGroup PersistentName="TRepGrp" ('+
    'ObjectClassName: String(32);' +
    'Reports: Parts(TPressDefaultReportItem))';
 end;
@@ -124,7 +124,7 @@ end;
 
 class function TPressDefaultReportItem.InternalMetadataStr: string;
 begin
-  Result := 'TPressDefaultReportItem PersistentName="TReportItem" (' +
+  Result := 'TPressDefaultReportItem PersistentName="TRepItem" (' +
    'Caption: String(40);' +
    'Visible: Boolean DefaultValue=True;' +
    'ReportMetadata: Binary)';
