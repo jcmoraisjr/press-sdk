@@ -2149,7 +2149,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
       VFieldMetadata := AddFieldMetadata(VMetadata.ClassIdName,
        ClassIdMetadata.IdMetadata.AttributeClass.AttributeBaseType,
        ClassIdMetadata.IdMetadata.Size,
-       [foNotNull, foIndexed], [], VTableMetadata);
+       [foNotNull], [], VTableMetadata);
       if HasClassIdStorage then
         AddForeignKey(VTableMetadata, VFieldMetadata, ClassIdMetadata);
     end;
