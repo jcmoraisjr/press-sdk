@@ -120,6 +120,7 @@ type
     FPersLinkName: string;
     FPersLinkParentName: string;
     FPersLinkPosName: string;
+    FShortName: string;
     FSize: Integer;
     FWeakReference: Boolean;
     function BuildPersLinkChildName: string;
@@ -128,6 +129,7 @@ type
     function GetPersLinkChildName: string;
     function GetPersLinkName: string;
     function GetPersLinkParentName: string;
+    function GetShortName: string;
     procedure SetAttributeClass(Value: TPressAttributeClass);
     procedure SetCalcMetadata(Value: TPressCalcMetadata);
     procedure SetEnumMetadata(Value: TPressEnumMetadata);
@@ -138,6 +140,7 @@ type
     function StorePersLinkName: Boolean;
     function StorePersLinkParentName: Boolean;
     function StorePersLinkPosName: Boolean;
+    function StoreShortName: Boolean;
   protected
     function GetAttributeName: string; virtual;
     function GetObjectClassName: string; virtual;
@@ -168,6 +171,7 @@ type
     property PersLinkName: string read GetPersLinkName write FPersLinkName stored StorePersLinkName;
     property PersLinkParentName: string read GetPersLinkParentName write FPersLinkParentName stored StorePersLinkParentName;
     property PersLinkPosName: string read FPersLinkPosName write FPersLinkPosName stored StorePersLinkPosName;
+    property ShortName: string read GetShortName write FShortName stored StoreShortName;
     property WeakReference: Boolean read FWeakReference write FWeakReference default False;
   end;
 
@@ -246,17 +250,20 @@ type
     FObjectClassName: string;
     FParent: TPressObjectMetadata;
     FPersistentName: string;
+    FShortName: string;
     FUpdateCountName: string;
     function GetAttributeMetadatas: TPressAttributeMetadataList;
     function GetIdMetadata: TPressAttributeMetadata;
     function GetMap: TPressClassMap;
     function GetObjectClass: TPressObjectClass;
+    function GetShortName: string;
     procedure SetIsPersistent(AValue: Boolean);
     procedure SetPersistentName(const Value: string);
     function StoreClassIdName: Boolean;
     function StoreKeyName: Boolean;
     function StoreKeyType: Boolean;
     function StorePersistentName: Boolean;
+    function StoreShortName: Boolean;
     function StoreUpdateCountName: Boolean;
   protected
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; virtual;
@@ -277,6 +284,7 @@ type
     property KeyType: string read FKeyType write FKeyType stored StoreKeyType;
     property IsPersistent: Boolean read FIsPersistent write SetIsPersistent default False;
     property PersistentName: string read FPersistentName write SetPersistentName stored StorePersistentName;
+    property ShortName: string read GetShortName write FShortName stored StoreShortName;
     property UpdateCountName: string read FUpdateCountName write FUpdateCountName stored StoreUpdateCountName;
   end;
 
@@ -1285,7 +1293,7 @@ end;
 function TPressAttributeMetadata.BuildPersLinkChildName: string;
 begin
   if Assigned(Owner) then
-    Result := PersistentName + SPressIdString
+    Result := ShortName + SPressIdString
   else
     Result := SPressChildString + SPressIdString;
 end;
@@ -1293,15 +1301,15 @@ end;
 function TPressAttributeMetadata.BuildPersLinkName: string;
 begin
   if Assigned(Owner) then
-    Result := Owner.PersistentName + '_' + PersistentName
+    Result := Owner.ShortName + '_' + ShortName
   else
-    Result := '_' + PersistentName;
+    Result := '_' + ShortName;
 end;
 
 function TPressAttributeMetadata.BuildPersLinkParentName: string;
 begin
   if Assigned(Owner) then
-    Result := Owner.PersistentName + SPressIdString
+    Result := Owner.ShortName + SPressIdString
   else
     Result := SPressParentString + SPressIdString;
 end;
@@ -1375,6 +1383,13 @@ begin
   if FPersLinkParentName = '' then
     FPersLinkParentName := BuildPersLinkParentName;
   Result := FPersLinkParentName;
+end;
+
+function TPressAttributeMetadata.GetShortName: string;
+begin
+  if FShortName = '' then
+    FShortName := FPersistentName;
+  Result := FShortName;
 end;
 
 procedure TPressAttributeMetadata.SetAttributeClass(
@@ -1477,6 +1492,11 @@ end;
 function TPressAttributeMetadata.StorePersLinkPosName: Boolean;
 begin
   Result := not SameText(FPersLinkIdName, SPressItemPosString);
+end;
+
+function TPressAttributeMetadata.StoreShortName: Boolean;
+begin
+  Result := (FShortName <> '') and not SameText(FShortName, FName);
 end;
 
 { TPressAttributeMetadataList }
@@ -1698,6 +1718,13 @@ begin
   Result := FObjectClass;
 end;
 
+function TPressObjectMetadata.GetShortName: string;
+begin
+  if FShortName = '' then
+    FShortName := FPersistentName;
+  Result := FShortName;
+end;
+
 function TPressObjectMetadata.InternalAttributeMetadataClass: TPressAttributeMetadataClass;
 begin
   Result := TPressAttributeMetadata;
@@ -1740,6 +1767,11 @@ end;
 function TPressObjectMetadata.StorePersistentName: Boolean;
 begin
   Result := IsPersistent and not SameText(FPersistentName, FObjectClassName);
+end;
+
+function TPressObjectMetadata.StoreShortName: Boolean;
+begin
+  Result := (FShortName <> '') and not SameText(FShortName, FObjectClassName);
 end;
 
 function TPressObjectMetadata.StoreUpdateCountName: Boolean;
