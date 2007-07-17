@@ -44,28 +44,21 @@ type
 
   TPressSQLdbConnector = class(TPressOPFConnector)
   private
-    FConnectionDef: TConnectionDef;
-    FDatabase: TSQLConnection;
+    FDatabase: TSQLConnector;
     FTransaction: TSQLTransaction;
-    function GetConnectionDef: TConnectionDef;
-    function GetConnectionDefName: string;
-    function GetDatabase: TSQLConnection;
-    procedure SetConnectionDef(const AValue: TConnectionDef);
-    procedure SetConnectionDefName(const AValue: string);
   protected
     function GetSupportTransaction: Boolean; override;
     procedure InternalCommit; override;
     procedure InternalConnect; override;
     function InternalDatasetClass: TPressOPFDatasetClass; override;
+    function InternalDBMSName: string; override;
     procedure InternalRollback; override;
     procedure InternalStartTransaction; override;
   public
     constructor Create; override;
     destructor Destroy; override;
-    property ConnectionDef: TConnectionDef read GetConnectionDef write SetConnectionDef;
   published
-    property ConnectionDefName: string read GetConnectionDefName write SetConnectionDefName;
-    property Database: TSQLConnection read GetDatabase;
+    property Database: TSQLConnector read FDatabase;
     property Transaction: TSQLTransaction read FTransaction;
   end;
 
@@ -92,7 +85,6 @@ implementation
 
 uses
   SysUtils,
-  db,
   PressConsts,
   PressOPFClasses,
   PressIBFbBroker,
@@ -125,7 +117,9 @@ end;
 constructor TPressSQLdbConnector.Create;
 begin
   inherited;
+  FDatabase := TSQLConnector.Create(nil);
   FTransaction := TSQLTransaction.Create(nil);
+  FDatabase.Transaction := FTransaction;
 end;
 
 destructor TPressSQLdbConnector.Destroy;
@@ -133,47 +127,6 @@ begin
   FDatabase.Free;
   FTransaction.Free;
   inherited;
-end;
-
-function TPressSQLdbConnector.GetDatabase: TSQLConnection;
-begin
-  if not Assigned(FDatabase) then
-    raise EPressOPFError.Create(SUnassignedDatabase);
-  Result := FDatabase;
-end;
-
-procedure TPressSQLdbConnector.SetConnectionDef(const AValue: TConnectionDef);
-begin
-  if FConnectionDef <> AValue then
-  begin
-    FConnectionDef := AValue;
-    FreeAndNil(FDatabase);
-    if Assigned(FConnectionDef) then
-      FDatabase := FConnectionDef.ConnectionClass.Create(nil);
-    FTransaction.Database := FDatabase;
-  end;
-end;
-
-function TPressSQLdbConnector.GetConnectionDef: TConnectionDef;
-begin
-  if not Assigned(FConnectionDef) then
-    raise EPressOPFError.Create(SUnassignedDatabase);
-  Result := FConnectionDef;
-end;
-
-function TPressSQLdbConnector.GetConnectionDefName: string;
-begin
-  Result := ConnectionDef.TypeName;
-end;
-
-procedure TPressSQLdbConnector.SetConnectionDefName(const AValue: string);
-var
-  VConnectionDef: TConnectionDef;
-begin
-  VConnectionDef := SQLdb.GetConnectionDef(AValue);
-  if not Assigned(VConnectionDef) then
-    raise EPressOPFError.CreateFmt(SConnectionNotFound, [AValue]);
-  ConnectionDef := VConnectionDef;
 end;
 
 function TPressSQLdbConnector.GetSupportTransaction: Boolean;
@@ -194,6 +147,11 @@ end;
 function TPressSQLdbConnector.InternalDatasetClass: TPressOPFDatasetClass;
 begin
   Result := TPressSQLdbDataset;
+end;
+
+function TPressSQLdbConnector.InternalDBMSName: string;
+begin
+  Result := Database.ConnectorType;
 end;
 
 procedure TPressSQLdbConnector.InternalRollback;
@@ -259,7 +217,8 @@ function TPressSQLdbObjectMapper.InternalDDLBuilderClass: TPressOPFDDLBuilderCla
 var
   VConnectionTypeName: string;
 begin
-  VConnectionTypeName := (Connector as TPressSQLdbConnector).ConnectionDefName;
+  VConnectionTypeName :=
+   (Connector as TPressSQLdbConnector).Database.ConnectorType;
   if SameText(VConnectionTypeName, 'firebird') then
     Result := TPressIBFbDDLBuilder
   else if SameText(VConnectionTypeName, 'oracle') then

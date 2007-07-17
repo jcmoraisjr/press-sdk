@@ -65,7 +65,6 @@ resourcestring
   SColumnDataParseError = 'Erro ao interpretar dados da coluna %s(''%s''): "%s"';
   SComponentIsNotAControl = 'O componente %s(''%s'') não é um controle';
   SComponentNotFound = 'O componente %s(''%s'') não foi encontrado';
-  SConnectionNotFound = 'A conexão ''%s'' não foi encontrada.';
   SDatabaseIdentifierTooLong = 'Estes identificadores são muito grandes' + #10 + 'e causarão erro no banco de dados:';
   SDialogClassIsAssigned = 'Classe do objeto de diálogo já está associado';
   SDisplayNamesAlreadyAssigned = 'DisplayNames já foi associado';
@@ -95,7 +94,6 @@ resourcestring
   STokenExpected = '''%s'' esperado, mas ''%s'' foi encontrado';
   STokenLengthOutOfBounds = 'Token muito grande';
   SUnassignedAttributeType = 'Tipo de atributo não associado para %s(''%s'')';
-  SUnassignedDatabase = 'Conector do banco de dados não foi associado';
   SUnassignedItemObjectClass = 'Classe de negócio dos itens da Query ''%s'' não está associado';
   SUnassignedMainForm = 'Formulário principal não está associado';
   SUnassignedMainPresenter = 'Presenter principal não está associado';

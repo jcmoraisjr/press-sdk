@@ -2,7 +2,7 @@
 DefaultServiceName := '';
 
 [OPFBroker.SQLdb]
-Connector.ConnectionDefName := '';
+Connector.Database.ConnectorType := '';
 Connector.Database.DatabaseName := '';
 Connector.Database.UserName := '';
 Connector.Database.Password := '';
