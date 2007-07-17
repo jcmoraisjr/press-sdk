@@ -60,7 +60,7 @@ type
   public
     constructor Create(APersistence: TPressPersistence; AStorageModel: TPressOPFStorageModel; AConnector: TPressOPFConnector);
     destructor Destroy; override;
-    function CreateDatabaseStatement: string;
+    function CreateDatabaseStatement(ACreateClearDatabaseStatements: Boolean = False): string;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function DMLBuilderClass: TPressOPFDMLBuilderClass;
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
@@ -79,6 +79,7 @@ type
       createdataset calls }
     FConnector: TPressOPFConnector;
     FDeleteDataset: TPressOPFDataset;
+    FDDLBuilder: TPressOPFDDLBuilder;
     FDMLBuilder: TPressOPFDMLBuilder;
     FInsertDataset: TPressOPFDataset;
     FMap: TPressOPFStorageMap;
@@ -107,6 +108,7 @@ type
   protected
     procedure DoConcurrencyError(AObject: TPressObject); virtual;
     property Connector: TPressOPFConnector read FConnector;
+    property DDLBuilder: TPressOPFDDLBuilder read FDDLBuilder;
     property DMLBuilder: TPressOPFDMLBuilder read FDMLBuilder;
     property ObjectMapper: TPressOPFObjectMapper read FObjectMapper;
     property Persistence: TPressPersistence read FPersistence;
@@ -128,6 +130,7 @@ type
     procedure ConcatStatements(const AStatementStr, AConnectorToken: string; var ABuffer: string);
   end;
 
+  TPressOPFMetadata = class;
   TPressOPFTableMetadata = class;
   TPressOPFFieldMetadata = class;
   TPressOPFIndexMetadata = class;
@@ -139,14 +142,19 @@ type
     function BuildFieldType(AFieldMetadata: TPressOPFFieldMetadata): string;
     function BuildStringList(AList: TStrings): string;
     function InternalFieldTypeStr(AFieldType: TPressOPFFieldType): string; virtual;
+    function InternalMaxIdentLength: Integer; virtual;
   public
+    function CreateClearDatabaseStatement(AModel: TPressOPFStorageModel): string; virtual;
     function CreateDatabaseStatement(AModel: TPressOPFStorageModel): string; virtual;
     function CreateFieldStatement(AFieldMetadata: TPressOPFFieldMetadata): string; virtual;
     function CreateFieldStatementList(ATableMetadata: TPressOPFTableMetadata): string; virtual;
     function CreateForeignKeyStatement(ATableMetadata: TPressOPFTableMetadata; AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string; virtual;
+    function CreateHints(AModel: TPressOPFStorageModel): string; virtual;
     function CreateIndexStatement(ATableMetadata: TPressOPFTableMetadata; AIndexMetadata: TPressOPFIndexMetadata): string; virtual;
     function CreatePrimaryKeyStatement(ATableMetadata: TPressOPFTableMetadata): string; virtual;
     function CreateTableStatement(ATableMetadata: TPressOPFTableMetadata): string; virtual;
+    function DropConstraintStatement(ATableMetadata: TPressOPFTableMetadata; AMetadata: TPressOPFMetadata): string; virtual;
+    function DropTableStatement(ATableMetadata: TPressOPFTableMetadata): string; virtual;
   end;
 
   TPressOPFFieldListType = (ftSimple, ftParams);
@@ -389,9 +397,13 @@ begin
   FConnector := AConnector;
 end;
 
-function TPressOPFObjectMapper.CreateDatabaseStatement: string;
+function TPressOPFObjectMapper.CreateDatabaseStatement(
+  ACreateClearDatabaseStatements: Boolean): string;
 begin
-  Result := DDLBuilder.CreateDatabaseStatement(StorageModel);
+  Result := DDLBuilder.CreateHints(StorageModel);
+  if ACreateClearDatabaseStatements then
+    Result := Result + DDLBuilder.CreateClearDatabaseStatement(StorageModel);
+  Result := Result + DDLBuilder.CreateDatabaseStatement(StorageModel);
 end;
 
 destructor TPressOPFObjectMapper.Destroy;
@@ -751,6 +763,7 @@ begin
   FPersistence := FObjectMapper.Persistence;
   FMap := AMap;
   FMaps := ObjectMapper.StorageModel.Maps[FMap.Metadata.ObjectClass];
+  FDDLBuilder := FObjectMapper.DDLBuilder;
   FDMLBuilder := FObjectMapper.DMLBuilderClass.Create(Maps);
 end;
 
@@ -1202,6 +1215,28 @@ begin
     ConcatStatements(AList[I], ', ', Result);
 end;
 
+function TPressOPFDDLBuilder.CreateClearDatabaseStatement(
+  AModel: TPressOPFStorageModel): string;
+var
+  VTable: TPressOPFTableMetadata;
+  I, J: Integer;
+begin
+  Result := '/*'#10 +
+   'The following statement(s) can be used'#10 +
+   'to drop all tables from the database'#10#10;
+  for I := 0 to Pred(AModel.TableMetadataCount) do
+  begin
+    VTable := AModel.TableMetadatas[I];
+    for J := 0 to Pred(VTable.ForeignKeyCount) do
+      Result := Result + '  ' +
+       DropConstraintStatement(VTable, VTable.ForeignKeys[J]);
+  end;
+  for I := 0 to Pred(AModel.TableMetadataCount) do
+    Result := Result + '  ' +
+     DropTableStatement(AModel.TableMetadatas[I]);
+  Result := Result + '*/'#10#10;
+end;
+
 function TPressOPFDDLBuilder.CreateDatabaseStatement(
   AModel: TPressOPFStorageModel): string;
 var
@@ -1270,6 +1305,50 @@ begin
    CReferentialAction[AForeignKeyMetadata.OnUpdateAction]]);
 end;
 
+function TPressOPFDDLBuilder.CreateHints(
+  AModel: TPressOPFStorageModel): string;
+
+  procedure CheckIdentLength(
+    const AIdentName: string; AMaxSize: Integer; var ABuffer: string);
+  begin
+    if Length(AIdentName) > AMaxSize then
+    begin
+      if ABuffer = '' then
+        ABuffer := '/*'#10 + SDatabaseIdentifierTooLong + #10#10;
+      ABuffer := ABuffer + '  ' + AIdentName + #10;
+    end;
+  end;
+
+var
+  VTable: TPressOPFTableMetadata;
+  VMaxIdentLength: Integer;
+  I, J: Integer;
+begin
+  VMaxIdentLength := InternalMaxIdentLength;
+  Result := '';
+  if VMaxIdentLength > 0 then
+  begin
+    for I := 0 to Pred(AModel.TableMetadataCount) do
+    begin
+      VTable := AModel.TableMetadatas[I];
+      CheckIdentLength(VTable.Name, VMaxIdentLength, Result);
+      for J := 0 to Pred(VTable.FieldCount) do
+        CheckIdentLength(VTable.Fields[J].Name, VMaxIdentLength, Result);
+      CheckIdentLength(VTable.PrimaryKey.Name, VMaxIdentLength, Result);
+      for J := 0 to Pred(VTable.IndexCount) do
+        CheckIdentLength(VTable.Indexes[J].Name, VMaxIdentLength, Result);
+    end;
+    for I := 0 to Pred(AModel.TableMetadataCount) do
+    begin
+      VTable := AModel.TableMetadatas[I];
+      for J := 0 to Pred(VTable.ForeignKeyCount) do
+        CheckIdentLength(VTable.ForeignKeys[J].Name, VMaxIdentLength, Result);
+    end;
+    if Result <> '' then
+      Result := Result + '*/' + #10#10;
+  end;
+end;
+
 function TPressOPFDDLBuilder.CreateIndexStatement(
   ATableMetadata: TPressOPFTableMetadata; AIndexMetadata: TPressOPFIndexMetadata): string;
 const
@@ -1306,10 +1385,31 @@ begin
    CreateFieldStatementList(ATableMetadata)]);
 end;
 
+function TPressOPFDDLBuilder.DropConstraintStatement(
+  ATableMetadata: TPressOPFTableMetadata;
+  AMetadata: TPressOPFMetadata): string;
+begin
+  Result := Format('alter table %s drop constraint %s;'#10, [
+   ATableMetadata.Name,
+   AMetadata.Name]);
+end;
+
+function TPressOPFDDLBuilder.DropTableStatement(
+  ATableMetadata: TPressOPFTableMetadata): string;
+begin
+  Result := Format('drop table %s;'#10, [
+   ATableMetadata.Name]);
+end;
+
 function TPressOPFDDLBuilder.InternalFieldTypeStr(
   AFieldType: TPressOPFFieldType): string;
 begin
   raise EPressOPFError.CreateFmt(SUnsupportedFeature, ['field type str']);
+end;
+
+function TPressOPFDDLBuilder.InternalMaxIdentLength: Integer;
+begin
+  Result := 0;
 end;
 
 { TPressOPFDMLBuilder }

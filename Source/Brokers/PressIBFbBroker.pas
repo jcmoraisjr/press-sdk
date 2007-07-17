@@ -26,6 +26,7 @@ type
   TPressIBFbDDLBuilder = class(TPressOPFDDLBuilder)
   protected
     function InternalFieldTypeStr(AFieldType: TPressOPFFieldType): string; override;
+    function InternalMaxIdentLength: Integer; override;
   end;
 
 implementation
@@ -51,6 +52,11 @@ const
    'blob');             //  oftBinary
 begin
   Result := CFieldTypeStr[AFieldType];
+end;
+
+function TPressIBFbDDLBuilder.InternalMaxIdentLength: Integer;
+begin
+  Result := 32;
 end;
 
 end.

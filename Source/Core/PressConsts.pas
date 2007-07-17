@@ -66,6 +66,7 @@ resourcestring
   SComponentIsNotAControl = 'O componente %s(''%s'') não é um controle';
   SComponentNotFound = 'O componente %s(''%s'') não foi encontrado';
   SConnectionNotFound = 'A conexão ''%s'' não foi encontrada.';
+  SDatabaseIdentifierTooLong = 'Estes identificadores são muito grandes' + #10 + 'e causarão erro no banco de dados:';
   SDialogClassIsAssigned = 'Classe do objeto de diálogo já está associado';
   SDisplayNamesAlreadyAssigned = 'DisplayNames já foi associado';
   SEnumItemNotFound = 'Enumeration ''%s'' não encontrado';
