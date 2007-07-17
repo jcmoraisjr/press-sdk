@@ -150,7 +150,7 @@ end;
 
 function TPressUIBConnector.InternalDBMSName: string;
 begin
-  Result := 'InterBase';
+  Result := 'InterBase/Firebird';
 end;
 
 procedure TPressUIBConnector.InternalRollback;
