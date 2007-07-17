@@ -116,6 +116,7 @@ constructor TPressDOAConnector.Create;
 begin
   inherited;
   FSession := TOracleSession.Create(nil);
+  FSession.BytesPerCharacter := bcAutoDetect;
   FSession.IsolationLevel := ilReadCommitted;
 end;
 
