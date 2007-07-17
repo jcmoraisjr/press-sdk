@@ -27,11 +27,39 @@ type
   protected
     function InternalFieldTypeStr(AFieldType: TPressOPFFieldType): string; override;
     function InternalMaxIdentLength: Integer; override;
+  public
+    function CreateForeignKeyStatement(ATableMetadata: TPressOPFTableMetadata; AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string; override;
   end;
 
 implementation
 
+uses
+  SysUtils;
+
 { TPressOracleDDLBuilder }
+
+function TPressOracleDDLBuilder.CreateForeignKeyStatement(
+  ATableMetadata: TPressOPFTableMetadata;
+  AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string;
+const
+  CReferentialAction: array[TPressOPFReferentialAction] of string = (
+   '', 'cascade', 'set null', '');
+begin
+  Result := Format(
+   'alter table %s add constraint %s'#10 +
+   '  foreign key (%s)'#10 +
+   '  references %s (%s)', [
+   ATableMetadata.Name,
+   AForeignKeyMetadata.Name,
+   BuildStringList(AForeignKeyMetadata.KeyFieldNames),
+   AForeignKeyMetadata.ReferencedTableName,
+   BuildStringList(AForeignKeyMetadata.ReferencedFieldNames)]);
+  if AForeignKeyMetadata.OnDeleteAction in [raCascade, raSetNull] then
+    Result := Format('%s'#10'  on delete %s', [
+     Result,
+     CReferentialAction[AForeignKeyMetadata.OnDeleteAction]]);
+  Result := Result + ';' + #10#10;
+end;
 
 function TPressOracleDDLBuilder.InternalFieldTypeStr(
   AFieldType: TPressOPFFieldType): string;
