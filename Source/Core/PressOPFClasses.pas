@@ -33,7 +33,6 @@ type
   private
     FDataType: TPressOPFFieldType;
     FIsAssigned: Boolean;
-    FIsBlob: Boolean;
     FIsNull: Boolean;
     FName: string;
     FValue: Variant;
@@ -60,10 +59,10 @@ type
     procedure SetAsString(const AValue: string);
     procedure SetAsTime(AValue: TDateTime);
     procedure SetAsVariant(AValue: Variant);
-    procedure ValueAssigned(AIsBlob: Boolean);
+    procedure ValueAssigned;
   public
     constructor Create(const AName: string);
-    procedure Clear(AIsBlob: Boolean);
+    procedure Clear(ADataType: TPressOPFFieldType);
     procedure Empty;
     property AsBinary: string read GetAsString write SetAsBinary;
     property AsBoolean: Boolean read GetAsBoolean write SetAsBoolean;
@@ -80,7 +79,6 @@ type
     property AsVariant: Variant read FValue write SetAsVariant;
     property DataType: TPressOPFFieldType read FDataType;
     property IsAssigned: Boolean read FIsAssigned;
-    property IsBlob: Boolean read FIsBlob;
     property IsNull: Boolean read FIsNull;
     property Name: string read FName;
   end;
@@ -122,12 +120,12 @@ uses
 
 { TPressOPFParam }
 
-procedure TPressOPFParam.Clear(AIsBlob: Boolean);
+procedure TPressOPFParam.Clear(ADataType: TPressOPFFieldType);
 begin
   FIsAssigned := True;
   FIsNull := True;
   FValue := Null;
-  FIsBlob := AIsBlob;
+  FDataType := ADataType;
 end;
 
 constructor TPressOPFParam.Create(const AName: string);
@@ -142,7 +140,7 @@ begin
   FIsAssigned := False;
   FIsNull := True;
   FValue := Null;
-  FIsBlob := False;
+  FDataType := oftUnknown;
 end;
 
 function TPressOPFParam.GetAsBoolean: Boolean;
@@ -234,56 +232,56 @@ procedure TPressOPFParam.SetAsBinary(const AValue: string);
 begin
   FValue := AValue;
   FDataType := oftBinary;
-  ValueAssigned(True);
+  ValueAssigned;
 end;
 
 procedure TPressOPFParam.SetAsBoolean(AValue: Boolean);
 begin
   FValue := AValue;
   FDataType := oftBoolean;
-  ValueAssigned(False);
+  ValueAssigned;
 end;
 
 procedure TPressOPFParam.SetAsCurrency(AValue: Currency);
 begin
   FValue := AValue;
   FDataType := oftCurrency;
-  ValueAssigned(False);
+  ValueAssigned;
 end;
 
 procedure TPressOPFParam.SetAsDate(AValue: TDateTime);
 begin
   FValue := AValue;
   FDataType := oftDate;
-  ValueAssigned(False);
+  ValueAssigned;
 end;
 
 procedure TPressOPFParam.SetAsDateTime(AValue: TDateTime);
 begin
   FValue := AValue;
   FDataType := oftDateTime;
-  ValueAssigned(False);
+  ValueAssigned;
 end;
 
 procedure TPressOPFParam.SetAsFloat(AValue: Double);
 begin
   FValue := AValue;
   FDataType := oftFloat;
-  ValueAssigned(False);
+  ValueAssigned;
 end;
 
 procedure TPressOPFParam.SetAsInt16(AValue: Integer);
 begin
   FValue := AValue;
   FDataType := oftInt16;
-  ValueAssigned(False);
+  ValueAssigned;
 end;
 
 procedure TPressOPFParam.SetAsInt32(AValue: Integer);
 begin
   FValue := AValue;
   FDataType := oftInt32;
-  ValueAssigned(False);
+  ValueAssigned;
 end;
 
 procedure TPressOPFParam.SetAsInt64(AValue: Int64);
@@ -300,21 +298,21 @@ procedure TPressOPFParam.SetAsMemo(const AValue: string);
 begin
   FValue := AValue;
   FDataType := oftMemo;
-  ValueAssigned(True);
+  ValueAssigned;
 end;
 
 procedure TPressOPFParam.SetAsString(const AValue: string);
 begin
   FValue := AValue;
   FDataType := oftString;
-  ValueAssigned(False);
+  ValueAssigned;
 end;
 
 procedure TPressOPFParam.SetAsTime(AValue: TDateTime);
 begin
   FValue := AValue;
   FDataType := oftTime;
-  ValueAssigned(False);
+  ValueAssigned;
 end;
 
 procedure TPressOPFParam.SetAsVariant(AValue: Variant);
@@ -339,18 +337,16 @@ begin
   end;
   FIsAssigned := not VarIsEmpty(AValue);
   FIsNull := VarIsEmpty(AValue) or VarIsNull(AValue);
-  FIsBlob := False;
   if IsAssigned then
     FValue := AValue
   else
     FValue := Null;
 end;
 
-procedure TPressOPFParam.ValueAssigned(AIsBlob: Boolean);
+procedure TPressOPFParam.ValueAssigned;
 begin
   FIsAssigned := True;
   FIsNull := False;
-  FIsBlob := AIsBlob;
 end;
 
 { TPressOPFParamList }

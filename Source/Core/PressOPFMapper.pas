@@ -96,7 +96,7 @@ type
     procedure AddIdParam(ADataset: TPressOPFDataset; const AParamName, AValue: string);
     procedure AddIntegerParam(ADataset: TPressOPFDataset; const AParamName: string; AValue: Integer);
     procedure AddLinkParams(ADataset: TPressOPFDataset; AItems: TPressItems; AProxy: TPressProxy; const AOwnerId: string; AIndex: Integer);
-    procedure AddNullParam(ADataset: TPressOPFDataset; const AParamName: string; AIsBlob: Boolean);
+    procedure AddNullParam(ADataset: TPressOPFDataset; const AParamName: string; AFieldType: TPressOPFFieldType);
     procedure AddPersistentIdParam(ADataset: TPressOPFDataset; const APersistentId: string);
     procedure AddStringParam(ADataset: TPressOPFDataset; const AParamName, AValue: string);
     procedure AddUpdateCountParam(ADataset: TPressOPFDataset; AObject: TPressObject);
@@ -616,7 +616,8 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
           VParam.AsVariant := AValue.AsVariant;
       end;
     end else
-      VParam.Clear(AAttribute is TPressBlob);
+      VParam.Clear(DDLBuilder.AttributeTypeToFieldType(
+       AValue.AttributeBaseType));
   end;
 
   procedure AddPartAttribute(APart: TPressPart);
@@ -638,7 +639,9 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
       AddStringParam(
        ADataset, AReference.PersistentName, AReference.Proxy.ObjectId);
     end else
-      AddNullParam(ADataset, AReference.PersistentName, False);
+      AddNullParam(ADataset, AReference.PersistentName,
+       DDLBuilder.AttributeTypeToFieldType(
+       AReference.Metadata.ObjectClass.ClassMetadata.IdMetadata.AttributeClass.AttributeBaseType));
   end;
 
 begin
@@ -719,10 +722,10 @@ begin
 end;
 
 procedure TPressOPFAttributeMapper.AddNullParam(
-  ADataset: TPressOPFDataset; const AParamName: string; AIsBlob: Boolean);
+  ADataset: TPressOPFDataset; const AParamName: string; AFieldType: TPressOPFFieldType);
 begin
   if AParamName <> '' then
-    ADataset.Params.ParamByName(AParamName).Clear(AIsBlob);
+    ADataset.Params.ParamByName(AParamName).Clear(AFieldType);
 end;
 
 procedure TPressOPFAttributeMapper.AddPersistentIdParam(

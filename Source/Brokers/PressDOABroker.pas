@@ -263,16 +263,11 @@ begin
     if VParam.IsAssigned then
     begin
       VParamType := OPFTypeToDOAType(VParam.DataType);
-      if (VParamType = -1) and VParam.IsNull then
-        if VParam.IsBlob then
-          VParamType := otBlob
-        else
-          VParamType := otString;
       VVarName := VParam.Name;
       VVarIndex := VQuery.VariableIndex(VVarName);
       if VVarIndex = -1 then
         VQuery.DeclareVariable(VVarName, VParamType);
-      if VParam.IsBlob then
+      if VParam.DataType in [oftMemo, oftBinary] then
       begin
         VLOB := CreateLOBLocator(VParamType);
         if not VParam.IsNull then
