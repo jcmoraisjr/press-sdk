@@ -44,6 +44,7 @@ type
   protected
     procedure InitService; override;
     procedure InternalCommit; override;
+    function InternalDBMSName: string; override;
     procedure InternalShowConnectionManager; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
     function InternalExecuteStatement(const AStatement: string): Integer; override;
@@ -187,6 +188,11 @@ end;
 procedure TPressInstantObjectsPersistence.InternalCommit;
 begin
   Connector.CommitTransaction;
+end;
+
+function TPressInstantObjectsPersistence.InternalDBMSName: string;
+begin
+  (Connector.Broker as TInstantCustomRelationalBroker).DBMSName;
 end;
 
 procedure TPressInstantObjectsPersistence.InternalDispose(
