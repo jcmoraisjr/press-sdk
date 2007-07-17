@@ -235,10 +235,13 @@ type
   private
     FDataType: TPressAttributeBaseType;
     FOptions: TPressOPFFieldOptions;
+    FShortName: string;
     FSize: Integer;
   public
+    constructor Create(const AName, AShortName: string);
     property DataType: TPressAttributeBaseType read FDataType write FDataType;
     property Options: TPressOPFFieldOptions read FOptions write FOptions;
+    property ShortName: string read FShortName;
     property Size: Integer read FSize write FSize;
   end;
 
@@ -281,14 +284,16 @@ type
     FForeignKeys: TObjectList;
     FIndexes: TObjectList;
     FPrimaryKey: TPressOPFIndexMetadata;
+    FShortName: string;
     procedure EnsureListInstance(var AList: TObjectList);
     function GetFields(AIndex: Integer): TPressOPFFieldMetadata;
     function GetForeignKeys(AIndex: Integer): TPressOPFForeignKeyMetadata;
     function GetIndexes(AIndex: Integer): TPressOPFIndexMetadata;
     procedure SetPrimaryKey(AValue: TPressOPFIndexMetadata);
   public
+    constructor Create(const AName, AShortName: string);
     destructor Destroy; override;
-    function AddField(const AName: string): TPressOPFFieldMetadata;
+    function AddField(const AName, AShortName: string): TPressOPFFieldMetadata;
     function AddForeignKey(const AName: string): TPressOPFForeignKeyMetadata;
     function AddIndex(const AName: string): TPressOPFIndexMetadata;
     function FieldCount: Integer;
@@ -298,6 +303,7 @@ type
     property ForeignKeys[AIndex: Integer]: TPressOPFForeignKeyMetadata read GetForeignKeys;
     property Indexes[AIndex: Integer]: TPressOPFIndexMetadata read GetIndexes;
     property PrimaryKey: TPressOPFIndexMetadata read FPrimaryKey write SetPrimaryKey;
+    property ShortName: string read FShortName;
   end;
 
   TPressOPFStorageModel = class(TObject)
@@ -1771,6 +1777,17 @@ begin
   FName := AName;
 end;
 
+{ TPressOPFFieldMetadata }
+
+constructor TPressOPFFieldMetadata.Create(const AName, AShortName: string);
+begin
+  inherited Create(AName);
+  if AShortName <> '' then
+    FShortName := AShortName
+  else
+    FShortName := AName;
+end;
+
 { TPressOPFIndexMetadata }
 
 constructor TPressOPFIndexMetadata.Create(const AName: string);
@@ -1806,10 +1823,10 @@ end;
 { TPressOPFTableMetadata }
 
 function TPressOPFTableMetadata.AddField(
-  const AName: string): TPressOPFFieldMetadata;
+  const AName, AShortName: string): TPressOPFFieldMetadata;
 begin
   EnsureListInstance(FFields);
-  Result := TPressOPFFieldMetadata.Create(AName);
+  Result := TPressOPFFieldMetadata.Create(AName, AShortName);
   FFields.Add(Result);
 end;
 
@@ -1827,6 +1844,15 @@ begin
   EnsureListInstance(FIndexes);
   Result := TPressOPFIndexMetadata.Create(AName);
   FIndexes.Add(Result);
+end;
+
+constructor TPressOPFTableMetadata.Create(const AName, AShortName: string);
+begin
+  inherited Create(AName);
+  if AShortName <> '' then
+    FShortName := AShortName
+  else
+    FShortName := AName;
 end;
 
 destructor TPressOPFTableMetadata.Destroy;
@@ -1996,8 +2022,8 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
       VIndex: TPressOPFIndexMetadata;
     begin
       if AIndexName = '' then
-        AIndexName := SPressIndexNamePrefix + ATableMetadata.Name +
-         SPressIdentifierSeparator + AFieldMetadata.Name;
+        AIndexName := SPressIndexNamePrefix + ATableMetadata.ShortName +
+         SPressIdentifierSeparator + AFieldMetadata.ShortName;
       VIndex := ATableMetadata.AddIndex(AIndexName);
       VIndex.FieldNames.Text := AFieldMetadata.Name;
       VIndex.Options := AIndexOptions;
@@ -2009,7 +2035,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
       VForeignKey: TPressOPFForeignKeyMetadata;
     begin
       VForeignKey := ATable.AddForeignKey(SPressForeignKeyNamePrefix +
-       ATable.Name + SPressIdentifierSeparator + AField.Name);
+       ATable.ShortName + SPressIdentifierSeparator + AField.ShortName);
       VForeignKey.KeyFieldNames.Text := AField.Name;
       VForeignKey.ReferencedFieldNames.Text :=
        AReferencedObject.IdMetadata.PersistentName;
@@ -2025,7 +2051,8 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
       var
         VField: TPressOPFFieldMetadata;
       begin
-        VField := ATableMetadata.AddField(AAttributeMetadata.PersistentName);
+        VField := ATableMetadata.AddField(
+         AAttributeMetadata.PersistentName, AAttributeMetadata.ShortName);
         VField.DataType := AAttributeMetadata.AttributeClass.AttributeBaseType;
         VField.Size := AAttributeMetadata.Size;
         VField.Options := [];
@@ -2043,7 +2070,8 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
         VField: TPressOPFFieldMetadata;
         VObjectMetadata: TPressObjectMetadata;
       begin
-        VField := ATableMetadata.AddField(AAttributeMetadata.PersistentName);
+        VField := ATableMetadata.AddField(
+         AAttributeMetadata.PersistentName, AAttributeMetadata.ShortName);
         VObjectMetadata := AAttributeMetadata.ObjectClass.ClassMetadata;
         VField.DataType :=
          VObjectMetadata.IdMetadata.AttributeClass.AttributeBaseType;
@@ -2059,8 +2087,8 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
         VObjectMetadata: TPressObjectMetadata;
         VHasId: Boolean;
       begin
-        VTableMetadata :=
-         TPressOPFTableMetadata.Create(AAttributeMetadata.PersLinkName);
+        VTableMetadata := TPressOPFTableMetadata.Create(
+         AAttributeMetadata.PersLinkName, '');
         ATableMetadatas.Add(VTableMetadata);
         VTableMetadata.PrimaryKey := TPressOPFIndexMetadata.Create(
          SPressPrimaryKeyNamePrefix + VTableMetadata.Name);
@@ -2068,7 +2096,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
         if VHasId then
         begin
           VField :=
-           VTableMetadata.AddField(AAttributeMetadata.PersLinkIdName);
+           VTableMetadata.AddField(AAttributeMetadata.PersLinkIdName, '');
           { TODO : Implement }
           VField.DataType := Model.DefaultKeyType.AttributeBaseType;
           VField.Size := 32;
@@ -2077,7 +2105,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
         end;
 
         VField :=
-         VTableMetadata.AddField(AAttributeMetadata.PersLinkParentName);
+         VTableMetadata.AddField(AAttributeMetadata.PersLinkParentName, '');
         VObjectMetadata := AAttributeMetadata.Owner;
         VField.DataType :=
          VObjectMetadata.IdMetadata.AttributeClass.AttributeBaseType;
@@ -2088,7 +2116,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
           VTableMetadata.PrimaryKey.FieldNames.Text := VField.Name;
 
         VField :=
-         VTableMetadata.AddField(AAttributeMetadata.PersLinkChildName);
+         VTableMetadata.AddField(AAttributeMetadata.PersLinkChildName, '');
         VObjectMetadata := AAttributeMetadata.ObjectClass.ClassMetadata;
         VField.DataType :=
          VObjectMetadata.IdMetadata.AttributeClass.AttributeBaseType;
@@ -2101,7 +2129,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
         if AAttributeMetadata.PersLinkPosName <> '' then
         begin
           VField :=
-           VTableMetadata.AddField(AAttributeMetadata.PersLinkPosName);
+           VTableMetadata.AddField(AAttributeMetadata.PersLinkPosName, '');
           VField.DataType := attInteger;
           VField.Options := [foNotNull];
         end;
@@ -2116,7 +2144,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
         AddItemsMetadata;
     end;
 
-    function AddFieldMetadata(const AFieldName: string;
+    function AddFieldMetadata(const AFieldName, AShortFieldName: string;
       ADataType: TPressAttributeBaseType; ASize: Integer;
       AFieldOptions: TPressOPFFieldOptions;
       AIndexOptions: TPressOPFIndexOptions;
@@ -2124,7 +2152,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
     var
       VField: TPressOPFFieldMetadata;
     begin
-      VField := ATableMetadata.AddField(AFieldName);
+      VField := ATableMetadata.AddField(AFieldName, AShortFieldName);
       VField.DataType := ADataType;
       VField.Size := ASize;
       VField.Options := AFieldOptions;
@@ -2140,13 +2168,13 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
     I: Integer;
   begin
     VMetadata := AStorageMap.Metadata;
-    VTableMetadata :=
-     TPressOPFTableMetadata.Create(VMetadata.PersistentName);
+    VTableMetadata := TPressOPFTableMetadata.Create(
+     VMetadata.PersistentName, VMetadata.ShortName);
     ATableMetadatas.Add(VTableMetadata);
     AddAttributeMetadata(VMetadata.IdMetadata, VTableMetadata);
     if VMetadata.ClassIdName <> '' then
     begin
-      VFieldMetadata := AddFieldMetadata(VMetadata.ClassIdName,
+      VFieldMetadata := AddFieldMetadata(VMetadata.ClassIdName, '',
        ClassIdMetadata.IdMetadata.AttributeClass.AttributeBaseType,
        ClassIdMetadata.IdMetadata.Size,
        [foNotNull], [], VTableMetadata);
@@ -2154,7 +2182,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
         AddForeignKey(VTableMetadata, VFieldMetadata, ClassIdMetadata);
     end;
     if VMetadata.UpdateCountName <> '' then
-      AddFieldMetadata(VMetadata.UpdateCountName,
+      AddFieldMetadata(VMetadata.UpdateCountName, '',
        attInteger, 0, [foNotNull], [], VTableMetadata);
     for I := 1 to Pred(AStorageMap.Count) do  // skips ID
       AddAttributeMetadata(AStorageMap[I], VTableMetadata);
