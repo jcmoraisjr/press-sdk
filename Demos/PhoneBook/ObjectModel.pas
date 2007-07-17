@@ -237,7 +237,7 @@ begin
   Result :=
    'TPhone IsPersistent (' +
    'PhoneType: Enum(TPhoneType);' +
-   'Number: String(15))';
+   'Number: String(15) PersistentName="PhoneNumber")';
 end;
 
 procedure TPhone.SetNumber(const Value: string);
