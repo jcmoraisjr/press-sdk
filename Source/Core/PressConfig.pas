@@ -27,6 +27,7 @@ uses
 type
   TPressConfigReader = class(TPressParserReader)
   protected
+    procedure InternalCheckComment(var AToken: string); override;
     function InternalCreateBigSymbolsArray: TPressStringArray; override;
   end;
 
@@ -89,10 +90,21 @@ uses
 
 { TPressConfigReader }
 
+procedure TPressConfigReader.InternalCheckComment(var AToken: string);
+begin
+  inherited;
+  if (AToken = '//') or (AToken = '#') then
+    while ReadChar <> #10 do
+  else
+    Exit;
+  AToken := ReadToken;
+end;
+
 function TPressConfigReader.InternalCreateBigSymbolsArray: TPressStringArray;
 begin
-  SetLength(Result, 1);
+  SetLength(Result, 2);
   Result[0] := ':=';
+  Result[1] := '//';
 end;
 
 { TPressConfigFile }
