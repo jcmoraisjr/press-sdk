@@ -19,12 +19,15 @@ Using PressObjects persistence
    a) the "UsePressOPF" conditional symbol is defined,
       and
    b) the "UseInstantObjects" conditional symbol is NOT defined;
-2. Change the unit Brokers.pas to choose which broker the application will use.
-   Currently PressObjects has brokers for IBX, UIB, ZeosDBO and SQLdb. Follow
-   the comments inside the unit;
-3. Still in the Brokers.pas unit, change the TBroker.InitService implementation
-   to provide the database component settings for database name, user, 
-   password, and any others as required;
+2. Change the unit Brokers.pas to choose which brokers the application will
+   use. Currently PressObjects has brokers for IBX, UIB, ZeosDBO, DOA and
+   SQLdb;
+3. Change the PhoneBook.cf file to provide:
+   a) the default service name (IBX, UIB, Zeos, DOA or SQLdb) for the
+      OPFBroker registry,
+      and
+   b) the database component settings required for the brokers used (for
+      example: database name, user, password, etc.);
 4. Run the application and call File | Connector to create the database
    metadata;
 5. Create the database tables and constraints using the metadata provided by
