@@ -802,8 +802,8 @@ begin
     TPressMVPStructureModel(VModel).AssignDisplayNames(ADisplayNames)
   else if ADisplayNames <> '' then
   begin
-    VModel.Free;
     VAttribute := VModel.Subject as TPressAttribute;
+    VModel.Free;
     raise EPressMVPError.CreateFmt(SUnsupportedDisplayNames,
      [VAttribute.ClassName, VAttribute.Owner.ClassName, VAttribute.Name]);
   end;
