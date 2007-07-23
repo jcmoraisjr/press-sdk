@@ -112,6 +112,7 @@ resourcestring
   SUnsupportedDisplayNames = 'DisplayNames não é suportado para o atributo %s(''%s.%s'')';
   SUnsupportedFeature = 'Feature %s não é suportada';
   SUnsupportedFieldType = 'O tipo de campo ''%s'' não é suportado';
+  SUnsupportedGraphicFormat = 'Formato de arquivo gráfico não suportado';
   SUnsupportedModel = 'Model %s não é suportado por %s';
   SUnsupportedObject = 'Nenhuma classe %s suporta objetos %s';
   SViewAccessError = 'Não é possível acessar a view %s(''%s'') como %s';
@@ -119,7 +120,7 @@ resourcestring
   SConnectionManagerCaption = 'Conector';
 
   SPressTodayCommand = 'Hoje';
-  SPressLoadPictureCommand = 'Adicionar figura';
+  SPressLoadPictureCommand = 'Carregar figura';
   SPressRemovePictureCommand = 'Remover figura';
   SPressIncludeObjectCommand = 'Cadastrar novo item';
   SPressAddItemCommand = 'Adicionar item';

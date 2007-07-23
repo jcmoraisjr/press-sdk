@@ -103,6 +103,7 @@ type
   protected
     function GetCaption: string; override;
     function GetShortCut: TShortCut; override;
+    procedure InitNotifier; override;
     procedure InternalExecute; override;
     function InternalIsEnabled: Boolean; override;
   end;
@@ -462,7 +463,7 @@ end;
 
 function TPressMVPLoadPictureCommand.GetShortCut: TShortCut;
 begin
-  Result := VK_INSERT;
+  Result := VK_F2;
 end;
 
 procedure TPressMVPLoadPictureCommand.InternalExecute;
@@ -470,7 +471,7 @@ begin
   with TOpenPictureDialog.Create(nil) do
   try
     if Execute then
-      Subject.AssignPictureFromFile(FileName);
+      Subject.AssignFromFile(FileName);
   finally
     Free;
   end;
@@ -485,7 +486,14 @@ end;
 
 function TPressMVPRemovePictureCommand.GetShortCut: TShortCut;
 begin
-  Result := VK_DELETE;
+  Result := Menus.ShortCut(VK_F8, [ssCtrl]);
+end;
+
+procedure TPressMVPRemovePictureCommand.InitNotifier;
+begin
+  inherited;
+  { TODO : Merge in the core implementation }
+  Notifier.AddNotificationItem(Model.Subject, [TPressAttributeChangedEvent]);
 end;
 
 procedure TPressMVPRemovePictureCommand.InternalExecute;

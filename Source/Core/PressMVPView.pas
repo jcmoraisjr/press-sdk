@@ -554,6 +554,7 @@ implementation
 uses
   SysUtils,
   PressConsts,
+  PressAttributes,
   PressMVPFactory;
 
 type
@@ -1796,9 +1797,13 @@ begin
 end;
 
 procedure TPressMVPPictureView.InternalUpdate;
+var
+  VSubject: TPressAttribute;
 begin
   inherited;
-  { TODO : Implement }
+  VSubject := Model.Subject;
+  if VSubject is TPressPicture then
+    TPressPicture(VSubject).AssignToPicture(Control.Picture);
 end;
 
 { TPressMVPCustomFormView }
