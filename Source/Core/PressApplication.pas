@@ -210,7 +210,6 @@ type
 
   TPressApplication = class(TObject)
   private
-    FNotifier: TPressNotifier;
     FOnIdle: TIdleEvent;
     FRegistries: TPressRegistryList;
     FRunning: Boolean;
@@ -221,7 +220,6 @@ type
     function GetConfigFileName: string;
     function GetRegistry(AServiceType: TPressServiceType): TPressRegistry;
     procedure InitApplication;
-    procedure Notify(AEvent: TPressEvent);
     procedure ReadConfigFile;
     procedure SetConfigFileName(const Value: string);
   protected
@@ -747,8 +745,6 @@ end;
 constructor TPressApplication.Create;
 begin
   inherited Create;
-  FNotifier := TPressNotifier.Create(Notify);
-  FNotifier.AddNotificationItem(Self, [TPressApplicationRunningEvent]);
   FRegistries := TPressRegistryList.Create(True);
 end;
 
@@ -791,7 +787,6 @@ end;
 destructor TPressApplication.Destroy;
 begin
   FRegistries.Free;
-  FNotifier.Free;
   FConfigFile.Free;
   inherited;
 end;
@@ -834,19 +829,12 @@ end;
 
 procedure TPressApplication.InitApplication;
 begin
+  FRunning := True;
   FOnIdle := Application.OnIdle;
   Application.OnIdle := ApplicationIdle;
   TPressApplicationInitEvent.Create(Self).Notify;
   TPressApplicationRunningEvent.Create(Self).QueueNotification;
-end;
-
-procedure TPressApplication.Notify(AEvent: TPressEvent);
-begin
-  if AEvent is TPressApplicationRunningEvent then
-  begin
-    FRunning := True;
-    ReadConfigFile;
-  end;
+  ReadConfigFile;
 end;
 
 procedure TPressApplication.ReadConfigFile;
