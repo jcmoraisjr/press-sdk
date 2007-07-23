@@ -171,7 +171,7 @@ type
     function BuildMapArray(ABaseMap: TPressOPFStorageMap): TPressOPFStorageMapArray;
     function BuildTableAlias(AIndex: Integer): string;
     function BuildTableList(AMaps: TPressOPFStorageMapArray): string;
-    function CreateAssignParamToFieldList(AObject: TPressObject; out AConcurrency: Boolean): string;
+    function CreateAssignParamToFieldList(AObject: TPressObject): string;
     function CreateIdParamList(ACount: Integer): string;
     property Map: TPressOPFStorageMap read FMap;
     property Maps: TPressOPFStorageMapList read FMaps;
@@ -667,7 +667,8 @@ begin
     if not AObject.IsPersistent or VAttribute.IsChanged then
       AddAttributeParam(ADataset, VAttribute);
   end;
-  AddUpdateCountParam(ADataset, AObject);
+  if Map.Metadata = AObject.Metadata then
+    AddUpdateCountParam(ADataset, AObject);
   if AObject.IsPersistent then
     AddPersistentIdParam(ADataset, AObject.PersistentId);
 end;
@@ -1560,7 +1561,7 @@ begin
 end;
 
 function TPressOPFDMLBuilder.CreateAssignParamToFieldList(
-  AObject: TPressObject; out AConcurrency: Boolean): string;
+  AObject: TPressObject): string;
 
   procedure AddRelativeChange(AAttribute: TPressNumeric);
   begin
@@ -1578,7 +1579,6 @@ var
   VAttribute: TPressAttribute;
   I: Integer;
 begin
-  AConcurrency := False;
   Result := '';
   for I := 0 to Pred(Map.Count) do
   begin
@@ -1591,16 +1591,11 @@ begin
          TPressNumeric(VAttribute).IsRelativelyChanged then
           AddRelativeChange(TPressNumeric(VAttribute))
         else
-        begin
           AddParam(VAttribute.PersistentName);
-          AConcurrency := True;
-        end;
       end;
-    end else if VAttribute.IsChanged and
-     (VAttribute.PersistentName <> '') then
-      AConcurrency := True;
+    end;
   end;
-  if AConcurrency or (Result <> '') or (Map.Metadata = AObject.Metadata) then
+  if Map.Metadata = AObject.Metadata then
     AddParam(Map.Metadata.UpdateCountName);
 end;
 
@@ -1694,9 +1689,8 @@ function TPressOPFDMLBuilder.UpdateStatement(
   AObject: TPressObject): string;
 var
   VAssignParamList: string;
-  VConcurrency: Boolean;
 begin
-  VAssignParamList := CreateAssignParamToFieldList(AObject, VConcurrency);
+  VAssignParamList := CreateAssignParamToFieldList(AObject);
   if VAssignParamList <> '' then
   begin
     Result := Format('update %s set %s where (%s = %s)', [
@@ -1704,7 +1698,8 @@ begin
      VAssignParamList,
      Map.Metadata.KeyName,
      ':' + SPressPersistentIdParamString]);
-    if VConcurrency and (Map.Metadata.UpdateCountName <> '') then
+    if (Map.Metadata = AObject.Metadata) and
+     (Map.Metadata.UpdateCountName <> '') then
       Result := Format('%s and (%s = %d)', [
        Result,
        Map.Metadata.UpdateCountName,
