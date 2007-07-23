@@ -1583,6 +1583,8 @@ begin
     VIndex := IndexOfName(APath);
     if VIndex >= 0 then
       Result := Items[VIndex]
+    else if SameText(APath, SPressIdString) then
+      Result := ObjectMetadata.IdMetadata
     else
       Result := nil;
   end else
