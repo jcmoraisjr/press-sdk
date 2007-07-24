@@ -570,7 +570,7 @@ procedure TPressMVPIncludeObjectCommand.InternalExecute;
 var
   VObject: TPressObject;
 begin
-  VObject := Model.Subject.ObjectClass.Create;
+  VObject := Model.ObjectClass.Create;
   Model.Subject.Value := VObject;
   VObject.Release;
   TPressMVPModelCreateIncludeFormEvent.Create(Model).Notify;

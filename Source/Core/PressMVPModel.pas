@@ -276,12 +276,14 @@ type
     function GetMetadata: TPressQueryMetadata;
     function GetQuery: TPressMVPReferenceQuery;
     function GetSubject: TPressReference;
+    function GetObjectClass: TPressObjectClass;
   protected
     function CreateReferenceQuery: TPressMVPReferenceQuery; virtual;
     function GetAsString: string; override;
     procedure InitCommands; override;
     procedure InternalAssignDisplayNames(const ADisplayNames: string); override;
     function InternalObjectAsString(AObject: TPressObject; ACol: Integer): string; virtual;
+    function InternalObjectClass: TPressObjectClass; virtual;
     procedure InternalUpdateQueryMetadata(const AQueryString: string); virtual;
     procedure Notify(AEvent: TPressEvent); override;
     property Metadata: TPressQueryMetadata read GetMetadata;
@@ -294,6 +296,7 @@ type
     function ObjectOf(AIndex: Integer): TPressObject;
     function ReferencedValue(AObject: TPressObject): TPressValue;
     function TextAlignment(ACol: Integer): TAlignment;
+    property ObjectClass: TPressObjectClass read GetObjectClass;
     property Query: TPressMVPReferenceQuery read GetQuery;
     property Subject: TPressReference read GetSubject;
   end;
@@ -1084,6 +1087,11 @@ begin
   Result := FMetadata;
 end;
 
+function TPressMVPReferenceModel.GetObjectClass: TPressObjectClass;
+begin
+  Result := InternalObjectClass;
+end;
+
 function TPressMVPReferenceModel.GetQuery: TPressMVPReferenceQuery;
 begin
   if not Assigned(FQuery) then
@@ -1138,9 +1146,15 @@ begin
     Result := VAttribute.DisplayText;
 end;
 
+function TPressMVPReferenceModel.InternalObjectClass: TPressObjectClass;
+begin
+  Result := Subject.ObjectClass;
+end;
+
 procedure TPressMVPReferenceModel.InternalUpdateQueryMetadata(
   const AQueryString: string);
 begin
+  Query.Metadata.ItemObjectClass := InternalObjectClass;
   Query.Name := AQueryString;
 end;
 
