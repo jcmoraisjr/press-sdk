@@ -866,6 +866,8 @@ procedure TPressMVPSaveObjectCommand.InternalStoreObject;
 var
   VSubject: TPressObject;
 begin
+  if not Model.Store then
+    Exit;
   VSubject := Model.Subject;
   VSubject.DisableUpdates;
   try

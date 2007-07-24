@@ -237,6 +237,7 @@ type
   TPressMVPStructureModel = class(TPressMVPAttributeModel)
   private
     FColumnData: TPressMVPColumnData;
+    FStore: Boolean;
     function GetColumnData: TPressMVPColumnData;
     function GetSelection: TPressMVPObjectSelection;
     function GetSubject: TPressStructure;
@@ -245,10 +246,12 @@ type
     procedure InternalAssignDisplayNames(const ADisplayNames: string); virtual; abstract;
     function InternalCreateSelection: TPressMVPSelection; override;
   public
+    constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
     destructor Destroy; override;
     procedure AssignDisplayNames(const ADisplayNames: string);
     property ColumnData: TPressMVPColumnData read GetColumnData;
     property Selection: TPressMVPObjectSelection read GetSelection;
+    property Store: Boolean read FStore write FStore;
     property Subject: TPressStructure read GetSubject;
   end;
 
@@ -418,6 +421,7 @@ type
     FHookedSubject: TPressStructure;
     FIsIncluding: Boolean;
     FObjectMemento: TPressObjectMemento;
+    FStore: Boolean;
     procedure AfterChangeHookedSubject;
     procedure BeforeChangeHookedSubject;
     function GetIsChanged: Boolean;
@@ -442,6 +446,7 @@ type
     property IsChanged: Boolean read GetIsChanged;
     property IsIncluding: Boolean read FIsIncluding write FIsIncluding;
     property Selection: TPressMVPModelSelection read GetSelection;
+    property Store: Boolean read FStore write FStore;
     property Subject: TPressObject read GetSubject;
   end;
 
@@ -993,6 +998,13 @@ begin
   if Assigned(FColumnData) and (FColumnData.ColumnCount > 0) then
     raise EPressMVPError.Create(SDisplayNamesAlreadyAssigned);
   InternalAssignDisplayNames(ADisplayNames);
+end;
+
+constructor TPressMVPStructureModel.Create(AParent: TPressMVPModel;
+  ASubject: TPressSubject);
+begin
+  inherited Create(AParent, ASubject);
+  FStore := (ASubject is TPressReference) or (ASubject is TPressReferences);
 end;
 
 destructor TPressMVPStructureModel.Destroy;
@@ -1790,6 +1802,7 @@ constructor TPressMVPObjectModel.Create(
   AParent: TPressMVPModel; ASubject: TPressSubject);
 begin
   inherited Create(AParent, ASubject);
+  FStore := True;
   if Assigned(ASubject) then
     FObjectMemento := (ASubject as TPressObject).CreateMemento;
 end;
