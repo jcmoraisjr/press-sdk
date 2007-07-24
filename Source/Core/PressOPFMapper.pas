@@ -667,7 +667,7 @@ begin
     if not AObject.IsPersistent or VAttribute.IsChanged then
       AddAttributeParam(ADataset, VAttribute);
   end;
-  if Map.Metadata = AObject.Metadata then
+  if not AObject.IsPersistent or (Map.Metadata = AObject.Metadata) then
     AddUpdateCountParam(ADataset, AObject);
   if AObject.IsPersistent then
     AddPersistentIdParam(ADataset, AObject.PersistentId);
