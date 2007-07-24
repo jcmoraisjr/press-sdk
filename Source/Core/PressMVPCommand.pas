@@ -156,6 +156,7 @@ type
 
   TPressMVPCustomAddItemsCommand = class(TPressMVPItemsCommand)
   protected
+    function InternalCreateObject: TPressObject; virtual;
     procedure InternalExecute; override;
     function InternalObjectClass: TPressObjectClass; virtual;
   end;
@@ -628,12 +629,17 @@ end;
 
 { TPressMVPCustomAddItemsCommand }
 
+function TPressMVPCustomAddItemsCommand.InternalCreateObject: TPressObject;
+begin
+  Result := Model.Subject.Add(InternalObjectClass);
+end;
+
 procedure TPressMVPCustomAddItemsCommand.InternalExecute;
 var
   VModel: TPressMVPItemsModel;
 begin
   VModel := Model;
-  VModel.Selection.Select(VModel.Subject.Add(InternalObjectClass));
+  VModel.Selection.Select(InternalCreateObject);
   TPressMVPModelCreateIncludeFormEvent.Create(VModel).Notify;
 end;
 
