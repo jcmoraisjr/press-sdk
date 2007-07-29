@@ -19,13 +19,18 @@ unit PressOPF;
 interface
 
 uses
+  PressApplication,
   PressSubject,
   PressPersistence,
-  PressOPFBroker,
   PressOPFConnector,
   PressOPFMapper;
 
+const
+  CPressOPFBrokerService = CPressDataAccessServicesBase + $0003;
+
 type
+  TPressOPFBroker = class;
+
   TPressOPF = class(TPressPersistence)
   private
     FBroker: TPressOPFBroker;
@@ -39,6 +44,7 @@ type
   protected
     function CreatePressObject(AClass: TPressObjectClass; ADataset: TPressOPFDataset; ADatasetIndex: Integer): TPressObject;
     procedure DoneService; override;
+    procedure Finit; override;
     procedure InternalCommit; override;
     function InternalDBMSName: string; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
@@ -60,13 +66,42 @@ type
     property Mapper: TPressOPFObjectMapper read GetMapper;
   end;
 
+  TPressOPFBrokerClass = class of TPressOPFBroker;
+
+  TPressOPFBroker = class(TPressService)
+  private
+    FConnector: TPressOPFConnector;
+    function GetConnector: TPressOPFConnector;
+  protected
+    procedure DoneService; override;
+    function InternalConnectorClass: TPressOPFConnectorClass; virtual;
+    function InternalMapperClass: TPressOPFObjectMapperClass; virtual;
+    procedure InternalShowConnectionManager; virtual;
+    class function InternalServiceType: TPressServiceType; override;
+  public
+    function MapperClass: TPressOPFObjectMapperClass;
+    procedure ShowConnectionManager;
+    property Connector: TPressOPFConnector read GetConnector;
+  end;
+
+  TPressOPFConnection = class(TPressServiceComponent)
+  private
+    FConnector: TPressOPFConnector;
+    function GetService: TPressOPF;
+  protected
+    function InternalBrokerClass: TPressOPFBrokerClass; virtual; abstract;
+    function InternalCreateService: TPressService; override;
+    property Connector: TPressOPFConnector read FConnector;
+  public
+    property Service: TPressOPF read GetService;
+  end;
+
 function PressOPFService: TPressOPF;
 
 implementation
 
 uses
   SysUtils,
-  PressApplication,
   PressConsts,
   PressOPFClasses,
   PressOQL;
@@ -117,9 +152,18 @@ end;
 function TPressOPF.EnsureBroker: TPressOPFBroker;
 begin
   if not Assigned(FBroker) then
+  begin
     FBroker :=
      PressApp.DefaultService(CPressOPFBrokerService) as TPressOPFBroker;
+    FBroker.AddRef;
+  end;
   Result := FBroker;
+end;
+
+procedure TPressOPF.Finit;
+begin
+  FBroker.Free;
+  inherited;
 end;
 
 function TPressOPF.GetConnector: TPressOPFConnector;
@@ -302,12 +346,78 @@ begin
   begin
     if Cache.HasObject then
       raise EPressOPFError.Create(SCannotChangeOPFBroker);
+    FConnector := nil;
     FreeAndNil(FMapper);
+    FBroker.Free;
     FBroker := AValue;
+    FBroker.AddRef;
   end;
 end;
 
+{ TPressOPFBroker }
+
+procedure TPressOPFBroker.DoneService;
+begin
+  FConnector.Free;
+  inherited;
+end;
+
+function TPressOPFBroker.GetConnector: TPressOPFConnector;
+begin
+  if not Assigned(FConnector) then
+    FConnector := InternalConnectorClass.Create;
+  Result := FConnector;
+end;
+
+function TPressOPFBroker.InternalConnectorClass: TPressOPFConnectorClass;
+begin
+  Result := TPressOPFConnector;
+end;
+
+function TPressOPFBroker.InternalMapperClass: TPressOPFObjectMapperClass;
+begin
+  Result := TPressOPFObjectMapper;
+end;
+
+class function TPressOPFBroker.InternalServiceType: TPressServiceType;
+begin
+  Result := CPressOPFBrokerService;
+end;
+
+procedure TPressOPFBroker.InternalShowConnectionManager;
+begin
+end;
+
+function TPressOPFBroker.MapperClass: TPressOPFObjectMapperClass;
+begin
+  Result := InternalMapperClass;
+end;
+
+procedure TPressOPFBroker.ShowConnectionManager;
+begin
+  InternalShowConnectionManager;
+end;
+
+{ TPressOPFConnection }
+
+function TPressOPFConnection.GetService: TPressOPF;
+begin
+  Result := inherited Service as TPressOPF;
+end;
+
+function TPressOPFConnection.InternalCreateService: TPressService;
+var
+  VOPF: TPressOPF;
+begin
+  VOPF := TPressOPF.Create;
+  VOPF.Broker := InternalBrokerClass.Create;
+  FConnector := VOPF.Connector;
+  Result := VOPF;
+end;
+
 initialization
+  PressApp.Registry[CPressOPFBrokerService].ServiceTypeName :=
+   SPressOPFBrokerServiceName;
   TPressOPF.RegisterService;
 
 finalization

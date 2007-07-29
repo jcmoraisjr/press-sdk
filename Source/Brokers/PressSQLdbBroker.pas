@@ -19,7 +19,7 @@ unit PressSQLdbBroker;
 interface
 
 uses
-  PressOPFBroker,
+  PressOPF,
   PressOPFConnector,
   PressOPFMapper,
   PressDataSetBroker,

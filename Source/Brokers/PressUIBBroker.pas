@@ -19,7 +19,7 @@ unit PressUIBBroker;
 interface
 
 uses
-  PressOPFBroker,
+  PressOPF,
   PressOPFConnector,
   PressOPFMapper,
   PressDataSetBroker,

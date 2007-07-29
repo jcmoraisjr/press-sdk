@@ -20,7 +20,7 @@ interface
 
 uses
   Contnrs,
-  PressOPFBroker,
+  PressOPF,
   PressOPFConnector,
   PressOPFMapper,
   PressDataSetBroker,

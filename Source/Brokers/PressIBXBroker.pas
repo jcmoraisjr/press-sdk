@@ -19,7 +19,7 @@ unit PressIBXBroker;
 interface
 
 uses
-  PressOPFBroker,
+  PressOPF,
   PressOPFConnector,
   PressOPFMapper,
   PressDataSetBroker,
