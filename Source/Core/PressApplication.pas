@@ -334,6 +334,11 @@ function TPressService.Release: Integer;
 begin
   if RefCount = 2 then
     inherited Release;
+  if RefCount = 1 then
+  begin
+    DoneService;
+    FRunning := False;
+  end;
   Result := inherited Release;
 end;
 
