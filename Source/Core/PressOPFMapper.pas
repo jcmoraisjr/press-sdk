@@ -677,7 +677,7 @@ procedure TPressOPFAttributeMapper.AddClassIdParam(
   ADataset: TPressOPFDataset; AObject: TPressObject);
 begin
   if Map.Metadata.ClassIdName <> '' then
-    AddIdParam(ADataset, Map.Metadata.ClassIdName,
+    AddStringParam(ADataset, Map.Metadata.ClassIdName,
      ObjectMapper.StorageModel.ClassIdByName(AObject.ClassName));
 end;
 
