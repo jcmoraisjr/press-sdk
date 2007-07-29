@@ -280,13 +280,6 @@ type
 var
   _PressMVPMainPresenter: TPressMVPMainFormPresenter;
 
-function PressMainPresenter: TPressMVPMainFormPresenter;
-begin
-  if not Assigned(_PressMVPMainPresenter) then
-    raise EPressMVPError.Create(SUnassignedMainPresenter);
-  Result := _PressMVPMainPresenter;
-end;
-
 { TPressMVPInteractor }
 
 constructor TPressMVPInteractor.Create(AOwner: TPressMVPPresenter);
@@ -903,7 +896,7 @@ class function TPressMVPFormPresenter.Run(
   AObject: TPressObject; AIncluding: Boolean;
   AAutoDestroy: Boolean): TPressMVPFormPresenter;
 begin
-  Result := Run(PressMainPresenter, AObject, AIncluding, AAutoDestroy);
+  Result := Run(_PressMVPMainPresenter, AObject, AIncluding, AAutoDestroy);
 end;
 
 class function TPressMVPFormPresenter.Run(
@@ -912,6 +905,7 @@ class function TPressMVPFormPresenter.Run(
 var
   VModelClass: TPressMVPObjectModelClass;
   VModel: TPressMVPObjectModel;
+  VParentModel: TPressMVPObjectModel;
   VViewClass: TPressMVPCustomFormViewClass;
   VView: TPressMVPCustomFormView;
   VFormClass: TFormClass;
@@ -938,16 +932,20 @@ begin
   end;
 
   if not Assigned(AParent) then
-    AParent := PressMainPresenter;
+    AParent := _PressMVPMainPresenter;
 
   { TODO : Catch memory leakage when an exception is raised }
   if not Assigned(VModelClass) then
     VModelClass := InternalModelClass;
+  if Assigned(AParent) then
+    VParentModel := AParent.Model
+  else
+    VParentModel := nil;
   if Assigned(VModelClass) then
-    VModel := VModelClass.Create(AParent.Model, AObject)
+    VModel := VModelClass.Create(VParentModel, AObject)
   else
     VModel := TPressMVPModel.CreateFromSubject(
-     AParent.Model, AObject) as TPressMVPObjectModel;
+     VParentModel, AObject) as TPressMVPObjectModel;
   VModel.IsIncluding := AIncluding;
   VModel.AccessUser := PressUserData.User;
   if VObjectIsMissing then

@@ -98,7 +98,6 @@ resourcestring
   SUnassignedAttributeType = 'Tipo de atributo não associado para %s(''%s'')';
   SUnassignedItemObjectClass = 'Classe de negócio dos itens da Query ''%s'' não está associado';
   SUnassignedMainForm = 'Formulário principal não está associado';
-  SUnassignedMainPresenter = 'Presenter principal não está associado';
   SUnassignedModel = 'Model não está associado';
   SUnassignedPersistenceConnector = 'Conector de persistência não foi associado';
   SUnassignedPersistenceService = 'Serviço de persistência não foi associado ou não é do PressObjects';
