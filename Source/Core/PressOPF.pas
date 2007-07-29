@@ -407,9 +407,13 @@ end;
 
 function TPressOPFConnection.InternalCreateService: TPressService;
 var
+  VOPFClass: TPressServiceClass;
   VOPF: TPressOPF;
 begin
-  VOPF := TPressOPF.Create;
+  VOPFClass := PressApp.DefaultServiceClass(CPressDAOService);
+  if not VOPFClass.InheritsFrom(TPressOPF) then
+    VOPFClass := TPressOPF;
+  VOPF := VOPFClass.Create as TPressOPF;
   VOPF.Broker := InternalBrokerClass.Create;
   FConnector := VOPF.Connector;
   Result := VOPF;
