@@ -23,8 +23,8 @@ Connector.Session.LogonPassword := '';
 Connector.Session.LogonDatabase := '';
 
 [OPFBroker.Zeos]
-Connector.Database.Protocol := '';
-Connector.Database.Hostname := '';
-Connector.Database.Database := '';
-Connector.Database.User := '';
-Connector.Database.Password := '';
+Connector.Connection.Protocol := '';
+Connector.Connection.Hostname := '';
+Connector.Connection.Database := '';
+Connector.Connection.User := '';
+Connector.Connection.Password := '';

@@ -43,7 +43,7 @@ type
 
   TPressZeosConnector = class(TPressOPFConnector)
   private
-    FDatabase: TZConnection;
+    FConnection: TZConnection;
   protected
     function GetSupportTransaction: Boolean; override;
     procedure InternalCommit; override;
@@ -56,7 +56,7 @@ type
     constructor Create; override;
     destructor Destroy; override;
   published
-    property Database: TZConnection read FDatabase;
+    property Connection: TZConnection read FConnection;
   end;
 
   TPressZeosDataset = class(TPressOPFDBDataset)
@@ -114,13 +114,13 @@ end;
 constructor TPressZeosConnector.Create;
 begin
   inherited;
-  FDatabase := TZConnection.Create(nil);
-  FDatabase.TransactIsolationLevel := tiReadCommitted;
+  FConnection := TZConnection.Create(nil);
+  FConnection.TransactIsolationLevel := tiReadCommitted;
 end;
 
 destructor TPressZeosConnector.Destroy;
 begin
-  FDatabase.Free;
+  FConnection.Free;
   inherited;
 end;
 
@@ -131,12 +131,12 @@ end;
 
 procedure TPressZeosConnector.InternalCommit;
 begin
-  Database.Commit;
+  Connection.Commit;
 end;
 
 procedure TPressZeosConnector.InternalConnect;
 begin
-  Database.Connect;
+  Connection.Connect;
 end;
 
 function TPressZeosConnector.InternalDatasetClass: TPressOPFDatasetClass;
@@ -146,20 +146,20 @@ end;
 
 function TPressZeosConnector.InternalDBMSName: string;
 begin
-  if Database.Connected then
-    Result := Database.DbcConnection.GetMetadata.GetDatabaseProductName
+  if Connection.Connected then
+    Result := Connection.DbcConnection.GetMetadata.GetDatabaseProductName
   else
-    Result := Database.Protocol;
+    Result := Connection.Protocol;
 end;
 
 procedure TPressZeosConnector.InternalRollback;
 begin
-  Database.Rollback;
+  Connection.Rollback;
 end;
 
 procedure TPressZeosConnector.InternalStartTransaction;
 begin
-  Database.AutoCommit := False;
+  Connection.AutoCommit := False;
 end;
 
 { TPressZeosDataset }
@@ -180,7 +180,7 @@ begin
   if not Assigned(FQuery) then
   begin
     FQuery := TZReadOnlyQuery.Create(nil);
-    FQuery.Connection := Connector.Database;
+    FQuery.Connection := Connector.Connection;
     {$IFNDEF D5}
     FQuery.IsUniDirectional := True;
     {$ENDIF}
@@ -215,7 +215,7 @@ var
   VProtocol: string;
 begin
   { TODO : Implement }
-  VProtocol := (Connector as TPressZeosConnector).Database.Protocol;
+  VProtocol := (Connector as TPressZeosConnector).Connection.Protocol;
   if SameText(Copy(VProtocol, 1, 8), 'firebird') then
     Result := TPressIBFbDDLBuilder
   else
