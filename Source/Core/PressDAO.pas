@@ -82,7 +82,7 @@ type
     function ExecuteStatement(const AStatement: string): Integer;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
     function OQLQuery(const AOQLStatement: string): TPressProxyList;
-    procedure Release(AObject: TPressObject);
+    procedure ReleaseObject(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil): TPressObject;
     function RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
     procedure Rollback;
@@ -410,7 +410,7 @@ begin
   end;
 end;
 
-procedure TPressDAO.Release(AObject: TPressObject);
+procedure TPressDAO.ReleaseObject(AObject: TPressObject);
 begin
   Cache.RemoveObject(AObject);
 end;

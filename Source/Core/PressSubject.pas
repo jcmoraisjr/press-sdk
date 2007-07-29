@@ -531,7 +531,7 @@ type
     function ExecuteStatement(const AStatement: string): Integer;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
     function OQLQuery(const AOQLStatement: string): TPressProxyList;
-    procedure Release(AObject: TPressObject);
+    procedure ReleaseObject(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil): TPressObject;
     function RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
     procedure Rollback;
@@ -2748,7 +2748,7 @@ procedure TPressObject.Finit;
 begin
   DisableChanges;
   if Assigned(FDataAccess) then
-    FDataAccess.Release(Self);
+    FDataAccess.ReleaseObject(Self);
   FMementos.Free;
   FAttributes.Free;
   inherited;
