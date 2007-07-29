@@ -22,6 +22,7 @@ uses
   Classes,
   Contnrs,
   PressClasses,
+  PressNotifier,
   PressSubject,
   PressAttributes,
   PressPersistence,
@@ -322,12 +323,14 @@ type
     FHasClassIdStorage: Boolean;
     FMapsList: TObjectList;
     FModel: TPressModel;
+    FNotifier: TPressNotifier;
     FTableMetadatas: TObjectList;
     procedure BuildClassLists;
-    function GetClassIdMetadata: TPressObjectMetadata;
     function CreateTableMetadatas: TObjectList;
+    function GetClassIdMetadata: TPressObjectMetadata;
     function GetMaps(AClass: TPressObjectClass): TPressOPFStorageMapList;
     function GetTableMetadatas(AIndex: Integer): TPressOPFTableMetadata;
+    procedure Notify(AEvent: TPressEvent);
   protected
     property ClassIdMetadata: TPressObjectMetadata read GetClassIdMetadata;
   public
@@ -2105,6 +2108,8 @@ constructor TPressOPFStorageModel.Create(AModel: TPressModel);
 begin
   inherited Create;
   FModel := AModel;
+  FNotifier := TPressNotifier.Create(Notify);
+  FNotifier.AddNotificationItem(FModel, [TPressModelBusinessClassChangedEvent]); 
   FHasClassIdStorage := TPressInstanceClass.ClassMetadata.IsPersistent;
 end;
 
@@ -2306,6 +2311,7 @@ end;
 
 destructor TPressOPFStorageModel.Destroy;
 begin
+  FNotifier.Free;
   FClassIdList.Free;
   FClassNameList.Free;
   FMapsList.Free;
@@ -2343,6 +2349,17 @@ begin
   if not Assigned(FTableMetadatas) then
     FTableMetadatas := CreateTableMetadatas;
   Result := FTableMetadatas[AIndex] as TPressOPFTableMetadata
+end;
+
+procedure TPressOPFStorageModel.Notify(AEvent: TPressEvent);
+begin
+  if AEvent is TPressModelBusinessClassChangedEvent then
+  begin
+    FreeAndNil(FClassIdList);
+    FreeAndNil(FClassNameList);
+    FreeAndNil(FMapsList);
+    FreeAndNil(FTableMetadatas);
+  end;
 end;
 
 function TPressOPFStorageModel.TableMetadataCount: Integer;
