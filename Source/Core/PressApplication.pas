@@ -213,11 +213,11 @@ type
 
   TPressApplication = class(TObject)
   private
+    FConfigFile: TPressConfigFile;
+    FConfigFileName: string;
     FOnIdle: TIdleEvent;
     FRegistries: TPressRegistryList;
     FRunning: Boolean;
-    FConfigFile: TPressConfigFile;
-    FConfigFileName: string;
     procedure ApplicationIdle(Sender: TObject; var Done: Boolean);
     procedure DoneApplication;
     function GetConfigFileName: string;
@@ -245,6 +245,24 @@ type
     property ConfigFileName: string read GetConfigFileName write SetConfigFileName;
     property Registry[AServiceType: TPressServiceType]: TPressRegistry read GetRegistry;
     property Running: Boolean read FRunning;
+  end;
+
+  TPressComponent = class(TComponent)
+  end;
+
+  TPressServiceComponent = class(TPressComponent)
+  private
+    FService: TPressService;
+    function GetIsDefault: Boolean;
+    procedure SetIsDefault(AValue: Boolean);
+  protected
+    function InternalCreateService: TPressService; virtual; abstract;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    property Service: TPressService read FService;
+  published
+    property IsDefault: Boolean read GetIsDefault write SetIsDefault;
   end;
 
 function PressApp: TPressApplication;
@@ -938,6 +956,36 @@ procedure TPressApplication.UnregisterService(
   AServiceType: TPressServiceType; AServiceClass: TPressServiceClass);
 begin
   Registry[AServiceType].UnregisterService(AServiceClass);
+end;
+
+{ TPressServiceComponent }
+
+constructor TPressServiceComponent.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  FService := InternalCreateService;
+  FService.AddRef;
+end;
+
+destructor TPressServiceComponent.Destroy;
+begin
+  inherited;
+  if Assigned(FService) and Assigned(_PressApp) and _PressApp.Running then
+  begin
+    FService.DoneService;
+    FService.FRunning := False;
+  end;
+  FService.Free;
+end;
+
+function TPressServiceComponent.GetIsDefault: Boolean;
+begin
+  Result := Service.IsDefault;
+end;
+
+procedure TPressServiceComponent.SetIsDefault(AValue: Boolean);
+begin
+  Service.IsDefault := AValue;
 end;
 
 initialization
