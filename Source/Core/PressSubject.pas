@@ -579,9 +579,9 @@ type
     FPersUpdateCount: Integer;
     FUpdateCount: Integer;
     procedure CreateAttributes;
-    function EnsureDataAccess: IPressDAO;
     function GetAttributes(AIndex: Integer): TPressAttribute;
     function GetChangesDisabled: Boolean;
+    function GetDataAccess: IPressDAO;
     function GetId: string;
     function GetIsOwned: Boolean;
     function GetIsPersistent: Boolean;
@@ -649,7 +649,7 @@ type
     class procedure UnregisterClass;
     property Attributes[AIndex: Integer]: TPressAttribute read GetAttributes;
     property ChangesDisabled: Boolean read GetChangesDisabled;
-    property DataAccess: IPressDAO read FDataAccess;
+    property DataAccess: IPressDAO read GetDataAccess;
     property Id: string read GetId write SetId;
     property IsChanged: Boolean read FIsChanged;
     property IsOwned: Boolean read GetIsOwned;
@@ -1057,7 +1057,7 @@ procedure PressAssignUpdateCount(AObject: TPressObject; ANewValue: Integer);
 procedure PressAssignPersistentUpdateCount(AObject: TPressObject);
 procedure PressEvolveUpdateCount(AObject: TPressObject);
 function PressModel: TPressModel;
-function PressDefaultDAO(const AForce: Boolean = True): IPressDAO;
+function PressDefaultDAO: IPressDAO;
 
 implementation
 
@@ -1125,13 +1125,9 @@ begin
     AObject.FUpdateCount := 1;  // friend class
 end;
 
-function PressDefaultDAO(const AForce: Boolean): IPressDAO;
+function PressDefaultDAO: IPressDAO;
 begin
-  with PressApp.Registry[CPressDAOService] do
-    if AForce or HasDefaultService then
-      Result := DefaultService as IPressDAO
-    else
-      Result := nil;
+  Result := PressApp.Registry[CPressDAOService].DefaultService as IPressDAO;
 end;
 
 { TPressEnumMetadata }
@@ -2684,7 +2680,7 @@ end;
 procedure TPressObject.Dispose;
 begin
   if IsPersistent then
-    EnsureDataAccess.Dispose(ClassType, PersistentId);
+    DataAccess.Dispose(ClassType, PersistentId);
 end;
 
 procedure TPressObject.EnableChanges;
@@ -2699,16 +2695,6 @@ begin
     Dec(FDisableUpdatesCount);
   if FDisableUpdatesCount = 0 then
     NotifyInvalidate;
-end;
-
-function TPressObject.EnsureDataAccess: IPressDAO;
-begin
-  if not Assigned(FDataAccess) then
-  begin
-    FDataAccess := PressDefaultDAO;
-    FDataAccess.AssignObject(Self);
-  end;
-  Result := FDataAccess;
 end;
 
 function TPressObject.FindAttribute(const AAttributeName: string): TPressAttribute;
@@ -2772,6 +2758,16 @@ function TPressObject.GetChangesDisabled: Boolean;
 begin
   Result := (FDisableChangesCount > 0) or
    (IsOwned and FOwnerAttribute.ChangesDisabled);
+end;
+
+function TPressObject.GetDataAccess: IPressDAO;
+begin
+  if not Assigned(FDataAccess) then
+  begin
+    FDataAccess := PressDefaultDAO;
+    FDataAccess.AssignObject(Self);
+  end;
+  Result := FDataAccess;
 end;
 
 function TPressObject.GetId: string;
@@ -2984,7 +2980,7 @@ end;
 
 procedure TPressObject.Store;
 begin
-  EnsureDataAccess.Store(Self);
+  DataAccess.Store(Self);
 end;
 
 procedure TPressObject.UnchangeAttributes;
