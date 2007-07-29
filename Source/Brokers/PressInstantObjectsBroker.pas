@@ -42,6 +42,7 @@ type
     procedure ReadInstantObject(AInstantObject: TInstantObject; APressObject: TPressObject);
     procedure ReadPressObject(APressObject: TPressObject; AInstantObject: TInstantObject);
   protected
+    procedure Finit; override;
     procedure InitService; override;
     procedure InternalCommit; override;
     function InternalDBMSName: string; override;
@@ -56,8 +57,6 @@ type
     procedure InternalStartTransaction; override;
     procedure InternalStore(AObject: TPressObject); override;
     property Connector: TInstantConnector read FConnector;
-  public
-    destructor Destroy; override;
   end;
 
 implementation
@@ -140,7 +139,7 @@ begin
   end;
 end;
 
-destructor TPressInstantObjectsPersistence.Destroy;
+procedure TPressInstantObjectsPersistence.Finit;
 begin
   FConnectionManager.Free;
   FConnector.Free;
