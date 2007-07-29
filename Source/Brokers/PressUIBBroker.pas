@@ -19,11 +19,14 @@ unit PressUIBBroker;
 interface
 
 uses
+  SysUtils,
+  Classes,
   PressOPF,
   PressOPFConnector,
   PressOPFMapper,
   PressDataSetBroker,
   jvuib,
+  jvuiblib,
   jvuibdataset;
 
 type
@@ -81,12 +84,63 @@ type
     function InternalDDLBuilderClass: TPressOPFDDLBuilderClass; override;
   end;
 
+  TPressUIBConnection = class(TPressOPFConnection)
+  private
+    FDatabase: TJvUIBDatabase;
+    FTransaction: TJvUIBTransaction;
+    function GetAfterConnect: TNotifyEvent;
+    function GetAfterDisconnect: TNotifyEvent;
+    function GetBeforeConnect: TNotifyEvent;
+    function GetBeforeDisconnect: TNotifyEvent;
+    function GetCharacterSet: TCharacterSet;
+    function GetConnected: Boolean;
+    function GetDatabaseName: TFileName;
+    function GetLibraryName: TFileName;
+    function GetOnConnectionLost: TNotifyEvent;
+    function GetParams: TStrings;
+    function GetPassWord: string;
+    function GetSQLDialect: Integer;
+    function GetUserName: string;
+    procedure SetAfterConnect(AValue: TNotifyEvent);
+    procedure SetAfterDisconnect(AValue: TNotifyEvent);
+    procedure SetBeforeConnect(AValue: TNotifyEvent);
+    procedure SetBeforeDisconnect(AValue: TNotifyEvent);
+    procedure SetCharacterSet(AValue: TCharacterSet);
+    procedure SetConnected(AValue: Boolean);
+    procedure SetDatabaseName(AValue: TFileName);
+    procedure SetLibraryName(AValue: TFileName);
+    procedure SetOnConnectionLost(AValue: TNotifyEvent);
+    procedure SetParams(AValue: TStrings);
+    procedure SetPassWord(const AValue: string);
+    procedure SetSQLDialect(AValue: Integer);
+    procedure SetUserName(const AValue: string);
+  protected
+    function InternalBrokerClass: TPressOPFBrokerClass; override;
+    property Database: TJvUIBDatabase read FDatabase;
+    property Transaction: TJvUIBTransaction read FTransaction;
+  public
+    constructor Create(AOwner: TComponent); override;
+  published
+    property DatabaseName: TFileName read GetDatabaseName write SetDatabaseName;
+    property UserName: string read GetUserName write SetUserName;
+    property PassWord: string read GetPassWord write SetPassWord;
+    property CharacterSet: TCharacterSet read GetCharacterSet write SetCharacterSet default csNONE;
+    property Params: TStrings read GetParams write SetParams;
+    property SQLDialect: Integer read GetSQLDialect write SetSQLDialect default 3;
+    property LibraryName: TFileName read GetLibraryName write SetLibraryName;
+    property Connected: Boolean read GetConnected write SetConnected default False;
+    property AfterConnect: TNotifyEvent read GetAfterConnect write SetAfterConnect;
+    property BeforeConnect: TNotifyEvent read GetBeforeConnect write SetBeforeConnect;
+    property AfterDisconnect: TNotifyEvent read GetAfterDisconnect write SetAfterDisconnect;
+    property BeforeDisconnect: TNotifyEvent read GetBeforeDisconnect write SetBeforeDisconnect;
+    property OnConnectionLost: TNotifyEvent read GetOnConnectionLost write SetOnConnectionLost;
+  end;
+
 implementation
 
 uses
   PressOPFClasses,
-  PressIBFbBroker,
-  jvuiblib;
+  PressIBFbBroker;
 
 { TPressUIBBroker }
 
@@ -259,6 +313,153 @@ end;
 function TPressUIBObjectMapper.InternalDDLBuilderClass: TPressOPFDDLBuilderClass;
 begin
   Result := TPressIBFbDDLBuilder;
+end;
+
+{ TPressUIBConnection }
+
+constructor TPressUIBConnection.Create(AOwner: TComponent);
+var
+  VConnector: TPressUIBConnector;
+begin
+  inherited Create(AOwner);
+  VConnector := Connector as TPressUIBConnector;
+  FDatabase := VConnector.Database;
+  FTransaction := VConnector.Transaction;
+end;
+
+function TPressUIBConnection.GetAfterConnect: TNotifyEvent;
+begin
+  Result := Database.AfterConnect;
+end;
+
+function TPressUIBConnection.GetAfterDisconnect: TNotifyEvent;
+begin
+  Result := Database.AfterDisconnect;
+end;
+
+function TPressUIBConnection.GetBeforeConnect: TNotifyEvent;
+begin
+  Result := Database.BeforeConnect;
+end;
+
+function TPressUIBConnection.GetBeforeDisconnect: TNotifyEvent;
+begin
+  Result := Database.BeforeDisconnect;
+end;
+
+function TPressUIBConnection.GetCharacterSet: TCharacterSet;
+begin
+  Result := Database.CharacterSet;
+end;
+
+function TPressUIBConnection.GetConnected: Boolean;
+begin
+  Result := Database.Connected;
+end;
+
+function TPressUIBConnection.GetDatabaseName: TFileName;
+begin
+  Result := Database.DatabaseName;
+end;
+
+function TPressUIBConnection.GetLibraryName: TFileName;
+begin
+  Result := Database.LibraryName;
+end;
+
+function TPressUIBConnection.GetOnConnectionLost: TNotifyEvent;
+begin
+  Result := Database.OnConnectionLost;
+end;
+
+function TPressUIBConnection.GetParams: TStrings;
+begin
+  Result := Database.Params;
+end;
+
+function TPressUIBConnection.GetPassWord: string;
+begin
+  Result := Database.PassWord;
+end;
+
+function TPressUIBConnection.GetSQLDialect: Integer;
+begin
+  Result := Database.SQLDialect;
+end;
+
+function TPressUIBConnection.GetUserName: string;
+begin
+  Result := Database.UserName;
+end;
+
+function TPressUIBConnection.InternalBrokerClass: TPressOPFBrokerClass;
+begin
+  Result := TPressUIBBroker;
+end;
+
+procedure TPressUIBConnection.SetAfterConnect(AValue: TNotifyEvent);
+begin
+  Database.AfterConnect := AValue;
+end;
+
+procedure TPressUIBConnection.SetAfterDisconnect(AValue: TNotifyEvent);
+begin
+  Database.AfterDisconnect := AValue;
+end;
+
+procedure TPressUIBConnection.SetBeforeConnect(AValue: TNotifyEvent);
+begin
+  Database.BeforeConnect := AValue;
+end;
+
+procedure TPressUIBConnection.SetBeforeDisconnect(AValue: TNotifyEvent);
+begin
+  Database.BeforeDisconnect := AValue;
+end;
+
+procedure TPressUIBConnection.SetCharacterSet(AValue: TCharacterSet);
+begin
+  Database.CharacterSet := AValue;
+end;
+
+procedure TPressUIBConnection.SetConnected(AValue: Boolean);
+begin
+  Database.Connected := AValue;
+end;
+
+procedure TPressUIBConnection.SetDatabaseName(AValue: TFileName);
+begin
+  Database.DatabaseName := AValue;
+end;
+
+procedure TPressUIBConnection.SetLibraryName(AValue: TFileName);
+begin
+  Database.LibraryName := AValue;
+end;
+
+procedure TPressUIBConnection.SetOnConnectionLost(AValue: TNotifyEvent);
+begin
+  Database.OnConnectionLost := AValue;
+end;
+
+procedure TPressUIBConnection.SetParams(AValue: TStrings);
+begin
+  Database.Params := AValue;
+end;
+
+procedure TPressUIBConnection.SetPassWord(const AValue: string);
+begin
+  Database.PassWord := AValue;
+end;
+
+procedure TPressUIBConnection.SetSQLDialect(AValue: Integer);
+begin
+  Database.SQLDialect := AValue;
+end;
+
+procedure TPressUIBConnection.SetUserName(const AValue: string);
+begin
+  Database.UserName := AValue;
 end;
 
 initialization

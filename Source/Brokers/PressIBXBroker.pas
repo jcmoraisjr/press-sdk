@@ -19,6 +19,7 @@ unit PressIBXBroker;
 interface
 
 uses
+  Classes,
   PressOPF,
   PressOPFConnector,
   PressOPFMapper,
@@ -82,6 +83,52 @@ type
   TPressIBXObjectMapper = class(TPressOPFObjectMapper)
   protected
     function InternalDDLBuilderClass: TPressOPFDDLBuilderClass; override;
+  end;
+
+  TPressIBXConnection = class(TPressOPFConnection)
+  private
+    FDatabase: TIBDatabase;
+    FTransaction: TIBTransaction;
+    function GetAfterConnect: TNotifyEvent;
+    function GetAfterDisconnect: TNotifyEvent;
+    function GetBeforeConnect: TNotifyEvent;
+    function GetBeforeDisconnect: TNotifyEvent;
+    function GetConnected: Boolean;
+    function GetDatabaseName: TIBFileName;
+    function GetOnLogin: TIBDatabaseLoginEvent;
+    function GetParams: TStrings;
+    function GetPassword: string;
+    function GetSQLDialect: Integer;
+    function GetUserName: string;
+    procedure SetAfterConnect(AValue: TNotifyEvent);
+    procedure SetAfterDisconnect(AValue: TNotifyEvent);
+    procedure SetBeforeConnect(AValue: TNotifyEvent);
+    procedure SetBeforeDisconnect(AValue: TNotifyEvent);
+    procedure SetConnected(AValue: Boolean);
+    procedure SetDatabaseName(AValue: TIBFileName);
+    procedure SetOnLogin(AValue: TIBDatabaseLoginEvent);
+    procedure SetParams(AValue: TStrings);
+    procedure SetPassword(const AValue: string);
+    procedure SetSQLDialect(AValue: Integer);
+    procedure SetUserName(const AValue: string);
+  protected
+    function InternalBrokerClass: TPressOPFBrokerClass; override;
+    property Database: TIBDatabase read FDatabase;
+    property Transaction: TIBTransaction read FTransaction;
+  public
+    constructor Create(AOwner: TComponent); override;
+  published
+    property DatabaseName: TIBFileName read GetDatabaseName write SetDatabaseName;
+    property UserName: string read GetUserName write SetUserName;
+    property Password: string read GetPassword write SetPassword;
+    property Params: TStrings read GetParams write SetParams;
+    property SQLDialect: Integer read GetSQLDialect write SetSQLDialect;
+    property Connected: Boolean read GetConnected write SetConnected default False;
+    property AfterConnect: TNotifyEvent read GetAfterConnect write SetAfterConnect;
+    property AfterDisconnect: TNotifyEvent read GetAfterDisconnect write SetAfterDisconnect;
+    property BeforeConnect: TNotifyEvent read GetBeforeConnect write SetBeforeConnect;
+    property BeforeDisconnect: TNotifyEvent read GetBeforeDisconnect write SetBeforeDisconnect;
+    property OnLogin: TIBDatabaseLoginEvent read GetOnLogin write SetOnLogin;
   end;
 
 implementation
@@ -170,12 +217,12 @@ end;
 
 procedure TPressIBXConnector.SetPassword(const Value: string);
 begin
-  Database.Params.Values['password'] := Value;
+  Database.Params.Values['password'] := Value;  { do not localize }
 end;
 
 procedure TPressIBXConnector.SetUserName(const Value: string);
 begin
-  Database.Params.Values['user_name'] := Value;
+  Database.Params.Values['user_name'] := Value;  { do not localize }
 end;
 
 { TPressIBXDataset }
@@ -228,6 +275,133 @@ end;
 function TPressIBXObjectMapper.InternalDDLBuilderClass: TPressOPFDDLBuilderClass;
 begin
   Result := TPressIBFbDDLBuilder;
+end;
+
+{ TPressIBXConnection }
+
+constructor TPressIBXConnection.Create(AOwner: TComponent);
+var
+  VConnector: TPressIBXConnector;
+begin
+  inherited Create(AOwner);
+  VConnector := Connector as TPressIBXConnector;
+  FDatabase := VConnector.Database;
+  FTransaction := VConnector.Transaction;
+end;
+
+function TPressIBXConnection.GetAfterConnect: TNotifyEvent;
+begin
+  Result := Database.AfterConnect;
+end;
+
+function TPressIBXConnection.GetAfterDisconnect: TNotifyEvent;
+begin
+  Result := Database.AfterDisconnect;
+end;
+
+function TPressIBXConnection.GetBeforeConnect: TNotifyEvent;
+begin
+  Result := Database.BeforeConnect;
+end;
+
+function TPressIBXConnection.GetBeforeDisconnect: TNotifyEvent;
+begin
+  Result := Database.BeforeDisconnect;
+end;
+
+function TPressIBXConnection.GetConnected: Boolean;
+begin
+  Result := Database.Connected;
+end;
+
+function TPressIBXConnection.GetDatabaseName: TIBFileName;
+begin
+  Result := Database.DatabaseName;
+end;
+
+function TPressIBXConnection.GetOnLogin: TIBDatabaseLoginEvent;
+begin
+  Result := Database.OnLogin;
+end;
+
+function TPressIBXConnection.GetParams: TStrings;
+begin
+  Result := Database.Params;
+end;
+
+function TPressIBXConnection.GetPassword: string;
+begin
+  Result := Database.Params.Values['password'];  { do not localize }
+end;
+
+function TPressIBXConnection.GetSQLDialect: Integer;
+begin
+  Result := Database.SQLDialect;
+end;
+
+function TPressIBXConnection.GetUserName: string;
+begin
+  Result := Database.Params.Values['user_name'];  { do not localize }
+end;
+
+function TPressIBXConnection.InternalBrokerClass: TPressOPFBrokerClass;
+begin
+  Result := TPressIBXBroker;
+end;
+
+procedure TPressIBXConnection.SetAfterConnect(AValue: TNotifyEvent);
+begin
+  Database.AfterConnect := AValue;
+end;
+
+procedure TPressIBXConnection.SetAfterDisconnect(AValue: TNotifyEvent);
+begin
+  Database.AfterDisconnect := AValue;
+end;
+
+procedure TPressIBXConnection.SetBeforeConnect(AValue: TNotifyEvent);
+begin
+  Database.BeforeConnect := AValue;
+end;
+
+procedure TPressIBXConnection.SetBeforeDisconnect(AValue: TNotifyEvent);
+begin
+  Database.BeforeDisconnect := AValue;
+end;
+
+procedure TPressIBXConnection.SetConnected(AValue: Boolean);
+begin
+  Database.Connected := AValue;
+end;
+
+procedure TPressIBXConnection.SetDatabaseName(AValue: TIBFileName);
+begin
+  Database.DatabaseName := AValue;
+end;
+
+procedure TPressIBXConnection.SetOnLogin(AValue: TIBDatabaseLoginEvent);
+begin
+  Database.OnLogin := AValue;
+end;
+
+procedure TPressIBXConnection.SetParams(AValue: TStrings);
+begin
+  Database.Params := AValue;
+end;
+
+procedure TPressIBXConnection.SetPassword(const AValue: string);
+begin
+  Database.Params.Values['password'] := AValue;  { do not localize }
+end;
+
+procedure TPressIBXConnection.SetSQLDialect(AValue: Integer);
+begin
+  Database.SQLDialect := AValue;
+end;
+
+procedure TPressIBXConnection.SetUserName(const AValue: string);
+begin
+  Database.Params.Values['user_name'] := AValue;  { do not localize }
 end;
 
 initialization

@@ -19,6 +19,7 @@ unit PressDOABroker;
 interface
 
 uses
+  Classes,
   Contnrs,
   PressOPF,
   PressOPFConnector,
@@ -80,6 +81,38 @@ type
   TPressDOAObjectMapper = class(TPressOPFObjectMapper)
   protected
     function InternalDDLBuilderClass: TPressOPFDDLBuilderClass; override;
+  end;
+
+  TPressDOAConnection = class(TPressOPFConnection)
+  private
+    FSession: TOracleSession;
+    function GetAfterLogOn: TOracleSessionEvent;
+    function GetBeforeLogOn: TOracleSessionEvent;
+    function GetConnected: Boolean;
+    function GetIsolationLevel: TIsolationLevelOption;
+    function GetLogonDatabase: string;
+    function GetLogonPassword: string;
+    function GetLogonUsername: string;
+    procedure SetAfterLogOn(AValue: TOracleSessionEvent);
+    procedure SetBeforeLogOn(AValue: TOracleSessionEvent);
+    procedure SetConnected(AValue: Boolean);
+    procedure SetIsolationLevel(AValue: TIsolationLevelOption);
+    procedure SetLogonDatabase(const AValue: string);
+    procedure SetLogonPassword(const AValue: string);
+    procedure SetLogonUsername(const AValue: string);
+  protected
+    function InternalBrokerClass: TPressOPFBrokerClass; override;
+    property Session: TOracleSession read FSession;
+  public
+    constructor Create(AOwner: TComponent); override;
+  published
+    property LogonUsername: string read GetLogonUsername write SetLogonUsername;
+    property LogonPassword: string read GetLogonPassword write SetLogonPassword;
+    property LogonDatabase: string read GetLogonDatabase write SetLogonDatabase;
+    property IsolationLevel: TIsolationLevelOption read GetIsolationLevel write SetIsolationLevel default ilUnchanged;
+    property Connected: Boolean read GetConnected write SetConnected default False;
+    property BeforeLogOn: TOracleSessionEvent read GetBeforeLogOn write SetBeforeLogOn;
+    property AfterLogOn: TOracleSessionEvent read GetAfterLogOn write SetAfterLogOn;
   end;
 
 implementation
@@ -288,6 +321,89 @@ end;
 function TPressDOAObjectMapper.InternalDDLBuilderClass: TPressOPFDDLBuilderClass;
 begin
   Result := TPressOracleDDLBuilder;
+end;
+
+{ TPressDOAConnection }
+
+constructor TPressDOAConnection.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  FSession := (Connector as TPressDOAConnector).Session;
+end;
+
+function TPressDOAConnection.GetAfterLogOn: TOracleSessionEvent;
+begin
+  Result := Session.AfterLogOn;
+end;
+
+function TPressDOAConnection.GetBeforeLogOn: TOracleSessionEvent;
+begin
+  Result := Session.BeforeLogOn;
+end;
+
+function TPressDOAConnection.GetConnected: Boolean;
+begin
+  Result := Session.Connected;
+end;
+
+function TPressDOAConnection.GetIsolationLevel: TIsolationLevelOption;
+begin
+  Result := Session.IsolationLevel;
+end;
+
+function TPressDOAConnection.GetLogonDatabase: string;
+begin
+  Result := Session.LogonDatabase;
+end;
+
+function TPressDOAConnection.GetLogonPassword: string;
+begin
+  Result := Session.LogonPassword;
+end;
+
+function TPressDOAConnection.GetLogonUsername: string;
+begin
+  Result := Session.LogonUsername;
+end;
+
+function TPressDOAConnection.InternalBrokerClass: TPressOPFBrokerClass;
+begin
+  Result := TPressDOABroker;
+end;
+
+procedure TPressDOAConnection.SetAfterLogOn(AValue: TOracleSessionEvent);
+begin
+  Session.AfterLogOn := AValue;
+end;
+
+procedure TPressDOAConnection.SetBeforeLogOn(AValue: TOracleSessionEvent);
+begin
+  Session.BeforeLogOn := AValue;
+end;
+
+procedure TPressDOAConnection.SetConnected(AValue: Boolean);
+begin
+  Session.Connected := AValue;
+end;
+
+procedure TPressDOAConnection.SetIsolationLevel(AValue: TIsolationLevelOption);
+begin
+  Session.IsolationLevel := AValue;
+end;
+
+procedure TPressDOAConnection.SetLogonDatabase(const AValue: string);
+begin
+  Session.LogonDatabase := AValue;
+end;
+
+procedure TPressDOAConnection.SetLogonPassword(const AValue: string);
+begin
+  Session.LogonPassword := AValue;
+end;
+
+procedure TPressDOAConnection.SetLogonUsername(const AValue: string);
+begin
+  Session.LogonUsername := AValue;
 end;
 
 initialization
