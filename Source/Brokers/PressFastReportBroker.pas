@@ -28,6 +28,7 @@ type
     FReport: TfrReport;
     procedure ReportGetValue(const ParName: String; var ParValue: Variant);
   protected
+    procedure Finit; override;
     procedure InternalCreateFields(ADataSet: TPressReportDataSet; AFields: TStrings); override;
     function InternalCreateReportDataSet(const AName: string): TPressReportDataSet; override;
     procedure InternalDesignReport; override;
@@ -36,7 +37,6 @@ type
     procedure InternalSaveToStream(AStream: TStream); override;
   public
     constructor Create; override;
-    destructor Destroy; override;
   end;
 
   TPressFRReportDataSet = class(TPressReportDataSet)
@@ -65,7 +65,7 @@ begin
   FReport.OnGetValue := ReportGetValue;
 end;
 
-destructor TPressFRReport.Destroy;
+procedure TPressFRReport.Finit;
 begin
   while FOwner.ComponentCount > 0 do
     FOwner.RemoveComponent(FOwner.Components[0]);
