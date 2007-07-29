@@ -2260,7 +2260,7 @@ begin
   for I := 0 to Pred(Metadatas.Count) do
   begin
     Result := Metadatas[I];
-    if SameText(Result.ObjectClassName, AClassName) then
+    if Result.ObjectClassName = AClassName then
       Exit;
   end;
   Result := nil;
@@ -2600,10 +2600,7 @@ constructor TPressObject.Create(
   ADataAccess: IPressDAO; AMetadata: TPressObjectMetadata);
 begin
   inherited Create;
-  if not Assigned(ADataAccess) then
-    FDataAccess := PressDefaultDAO(False)
-  else
-    FDataAccess := ADataAccess;
+  FDataAccess := ADataAccess;
   FMetadata := AMetadata;
   Init;
 end;
