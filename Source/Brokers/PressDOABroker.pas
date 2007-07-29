@@ -293,4 +293,7 @@ end;
 initialization
   TPressDOABroker.RegisterService;
 
+finalization
+  TPressDOABroker.UnregisterService;
+
 end.

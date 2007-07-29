@@ -226,4 +226,7 @@ end;
 initialization
   TPressZeosBroker.RegisterService;
 
+finalization
+  TPressZeosBroker.UnregisterService;
+
 end.

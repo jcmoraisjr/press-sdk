@@ -176,4 +176,7 @@ end;
 initialization
   TPressFRReport.RegisterService;
 
+finalization
+  TPressFRReport.UnregisterService;
+
 end.

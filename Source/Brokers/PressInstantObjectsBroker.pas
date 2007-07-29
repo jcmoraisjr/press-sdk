@@ -622,4 +622,7 @@ end;
 initialization
   TPressInstantObjectsPersistence.RegisterService;
 
+finalization
+  TPressInstantObjectsPersistence.UnregisterService;
+
 end.

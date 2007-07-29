@@ -233,4 +233,7 @@ end;
 initialization
   TPressIBXBroker.RegisterService;
 
+finalization
+  TPressIBXBroker.UnregisterService;
+
 end.

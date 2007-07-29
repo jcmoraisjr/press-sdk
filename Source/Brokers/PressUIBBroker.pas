@@ -264,4 +264,7 @@ end;
 initialization
   TPressUIBBroker.RegisterService;
 
+finalization
+  TPressUIBBroker.UnregisterService;
+
 end.

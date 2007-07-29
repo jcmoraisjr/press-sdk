@@ -231,4 +231,7 @@ end;
 initialization
   TPressSQLdbBroker.RegisterService;
 
+finalization
+  TPressSQLdbBroker.UnregisterService;
+
 end.
