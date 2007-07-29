@@ -2488,8 +2488,7 @@ end;
 
 function TPressSubject.AddRef: Integer;
 begin
-  ThreadSafeIncrement(FRefCount);
-  Result := FRefCount;
+  Result := IncLock(FRefCount);
 end;
 
 constructor TPressSubject.Create;
@@ -2530,10 +2529,9 @@ end;
 
 function TPressSubject.Release: Integer;
 begin
-  ThreadSafeDecrement(FRefCount);
+  Result := DecLock(FRefCount);
   if FRefCount < 0 then
     raise EPressError.CreateFmt(SCannotReleaseInstance, [Signature]);
-  Result := FRefCount;
 end;
 
 function TPressSubject._AddRef: Integer; stdcall;

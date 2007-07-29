@@ -58,6 +58,24 @@ type
   TPressWriter = class(TWriter)
   end;
 
+  TPressManagedObject = class(TPersistent, IInterface)
+  private
+    FRefCount: Integer;
+  protected
+    procedure Finit; virtual;
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
+  public
+    destructor Destroy; reintroduce;
+    function AddRef: Integer; virtual;
+    procedure AfterConstruction; override;
+    procedure FreeInstance; override;
+    class function NewInstance: TObject; override;
+    function Release: Integer; virtual;
+    property RefCount: Integer read FRefCount;
+  end;
+
   TPressStreamableClass = class of TPressStreamable;
 
   TPressStreamable = class(TPersistent)
@@ -326,6 +344,78 @@ begin
   inherited CreateFmt(AMsg, AParams);
   FLine := APosition.Line;
   FColumn := APosition.Column;
+end;
+
+{ TPressManagedObject }
+
+function TPressManagedObject.AddRef: Integer;
+begin
+  Result := IncLock(FRefCount);
+end;
+
+procedure TPressManagedObject.AfterConstruction;
+begin
+  inherited;
+  { TODO : DecLock if assigning the instance to an interface pointer }
+  // DecLock(FRefCount);
+end;
+
+destructor TPressManagedObject.Destroy;
+begin
+  inherited;
+end;
+
+procedure TPressManagedObject.Finit;
+begin
+end;
+
+procedure TPressManagedObject.FreeInstance;
+begin
+  Release;
+  if FRefCount = 0 then
+    try
+      Finit;
+    finally
+      inherited;
+    end;
+end;
+
+class function TPressManagedObject.NewInstance: TObject;
+begin
+  Result := inherited NewInstance;
+  TPressManagedObject(Result).FRefCount := 1;
+end;
+
+function TPressManagedObject.QueryInterface(
+  const IID: TGUID; out Obj): HResult; stdcall;
+begin
+  if GetInterface(IID, Obj) then
+    Result := 0
+  else
+    Result := HResult($80004002);  // E_NOINTERFACE
+end;
+
+function TPressManagedObject.Release: Integer;
+begin
+  Result := DecLock(FRefCount);
+  if FRefCount < 0 then
+    raise EPressError.CreateFmt(SCannotReleaseInstance, [ClassName]);
+end;
+
+function TPressManagedObject._AddRef: Integer; stdcall;
+begin
+  Result := AddRef;
+end;
+
+function TPressManagedObject._Release: Integer; stdcall;
+begin
+  Result := Release;
+  if Result = 0 then
+    try
+      Finit;
+    finally
+      inherited FreeInstance;
+    end;
 end;
 
 { TPressMVPStreamable }

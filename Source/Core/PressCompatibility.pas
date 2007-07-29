@@ -47,8 +47,8 @@ function FormatMaskText(const EditMask: string; const Value: string): string;
 procedure GenerateGUID(out AGUID: TGUID);
 function SetPropertyValue(AObject: TPersistent; const APathName, AValue: string; AError: Boolean = False): Boolean;
 procedure OutputDebugString(const AStr: string);
-procedure ThreadSafeIncrement(var AValue: Integer);
-procedure ThreadSafeDecrement(var AValue: Integer);
+function IncLock(var AValue: Integer): Integer;
+function DecLock(var AValue: Integer): Integer;
 function UnquotedStr(const AStr: string): string;
 
 implementation
@@ -157,21 +157,23 @@ begin
   {$ENDIF}
 end;
 
-procedure ThreadSafeIncrement(var AValue: Integer);
+function IncLock(var AValue: Integer): Integer;
 begin
   {$IFDEF FPC}
   Inc(AValue);  // IncLocked(AValue);
+  Result := AValue;
   {$ELSE}
-  InterlockedIncrement(AValue);
+  Result := InterlockedIncrement(AValue);
   {$ENDIF}
 end;
 
-procedure ThreadSafeDecrement(var AValue: Integer);
+function DecLock(var AValue: Integer): Integer;
 begin
   {$IFDEF FPC}
   Dec(AValue);  // DecLocked(AValue);
+  Result := AValue;
   {$ELSE}
-  InterlockedDecrement(AValue);
+  Result := InterlockedDecrement(AValue);
   {$ENDIF}
 end;
 
