@@ -430,6 +430,15 @@ type
 
   { Model declaration }
 
+  TPressModelEvent = class(TPressEvent)
+  end;
+
+  TPressModelBusinessClassChangedEvent = class(TPressModelEvent)
+  end;
+
+  TPressModelAttributeChangedEvent = class(TPressModelEvent)
+  end;
+
   TPressModel = class(TObject)
   private
     FAttributes: TClassList;
@@ -444,8 +453,10 @@ type
     FNotifier: TPressNotifier;
     procedure Notify(AEvent: TPressEvent);
     {$ENDIF}
+    procedure ClearAllMetadatas;
     procedure FetchAllMetadatas;
     function GetClassIdType: TPressAttributeClass;
+    procedure SetClassIdStorageName(const Value: string);
     procedure SetClassIdType(Value: TPressAttributeClass);
     procedure SetDefaultKeyType(Value: TPressAttributeClass);
   protected
@@ -474,9 +485,11 @@ type
     function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string): TPressEnumMetadata; overload;
     function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string; AEnumValues: array of string): TPressEnumMetadata; overload;
     function RegisterMetadata(const AMetadataStr: string): TPressObjectMetadata;
+    procedure RemoveAttribute(AAttributeClass: TPressAttributeClass);
+    procedure RemoveClass(AClass: TPressObjectClass);
     procedure UnregisterMetadata(AMetadata: TPressObjectMetadata);
+    property ClassIdStorageName: string read FClassIdStorageName write SetClassIdStorageName;
     property ClassIdType: TPressAttributeClass read GetClassIdType write SetClassIdType;
-    property ClassIdStorageName: string read FClassIdStorageName write FClassIdStorageName;
     property DefaultKeyType: TPressAttributeClass read FDefaultKeyType write SetDefaultKeyType;
   end;
 
@@ -644,6 +657,7 @@ type
     class procedure RegisterClass;
     procedure Store;
     procedure Unchanged;
+    class procedure UnregisterClass;
     property Attributes[AIndex: Integer]: TPressAttribute read GetAttributes;
     property ChangesDisabled: Boolean read GetChangesDisabled;
     property DataAccess: IPressDAO read FDataAccess;
@@ -954,6 +968,7 @@ type
     procedure EnableChanges;
     class procedure RegisterAttribute;
     procedure Reset; virtual;
+    class procedure UnregisterAttribute;
     property AsBoolean: Boolean read GetAsBoolean write SetAsBoolean;
     property AsCurrency: Currency read GetAsCurrency write SetAsCurrency;
     property AsDate: TDate read GetAsDate write SetAsDate;
@@ -2129,11 +2144,14 @@ end;
 procedure TPressModel.AddAttribute(AAttributeClass: TPressAttributeClass);
 begin
   FAttributes.Add(AAttributeClass);
+  TPressModelAttributeChangedEvent.Create(Self).Notify;
 end;
 
 procedure TPressModel.AddClass(AClass: TPressObjectClass);
 begin
   FClasses.Add(AClass);
+  FMetadatasFetched := False;
+  TPressModelBusinessClassChangedEvent.Create(Self).Notify;
 end;
 
 function TPressModel.AttributeByName(
@@ -2166,6 +2184,27 @@ begin
         Exit;
       end;
   raise EPressError.CreateFmt(SPersistentClassNotFound, [APersistentName]);
+end;
+
+procedure TPressModel.ClearAllMetadatas;
+
+  function FindRootMetadata: TPressObjectMetadata;
+  var
+    I: Integer;
+  begin
+    for I := 0 to Pred(Metadatas.Count) do
+    begin
+      Result := Metadatas[I];
+      if Result.ObjectClassName = TPressObject.ClassName then
+        Exit;
+    end;
+    Result := nil;
+  end;
+
+begin
+  Metadatas.Remove(FindRootMetadata);
+  FMetadatasFetched := False;
+  TPressModelBusinessClassChangedEvent.Create(Self).Notify;
 end;
 
 constructor TPressModel.Create;
@@ -2369,20 +2408,57 @@ begin
   Result := TPressMetaParser.ParseMetadata(AMetadataStr, Self);
 end;
 
+procedure TPressModel.RemoveAttribute(
+  AAttributeClass: TPressAttributeClass);
+begin
+  FAttributes.Remove(AAttributeClass);
+  TPressModelAttributeChangedEvent.Create(Self).Notify;
+end;
+
+procedure TPressModel.RemoveClass(AClass: TPressObjectClass);
+var
+  VIndex: Integer;
+  I: Integer;
+begin
+  if AClass = TPressObject then
+    Exit;
+  VIndex := FClasses.IndexOf(AClass);
+  if VIndex >= 0 then
+  begin
+    for I := Pred(FClasses.Count) downto 0 do
+      if FClasses[I].ClassParent = AClass then
+        RemoveClass(TPressObjectClass(FClasses[I]));
+    for I := 0 to Pred(Metadatas.Count) do
+      if Metadatas[I].ObjectClassName = AClass.ClassName then
+      begin
+        Metadatas.Delete(I);
+        Break;
+      end;
+    FClasses.Delete(VIndex);
+    TPressModelBusinessClassChangedEvent.Create(Self).Notify;
+  end;
+end;
+
+procedure TPressModel.SetClassIdStorageName(const Value: string);
+begin
+  FClassIdStorageName := Value;
+  ClearAllMetadatas;
+end;
+
 procedure TPressModel.SetClassIdType(Value: TPressAttributeClass);
 begin
   if not Assigned(Value) then
     raise EPressError.CreateFmt(SUnsupportedAttributeType, [SPressNilString]);
   FClassIdType := Value;
+  ClearAllMetadatas;
 end;
 
 procedure TPressModel.SetDefaultKeyType(Value: TPressAttributeClass);
 begin
   if not Assigned(Value) then
     raise EPressError.CreateFmt(SUnsupportedAttributeType, [SPressNilString]);
-  if FMetadatas.Count > 0 then
-    raise EPressError.Create(SMetadataAlreadyInitialized);
   FDefaultKeyType := Value;
+  ClearAllMetadatas;
 end;
 
 procedure TPressModel.UnregisterMetadata(AMetadata: TPressObjectMetadata);
@@ -3002,6 +3078,11 @@ begin
   UnchangeAttributes;
   FIsChanged := False;
   NotifyUnchange;
+end;
+
+class procedure TPressObject.UnregisterClass;
+begin
+  PressModel.RemoveClass(Self);
 end;
 
 { TPressObjectList }
@@ -4116,6 +4197,11 @@ begin
     NotifyUnchange;
     InternalUnchange;
   end;
+end;
+
+class procedure TPressAttribute.UnregisterAttribute;
+begin
+  PressModel.RemoveAttribute(Self);
 end;
 
 function TPressAttribute.ValidateChars(
