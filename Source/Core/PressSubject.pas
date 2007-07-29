@@ -1819,8 +1819,17 @@ end;
 
 function TPressObjectMetadataList.Remove(
   AObject: TPressObjectMetadata): Integer;
+var
+  I: Integer;
 begin
-  Result := inherited Remove(AObject);
+  if Assigned(AObject) then
+  begin
+    for I := Pred(Count) downto 0 do
+      if Items[I].Parent = AObject then
+        Remove(Items[I]);
+    Result := inherited Remove(AObject);
+  end else
+    Result := -1;
 end;
 
 procedure TPressObjectMetadataList.SetItems(
@@ -2378,7 +2387,6 @@ end;
 
 procedure TPressModel.UnregisterMetadata(AMetadata: TPressObjectMetadata);
 begin
-  { TODO : Verify metadatas whose parent is AMetadata }
   Metadatas.Remove(AMetadata);
 end;
 
@@ -2559,7 +2567,7 @@ class function TPressObject.ClassMetadata: TPressObjectMetadata;
 begin
   Result := PressModel.FindMetadata(ClassName);
   if not Assigned(Result) then
-    Result := PressModel.RegisterMetadata(ClassMetadataStr)
+    Result := PressModel.RegisterMetadata(ClassMetadataStr);
 end;
 
 class function TPressObject.ClassMetadataStr: string;
