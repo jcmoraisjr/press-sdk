@@ -48,6 +48,7 @@ const
   SPressQueryItemsString = 'QueryItems';
   SPressReportNativeValueSuffix = 'Value';
   SPressReportDisplayTextSuffix = 'DisplayText';
+  SPressDAOServiceName = 'DAO';
   SPressOIDGeneratorServiceName = 'OIDGen';
   SPressOPFBrokerServiceName = 'OPFBroker';
   SPressUserServiceName = 'User';
