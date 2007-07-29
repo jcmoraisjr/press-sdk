@@ -19,6 +19,7 @@ unit PressDesignConsts;
 interface
 
 const
+  SPressObjectsPaletteName = 'PressObjects';
   SPressAttributeNameMethodName = 'AttributeName';
   SPressMetadataMethodName = 'InternalMetadataStr';
   SPressRegisterEnumMethodName = 'RegisterEnumMetadata';
