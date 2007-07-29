@@ -248,7 +248,7 @@ type
 
   TPressMVPObjectClass = class of TPressMVPObject;
 
-  TPressMVPObject = class(TPressStreamable)
+  TPressMVPObject = class(TPersistent)
   private
     FDisableCount: Integer;
     function GetEventsDisabled: Boolean;

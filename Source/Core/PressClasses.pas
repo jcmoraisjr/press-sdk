@@ -78,7 +78,7 @@ type
 
   TPressStreamableClass = class of TPressStreamable;
 
-  TPressStreamable = class(TPersistent)
+  TPressStreamable = class(TPressManagedObject)
   public
     class function CreateInstance(Arg: Pointer): TPressStreamable; virtual;
     procedure ReadObject(Reader: TPressReader); virtual;

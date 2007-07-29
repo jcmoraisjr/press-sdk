@@ -142,6 +142,7 @@ type
     function StorePersLinkPosName: Boolean;
     function StoreShortName: Boolean;
   protected
+    procedure Finit; override;
     function GetAttributeName: string; virtual;
     function GetObjectClassName: string; virtual;
     procedure SetAttributeName(const Value: string); virtual;
@@ -150,7 +151,6 @@ type
     property Model: TPressModel read FModel;
   public
     constructor Create(AOwner: TPressObjectMetadata); virtual;
-    destructor Destroy; override;
     function CreateAttribute(AOwner: TPressObject): TPressAttribute;
     property AttributeClass: TPressAttributeClass read FAttributeClass write SetAttributeClass;
     property AttributeName: string read GetAttributeName write SetAttributeName;
@@ -266,11 +266,11 @@ type
     function StoreShortName: Boolean;
     function StoreUpdateCountName: Boolean;
   protected
+    procedure Finit; override;
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; virtual;
     property Model: TPressModel read FModel;
   public
     constructor Create(const AObjectClassName: string; AModel: TPressModel); virtual;
-    destructor Destroy; override;
     function CreateAttributeMetadata: TPressAttributeMetadata;
     property AttributeMetadatas: TPressAttributeMetadataList read GetAttributeMetadatas;
     property IdMetadata: TPressAttributeMetadata read GetIdMetadata;
@@ -515,21 +515,10 @@ type
 
   TPressSubjectClass = class of TPressSubject;
 
-  TPressSubject = class(TPressStreamable, IInterface)
-  private
-    FRefCount: Integer;
+  TPressSubject = class(TPressStreamable)
   protected
-    procedure Finit; virtual;
     function GetSignature: string; virtual;
-    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
-    function _AddRef: Integer; stdcall;
-    function _Release: Integer; stdcall;
   public
-    constructor Create;
-    function AddRef: Integer;
-    procedure FreeInstance; override;
-    function Release: Integer;
-    property RefCount: Integer read FRefCount;
     property Signature: string read GetSignature;
   end;
 
@@ -1355,7 +1344,7 @@ begin
      [AOwner.ClassName, Name]);
 end;
 
-destructor TPressAttributeMetadata.Destroy;
+procedure TPressAttributeMetadata.Finit;
 begin
   FCalcMetadata.Free;
   if Assigned(FOwner) then
@@ -1693,7 +1682,7 @@ begin
   Result := InternalAttributeMetadataClass.Create(Self);
 end;
 
-destructor TPressObjectMetadata.Destroy;
+procedure TPressObjectMetadata.Finit;
 begin
   FMap.Free;
   FAttributeMetadatas.Free;
@@ -2486,68 +2475,9 @@ end;
 
 { TPressSubject }
 
-function TPressSubject.AddRef: Integer;
-begin
-  Result := IncLock(FRefCount);
-end;
-
-constructor TPressSubject.Create;
-begin
-  {$IFDEF PressLogMemory}PressLogMsg(Self, 'Creating "' + Signature + '"');{$ENDIF}
-  inherited Create;
-  FRefCount := 1;
-end;
-
-procedure TPressSubject.Finit;
-begin
-  {$IFDEF PressLogMemory}PressLogMsg(Self, 'Destroying "' + Signature + '"');{$ENDIF}
-end;
-
-procedure TPressSubject.FreeInstance;
-begin
-  Release;
-  if FRefCount = 0 then
-    try
-      Finit;
-    finally
-      inherited;
-    end;
-end;
-
 function TPressSubject.GetSignature: string;
 begin
   Result := ClassName;
-end;
-
-function TPressSubject.QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
-begin
-  if GetInterface(IID, Obj) then
-    Result := 0
-  else
-    Result := HResult($80004002);  // E_NOINTERFACE
-end;
-
-function TPressSubject.Release: Integer;
-begin
-  Result := DecLock(FRefCount);
-  if FRefCount < 0 then
-    raise EPressError.CreateFmt(SCannotReleaseInstance, [Signature]);
-end;
-
-function TPressSubject._AddRef: Integer; stdcall;
-begin
-  Result := AddRef;
-end;
-
-function TPressSubject._Release: Integer; stdcall;
-begin
-  Result := Release;
-  if Result = 0 then
-    try
-      Finit;
-    finally
-      inherited FreeInstance;
-    end;
 end;
 
 { TPressObject }
