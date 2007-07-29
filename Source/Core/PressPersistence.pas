@@ -47,12 +47,12 @@ type
     FOIDGenerator: TPressOIDGenerator;
     function GetOIDGenerator: TPressOIDGenerator;
   protected
+    procedure Finit; override;
     function InternalDBMSName: string; virtual;
     function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; override;
     function InternalOIDGeneratorClass: TPressOIDGeneratorClass; virtual;
     property OIDGenerator: TPressOIDGenerator read GetOIDGenerator;
   public
-    destructor Destroy; override;
     function DBMSName: string;
   end;
 
@@ -147,7 +147,7 @@ begin
   Result := InternalDBMSName;
 end;
 
-destructor TPressPersistence.Destroy;
+procedure TPressPersistence.Finit;
 begin
   FOIDGenerator.Free;
   inherited;
@@ -156,7 +156,10 @@ end;
 function TPressPersistence.GetOIDGenerator: TPressOIDGenerator;
 begin
   if not Assigned(FOIDGenerator) then
+  begin
     FOIDGenerator := InternalOIDGeneratorClass.Create;
+    FOIDGenerator.AddRef;
+  end;
   Result := FOIDGenerator;
 end;
 
@@ -288,12 +291,12 @@ begin
     Cache.AddLink(APressObject, AValue);
 end;
 
-procedure RegisterServices;
-begin
-  TPressOIDGenerator.RegisterService;
-end;
-
 initialization
-  RegisterServices;
+  PressApp.Registry[CPressOIDGeneratorService].ServiceTypeName :=
+   SPressOIDGeneratorServiceName;
+  TPressOIDGenerator.RegisterService;
+
+finalization
+  TPressOIDGenerator.UnregisterService;
 
 end.

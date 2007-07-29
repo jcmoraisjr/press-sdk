@@ -56,6 +56,7 @@ type
     procedure Notify(AEvent: TPressEvent);
   protected
     procedure DoneService; override;
+    procedure Finit; override;
     function InternalCacheClass: TPressDAOCacheClass; virtual;
     procedure InternalCommit; virtual;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); virtual;
@@ -75,7 +76,6 @@ type
     property Cache: TPressDAOCache read FCache;
   public
     constructor Create; override;
-    destructor Destroy; override;
     procedure AssignObject(AObject: TPressObject);
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
@@ -191,13 +191,6 @@ begin
   FNotifier.AddNotificationItem(Self, [TPressDAOCommit]);
 end;
 
-destructor TPressDAO.Destroy;
-begin
-  FNotifier.Free;
-  FCache.Free;
-  inherited;
-end;
-
 procedure TPressDAO.Dispose(AClass: TPressObjectClass; const AId: string);
 var
   VObject: TPressObject;
@@ -251,6 +244,13 @@ begin
     Rollback;
     raise;
   end;
+end;
+
+procedure TPressDAO.Finit;
+begin
+  FNotifier.Free;
+  FCache.Free;
+  inherited;
 end;
 
 function TPressDAO.GenerateOID(AClass: TPressObjectClass;

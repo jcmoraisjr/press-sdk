@@ -48,7 +48,9 @@ const
   SPressQueryItemsString = 'QueryItems';
   SPressReportNativeValueSuffix = 'Value';
   SPressReportDisplayTextSuffix = 'DisplayText';
+  SPressOIDGeneratorServiceName = 'OIDGen';
   SPressOPFBrokerServiceName = 'OPFBroker';
+  SPressUserServiceName = 'User';
 
 resourcestring
   SAmbiguousClass = 'Ambiguidade entre as classes ''%s'' e ''%s''';

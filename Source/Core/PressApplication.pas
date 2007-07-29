@@ -56,26 +56,27 @@ type
 
   TPressServiceClass = class of TPressService;
 
-  TPressService = class(TPersistent, IInterface)
+  TPressService = class(TPressManagedObject)
   private
     FRegistry: TPressRegistry;
+    FRunning: Boolean;
     function GetIsDefault: Boolean;
     procedure SetIsDefault(Value: Boolean);
   protected
     procedure DoneService; virtual;
+    procedure Finit; override;
     procedure InitService; virtual;
     procedure InternalIsDefaultChanged; virtual;
     class function InternalServiceType: TPressServiceType; virtual; abstract;
-    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
-    function _AddRef: Integer; stdcall;
-    function _Release: Integer; stdcall;
   public
     constructor Create; virtual;
-    destructor Destroy; override;
     class procedure RegisterService(AIsDefault: Boolean = False);
+    function Release: Integer; override;
     class function ServiceName: string; virtual;
+    class procedure UnregisterService;
     property IsDefault: Boolean read GetIsDefault write SetIsDefault;
     property Registry: TPressRegistry read FRegistry;
+    property Running: Boolean read FRunning;
   end;
 
   TPressServiceClassIterator = class;
@@ -160,13 +161,15 @@ type
     procedure AddConfigSection(ASection: TPressConfigSection);
     function ConfigSectionCount: Integer;
     function CreateService(ADefaultServiceClass: TPressServiceClass): TPressService;
-    procedure DoneServices;
+    procedure DoneServices(AServiceClass: TPressServiceClass = nil);
     procedure ExtractService(AService: TPressService);
     function HasDefaultService: Boolean;
     function HasDefaultServiceClass: Boolean;
     function IndexOfConfigSubSectionName(const ASubSectionName: string): Integer;
     procedure InsertService(AService: TPressService);
     procedure RegisterService(AServiceClass: TPressServiceClass; AIsDefault: Boolean);
+    procedure ReleaseServices(AServiceClass: TPressServiceClass);
+    procedure UnregisterService(AServiceClass: TPressServiceClass);
     property ConfigSections[AIndex: Integer]: TPressConfigSection read GetConfigSections;
     property DefaultService: TPressService read GetDefaultService write SetDefaultService;
     property DefaultServiceClass: TPressServiceClass read GetDefaultServiceClass write SetDefaultServiceClass;
@@ -219,6 +222,7 @@ type
     procedure DoneApplication;
     function GetConfigFileName: string;
     function GetRegistry(AServiceType: TPressServiceType): TPressRegistry;
+    procedure Init(AIsStatic: Boolean);
     procedure InitApplication;
     procedure ReadConfigFile;
     procedure SetConfigFileName(const Value: string);
@@ -232,9 +236,12 @@ type
     function DefaultService(AServiceType: TPressServiceType): TPressService; overload;
     function DefaultService(ADefaultServiceClass: TPressServiceClass): TPressService; overload;
     function DefaultServiceClass(AServiceType: TPressServiceType): TPressServiceClass;
+    procedure DonePackage;
+    procedure Finalize;
+    procedure InitPackage;
     procedure RegisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass; AIsDefault: Boolean);
     procedure Run;
-    procedure Finalize;
+    procedure UnregisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass);
     property ConfigFileName: string read GetConfigFileName write SetConfigFileName;
     property Registry[AServiceType: TPressServiceType]: TPressRegistry read GetRegistry;
     property Running: Boolean read FRunning;
@@ -264,18 +271,27 @@ begin
   inherited Create;
   FRegistry := PressApp.Registry[InternalServiceType];
   Registry.InsertService(Self);
+  FRunning := True;
   InitService;
-end;
-
-destructor TPressService.Destroy;
-begin
-  IsDefault := False;
-  Registry.ExtractService(Self);
-  inherited;
 end;
 
 procedure TPressService.DoneService;
 begin
+end;
+
+procedure TPressService.Finit;
+begin
+  if Assigned(_PressApp) and Assigned(FRegistry) then
+  begin
+    if Running then
+    begin
+      DoneService;
+      FRunning := False;
+    end;
+    IsDefault := False;
+    Registry.ExtractService(Self);
+  end;
+  inherited;
 end;
 
 function TPressService.GetIsDefault: Boolean;
@@ -291,14 +307,16 @@ procedure TPressService.InternalIsDefaultChanged;
 begin
 end;
 
-function TPressService.QueryInterface(const IID: TGUID; out Obj): HResult;
-begin
-  if GetInterface(IID, Obj) then Result := 0 else Result := HResult($80004002);
-end;
-
 class procedure TPressService.RegisterService(AIsDefault: Boolean);
 begin
   PressApp.RegisterService(InternalServiceType, Self, AIsDefault);
+end;
+
+function TPressService.Release: Integer;
+begin
+  if RefCount = 2 then
+    inherited Release;
+  Result := inherited Release;
 end;
 
 class function TPressService.ServiceName: string;
@@ -315,14 +333,9 @@ begin
       Registry.DefaultService := nil;
 end;
 
-function TPressService._AddRef: Integer;
+class procedure TPressService.UnregisterService;
 begin
-  Result := 1;
-end;
-
-function TPressService._Release: Integer;
-begin
-  Result := 1;
+  PressApp.UnregisterService(InternalServiceType, Self);
 end;
 
 { TPressServiceClassList }
@@ -507,15 +520,20 @@ begin
   inherited;
 end;
 
-procedure TPressRegistry.DoneServices;
+procedure TPressRegistry.DoneServices(AServiceClass: TPressServiceClass);
+var
+  VService: TPressService;
+  I: Integer;
 begin
-  with Services.CreateIterator do
-  try
-    BeforeFirstItem;
-    while NextItem do
-      CurrentItem.DoneService;
-  finally
-    Free;
+  for I := 0 to Pred(Services.Count) do
+  begin
+    VService := Services[I];
+    if VService.Running and
+     (not Assigned(AServiceClass) or (VService is AServiceClass)) then
+    begin
+      VService.DoneService;
+      VService.FRunning := False;  // friend class
+    end;
   end;
 end;
 
@@ -595,6 +613,15 @@ begin
     FDefaultServiceClass := AServiceClass;
 end;
 
+procedure TPressRegistry.ReleaseServices(AServiceClass: TPressServiceClass);
+var
+  I: Integer;
+begin
+  for I := Pred(Services.Count) downto 0 do
+    if Services[I] is AServiceClass then
+      Services.Delete(I);
+end;
+
 procedure TPressRegistry.SetDefaultService(Value: TPressService);
 var
   VOldDefaultService: TPressService;
@@ -624,6 +651,14 @@ begin
     DefaultServiceClass := ServiceClasses[VIndex]
   else
     raise EPressError.CreateFmt(SUnassignedServiceType, [Value]);
+end;
+
+procedure TPressRegistry.UnregisterService(
+  AServiceClass: TPressServiceClass);
+begin
+  DoneServices(AServiceClass);
+  ReleaseServices(AServiceClass);
+  ServiceClasses.Remove(AServiceClass);
 end;
 
 { TPressRegistryList }
@@ -786,6 +821,9 @@ end;
 
 destructor TPressApplication.Destroy;
 begin
+  if Running then
+    Application.OnIdle := FOnIdle;
+  FRunning := False;
   FRegistries.Free;
   FConfigFile.Free;
   inherited;
@@ -809,6 +847,11 @@ begin
   Application.OnIdle := FOnIdle;
 end;
 
+procedure TPressApplication.DonePackage;
+begin
+  DoneApplication;
+end;
+
 procedure TPressApplication.Finalize;
 begin
   Application.MainForm.Close;
@@ -827,14 +870,25 @@ begin
   Result := Registries.Registries[AServiceType];
 end;
 
-procedure TPressApplication.InitApplication;
+procedure TPressApplication.Init(AIsStatic: Boolean);
 begin
   FRunning := True;
   FOnIdle := Application.OnIdle;
   Application.OnIdle := ApplicationIdle;
   TPressApplicationInitEvent.Create(Self).Notify;
   TPressApplicationRunningEvent.Create(Self).QueueNotification;
-  ReadConfigFile;
+  if AIsStatic then
+    ReadConfigFile;
+end;
+
+procedure TPressApplication.InitApplication;
+begin
+  Init(True);
+end;
+
+procedure TPressApplication.InitPackage;
+begin
+  Init(False);
 end;
 
 procedure TPressApplication.ReadConfigFile;
@@ -880,10 +934,16 @@ begin
   FConfigFileName := Value;
 end;
 
+procedure TPressApplication.UnregisterService(
+  AServiceType: TPressServiceType; AServiceClass: TPressServiceClass);
+begin
+  Registry[AServiceType].UnregisterService(AServiceClass);
+end;
+
 initialization
   _PressApp := TPressApplication.Create;
 
 finalization
-  _PressApp.Free;
+  FreeAndNil(_PressApp);
 
 end.

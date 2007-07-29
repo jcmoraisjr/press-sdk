@@ -22,16 +22,12 @@ uses
   Controls,
   Contnrs,
   Forms,
-  PressApplication,
   PressClasses,
   PressSubject,
   PressMVP,
   PressMVPModel,
   PressMVPView,
   PressMVPPresenter;
-
-const
-  CPressMVPFactoryService = CPressMVPServicesBase + $0001;
 
 type
   TPressMVPRegisteredForm = class(TObject)
@@ -79,7 +75,7 @@ type
     property CurrentItem: TPressMVPRegisteredForm read GetCurrentItem;
   end;
 
-  TPressMVPFactory = class(TPressService)
+  TPressMVPFactory = class(TObject)
   { TODO : Refactor }
   private
     FInteractors: TClassList;
@@ -90,10 +86,8 @@ type
     function ChooseConcreteClass(ACandidateClass1, ACandidateClass2: TClass): TClass;
     function ExistSubClasses(AClasses: TClassList; AClass: TClass): Boolean;
     procedure RemoveSuperClasses(AClasses: TClassList; AClass: TClass);
-  protected
-    class function InternalServiceType: TPressServiceType; override;
   public
-    constructor Create; override;
+    constructor Create;
     destructor Destroy; override;
     function MVPInteractorFactory(APresenter: TPressMVPPresenter): TPressMVPInteractorClasses;
     function MVPModelFactory(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
@@ -114,14 +108,17 @@ implementation
 uses
   PressConsts;
 
+var
+  _MVPFactory: TPressMVPFactory;
+
 function PressDefaultMVPFactory: TPressMVPFactory;
 begin
-  with PressApp.Registry[CPressMVPFactoryService] do
+  if not Assigned(_MVPFactory) then
   begin
-    if not HasDefaultService then
-      RegisterService(TPressMVPFactory, False);
-    Result := DefaultService as TPressMVPFactory;
+    _MVPFactory := TPressMVPFactory.Create;
+    PressRegisterSingleObject(_MVPFactory);
   end;
+  Result := _MVPFactory;
 end;
 
 { TPressMVPRegisteredForm }
@@ -291,11 +288,6 @@ begin
       Exit;
   end;
   Result := False;
-end;
-
-class function TPressMVPFactory.InternalServiceType: TPressServiceType;
-begin
-  Result := CPressMVPFactoryService;
 end;
 
 function TPressMVPFactory.MVPInteractorFactory(

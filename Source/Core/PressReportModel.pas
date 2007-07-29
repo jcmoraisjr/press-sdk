@@ -150,5 +150,6 @@ initialization
 finalization
   TPressDefaultReportGroup.UnregisterClass;
   TPressDefaultReportItem.UnregisterClass;
+  TPressDefaultReportData.UnregisterService;
 
 end.

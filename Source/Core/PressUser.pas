@@ -54,10 +54,10 @@ type
     function GetHasUser: Boolean;
   protected
     procedure DoneService; override;
+    procedure Finit; override;
     function InternalQueryUser(const AUserID, APassword: string): TPressUser; virtual;
     class function InternalServiceType: TPressServiceType; override;
   public
-    destructor Destroy; override;
     procedure Logoff;
     function Logon(const AUserID: string = ''; const APassword: string = ''): Boolean;
     function QueryUser(const AUserID, APassword: string): TPressUser;
@@ -106,16 +106,16 @@ end;
 
 { TPressUserData }
 
-destructor TPressUserData.Destroy;
-begin
-  FCurrentUser.Free;
-  inherited;
-end;
-
 procedure TPressUserData.DoneService;
 begin
   inherited;
   Logoff;
+end;
+
+procedure TPressUserData.Finit;
+begin
+  FCurrentUser.Free;
+  inherited;
 end;
 
 function TPressUserData.GetCurrentUser: TPressUser;
@@ -176,9 +176,12 @@ begin
 end;
 
 initialization
+  PressApp.Registry[CPressUserDataService].ServiceTypeName :=
+   SPressUserServiceName;
   TPressUser.RegisterClass;
 
 finalization
   TPressUser.UnregisterClass;
+  TPressUserData.UnregisterService;
 
 end.

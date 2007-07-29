@@ -4413,6 +4413,7 @@ begin
 end;
 
 initialization
+  PressApp.Registry[CPressDAOService].ServiceTypeName := SPressDAOServiceName;
   TPressObject.RegisterClass;
   TPressQuery.RegisterClass;
   TPressSingletonObject.RegisterClass;

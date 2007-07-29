@@ -310,4 +310,7 @@ end;
 initialization
   TPressOPF.RegisterService;
 
+finalization
+  TPressOPF.UnregisterService;
+
 end.
