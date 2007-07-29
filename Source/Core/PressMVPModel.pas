@@ -1938,8 +1938,7 @@ begin
   AddCommand(TPressMVPExecuteQueryCommand);
 end;
 
-procedure RegisterModels;
-begin
+initialization
   TPressMVPValueModel.RegisterModel;
   TPressMVPEnumModel.RegisterModel;
   TPressMVPDateModel.RegisterModel;
@@ -1949,15 +1948,9 @@ begin
   TPressMVPReferencesModel.RegisterModel;
   TPressMVPObjectModel.RegisterModel;
   TPressMVPQueryModel.RegisterModel;
-end;
-
-procedure RegisterClasses;
-begin
   TPressMVPReferenceQuery.RegisterClass;
-end;
 
-initialization
-  RegisterModels;
-  RegisterClasses;
+finalization
+  TPressMVPReferenceQuery.UnregisterClass;
 
 end.

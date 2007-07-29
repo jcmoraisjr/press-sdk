@@ -175,12 +175,10 @@ begin
   Result := InternalQueryUser(AUserID, APassword);
 end;
 
-procedure RegisterClasses;
-begin
-  TPressUser.RegisterClass;
-end;
-
 initialization
-  RegisterClasses;
+  TPressUser.RegisterClass;
+
+finalization
+  TPressUser.UnregisterClass;
 
 end.

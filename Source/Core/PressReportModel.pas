@@ -142,14 +142,13 @@ begin
   Result := TPressDefaultReportGroup;
 end;
 
-procedure RegisterClasses;
-begin
+initialization
   TPressDefaultReportGroup.RegisterClass;
   TPressDefaultReportItem.RegisterClass;
-end;
-
-initialization
-  RegisterClasses;
   TPressDefaultReportData.RegisterService;
+
+finalization
+  TPressDefaultReportGroup.UnregisterClass;
+  TPressDefaultReportItem.UnregisterClass;
 
 end.

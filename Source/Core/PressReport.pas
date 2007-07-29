@@ -777,13 +777,12 @@ begin
   Result := CPressReportDataService;
 end;
 
-procedure RegisterClasses;
-begin
+initialization
   TPressReportGroup.RegisterClass;
   TPressReportItem.RegisterClass;
-end;
 
-initialization
-  RegisterClasses;
+finalization
+  TPressReportGroup.UnregisterClass;
+  TPressReportItem.UnregisterClass;
 
 end.

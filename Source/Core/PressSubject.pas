@@ -4484,23 +4484,50 @@ begin
   inherited;
 end;
 
-procedure RegisterClasses;
-begin
+initialization
   TPressObject.RegisterClass;
   TPressQuery.RegisterClass;
   TPressSingletonObject.RegisterClass;
-end;
-
-procedure RegisterAttributes;
-begin
+  TPressString.RegisterAttribute;
+  TPressInteger.RegisterAttribute;
+  TPressFloat.RegisterAttribute;
+  TPressCurrency.RegisterAttribute;
+  TPressEnum.RegisterAttribute;
+  TPressBoolean.RegisterAttribute;
+  TPressDate.RegisterAttribute;
+  TPressTime.RegisterAttribute;
+  TPressDateTime.RegisterAttribute;
+  TPressVariant.RegisterAttribute;
+  TPressMemo.RegisterAttribute;
+  TPressBinary.RegisterAttribute;
+  TPressPicture.RegisterAttribute;
+  TPressPart.RegisterAttribute;
+  TPressReference.RegisterAttribute;
+  TPressParts.RegisterAttribute;
+  TPressReferences.RegisterAttribute;
   TPressQueryItems.RegisterAttribute;
-end;
-
-initialization
-  RegisterClasses;
-  RegisterAttributes;
 
 finalization
+  TPressQuery.UnregisterClass;
+  TPressSingletonObject.UnregisterClass;
+  TPressString.UnregisterAttribute;
+  TPressInteger.UnregisterAttribute;
+  TPressFloat.UnregisterAttribute;
+  TPressCurrency.UnregisterAttribute;
+  TPressEnum.UnregisterAttribute;
+  TPressBoolean.UnregisterAttribute;
+  TPressDate.UnregisterAttribute;
+  TPressTime.UnregisterAttribute;
+  TPressDateTime.UnregisterAttribute;
+  TPressVariant.UnregisterAttribute;
+  TPressMemo.UnregisterAttribute;
+  TPressBinary.UnregisterAttribute;
+  TPressPicture.UnregisterAttribute;
+  TPressPart.UnregisterAttribute;
+  TPressReference.UnregisterAttribute;
+  TPressParts.UnregisterAttribute;
+  TPressReferences.UnregisterAttribute;
+  TPressQueryItems.UnregisterAttribute;
   _PressModel.Free;
 
 end.

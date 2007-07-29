@@ -2352,15 +2352,11 @@ begin
   Result := FTableMetadatas.Count;
 end;
 
-procedure RegisterClasses;
-begin
-  TPressInstanceClass.RegisterClass;
-end;
-
 initialization
-  RegisterClasses;
+  TPressInstanceClass.RegisterClass;
 
 finalization
+  TPressInstanceClass.UnregisterClass;
   _PressStorageModel.Free;
 
 end.

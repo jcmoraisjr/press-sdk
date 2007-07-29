@@ -4127,31 +4127,7 @@ begin
     Result := ptShared;
 end;
 
-{ Initialization routines }
-
-procedure RegisterAttributes;
-begin
-  TPressString.RegisterAttribute;
-  TPressInteger.RegisterAttribute;
-  TPressFloat.RegisterAttribute;
-  TPressCurrency.RegisterAttribute;
-  TPressEnum.RegisterAttribute;
-  TPressBoolean.RegisterAttribute;
-  TPressDate.RegisterAttribute;
-  TPressTime.RegisterAttribute;
-  TPressDateTime.RegisterAttribute;
-  TPressVariant.RegisterAttribute;
-  TPressMemo.RegisterAttribute;
-  TPressBinary.RegisterAttribute;
-  TPressPicture.RegisterAttribute;
-  TPressPart.RegisterAttribute;
-  TPressReference.RegisterAttribute;
-  TPressParts.RegisterAttribute;
-  TPressReferences.RegisterAttribute;
-end;
-
 initialization
-  RegisterAttributes;
 
 finalization
   _GraphicFormatList.Free;
