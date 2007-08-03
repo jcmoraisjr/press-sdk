@@ -764,7 +764,7 @@ type
   TPressProxyRetrieveInstanceEvent = procedure(
    Sender: TPressProxy) of object;
 
-  TPressProxy = class(TObject)
+  TPressProxy = class(TPressManagedObject)
   private
     FAfterChangeInstance: TPressProxyChangeInstanceEvent;
     FAfterChangeReference: TPressProxyChangeReferenceEvent;
@@ -785,21 +785,18 @@ type
     function IsEmptyReference(const ARefClass, ARefID: string): Boolean;
     procedure SetInstance(Value: TPressObject);
   protected
-    procedure Finit; virtual;
+    procedure Finit; override;
   public
     constructor Create(AProxyType: TPressProxyType; AObject: TPressObject = nil);
-    function AddRef: Integer;
-    procedure Assign(Source: TPressProxy); virtual;
+    procedure Assign(Source: TPersistent); override;
     procedure AssignReference(const ARefClass, ARefID: string; ADataAccess: IPressDAO);
     procedure Clear;
     procedure ClearInstance;
     procedure ClearReference;
     function Clone: TPressProxy;
-    procedure FreeInstance; override;
     function HasInstance: Boolean;
     function HasReference: Boolean;
     function IsEmpty: Boolean;
-    function Release: Integer;
     function SameReference(AObject: TPressObject): Boolean; overload;
     function SameReference(const ARefClass, ARefID: string): Boolean; overload;
     property AfterChangeInstance: TPressProxyChangeInstanceEvent read FAfterChangeInstance write FAfterChangeInstance;
@@ -3313,26 +3310,27 @@ end;
 
 { TPressProxy }
 
-function TPressProxy.AddRef: Integer;
+procedure TPressProxy.Assign(Source: TPersistent);
+var
+  VSource: TPressProxy;
 begin
-  Inc(FRefCount);
-  Result := FRefCount;
-end;
-
-procedure TPressProxy.Assign(Source: TPressProxy);
-begin
-  if Source.HasInstance then
+  if Source is TPressProxy then
   begin
-    if Source.FInstance <> FInstance then
+    VSource := TPressProxy(Source);
+    if VSource.HasInstance then
     begin
-      Instance := Source.FInstance;
-      if ProxyType = ptOwned then
-        FInstance.AddRef;
-    end;
-  end else if Source.HasReference then
-    AssignReference(Source.FRefClass, Source.FRefID, Source.FDataAccess)
-  else
-    Clear;
+      if VSource.FInstance <> FInstance then
+      begin
+        Instance := VSource.FInstance;
+        if ProxyType = ptOwned then
+          FInstance.AddRef;
+      end;
+    end else if VSource.HasReference then
+      AssignReference(VSource.FRefClass, VSource.FRefID, VSource.FDataAccess)
+    else
+      Clear;
+  end else
+    inherited Assign(Source);
 end;
 
 procedure TPressProxy.AssignReference(
@@ -3426,17 +3424,6 @@ begin
     FInstance.Free;
 end;
 
-procedure TPressProxy.FreeInstance;
-begin
-  Release;
-  if FRefCount = 0 then
-    try
-      Finit;
-    finally
-      inherited;
-    end;
-end;
-
 function TPressProxy.GetInstance: TPressObject;
 begin
   if Assigned(FBeforeRetrieveInstance) then
@@ -3491,12 +3478,6 @@ function TPressProxy.IsEmptyReference(
   const ARefClass, ARefID: string): Boolean;
 begin
   Result := ARefID = '';
-end;
-
-function TPressProxy.Release: Integer;
-begin
-  Dec(FRefCount);
-  Result := FRefCount;
 end;
 
 function TPressProxy.SameReference(AObject: TPressObject): Boolean;
