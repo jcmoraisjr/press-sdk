@@ -1103,7 +1103,10 @@ begin
   if AEvent is TPressApplicationRunningEvent then
     Running
   else if AEvent is TPressApplicationDoneEvent then
+  begin
+    _PressMVPMainPresenter := nil;
     Free;
+  end;
 end;
 
 class procedure TPressMVPMainFormPresenter.Run;
@@ -1125,5 +1128,8 @@ end;
 
 initialization
   RegisterPresenters;
+
+finalization
+  FreeAndNil(_PressMVPMainPresenter);
 
 end.
