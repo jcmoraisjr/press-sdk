@@ -703,7 +703,7 @@ type
     FItemsDataAccess: IPressDAO;
     FMatchEmptyAndNull: Boolean;
     FStyle: TPressQueryStyle;
-    function EnsureItemsDataAccess: IPressDAO;
+    function GetItemsDataAccess: IPressDAO;
     function GetMetadata: TPressQueryMetadata;
     function GetObjects(AIndex: Integer): TPressObject;
     procedure SetStyle(AValue: TPressQueryStyle);
@@ -731,7 +731,7 @@ type
     property FieldNamesClause: string read GetFieldNamesClause;
     property FromClause: string read GetFromClause;
     property GroupByClause: string read GetGroupByClause;
-    property ItemsDataAccess: IPressDAO read FItemsDataAccess;
+    property ItemsDataAccess: IPressDAO read GetItemsDataAccess;
     property MatchEmptyAndNull: Boolean read FMatchEmptyAndNull write FMatchEmptyAndNull;
     property Metadata: TPressQueryMetadata read GetMetadata;
     property Objects[AIndex: Integer]: TPressObject read GetObjects; default;
@@ -3092,13 +3092,6 @@ begin
   Result := TPressReferences(FQueryItems).CreateIterator;
 end;
 
-function TPressQuery.EnsureItemsDataAccess: IPressDAO;
-begin
-  if not Assigned(FItemsDataAccess) then
-    FItemsDataAccess := PressDefaultDAO;
-  Result := FItemsDataAccess;
-end;
-
 function TPressQuery.GetFieldNamesClause: string;
 begin
   Result := '*';
@@ -3112,6 +3105,14 @@ end;
 function TPressQuery.GetGroupByClause: string;
 begin
   Result := '';
+end;
+
+function TPressQuery.GetItemsDataAccess: IPressDAO;
+begin
+  { TODO : Improve Items DAO assignment }
+  if not Assigned(FItemsDataAccess) then
+    FItemsDataAccess := DataAccess;
+  Result := FItemsDataAccess;
 end;
 
 function TPressQuery.GetMetadata: TPressQueryMetadata;
@@ -3148,8 +3149,6 @@ end;
 procedure TPressQuery.Init;
 begin
   inherited;
-  { TODO : Improve Items DAO assignment }
-  FItemsDataAccess := DataAccess;
   FMatchEmptyAndNull := True;
   FStyle := Metadata.Style;
 end;
@@ -3257,7 +3256,7 @@ end;
 procedure TPressQuery.InternalUpdateReferenceList;
 begin
   TPressReferences(FQueryItems).AssignProxyList(
-   EnsureItemsDataAccess.RetrieveProxyList(Self));
+   ItemsDataAccess.RetrieveProxyList(Self));
 end;
 
 class function TPressQuery.ObjectMetadataClass: TPressObjectMetadataClass;
