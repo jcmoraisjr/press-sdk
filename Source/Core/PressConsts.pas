@@ -89,7 +89,6 @@ resourcestring
   SPersistentClassNotFound = 'Classe persistente %s não encontrada';
   SPropertyIsReadOnly = 'A propriedade ''%s.%s'' é somente leitura';
   SPropertyNotFound = 'A propriedade ''%s.%s'' não foi encontrada';
-  SServiceRegistryNotFound = 'O registro de serviços ''%s'' não foi encontrado';
   SSingletonClassNotFound = 'Classe Singleton %s não encontrada';
   SStringLengthOutOfBounds = 'String muito grande';
   SStringOverflow = 'String overflow: %s(%s)';
