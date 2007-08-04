@@ -70,6 +70,7 @@ type
     class function InternalServiceType: TPressServiceType; virtual; abstract;
   public
     constructor Create; virtual;
+    procedure AfterConstruction; override;
     class procedure RegisterService(AIsDefault: Boolean = False);
     function Release: Integer; override;
     class function ServiceName: string; virtual;
@@ -284,13 +285,18 @@ end;
 
 { TPressService }
 
+procedure TPressService.AfterConstruction;
+begin
+  inherited;
+  FRunning := True;
+  InitService;
+end;
+
 constructor TPressService.Create;
 begin
   inherited Create;
   FRegistry := PressApp.Registry[InternalServiceType];
   Registry.InsertService(Self);
-  FRunning := True;
-  InitService;
 end;
 
 procedure TPressService.DoneService;
