@@ -1054,7 +1054,7 @@ function TPressMVPReferenceModel.CreateQueryIterator(
   const AQueryString: string): TPressQueryIterator;
 begin
   InternalUpdateQueryMetadata(AQueryString);
-  Query.UpdateReferenceList;
+  Query.Execute;
   if Query.Count > SPressMaxItemCount then
   begin
     PressDialog.DefaultDlg(
@@ -1911,7 +1911,7 @@ end;
 
 procedure TPressMVPQueryModel.Execute;
 begin
-  Subject.UpdateReferenceList;
+  Subject.Execute;
   { TODO : BeginUpdate / EndUpdate }
   if HookedSubject is TPressReferences then
     with TPressReferences(HookedSubject).CreateProxyIterator do

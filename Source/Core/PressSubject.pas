@@ -535,7 +535,7 @@ type
     function OQLQuery(const AOQLStatement: string): TPressProxyList;
     procedure ReleaseObject(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil): TPressObject;
-    function RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
+    function RetrieveQuery(AQuery: TPressQuery): TPressProxyList;
     procedure Rollback;
     procedure ShowConnectionManager;
     function SQLProxy(const ASQLStatement: string): TPressProxyList;
@@ -717,17 +717,17 @@ type
     procedure Init; override;
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     function InternalBuildStatement(AAttribute: TPressAttribute): string; virtual;
-    procedure InternalUpdateReferenceList; virtual;
+    procedure InternalExecute; virtual;
   public
     function Add(AObject: TPressObject): Integer;
     procedure Clear;
     function Count: Integer;
     class function ClassMetadata: TPressQueryMetadata;
     function CreateIterator: TPressQueryIterator;
+    procedure Execute;
     class function ObjectMetadataClass: TPressObjectMetadataClass; override;
     function Remove(AObject: TPressObject): Integer;
     function RemoveReference(AProxy: TPressProxy): Integer;
-    procedure UpdateReferenceList;
     property FieldNamesClause: string read GetFieldNamesClause;
     property FromClause: string read GetFromClause;
     property GroupByClause: string read GetGroupByClause;
@@ -3092,6 +3092,11 @@ begin
   Result := TPressReferences(FQueryItems).CreateIterator;
 end;
 
+procedure TPressQuery.Execute;
+begin
+  InternalExecute;
+end;
+
 function TPressQuery.GetFieldNamesClause: string;
 begin
   Result := '*';
@@ -3253,10 +3258,10 @@ begin
       Result := IsNullStatement;
 end;
 
-procedure TPressQuery.InternalUpdateReferenceList;
+procedure TPressQuery.InternalExecute;
 begin
   TPressReferences(FQueryItems).AssignProxyList(
-   ItemsDataAccess.RetrieveProxyList(Self));
+   ItemsDataAccess.RetrieveQuery(Self));
 end;
 
 class function TPressQuery.ObjectMetadataClass: TPressObjectMetadataClass;
@@ -3281,11 +3286,6 @@ begin
     FStyle := AValue;
     Clear;
   end;
-end;
-
-procedure TPressQuery.UpdateReferenceList;
-begin
-  InternalUpdateReferenceList;
 end;
 
 { TPressSingletonObject }

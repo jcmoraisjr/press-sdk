@@ -64,7 +64,7 @@ type
     function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; virtual;
     function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; virtual;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; virtual;
-    function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; virtual;
+    function InternalRetrieveQuery(AQuery: TPressQuery): TPressProxyList; virtual;
     procedure InternalRollback; virtual;
     class function InternalServiceType: TPressServiceType; override;
     procedure InternalShowConnectionManager; virtual;
@@ -84,7 +84,7 @@ type
     function OQLQuery(const AOQLStatement: string): TPressProxyList;
     procedure ReleaseObject(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil): TPressObject;
-    function RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
+    function RetrieveQuery(AQuery: TPressQuery): TPressProxyList;
     procedure Rollback;
     procedure ShowConnectionManager;
     function SQLProxy(const ASQLStatement: string): TPressProxyList;
@@ -300,7 +300,7 @@ begin
   raise UnsupportedFeatureError('Retrieve object');
 end;
 
-function TPressDAO.InternalRetrieveProxyList(
+function TPressDAO.InternalRetrieveQuery(
   AQuery: TPressQuery): TPressProxyList;
 
   function SelectPart: string;
@@ -441,11 +441,11 @@ begin
   end;
 end;
 
-function TPressDAO.RetrieveProxyList(AQuery: TPressQuery): TPressProxyList;
+function TPressDAO.RetrieveQuery(AQuery: TPressQuery): TPressProxyList;
 begin
   StartTransaction;
   try
-    Result := InternalRetrieveProxyList(AQuery);
+    Result := InternalRetrieveQuery(AQuery);
     Commit;
   except
     Rollback;
