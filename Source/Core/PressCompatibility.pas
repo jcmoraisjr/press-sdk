@@ -131,8 +131,12 @@ begin
         {$ENDIF}
             VPropValue := UnquotedStr(AValue);
           tkEnumeration:
-            VPropValue := GetEnumValue(
-             VPropInfo^.PropType{$IFNDEF FPC}^{$ENDIF}, AValue);
+            begin
+              VPropValue := GetEnumValue(
+               VPropInfo^.PropType{$IFNDEF FPC}^{$ENDIF}, AValue);
+              if VPropValue < 0 then
+                raise EPressError.CreateFmt(SEnumItemNotFound, [AValue]);
+            end;
         {$IFDEF FPC}
           tkBool:
             VPropValue := not SameText(AValue, SPressFalseString);
