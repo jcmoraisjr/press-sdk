@@ -231,7 +231,8 @@ end;
 procedure TPressDAO.DoneService;
 begin
   inherited;
-  Cache.ReleaseObjects;
+  if Assigned(Cache) then
+    Cache.ReleaseObjects;
 end;
 
 function TPressDAO.ExecuteStatement(const AStatement: string): Integer;
