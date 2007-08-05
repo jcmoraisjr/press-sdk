@@ -99,7 +99,7 @@ type
     function InternalExecuteStatement(const AStatement: string): Integer; override;
     function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
-    function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
+    function InternalRetrieveQuery(AQuery: TPressQuery): TPressProxyList; override;
     procedure InternalRollback; override;
     function InternalSQLProxy(const ASQLStatement: string): TPressProxyList; override;
     function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList; override;
@@ -130,7 +130,7 @@ function TPressPhoneBookPersistence.InternalOQLQuery(
   const AOQLStatement: string): TPressProxyList;
 begin
   { TODO : Implement }
-  Result := InternalRetrieveProxyList(nil);
+  Result := InternalRetrieveQuery(nil);
 end;
 
 function TPressPhoneBookPersistence.InternalRetrieve(
@@ -140,7 +140,7 @@ begin
   Result := nil;
 end;
 
-function TPressPhoneBookPersistence.InternalRetrieveProxyList(
+function TPressPhoneBookPersistence.InternalRetrieveQuery(
   AQuery: TPressQuery): TPressProxyList;
 begin
   { TODO : Improve }
@@ -169,14 +169,14 @@ function TPressPhoneBookPersistence.InternalSQLProxy(
   const ASQLStatement: string): TPressProxyList;
 begin
   { TODO : Implement }
-  Result := InternalRetrieveProxyList(nil);
+  Result := InternalRetrieveQuery(nil);
 end;
 
 function TPressPhoneBookPersistence.InternalSQLQuery(
   AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
 begin
   { TODO : Implement }
-  Result := InternalRetrieveProxyList(nil);
+  Result := InternalRetrieveQuery(nil);
 end;
 
 procedure TPressPhoneBookPersistence.InternalStartTransaction;
