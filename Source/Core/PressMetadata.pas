@@ -201,11 +201,10 @@ begin
         Result := VParser.Metadata;
       end;
     except
-      on E: EPressParseError do
-        raise EPressError.CreateFmt(SMetadataParseError,
-         [E.Line, E.Column, E.Message, AMetadataStr]);
-      else
-        raise;
+      on E: Exception do
+        raise EPressError.CreateFmt(SMetadataParseError, [
+         VReader.TokenPos.Line, VReader.TokenPos.Column,
+         E.Message, AMetadataStr]);
     end;
   finally
     VParser.Free;
