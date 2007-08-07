@@ -37,6 +37,8 @@
 (************ Do not change directives below this line ************)
 
 
+{.$DEFINE PressReleaseManagedObjects}
+
 {$BOOLEVAL OFF}
 {$LONGSTRINGS ON}
 {$TYPEDADDRESS ON}

@@ -76,6 +76,24 @@ type
     property RefCount: Integer read FRefCount;
   end;
 
+  IPressHolder = interface(IInterface)
+  ['{ADF93AAB-E963-462F-ACE7-D56CCF582C2D}']
+    function GetInstance: TObject;
+    property Instance: TObject read GetInstance;
+  end;
+
+  TPressHolder = class(TPressManagedObject, IPressHolder)
+  private
+    FInstance: TObject;
+    function GetInstance: TObject;
+  protected
+    procedure Finit; override;
+  public
+    constructor Create(AInstance: TObject);
+    procedure AfterConstruction; override;
+    property Instance: TObject read FInstance;
+  end;
+
   TPressStreamableClass = class of TPressStreamable;
 
   TPressStreamable = class(TPressManagedObject)
@@ -356,8 +374,9 @@ end;
 procedure TPressManagedObject.AfterConstruction;
 begin
   inherited;
-  { TODO : DecLock if assigning the instance to an interface pointer }
-  // DecLock(FRefCount);
+{$IFDEF PressReleaseManagedObjects}
+  DecLock(FRefCount);
+{$ENDIF PressReleaseManagedObjects}
 end;
 
 destructor TPressManagedObject.Destroy;
@@ -418,7 +437,34 @@ begin
     end;
 end;
 
-{ TPressMVPStreamable }
+{ TPressHolder }
+
+procedure TPressHolder.AfterConstruction;
+begin
+  inherited;
+{$IFNDEF PressReleaseManagedObjects}
+  DecLock(FRefCount);  // friend class
+{$ENDIF PressReleaseManagedObjects}
+end;
+
+constructor TPressHolder.Create(AInstance: TObject);
+begin
+  inherited Create;
+  FInstance := AInstance;
+end;
+
+procedure TPressHolder.Finit;
+begin
+  FreeAndNil(FInstance);
+  inherited;
+end;
+
+function TPressHolder.GetInstance: TObject;
+begin
+  Result := FInstance;
+end;
+
+{ TPressStreamable }
 
 class function TPressStreamable.CreateInstance(Arg: Pointer): TPressStreamable;
 begin
