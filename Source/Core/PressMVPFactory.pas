@@ -109,16 +109,13 @@ uses
   PressConsts;
 
 var
-  _MVPFactory: TPressMVPFactory;
+  _MVPFactory: IPressHolder; //TPressMVPFactory;
 
 function PressDefaultMVPFactory: TPressMVPFactory;
 begin
   if not Assigned(_MVPFactory) then
-  begin
-    _MVPFactory := TPressMVPFactory.Create;
-    PressRegisterSingleObject(_MVPFactory);
-  end;
-  Result := _MVPFactory;
+    _MVPFactory := TPressHolder.Create(TPressMVPFactory.Create);
+  Result := TPressMVPFactory(_MVPFactory.Instance);
 end;
 
 { TPressMVPRegisteredForm }

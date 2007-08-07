@@ -393,16 +393,14 @@ type
   TPressMVPControlFriend = class(TControl);
 
 var
-  _PressCommandRegistryList: TPressMVPCommandRegistryList;
+  _CommandRegistryList: IPressHolder; //TPressMVPCommandRegistryList;
 
 function PressCommandRegistryList: TPressMVPCommandRegistryList;
 begin
-  if not Assigned(_PressCommandRegistryList) then
-  begin
-    _PressCommandRegistryList := TPressMVPCommandRegistryList.Create(True);
-    PressRegisterSingleObject(_PressCommandRegistryList);
-  end;
-  Result := _PressCommandRegistryList;
+  if not Assigned(_CommandRegistryList) then
+    _CommandRegistryList :=
+     TPressHolder.Create(TPressMVPCommandRegistryList.Create(True));
+  Result := TPressMVPCommandRegistryList(_CommandRegistryList.Instance);
 end;
 
 { TPressMVPCommandComponent }

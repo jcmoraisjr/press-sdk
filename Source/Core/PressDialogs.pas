@@ -19,18 +19,20 @@ unit PressDialogs;
 interface
 
 uses
-  PressClasses;
+  PressApplication;
+
+const
+  CPressDialogService = CPressDialogServicesBase + $0001;
 
 type
-  TPressDialogsClass = class of TPressDialogs;
-
-  TPressDialogs = class(TPressSingleton)
+  TPressDialogs = class(TPressService)
   protected
     function InternalCancelChanges: Boolean; virtual;
     function InternalConfirmDlg(const AMsg: string): Boolean; virtual;
     function InternalConfirmRemove(ACount: Integer): Boolean; virtual;
     procedure InternalDefaultDlg(const AMsg: string); virtual;
     function InternalSaveChanges: Boolean; virtual;
+    class function InternalServiceType: TPressServiceType; override;
   public
     function CancelChanges: Boolean;
     function ConfirmDlg(const AMsg: string): Boolean;
@@ -39,7 +41,6 @@ type
     function SaveChanges: Boolean;
   end;
 
-procedure AssignPressDialogClass(ADialogClass: TPressDialogsClass);
 function PressDialog: TPressDialogs;
 
 implementation
@@ -50,21 +51,9 @@ uses
   Dialogs,
   PressConsts;
 
-var
-  _PressDialogsClass: TPressDialogsClass;
-
-procedure AssignPressDialogClass(ADialogClass: TPressDialogsClass);
-begin
-  if Assigned(_PressDialogsClass) then
-    raise EPressError.Create(SDialogClassIsAssigned);
-  _PressDialogsClass := ADialogClass;
-end;
-
 function PressDialog: TPressDialogs;
 begin
-  if not Assigned(_PressDialogsClass) then
-    _PressDialogsClass := TPressDialogs;
-  Result := _PressDialogsClass.Instance;
+  Result := PressApp.DefaultService(TPressDialogs) as TPressDialogs;
 end;
 
 { TPressDialogs }
@@ -82,6 +71,11 @@ end;
 function TPressDialogs.ConfirmRemove(ACount: Integer): Boolean;
 begin
   Result := InternalConfirmRemove(ACount);
+end;
+
+procedure TPressDialogs.DefaultDlg(const AMsg: string);
+begin
+  InternalDefaultDlg(AMsg);
 end;
 
 function TPressDialogs.InternalCancelChanges: Boolean;
@@ -113,9 +107,9 @@ begin
   Result := ConfirmDlg(SPressSaveChangesDialog);
 end;
 
-procedure TPressDialogs.DefaultDlg(const AMsg: string);
+class function TPressDialogs.InternalServiceType: TPressServiceType;
 begin
-  InternalDefaultDlg(AMsg);
+  Result := CPressDialogService;
 end;
 
 function TPressDialogs.SaveChanges: Boolean;

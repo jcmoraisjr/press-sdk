@@ -1071,26 +1071,23 @@ type
   end;
 
 var
-  _PressSingletonIDs: TStrings;
-  _PressModel: TPressModel;
+  _SingletonIDs: IPressHolder; //TStrings;
+  _Model: IPressHolder; //TPressModel;
 
 function PressSingletonIDs: TStrings;
 begin
-  if not Assigned(_PressSingletonIDs) then
-  begin
-    _PressSingletonIDs := TStringList.Create;
-    PressRegisterSingleObject(_PressSingletonIDs);
-  end;
-  Result := _PressSingletonIDs;
+  if not Assigned(_SingletonIDs) then
+    _SingletonIDs := TPressHolder.Create(TStringList.Create);
+  Result := TStrings(_SingletonIDs.Instance);
 end;
 
 { Global routines }
 
 function PressModel: TPressModel;
 begin
-  if not Assigned(_PressModel) then
-    _PressModel := TPressModel.Create;
-  Result := _PressModel;
+  if not Assigned(_Model) then
+    _Model := TPressHolder.Create(TPressModel.Create);
+  Result := TPressModel(_Model.Instance);
 end;
 
 procedure PressAssignPersistentId(AObject: TPressObject; const AId: string);
@@ -4433,6 +4430,5 @@ finalization
   TPressParts.UnregisterAttribute;
   TPressReferences.UnregisterAttribute;
   TPressQueryItems.UnregisterAttribute;
-  _PressModel.Free;
 
 end.

@@ -190,7 +190,7 @@ type
     property CurrentItem: TPressEventClassItem read GetCurrentItem;
   end;
 
-  TPressNotifiers = class(TPressSingleton)
+  TPressNotifiers = class(TObject)
   private
     FEventClasses: TPressEventClassList;
     FLockShrinkListCount: Integer;
@@ -199,9 +199,9 @@ type
     procedure ShrinkEventClasses;
     procedure UnlockShrinkList;
   protected
-    procedure Finit; override;
     property EventClasses: TPressEventClassList read GetEventClasses;
   public
+    destructor Destroy; override;
     procedure NotifyEvent(AEvent: TPressEvent);
     procedure Subscribe(ANotifier: TPressNotifier; AObservedObject: TObject; AEventClass: TPressEventClass);
     procedure Unsubscribe(ANotifier: TPressNotifier; AObservedObject: TObject = nil);
@@ -217,37 +217,38 @@ uses
   ;
 
 var
-  _PressNotifiersInstance: TPressNotifiers;
-  _PressEventQueue: TPressEventList;
+  _Notifiers: IPressHolder; //TPressNotifiers;
+  _EventQueue: IPressHolder; //TPressEventList;
 
 function PressNotifiers: TPressNotifiers;
 begin
-  if not Assigned(_PressNotifiersInstance) then
-    _PressNotifiersInstance := TPressNotifiers.Instance;
-  Result := _PressNotifiersInstance;
+  if not Assigned(_Notifiers) then
+    _Notifiers := TPressHolder.Create(TPressNotifiers.Create);
+  Result := TPressNotifiers(_Notifiers.Instance);
 end;
 
 function PressEventQueue: TPressEventList;
 begin
-  if not Assigned(_PressEventQueue) then
-  begin
-    _PressEventQueue := TPressEventList.Create(False);
-    PressRegisterSingleObject(_PressEventQueue);
-  end;
-  Result := _PressEventQueue;
+  if not Assigned(_EventQueue) then
+    _EventQueue := TPressHolder.Create(TPressEventList.Create(False));
+  Result := TPressEventList(_EventQueue.Instance);
 end;
 
 procedure PressProcessEventQueue;
 var
+  VEventQueue: TPressEventList;
   VEvent: TPressEvent;
 begin
-  if Assigned(_PressEventQueue) then
-    while _PressEventQueue.Count > 0 do
+  if Assigned(_EventQueue) then
+  begin
+    VEventQueue := PressEventQueue;
+    while VEventQueue.Count > 0 do
     begin
-      VEvent := _PressEventQueue[0];
-      _PressEventQueue.Extract(VEvent);
+      VEvent := VEventQueue[0];
+      VEventQueue.Extract(VEvent);
       VEvent.Notify;
     end;
+  end;
 end;
 
 { TPressEvent }
@@ -676,10 +677,10 @@ end;
 
 { TPressNotifiers }
 
-procedure TPressNotifiers.Finit;
+destructor TPressNotifiers.Destroy;
 begin
-  inherited;
   FEventClasses.Free;
+  inherited;
 end;
 
 function TPressNotifiers.GetEventClasses: TPressEventClassList;

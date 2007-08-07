@@ -34,6 +34,7 @@ const
   CPressReportServicesBase      = $0300;
   CPressMVPServicesBase         = $0400;
   CPressLogServicesBase         = $0500;
+  CPressDialogServicesBase      = $0600;
 
   CPressUserDefinedServicesBase = $8000;
 
