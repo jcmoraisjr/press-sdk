@@ -534,7 +534,8 @@ begin
            VObject, VRootMap, VComplementaryDataset) then
           begin
             I := Pred(VComplementaryMaps.Count);
-            while (I >= 0) and (VComplementaryMaps[I] <> VRootMap) do
+            while (I >= 0) and
+             (VComplementaryMaps[I].Metadata <> VRootMap.Metadata) do
             begin
               AttributeMapper[VComplementaryMaps[I]].RetrieveAttributes(
                VObject, VComplementaryDataset[0]);
