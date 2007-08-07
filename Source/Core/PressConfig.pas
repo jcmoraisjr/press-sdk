@@ -70,23 +70,86 @@ type
     property SubSectionName: string read FSubSectionName;
   end;
 
+  TPressConfigValue = class;
+
   TPressConfigAssignment = class(TPressConfigObject)
   private
-    FPropertyValue: string;
     FPropertyName: string;
+    FPropertyValue: TPressConfigValue;
+    function GetPropertyValue: string;
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalRead(Reader: TPressParserReader); override;
   public
     property PropertyName: string read FPropertyName;
-    property PropertyValue: string read FPropertyValue;
+    property PropertyValue: string read GetPropertyValue;
+  end;
+
+  TPressConfigValue = class(TPressConfigObject)
+  protected
+    function GetValue: string; virtual; abstract;
+  public
+    property Value: string read GetValue;
+  end;
+
+  TPressConfigLiteralValue = class(TPressConfigValue)
+  private
+    FValue: string;
+  protected
+    function GetValue: string; override;
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    procedure InternalRead(Reader: TPressParserReader); override;
+  end;
+
+  TPressConfigFunction = class;
+
+  TPressConfigFunctionValue = class(TPressConfigValue)
+  private
+    FFunction: TPressConfigFunction;
+  protected
+    function GetValue: string; override;
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    procedure InternalRead(Reader: TPressParserReader); override;
+  public
+    destructor Destroy; override;
+  end;
+
+  TPressConfigFunction = class(TObject)
+  private
+    FParams: TStrings;
+    function GetParams: TStrings;
+  protected
+    function GetValue: string; virtual; abstract;
+  public
+    destructor Destroy; override;
+    class procedure RegisterFunction(const AFunctionName: string);
+    property Params: TStrings read GetParams;
+    property Value: string read GetValue;
   end;
 
 implementation
 
 uses
   SysUtils,
+  PressConsts,
   PressCompatibility;
+
+var
+  _FunctionsList: IPressHolder;
+
+function PressFunctionsList: TStrings;
+begin
+  if not Assigned(_FunctionsList) then
+  begin
+    _FunctionsList := TPressHolder.Create(TStringList.Create);
+    with TStringList(_FunctionsList.Instance) do
+    begin
+      Sorted := True;
+      Duplicates := dupError;
+    end;
+  end;
+  Result := TStrings(_FunctionsList.Instance);
+end;
 
 { TPressConfigReader }
 
@@ -207,6 +270,14 @@ end;
 
 { TPressConfigAssignment }
 
+function TPressConfigAssignment.GetPropertyValue: string;
+begin
+  if Assigned(FPropertyValue) then
+    Result := FPropertyValue.Value
+  else
+    Result := '';
+end;
+
 class function TPressConfigAssignment.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
@@ -221,8 +292,108 @@ begin
     FPropertyName := FPropertyName + '.' + Reader.ReadIdentifier;
   Reader.UnreadToken;
   Reader.ReadMatch(':=');
-  FPropertyValue := Reader.ReadToken;
-  Reader.ReadMatch(';');
+  FPropertyValue := TPressConfigValue(Parse(Reader, [
+   TPressConfigFunctionValue, TPressConfigLiteralValue],
+   Self, True, SPressExpressionMsg));
+  while Reader.ReadToken = ';' do
+    ;
+  Reader.UnreadToken;
+end;
+
+{ TPressConfigLiteralValue }
+
+function TPressConfigLiteralValue.GetValue: string;
+begin
+  Result := FValue;
+end;
+
+class function TPressConfigLiteralValue.InternalApply(
+  Reader: TPressParserReader): Boolean;
+var
+  Token: string;
+begin
+  Token := Reader.ReadToken;
+  Result := (Length(Token) > 0) and (Token[1] in ['0'..'9', '''', '"']);
+end;
+
+procedure TPressConfigLiteralValue.InternalRead(Reader: TPressParserReader);
+begin
+  inherited;
+  FValue := Reader.ReadToken;
+end;
+
+{ TPressConfigFunctionValue }
+
+destructor TPressConfigFunctionValue.Destroy;
+begin
+  FFunction.Free;
+  inherited;
+end;
+
+function TPressConfigFunctionValue.GetValue: string;
+begin
+  if Assigned(FFunction) then
+    Result := FFunction.Value
+  else
+    Result := '';
+end;
+
+class function TPressConfigFunctionValue.InternalApply(
+  Reader: TPressParserReader): Boolean;
+begin
+  Result := IsValidIdent(Reader.ReadToken);
+end;
+
+procedure TPressConfigFunctionValue.InternalRead(Reader: TPressParserReader);
+var
+  VIndex: Integer;
+  Token: string;
+begin
+  inherited;
+  Token := Reader.ReadToken;
+  VIndex := PressFunctionsList.IndexOf(Token);
+  if VIndex = -1 then
+    Reader.ErrorExpected(SPressFunctionMsg, Token);
+  FFunction :=
+   TClass(PressFunctionsList.Objects[VIndex]).Create as TPressConfigFunction;
+  if Reader.ReadNextToken = '(' then
+  begin
+    Reader.ReadMatch('(');
+    Token := Reader.ReadToken;
+    while Token <> ')' do
+    begin
+      if (Token = '') or (not IsValidIdent(Token) and
+       not (Token[1] in ['0'..'9', '''', '"'])) then
+        Reader.ErrorExpected(SPressExpressionMsg, Token);
+      FFunction.Params.Add(Token);
+      Token := Reader.ReadToken;
+      if Token = ',' then
+        Token := Reader.ReadToken
+      else if Token <> ')' then
+        Reader.ErrorExpected(')', Token);
+    end;
+  end
+end;
+
+{ TPressConfigFunction }
+
+destructor TPressConfigFunction.Destroy;
+begin
+  FParams.Free;
+  inherited;
+end;
+
+function TPressConfigFunction.GetParams: TStrings;
+begin
+  if not Assigned(FParams) then
+    FParams := TStringList.Create;
+  Result := FParams;
+end;
+
+class procedure TPressConfigFunction.RegisterFunction(
+  const AFunctionName: string);
+begin
+  PressFunctionsList.AddObject(AFunctionName, TObject(Self));
 end;
 
 end.

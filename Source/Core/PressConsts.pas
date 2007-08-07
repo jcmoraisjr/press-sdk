@@ -142,7 +142,9 @@ resourcestring
   SPressAttributeNameMsg = 'attribute name';
   SPressBooleanValueMsg = 'Valor lógico';
   SPressClassNameMsg = 'class name';
+  SPressExpressionMsg = 'Expressão';
   SPressEofMsg = 'Final de arquivo';
+  SPressFunctionMsg = 'Função';
   SPressIdentifierMsg = 'Identificador';
   SPressIntegerValueMsg = 'Inteiro';
   SPressLineBreakMsg = 'Quebra de linha';
