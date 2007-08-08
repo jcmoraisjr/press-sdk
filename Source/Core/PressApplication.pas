@@ -339,7 +339,7 @@ end;
 
 function TPressService.Release: Integer;
 begin
-  if RefCount = 2 then
+  if Assigned(_PressApp) and _PressApp.Running and (RefCount = 2) then
     inherited Release;
   if Running and (RefCount = 1) then
   begin
