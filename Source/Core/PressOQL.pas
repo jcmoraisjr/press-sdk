@@ -100,6 +100,26 @@ type
     property Statement: string read FStatement;
   end;
 
+  TPressOQLContainer = class(TPressOQLObject)
+  private
+    FAttributeMetadata: TPressAttributeMetadata;
+    FContainerMetadata: TPressAttributeMetadata;
+    FFunctionName: string;
+    FObjectMetadata: TPressObjectMetadata;
+    FTableAlias: string;
+    function BuildExternalLinkCondition: string;
+    function BuildSQLFunctionCall: string;
+    function BuildTableNames: string;
+    function GetAsSQL: string;
+    procedure SetContainerMetadata(Value: TPressAttributeMetadata);
+  protected
+    procedure InternalRead(Reader: TPressParserReader); override;
+  public
+    property AsSQL: string read GetAsSQL;
+    property ContainerMetadata: TPressAttributeMetadata read FContainerMetadata write SetContainerMetadata;
+    property TableAlias: string read FTableAlias write FTableAlias;
+  end;
+
   TPressOQLClause = class(TPressOQLObject)
   end;
 
@@ -399,6 +419,7 @@ var
   VSelect: TPressOQLSelectStatement;
   VMetadata: TPressObjectMetadata;
   VAttribute: TPressAttributeMetadata;
+  VContainer: TPressOQLContainer;
   VTableAlias: string;
   VIndex: Integer;
   Token: string;
@@ -418,20 +439,38 @@ begin
       VMetadata := VAttribute.Owner;
     end;
     Token := Reader.ReadToken;
-    if Token <> '.' then
-      Break;
-    if not VAttribute.AttributeClass.InheritsFrom(TPressItem) then
-      Reader.ErrorFmt(SAttributeIsNotItem, [
-       VMetadata.ObjectClassName, VAttribute.Name]);
-    VTableAlias := VSelect.TableReference(VTableAlias, VAttribute);
-    VMetadata := VAttribute.ObjectClass.ClassMetadata;
-    Token := Reader.ReadIdentifier;
+    if Token = '.' then
+    begin
+      if VAttribute.AttributeClass.InheritsFrom(TPressItem) then
+      begin
+        VTableAlias := VSelect.TableReference(VTableAlias, VAttribute);
+        VMetadata := VAttribute.ObjectClass.ClassMetadata;
+        Token := Reader.ReadIdentifier;
+      end else if VAttribute.AttributeClass.InheritsFrom(TPressItems) then
+      begin
+        VContainer := TPressOQLContainer.Create(nil);
+        try
+          VContainer.ContainerMetadata := VAttribute;
+          VContainer.TableAlias := VTableAlias;
+          VContainer.Read(Reader);
+          Result := VContainer.AsSQL;
+        finally
+          VContainer.Free;
+        end;
+        Exit;
+      end else
+        Reader.ErrorFmt(SUnsupportedAttribute, [
+         VMetadata.ObjectClassName, VAttribute.Name]);
+    end else
+    begin
+      Reader.UnreadToken;
+      if VAttribute.AttributeClass.InheritsFrom(TPressItems) then
+        Reader.ErrorFmt(SUnsupportedAttribute, [
+         VMetadata.ObjectClassName, VAttribute.Name]);
+      Result := VTableAlias + '.' + VAttribute.PersistentName;
+      Exit;
+    end;
   until False;
-  Reader.UnreadToken;
-  if VAttribute.AttributeClass.InheritsFrom(TPressItems) then
-    Reader.ErrorFmt(SUnsupportedAttribute, [
-     VMetadata.ObjectClassName, VAttribute.Name]);
-  Result := VTableAlias + '.' + VAttribute.PersistentName;
 end;
 
 function TPressOQLValue.ReadStringLiteral(Reader: TPressParserReader): string;
@@ -450,6 +489,80 @@ begin
     Result := Token
   else
     Result := AnsiQuotedStr(AnsiExtractQuotedStr(PToken, Token[1]), VQuote);
+end;
+
+{ TPressOQLContainer }
+
+function TPressOQLContainer.BuildExternalLinkCondition: string;
+begin
+  { TODO : Use table alias name improvement }
+  Result := Format('ts2.%s = %s.%s', [
+   ContainerMetadata.PersLinkParentName,
+   FTableAlias,
+   ContainerMetadata.Owner.IdMetadata.PersistentName]);
+end;
+
+function TPressOQLContainer.BuildSQLFunctionCall: string;
+begin
+  if Assigned(FAttributeMetadata) then
+    Result := FFunctionName + '(' + FAttributeMetadata.PersistentName + ')'
+  else
+    Result := FFunctionName + '(*)';
+end;
+
+function TPressOQLContainer.BuildTableNames: string;
+begin
+  { TODO : Improve table alias names }
+  { TODO : Improve for objects that doesn't use link table
+    (future implementation) }
+  Result := Format('%s ts1 inner join %s ts2 on ts1.%s = ts2.%s', [
+   FObjectMetadata.PersistentName,
+   FContainerMetadata.PersLinkName,
+   FObjectMetadata.IdMetadata.PersistentName,
+   FContainerMetadata.PersLinkChildName]);
+end;
+
+function TPressOQLContainer.GetAsSQL: string;
+begin
+  Result := Format('(select %s from %s where %s)', [
+   BuildSQLFunctionCall,
+   BuildTableNames,
+   BuildExternalLinkCondition]);
+end;
+
+procedure TPressOQLContainer.InternalRead(Reader: TPressParserReader);
+var
+  VIndex: Integer;
+  Token: string;
+begin
+  inherited;
+  { TODO : Implement support for more than one attribute }
+  { TODO : Implement support for path }
+  FFunctionName := Reader.ReadIdentifier;
+  Token := Reader.ReadToken;
+  if Token = '(' then
+  begin
+    Token := Reader.ReadIdentifier;
+    VIndex := FObjectMetadata.Map.IndexOfName(Token);
+    if VIndex = -1 then
+      Reader.ErrorExpected(SPressAttributeNameMsg, Token);
+    FAttributeMetadata := FObjectMetadata.Map[VIndex];
+    if not FAttributeMetadata.AttributeClass.InheritsFrom(TPressValue) then
+      Reader.ErrorFmt(SUnsupportedAttribute, [
+       FObjectMetadata.ObjectClassName, FAttributeMetadata.Name]);
+    Reader.ReadMatch(')');
+  end else
+  begin
+    Reader.UnreadToken;
+    FAttributeMetadata := nil;
+  end;
+end;
+
+procedure TPressOQLContainer.SetContainerMetadata(
+  Value: TPressAttributeMetadata);
+begin
+  FContainerMetadata := Value;
+  FObjectMetadata := FContainerMetadata.ObjectClass.ClassMetadata;
 end;
 
 { TPressOQLWhereClause }
