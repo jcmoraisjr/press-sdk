@@ -313,7 +313,8 @@ var
   Token: string;
 begin
   Token := Reader.ReadToken;
-  Result := (Length(Token) > 0) and (Token[1] in ['0'..'9', '''', '"']);
+  Result := IsValidIdent(Token) or
+   ((Length(Token) > 0) and (Token[1] in ['0'..'9', '''', '"']));
 end;
 
 procedure TPressConfigLiteralValue.InternalRead(Reader: TPressParserReader);
@@ -341,7 +342,7 @@ end;
 class function TPressConfigFunctionValue.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := IsValidIdent(Reader.ReadToken);
+  Result := IsValidIdent(Reader.ReadToken) and (Reader.ReadToken = '(');
 end;
 
 procedure TPressConfigFunctionValue.InternalRead(Reader: TPressParserReader);
