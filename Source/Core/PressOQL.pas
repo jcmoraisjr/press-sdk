@@ -88,36 +88,85 @@ type
     property TableAlias: string read GetTableAlias;
   end;
 
-  TPressOQLValue = class(TPressOQLObject)
+  TPressOQLFormula = class(TPressOQLObject)
   private
-    FStatement: string;
-    function ReadAttributeIdentifier(Reader: TPressParserReader): string;
-    function ReadStringLiteral(Reader: TPressParserReader): string;
+    function GetAsString: string;
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalRead(Reader: TPressParserReader); override;
   public
-    property Statement: string read FStatement;
+    property AsString: string read GetAsString;
   end;
 
-  TPressOQLContainer = class(TPressOQLObject)
+  TPressOQLFormulaItem = class(TPressOQLObject)
+  private
+    FNextOperator: string;
+    FSign: string;
+    function GetAsString: string;
+  protected
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    function InternalAsString: string; virtual; abstract;
+    procedure InternalRead(Reader: TPressParserReader); override;
+    procedure InternalReadValue(Reader: TPressParserReader); virtual; abstract;
+    class function IsSign(const AStr: string): Boolean;
+    class function IsValueOperator(const AStr: string): Boolean;
+  public
+    property AsString: string read GetAsString;
+    property NextOperator: string read FNextOperator;
+  end;
+
+  TPressOQLLiteral = class(TPressOQLFormulaItem)
+  private
+    FLiteral: string;
+  protected
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    function InternalAsString: string; override;
+    procedure InternalReadValue(Reader: TPressParserReader); override;
+    class function IsLiteral(const AStr: string): Boolean;
+  end;
+
+  TPressOQLAttributeValue = class;
+
+  TPressOQLAttribute = class(TPressOQLFormulaItem)
+  private
+    FValue: TPressOQLAttributeValue;
+  protected
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    function InternalAsString: string; override;
+    procedure InternalReadValue(Reader: TPressParserReader); override;
+  end;
+
+  TPressOQLAttributeValue = class(TPressOQLObject)
+  private
+    FMetadata: TPressAttributeMetadata;
+    FTableAlias: string;
+  protected
+    function GetAsString: string; virtual; abstract;
+  public
+    property AsString: string read GetAsString;
+    property Metadata: TPressAttributeMetadata read FMetadata write FMetadata;
+    property TableAlias: string read FTableAlias write FTableAlias;
+  end;
+
+  TPressOQLPlainValue = class(TPressOQLAttributeValue)
+  protected
+    function GetAsString: string; override;
+  end;
+
+  TPressOQLContainerValue = class(TPressOQLAttributeValue)
   private
     FAttributeMetadata: TPressAttributeMetadata;
-    FContainerMetadata: TPressAttributeMetadata;
     FFunctionName: string;
     FObjectMetadata: TPressObjectMetadata;
-    FTableAlias: string;
     function BuildExternalLinkCondition: string;
     function BuildSQLFunctionCall: string;
     function BuildTableNames: string;
-    function GetAsSQL: string;
-    procedure SetContainerMetadata(Value: TPressAttributeMetadata);
+    function GetObjectMetadata: TPressObjectMetadata;
   protected
+    function GetAsString: string; override;
     procedure InternalRead(Reader: TPressParserReader); override;
   public
-    property AsSQL: string read GetAsSQL;
-    property ContainerMetadata: TPressAttributeMetadata read FContainerMetadata write SetContainerMetadata;
-    property TableAlias: string read FTableAlias write FTableAlias;
+    property ObjectMetadata: TPressObjectMetadata read GetObjectMetadata;
   end;
 
   TPressOQLClause = class(TPressOQLObject)
@@ -138,8 +187,6 @@ type
 
   TPressOQLWhereExpressions = class(TPressOQLObject)
   private
-    FExpressions: string;
-    function BuildExpressions: string;
     function GetAsString: string;
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
@@ -150,25 +197,27 @@ type
 
   TPressOQLWhereExpression = class(TPressOQLObject)
   private
-    FConnectorToken: string;
+    FNextOperator: string;
     function GetAsString: string;
   protected
     function InternalAsString: string; virtual; abstract;
+    procedure InternalRead(Reader: TPressParserReader); override;
+    procedure InternalReadExpression(Reader: TPressParserReader); virtual; abstract;
   public
-    property ConnectorToken: string read FConnectorToken write FConnectorToken;
+    property NextOperator: string read FNextOperator write FNextOperator;
     property AsString: string read GetAsString;
   end;
 
-  TPressOQLWhereSimpleExpression = class(TPressOQLWhereExpression)
+  TPressOQLWhereDirectExpression = class(TPressOQLWhereExpression)
   private
-    FLeftValue: TPressOQLValue;
+    FLeftStatement: TPressOQLFormula;
     FNot: Boolean;
     FOperator: string;
-    FRightValue: TPressOQLValue;
+    FRightStatement: TPressOQLFormula;
   protected
     function InternalAsString: string; override;
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
-    procedure InternalRead(Reader: TPressParserReader); override;
+    procedure InternalReadExpression(Reader: TPressParserReader); override;
   end;
 
   TPressOQLWhereBracketExpression = class(TPressOQLWhereExpression)
@@ -177,7 +226,7 @@ type
   protected
     function InternalAsString: string; override;
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
-    procedure InternalRead(Reader: TPressParserReader); override;
+    procedure InternalReadExpression(Reader: TPressParserReader); override;
   end;
 
   TPressOQLOrderByClause = class(TPressOQLClause)
@@ -193,7 +242,7 @@ type
   TPressOQLOrderByElement = class(TPressOQLObject)
   private
     { TODO : Include the fields in the select clause }
-    FValue: TPressOQLValue;
+    FValue: TPressOQLAttribute;
     FDesc: Boolean;
     function GetAsString: string;
   protected
@@ -208,6 +257,7 @@ implementation
 uses
   SysUtils,
   PressConsts,
+  PressCompatibility,
   PressAttributes;
 
 { TPressOQLReader }
@@ -380,46 +430,131 @@ begin
   Result := VReference.AliasName;
 end;
 
-{ TPressOQLValue }
+{ TPressOQLFormula }
 
-class function TPressOQLValue.InternalApply(
-  Reader: TPressParserReader): Boolean;
+function TPressOQLFormula.GetAsString: string;
 var
-  Token: string;
+  I: Integer;
 begin
-  Token := Reader.ReadToken;
-  Result := (Length(Token) > 0) and
-   (Token[1] in ['A'..'Z', 'a'..'z', '_', '0'..'9', '''', '"']);
+  Result := '';
+  for I := 0 to Pred(ItemCount) do
+    Result := Result + (Items[I] as TPressOQLFormulaItem).AsString;
 end;
 
-procedure TPressOQLValue.InternalRead(Reader: TPressParserReader);
+class function TPressOQLFormula.InternalApply(
+  Reader: TPressParserReader): Boolean;
+begin
+  Result := TPressOQLLiteral.Apply(Reader) or TPressOQLAttribute.Apply(Reader);
+end;
+
+procedure TPressOQLFormula.InternalRead(Reader: TPressParserReader);
+begin
+  inherited;
+  repeat
+  until TPressOQLFormulaItem(Parse(Reader, [
+   TPressOQLLiteral, TPressOQLAttribute],
+   Owner, True, 'attribute')).NextOperator = '';
+end;
+
+{ TPressOQLFormulaItem }
+
+function TPressOQLFormulaItem.GetAsString: string;
+begin
+  Result := FSign + InternalAsString;
+  if FNextOperator <> '' then
+    Result := Result + ' ' + FNextOperator + ' ';
+end;
+
+class function TPressOQLFormulaItem.InternalApply(
+  Reader: TPressParserReader): Boolean;
+begin
+  Result := IsSign(Reader.ReadToken);
+end;
+
+procedure TPressOQLFormulaItem.InternalRead(Reader: TPressParserReader);
 var
   Token: string;
 begin
   inherited;
-  Token := Reader.ReadNextToken;
-  if Length(Token) > 0 then
-  begin
-    case Token[1] of
-      '''', '"':
-        FStatement := ReadStringLiteral(Reader);
-      '0'..'9':
-        FStatement := Reader.ReadNumber;
-      'A'..'Z', 'a'..'z', '_':
-        FStatement := ReadAttributeIdentifier(Reader)
-      else
-        FStatement := Reader.ReadToken;
-    end;
-  end else
-    FStatement := Reader.ReadToken;
+  Token := Reader.ReadToken;
+  if IsSign(Token) then
+    FSign := Token
+  else
+    Reader.UnreadToken;
+  InternalReadValue(Reader);
+  Token := Reader.ReadToken;
+  if IsValueOperator(Token) then
+    FNextOperator := Token
+  else
+    Reader.UnreadToken;
 end;
 
-function TPressOQLValue.ReadAttributeIdentifier(Reader: TPressParserReader): string;
+class function TPressOQLFormulaItem.IsSign(const AStr: string): Boolean;
+begin
+  Result := (AStr <> '') and (AStr[1] in ['+', '-']);
+end;
+
+class function TPressOQLFormulaItem.IsValueOperator(
+  const AStr: string): Boolean;
+begin
+  { TODO : Improve }
+  Result := (AStr = '+') or (AStr = '-') or (AStr = '*') or (AStr = '/');
+end;
+
+{ TPressOQLLiteral }
+
+class function TPressOQLLiteral.InternalApply(
+  Reader: TPressParserReader): Boolean;
+begin
+  Result := IsLiteral(Reader.ReadNextToken) or inherited InternalApply(Reader);
+end;
+
+function TPressOQLLiteral.InternalAsString: string;
+begin
+  Result := FLiteral;
+end;
+
+procedure TPressOQLLiteral.InternalReadValue(Reader: TPressParserReader);
+const
+  { TODO : read quote char from the database broker }
+  CQuote = '''';
+var
+  Token: string;
+begin
+  Token := Reader.ReadToken;
+  if (Token <> '') and (Token[1] in ['''', '"']) and (Token[1] <> CQuote) then
+    FLiteral := AnsiQuotedStr(UnquotedStr(Token), CQuote)
+  else
+    FLiteral := Token;
+end;
+
+class function TPressOQLLiteral.IsLiteral(const AStr: string): Boolean;
+begin
+  Result := (AStr <> '') and (AStr[1] in ['0'..'9', '''', '"']); 
+end;
+
+{ TPressOQLAttribute }
+
+class function TPressOQLAttribute.InternalApply(
+  Reader: TPressParserReader): Boolean;
+begin
+  Result := IsValidIdent(Reader.ReadNextToken) or
+   inherited InternalApply(Reader);
+end;
+
+function TPressOQLAttribute.InternalAsString: string;
+begin
+  if Assigned(FValue) then
+    Result := FValue.AsString
+  else
+    Result := '';
+end;
+
+procedure TPressOQLAttribute.InternalReadValue(Reader: TPressParserReader);
 var
   VSelect: TPressOQLSelectStatement;
   VMetadata: TPressObjectMetadata;
   VAttribute: TPressAttributeMetadata;
-  VContainer: TPressOQLContainer;
   VTableAlias: string;
   VIndex: Integer;
   Token: string;
@@ -448,15 +583,10 @@ begin
         Token := Reader.ReadIdentifier;
       end else if VAttribute.AttributeClass.InheritsFrom(TPressItems) then
       begin
-        VContainer := TPressOQLContainer.Create(nil);
-        try
-          VContainer.ContainerMetadata := VAttribute;
-          VContainer.TableAlias := VTableAlias;
-          VContainer.Read(Reader);
-          Result := VContainer.AsSQL;
-        finally
-          VContainer.Free;
-        end;
+        FValue := TPressOQLContainerValue.Create(Self);
+        FValue.TableAlias := VTableAlias;
+        FValue.Metadata := VAttribute;
+        FValue.Read(Reader);
         Exit;
       end else
         Reader.ErrorFmt(SUnsupportedAttribute, [
@@ -467,42 +597,37 @@ begin
       if VAttribute.AttributeClass.InheritsFrom(TPressItems) then
         Reader.ErrorFmt(SUnsupportedAttribute, [
          VMetadata.ObjectClassName, VAttribute.Name]);
-      Result := VTableAlias + '.' + VAttribute.PersistentName;
+      FValue := TPressOQLPlainValue.Create(Self);
+      FValue.TableAlias := VTableAlias;
+      FValue.Metadata := VAttribute;
+      FValue.Read(Reader);
       Exit;
     end;
   until False;
 end;
 
-function TPressOQLValue.ReadStringLiteral(Reader: TPressParserReader): string;
-var
-  Token: string;
-  PToken: PChar;
-  VQuote: Char;
+{ TPressOQLPlainValue }
+
+function TPressOQLPlainValue.GetAsString: string;
 begin
-  Token := Reader.ReadString;
-  PToken := PChar(Token);
-
-  { TODO : Implement }
-  VQuote := '''';
-
-  if Token[1] = VQuote then
-    Result := Token
+  if (TableAlias <> '') and Assigned(Metadata) then
+    Result := TableAlias + '.' + Metadata.PersistentName
   else
-    Result := AnsiQuotedStr(AnsiExtractQuotedStr(PToken, Token[1]), VQuote);
+    Result := '';
 end;
 
-{ TPressOQLContainer }
+{ TPressOQLContainerValue }
 
-function TPressOQLContainer.BuildExternalLinkCondition: string;
+function TPressOQLContainerValue.BuildExternalLinkCondition: string;
 begin
   { TODO : Use table alias name improvement }
   Result := Format('ts2.%s = %s.%s', [
-   ContainerMetadata.PersLinkParentName,
-   FTableAlias,
-   ContainerMetadata.Owner.IdMetadata.PersistentName]);
+   Metadata.PersLinkParentName,
+   TableAlias,
+   Metadata.Owner.IdMetadata.PersistentName]);
 end;
 
-function TPressOQLContainer.BuildSQLFunctionCall: string;
+function TPressOQLContainerValue.BuildSQLFunctionCall: string;
 begin
   if Assigned(FAttributeMetadata) then
     Result := FFunctionName + '(' + FAttributeMetadata.PersistentName + ')'
@@ -510,19 +635,22 @@ begin
     Result := FFunctionName + '(*)';
 end;
 
-function TPressOQLContainer.BuildTableNames: string;
+function TPressOQLContainerValue.BuildTableNames: string;
 begin
   { TODO : Improve table alias names }
   { TODO : Improve for objects that doesn't use link table
     (future implementation) }
-  Result := Format('%s ts1 inner join %s ts2 on ts1.%s = ts2.%s', [
-   FObjectMetadata.PersistentName,
-   FContainerMetadata.PersLinkName,
-   FObjectMetadata.IdMetadata.PersistentName,
-   FContainerMetadata.PersLinkChildName]);
+  if Assigned(Metadata) then
+    Result := Format('%s ts1 inner join %s ts2 on ts1.%s = ts2.%s', [
+     ObjectMetadata.PersistentName,
+     Metadata.PersLinkName,
+     ObjectMetadata.IdMetadata.PersistentName,
+     Metadata.PersLinkChildName])
+  else
+    Result := '';
 end;
 
-function TPressOQLContainer.GetAsSQL: string;
+function TPressOQLContainerValue.GetAsString: string;
 begin
   Result := Format('(select %s from %s where %s)', [
    BuildSQLFunctionCall,
@@ -530,7 +658,15 @@ begin
    BuildExternalLinkCondition]);
 end;
 
-procedure TPressOQLContainer.InternalRead(Reader: TPressParserReader);
+function TPressOQLContainerValue.GetObjectMetadata: TPressObjectMetadata;
+begin
+  if not Assigned(FObjectMetadata) then
+  { TODO : Validate Metadata }
+    FObjectMetadata := Metadata.ObjectClass.ClassMetadata;
+  Result := FObjectMetadata;
+end;
+
+procedure TPressOQLContainerValue.InternalRead(Reader: TPressParserReader);
 var
   VIndex: Integer;
   Token: string;
@@ -543,26 +679,19 @@ begin
   if Token = '(' then
   begin
     Token := Reader.ReadIdentifier;
-    VIndex := FObjectMetadata.Map.IndexOfName(Token);
+    VIndex := ObjectMetadata.Map.IndexOfName(Token);
     if VIndex = -1 then
       Reader.ErrorExpected(SPressAttributeNameMsg, Token);
-    FAttributeMetadata := FObjectMetadata.Map[VIndex];
+    FAttributeMetadata := ObjectMetadata.Map[VIndex];
     if not FAttributeMetadata.AttributeClass.InheritsFrom(TPressValue) then
       Reader.ErrorFmt(SUnsupportedAttribute, [
-       FObjectMetadata.ObjectClassName, FAttributeMetadata.Name]);
+       ObjectMetadata.ObjectClassName, FAttributeMetadata.Name]);
     Reader.ReadMatch(')');
   end else
   begin
     Reader.UnreadToken;
     FAttributeMetadata := nil;
   end;
-end;
-
-procedure TPressOQLContainer.SetContainerMetadata(
-  Value: TPressAttributeMetadata);
-begin
-  FContainerMetadata := Value;
-  FObjectMetadata := FContainerMetadata.ObjectClass.ClassMetadata;
 end;
 
 { TPressOQLWhereClause }
@@ -591,7 +720,7 @@ end;
 
 { TPressOQLWhereExpressions }
 
-function TPressOQLWhereExpressions.BuildExpressions: string;
+function TPressOQLWhereExpressions.GetAsString: string;
 var
   I: Integer;
 begin
@@ -600,36 +729,20 @@ begin
     Result := Result + (Items[I] as TPressOQLWhereExpression).AsString;
 end;
 
-function TPressOQLWhereExpressions.GetAsString: string;
-begin
-  if FExpressions = '' then
-    FExpressions := BuildExpressions;
-  Result := FExpressions;
-end;
-
 class function TPressOQLWhereExpressions.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
   Result := TPressOQLWhereBracketExpression.Apply(Reader) or
-   TPressOQLWhereSimpleExpression.Apply(Reader);
+   TPressOQLWhereDirectExpression.Apply(Reader);
 end;
 
 procedure TPressOQLWhereExpressions.InternalRead(Reader: TPressParserReader);
-var
-  VExpression: TPressOQLWhereExpression;
-  Token: string;
 begin
   inherited;
   repeat
-    VExpression := TPressOQLWhereExpression(Parse(Reader, [
-     TPressOQLWhereBracketExpression, TPressOQLWhereSimpleExpression],
-     Owner, True, 'expression'));
-    Token := Reader.ReadToken;
-    if SameText(Token, 'and') or SameText(Token, 'or') then
-      VExpression.ConnectorToken := Token
-    else
-      Reader.UnreadToken;
-  until VExpression.ConnectorToken = '';
+  until TPressOQLWhereExpression(Parse(Reader, [
+   TPressOQLWhereBracketExpression, TPressOQLWhereDirectExpression],
+   Owner, True, 'expression')).NextOperator = '';
 end;
 
 { TPressOQLWhereExpression }
@@ -637,51 +750,64 @@ end;
 function TPressOQLWhereExpression.GetAsString: string;
 begin
   Result := InternalAsString;
-  if (Result <> '') and (FConnectorToken <> '') then
-    Result := Result + ' ' + FConnectorToken + ' ';
+  if (Result <> '') and (FNextOperator <> '') then
+    Result := Result + ' ' + FNextOperator + ' ';
 end;
 
-{ TPressOQLWhereSimpleExpression }
+procedure TPressOQLWhereExpression.InternalRead(
+  Reader: TPressParserReader);
+var
+  Token: string;
+begin
+  inherited;
+  InternalReadExpression(Reader);
+  Token := Reader.ReadToken;
+  if SameText(Token, 'and') or SameText(Token, 'or') then
+    FNextOperator := Token
+  else
+    Reader.UnreadToken;
+end;
 
-class function TPressOQLWhereSimpleExpression.InternalApply(
+{ TPressOQLWhereDirectExpression }
+
+class function TPressOQLWhereDirectExpression.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
   Result := Reader.ReadToken <> ')';
   { TODO : not IsReservedWord(Token) and not IsSymbol(Token) }
 end;
 
-function TPressOQLWhereSimpleExpression.InternalAsString: string;
+function TPressOQLWhereDirectExpression.InternalAsString: string;
 const
   CNotString: array[Boolean] of string = ('', 'not ');
 begin
-  if Assigned(FLeftValue) and Assigned(FRightValue) then
+  if Assigned(FLeftStatement) and Assigned(FRightStatement) then
   begin
     Result := Format('%s%s %s %s', [
      CNotString[FNot],
-     FLeftValue.Statement,
+     FLeftStatement.AsString,
      FOperator,
-     FRightValue.Statement]);
+     FRightStatement.AsString]);
   end else
     Result := '';
 end;
 
-procedure TPressOQLWhereSimpleExpression.InternalRead(
+procedure TPressOQLWhereDirectExpression.InternalReadExpression(
   Reader: TPressParserReader);
 var
   Token: string;
 begin
-  inherited;
   Token := Reader.ReadToken;
   FNot := SameText(Token, 'not');
   if not FNot then
     Reader.UnreadToken;
-  FLeftValue :=
-   TPressOQLValue(Parse(Reader, [TPressOQLValue],
+  FLeftStatement :=
+   TPressOQLFormula(Parse(Reader, [TPressOQLFormula],
    Owner, True, 'statement'));
-  { TODO : Validate operator }
+  { TODO : Validate operator (>, >=, <, <=, =, <>, in) }
   FOperator := Reader.ReadToken;
-  FRightValue :=
-   TPressOQLValue(Parse(Reader, [TPressOQLValue],
+  FRightStatement :=
+   TPressOQLFormula(Parse(Reader, [TPressOQLFormula],
    Owner, True, 'statement'));
 end;
 
@@ -701,10 +827,9 @@ begin
     Result := '';
 end;
 
-procedure TPressOQLWhereBracketExpression.InternalRead(
+procedure TPressOQLWhereBracketExpression.InternalReadExpression(
   Reader: TPressParserReader);
 begin
-  inherited;
   Reader.ReadMatch('(');
   FExpressions := TPressOQLWhereExpressions(
    Parse(Reader, [TPressOQLWhereExpressions], Owner));
@@ -746,7 +871,7 @@ function TPressOQLOrderByElement.GetAsString: string;
 begin
   if Assigned(FValue) then
   begin
-    Result := FValue.Statement;
+    Result := FValue.AsString;
     if FDesc then
       Result := Result + ' desc';
   end else
@@ -755,17 +880,15 @@ end;
 
 class function TPressOQLOrderByElement.InternalApply(
   Reader: TPressParserReader): Boolean;
-var
-  Token: string;
 begin
-  Token := Reader.ReadToken;
-  Result := (Length(Token) > 0) and IsValidIdent(Token[1]);
+  Result := IsValidIdent(Reader.ReadToken);
 end;
 
 procedure TPressOQLOrderByElement.InternalRead(Reader: TPressParserReader);
 begin
   inherited;
-  FValue := TPressOQLValue(Parse(Reader, [TPressOQLValue], Owner));
+  { TODO : TPressOQLAttribute is a formula item, refactor }
+  FValue := TPressOQLAttribute(Parse(Reader, [TPressOQLAttribute], Owner));
   if Assigned(FValue) then
   begin
     FDesc := SameText(Reader.ReadToken, 'desc');
