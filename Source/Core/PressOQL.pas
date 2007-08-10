@@ -353,9 +353,9 @@ begin
     Result := Format('select %s from %s', [
      BuildFieldNames, BuildTableNames]);
     if Assigned(FWhereClause) then
-      Result := Result + ' where ' + FWhereClause.AsString;
+      Result := Result + ' ' + FWhereClause.AsString;
     if Assigned(FOrderByClause) then
-      Result := Result + ' order by ' + FOrderByClause.AsString;
+      Result := Result + ' ' + FOrderByClause.AsString;
   end else
     Result := '';
 end;
@@ -699,7 +699,7 @@ end;
 function TPressOQLWhereClause.GetAsString: string;
 begin
   if Assigned(FExpressions) then
-    Result := FExpressions.AsString
+    Result := 'where ' + FExpressions.AsString
   else
     Result := '';
 end;
@@ -842,10 +842,13 @@ function TPressOQLOrderByClause.GetAsString: string;
 var
   I: Integer;
 begin
-  Result := '';
-  for I := 0 to Pred(ItemCount) do
-    Result := Result + (Items[I] as TPressOQLOrderByElement).AsString + ', ';
-  SetLength(Result, Length(Result) - 2);
+  if ItemCount > 0 then
+  begin
+    Result := 'order by ';
+    for I := 0 to Pred(ItemCount) do
+      Result := Result + (Items[I] as TPressOQLOrderByElement).AsString + ', ';
+    SetLength(Result, Length(Result) - 2);
+  end;
 end;
 
 class function TPressOQLOrderByClause.InternalApply(
