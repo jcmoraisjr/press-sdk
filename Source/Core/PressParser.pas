@@ -14,6 +14,7 @@
 
 unit PressParser;
 
+{$DEFINE PressBaseUnit}
 {$I Press.inc}
 
 interface
