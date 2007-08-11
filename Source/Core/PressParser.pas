@@ -60,13 +60,15 @@ type
   private
     FItemList: TPressParserList;
     FOwner: TPressParserObject;
+    FParent: TPressParserObject;
     function GetItemList: TPressParserList;
     function GetItems(AIndex: Integer): TPressParserObject;
   protected
     function FindRule(Reader: TPressParserReader; AClasses: array of TPressParserClass): TPressParserClass;
     class function InternalApply(Reader: TPressParserReader): Boolean; virtual;
+    function InternalCreateObject(AClass: TPressParserClass): TPressParserObject; virtual;
     procedure InternalRead(Reader: TPressParserReader); virtual;
-    function Parse(Reader: TPressParserReader; AParserClasses: array of TPressParserClass; AOwner: TPressParserObject = nil; ANecessary: Boolean = False; const AErrorExpectedMsg: string = ''): TPressParserObject;
+    function Parse(Reader: TPressParserReader; AParserClasses: array of TPressParserClass; AParent: TPressParserObject = nil; AMandatory: Boolean = False; const AErrorExpectedMsg: string = ''): TPressParserObject;
     property ItemList: TPressParserList read GetItemList;
   public
     constructor Create(AOwner: TPressParserObject); virtual;
@@ -76,6 +78,7 @@ type
     procedure Read(Reader: TPressParserReader);
     property Items[AIndex: Integer]: TPressParserObject read GetItems; default;
     property Owner: TPressParserObject read FOwner;
+    property Parent: TPressParserObject read FParent write FParent;
   end;
 
   TPressParserIterator = class;
@@ -480,6 +483,12 @@ begin
   Result := True;
 end;
 
+function TPressParserObject.InternalCreateObject(
+  AClass: TPressParserClass): TPressParserObject;
+begin
+  Result := AClass.Create(Self);
+end;
+
 procedure TPressParserObject.InternalRead(Reader: TPressParserReader);
 begin
 end;
@@ -495,8 +504,8 @@ end;
 function TPressParserObject.Parse(
   Reader: TPressParserReader;
   AParserClasses: array of TPressParserClass;
-  AOwner: TPressParserObject;
-  ANecessary: Boolean;
+  AParent: TPressParserObject;
+  AMandatory: Boolean;
   const AErrorExpectedMsg: string): TPressParserObject;
 var
   VRule: TPressParserClass;
@@ -504,15 +513,15 @@ begin
   VRule := FindRule(Reader, AParserClasses);
   if Assigned(VRule) then
   begin
-    if not Assigned(AOwner) then
-      AOwner := Self;
-    Result := VRule.Create(Self);
-    Result.FOwner := AOwner;  // friend class
+    if not Assigned(AParent) then
+      AParent := Self;
+    Result := InternalCreateObject(VRule);
+    Result.Parent := AParent;
     Result.Read(Reader);
   end else
   begin
     Result := nil;
-    if ANecessary then
+    if AMandatory then
       Reader.ErrorExpected(AErrorExpectedMsg, Reader.ReadToken);
   end;
 end;

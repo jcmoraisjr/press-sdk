@@ -307,7 +307,7 @@ begin
   inherited;
   Reader.ReadMatch('(');
   repeat
-    Parse(Reader, [TPressMetaParserAttribute], Self);
+    Parse(Reader, [TPressMetaParserAttribute]);
   until Reader.ReadToken <> ';';
   Reader.UnreadToken;
   Reader.ReadMatch(')');
