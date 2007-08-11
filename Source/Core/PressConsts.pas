@@ -63,6 +63,7 @@ resourcestring
   SAttributeTypeNotFound = 'O atributo %s não foi encontrado';
   SCannotChangeOPFBroker = 'Não é possível alterar o Broker de acesso a dados';
   SCannotReleaseInstance = 'Não é possível liberar a instância ''%s''';
+  SCannotUseAggregateFunctionHere = 'Não é possível utilizar função de agregação aqui';
   SClassIsNotPersistent = 'Classe ''%s'' não é persistente';
   SClassNotFound = 'Classe %s não encontrada';
   SColumnDataParseError = 'Erro ao interpretar dados da coluna %s(''%s''): "%s"';

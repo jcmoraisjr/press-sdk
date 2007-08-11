@@ -3233,7 +3233,11 @@ begin
       mtFinishing:
         Result := FormatStringItem('%s LIKE %s%s%%%1:s');
       mtContains:
-        Result := FormatStringItem('%s LIKE %s%%%s%%%1:s');
+        { TODO : new MatchType Enums for containers? }
+        if AAttribute is TPressReference then
+          Result := FormatValueItem('%1:s IN %0:s')
+        else
+          Result := FormatStringItem('%s LIKE %s%%%s%%%1:s');
       mtGreaterThan:
         Result := FormatValueItem('%s > %s');
       mtGreaterThanOrEqual:
