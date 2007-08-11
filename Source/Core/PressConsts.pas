@@ -139,9 +139,9 @@ resourcestring
   SPressSortByCommand = 'Ordernar por ''%s''';
   SPressManageReportCommand = 'Gerenciar Relatório';
 
-  SPressAttributeNameMsg = 'attribute name';
+  SPressAttributeNameMsg = 'nome de atributo';
   SPressBooleanValueMsg = 'Valor lógico';
-  SPressClassNameMsg = 'class name';
+  SPressClassNameMsg = 'nome de classe';
   SPressExpressionMsg = 'Expressão';
   SPressEofMsg = 'Final de arquivo';
   SPressFunctionMsg = 'Função';
@@ -149,7 +149,7 @@ resourcestring
   SPressIntegerValueMsg = 'Inteiro';
   SPressLineBreakMsg = 'Quebra de linha';
   SPressNumberValueMsg = 'Número';
-  SPressPropertyNameMsg = 'property name';
+  SPressPropertyNameMsg = 'nome de propriedade';
   SPressReportErrorMsg = ' ##Erro## ';
   SPressStringDelimiterMsg = 'Delimitador de string';
   SPressStringValueMsg = 'String';
