@@ -88,7 +88,17 @@ type
     property TableAlias: string read GetTableAlias;
   end;
 
-  TPressOQLExpression = class(TPressOQLObject)
+  TPressOQLSelectObject = class(TPressOQLObject)
+  private
+    FSelect: TPressOQLSelectStatement;
+  protected
+    function InternalCreateObject(AClass: TPressParserClass): TPressParserObject; override;
+  public
+    constructor Create(AOwner: TPressParserObject); override;
+    property Select: TPressOQLSelectStatement read FSelect;
+  end;
+
+  TPressOQLExpression = class(TPressOQLSelectObject)
   protected
     function GetAsString: string; virtual; abstract;
   public
@@ -156,7 +166,7 @@ type
     function InternalReadItems(Reader: TPressParserReader; const ATableAlias: string; AAttribute: TPressAttributeMetadata): TPressOQLAttributeValue; override;
   end;
 
-  TPressOQLAttributeValue = class(TPressOQLObject)
+  TPressOQLAttributeValue = class(TPressOQLSelectObject)
   private
     FMetadata: TPressAttributeMetadata;
     FTableAlias: string;
@@ -201,7 +211,7 @@ type
     property ObjectMetadata: TPressObjectMetadata read GetObjectMetadata;
   end;
 
-  TPressOQLClause = class(TPressOQLObject)
+  TPressOQLClause = class(TPressOQLSelectObject)
   end;
 
   TPressOQLWhereExpressions = class;
@@ -217,7 +227,7 @@ type
     property AsString: string read GetAsString;
   end;
 
-  TPressOQLWhereExpressions = class(TPressOQLObject)
+  TPressOQLWhereExpressions = class(TPressOQLSelectObject)
   private
     function GetAsString: string;
   protected
@@ -227,7 +237,7 @@ type
     property AsString: string read GetAsString;
   end;
 
-  TPressOQLWhereExpression = class(TPressOQLObject)
+  TPressOQLWhereExpression = class(TPressOQLSelectObject)
   private
     FNextOperator: string;
     function GetAsString: string;
@@ -271,7 +281,7 @@ type
     property AsString: string read GetAsString;
   end;
 
-  TPressOQLOrderByElement = class(TPressOQLObject)
+  TPressOQLOrderByElement = class(TPressOQLSelectObject)
   private
     { TODO : Include the fields in the select clause }
     FValue: TPressOQLPlainAttribute;
@@ -462,6 +472,23 @@ begin
   Result := VReference.AliasName;
 end;
 
+{ TPressOQLSelectObject }
+
+constructor TPressOQLSelectObject.Create(AOwner: TPressParserObject);
+begin
+  inherited Create(AOwner);
+  if AOwner is TPressOQLSelectStatement then
+    FSelect := TPressOQLSelectStatement(AOwner);
+end;
+
+function TPressOQLSelectObject.InternalCreateObject(
+  AClass: TPressParserClass): TPressParserObject;
+begin
+  Result := inherited InternalCreateObject(AClass);
+  if Result is TPressOQLSelectObject then
+    TPressOQLSelectObject(Result).FSelect := Select;
+end;
+
 { TPressOQLFormula }
 
 function TPressOQLFormula.GetAsString: string;
@@ -486,7 +513,7 @@ begin
   repeat
   until TPressOQLFormulaItem(Parse(Reader, [
    TPressOQLLiteral, TPressOQLPlainAttribute],
-   Owner, True, SPressAttributeNameMsg)).NextOperator = '';
+   Self, True, SPressAttributeNameMsg)).NextOperator = '';
 end;
 
 { TPressOQLFormulaItem }
@@ -593,7 +620,7 @@ var
   Token: string;
 begin
   Token := Reader.ReadIdentifier;
-  VSelect := (Owner.Owner as TPressOQLSelectStatement);
+  VSelect := Select;
   VMetadata := VSelect.Metadata;
   VTableAlias := VSelect.TableAlias;
   repeat
@@ -837,7 +864,7 @@ begin
   repeat
   until TPressOQLWhereExpression(Parse(Reader, [
    TPressOQLWhereBracketExpression, TPressOQLWhereDirectExpression],
-   Owner, True, SPressExpressionMsg)).NextOperator = '';
+   Self, True, SPressExpressionMsg)).NextOperator = '';
 end;
 
 { TPressOQLWhereExpression }
@@ -899,7 +926,7 @@ begin
     Reader.UnreadToken;
   FLeftExpression :=
    TPressOQLExpression(Parse(Reader, [TPressOQLFormula],
-   Owner, True, SPressExpressionMsg));
+   Self, True, SPressExpressionMsg));
   { TODO : Validate operator (>, >=, <, <=, =, <>, in) }
   FOperator := Reader.ReadToken;
   if SameText(FOperator, 'in') then
@@ -908,7 +935,7 @@ begin
     VExpressionClass := TPressOQLFormula;
   FRightExpression :=
    TPressOQLExpression(Parse(Reader, [VExpressionClass],
-   Owner, True, SPressExpressionMsg));
+   Self, True, SPressExpressionMsg));
 end;
 
 { TPressOQLWhereBracketExpression }
@@ -932,7 +959,7 @@ procedure TPressOQLWhereBracketExpression.InternalReadExpression(
 begin
   Reader.ReadMatch('(');
   FExpressions := TPressOQLWhereExpressions(
-   Parse(Reader, [TPressOQLWhereExpressions], Owner));
+   Parse(Reader, [TPressOQLWhereExpressions]));
   Reader.ReadMatch(')');
 end;
 
@@ -991,7 +1018,7 @@ procedure TPressOQLOrderByElement.InternalRead(Reader: TPressParserReader);
 begin
   inherited;
   { TODO : TPressOQLPlainAttribute is a formula item, refactor }
-  FValue := TPressOQLPlainAttribute(Parse(Reader, [TPressOQLPlainAttribute], Owner));
+  FValue := TPressOQLPlainAttribute(Parse(Reader, [TPressOQLPlainAttribute]));
   if Assigned(FValue) then
   begin
     FDesc := SameText(Reader.ReadToken, 'desc');
