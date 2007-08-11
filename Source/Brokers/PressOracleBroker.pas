@@ -26,6 +26,7 @@ type
   TPressOracleDDLBuilder = class(TPressOPFDDLBuilder)
   protected
     function InternalFieldTypeStr(AFieldType: TPressOPFFieldType): string; override;
+    function InternalImplicitIndexCreation: Boolean; override;
     function InternalMaxIdentLength: Integer; override;
   public
     function CreateForeignKeyStatement(ATableMetadata: TPressOPFTableMetadata; AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string; override;
@@ -80,6 +81,11 @@ const
    'blob');          //  oftBinary
 begin
   Result := CFieldTypeStr[AFieldType];
+end;
+
+function TPressOracleDDLBuilder.InternalImplicitIndexCreation: Boolean;
+begin
+  Result := False;
 end;
 
 function TPressOracleDDLBuilder.InternalMaxIdentLength: Integer;

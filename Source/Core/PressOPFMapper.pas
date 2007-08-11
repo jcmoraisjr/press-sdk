@@ -143,12 +143,14 @@ type
     function BuildFieldType(AFieldMetadata: TPressOPFFieldMetadata): string;
     function BuildStringList(AList: TStrings): string;
     function InternalFieldTypeStr(AFieldType: TPressOPFFieldType): string; virtual;
+    function InternalImplicitIndexCreation: Boolean; virtual;
     function InternalMaxIdentLength: Integer; virtual;
   public
     function CreateClearDatabaseStatement(AModel: TPressOPFStorageModel): string; virtual;
     function CreateDatabaseStatement(AModel: TPressOPFStorageModel): string; virtual;
     function CreateFieldStatement(AFieldMetadata: TPressOPFFieldMetadata): string; virtual;
     function CreateFieldStatementList(ATableMetadata: TPressOPFTableMetadata): string; virtual;
+    function CreateForeignKeyIndexStatement(ATableMetadata: TPressOPFTableMetadata; AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string; virtual;
     function CreateForeignKeyStatement(ATableMetadata: TPressOPFTableMetadata; AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string; virtual;
     function CreateHints(AModel: TPressOPFStorageModel): string; virtual;
     function CreateIndexStatement(ATableMetadata: TPressOPFTableMetadata; AIndexMetadata: TPressOPFIndexMetadata): string; virtual;
@@ -1260,6 +1262,10 @@ begin
      CreatePrimaryKeyStatement(VTable);
     for J := 0 to Pred(VTable.IndexCount) do
       Result := Result + CreateIndexStatement(VTable, VTable.Indexes[J]);
+    if not InternalImplicitIndexCreation then
+      for J := 0 to Pred(VTable.ForeignKeyCount) do
+        Result := Result +
+         CreateForeignKeyIndexStatement(VTable, VTable.ForeignKeys[J]);
   end;
   for I := 0 to Pred(AModel.TableMetadataCount) do
   begin
@@ -1289,6 +1295,16 @@ begin
   for I := 0 to Pred(ATableMetadata.FieldCount) do
     ConcatStatements(
      CreateFieldStatement(ATableMetadata.Fields[I]), ','#10'  ', Result);
+end;
+
+function TPressOPFDDLBuilder.CreateForeignKeyIndexStatement(
+  ATableMetadata: TPressOPFTableMetadata;
+  AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string;
+begin
+  Result := Format('create index %s'#10'  on %s (%s);'#10#10, [
+   AForeignKeyMetadata.Name,
+   ATableMetadata.Name,
+   BuildStringList(AForeignKeyMetadata.KeyFieldNames)]);
 end;
 
 function TPressOPFDDLBuilder.CreateForeignKeyStatement(
@@ -1413,6 +1429,11 @@ function TPressOPFDDLBuilder.InternalFieldTypeStr(
   AFieldType: TPressOPFFieldType): string;
 begin
   raise EPressOPFError.CreateFmt(SUnsupportedFeature, ['field type str']);
+end;
+
+function TPressOPFDDLBuilder.InternalImplicitIndexCreation: Boolean;
+begin
+  Result := False;
 end;
 
 function TPressOPFDDLBuilder.InternalMaxIdentLength: Integer;
