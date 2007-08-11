@@ -148,12 +148,12 @@ type
     property TableAlias: string read FTableAlias write FTableAlias;
   end;
 
-  TPressOQLPlainValue = class(TPressOQLAttributeValue)
+  TPressOQLPlainAttributeValue = class(TPressOQLAttributeValue)
   protected
     function GetAsString: string; override;
   end;
 
-  TPressOQLContainerValue = class(TPressOQLAttributeValue)
+  TPressOQLContainerCalcValue = class(TPressOQLAttributeValue)
   private
     FAttributeMetadata: TPressAttributeMetadata;
     FFunctionName: string;
@@ -583,7 +583,7 @@ begin
         Token := Reader.ReadIdentifier;
       end else if VAttribute.AttributeClass.InheritsFrom(TPressItems) then
       begin
-        FValue := TPressOQLContainerValue.Create(Self);
+        FValue := TPressOQLContainerCalcValue.Create(Self);
         FValue.TableAlias := VTableAlias;
         FValue.Metadata := VAttribute;
         FValue.Read(Reader);
@@ -597,7 +597,7 @@ begin
       if VAttribute.AttributeClass.InheritsFrom(TPressItems) then
         Reader.ErrorFmt(SUnsupportedAttribute, [
          VMetadata.ObjectClassName, VAttribute.Name]);
-      FValue := TPressOQLPlainValue.Create(Self);
+      FValue := TPressOQLPlainAttributeValue.Create(Self);
       FValue.TableAlias := VTableAlias;
       FValue.Metadata := VAttribute;
       FValue.Read(Reader);
@@ -606,9 +606,9 @@ begin
   until False;
 end;
 
-{ TPressOQLPlainValue }
+{ TPressOQLPlainAttributeValue }
 
-function TPressOQLPlainValue.GetAsString: string;
+function TPressOQLPlainAttributeValue.GetAsString: string;
 begin
   if (TableAlias <> '') and Assigned(Metadata) then
     Result := TableAlias + '.' + Metadata.PersistentName
@@ -616,9 +616,9 @@ begin
     Result := '';
 end;
 
-{ TPressOQLContainerValue }
+{ TPressOQLContainerCalcValue }
 
-function TPressOQLContainerValue.BuildExternalLinkCondition: string;
+function TPressOQLContainerCalcValue.BuildExternalLinkCondition: string;
 begin
   { TODO : Use table alias name improvement }
   Result := Format('ts2.%s = %s.%s', [
@@ -627,7 +627,7 @@ begin
    Metadata.Owner.IdMetadata.PersistentName]);
 end;
 
-function TPressOQLContainerValue.BuildSQLFunctionCall: string;
+function TPressOQLContainerCalcValue.BuildSQLFunctionCall: string;
 begin
   if Assigned(FAttributeMetadata) then
     Result := FFunctionName + '(' + FAttributeMetadata.PersistentName + ')'
@@ -635,7 +635,7 @@ begin
     Result := FFunctionName + '(*)';
 end;
 
-function TPressOQLContainerValue.BuildTableNames: string;
+function TPressOQLContainerCalcValue.BuildTableNames: string;
 begin
   { TODO : Improve table alias names }
   { TODO : Improve for objects that doesn't use link table
@@ -650,7 +650,7 @@ begin
     Result := '';
 end;
 
-function TPressOQLContainerValue.GetAsString: string;
+function TPressOQLContainerCalcValue.GetAsString: string;
 begin
   Result := Format('(select %s from %s where %s)', [
    BuildSQLFunctionCall,
@@ -658,7 +658,7 @@ begin
    BuildExternalLinkCondition]);
 end;
 
-function TPressOQLContainerValue.GetObjectMetadata: TPressObjectMetadata;
+function TPressOQLContainerCalcValue.GetObjectMetadata: TPressObjectMetadata;
 begin
   if not Assigned(FObjectMetadata) then
   { TODO : Validate Metadata }
@@ -666,7 +666,7 @@ begin
   Result := FObjectMetadata;
 end;
 
-procedure TPressOQLContainerValue.InternalRead(Reader: TPressParserReader);
+procedure TPressOQLContainerCalcValue.InternalRead(Reader: TPressParserReader);
 var
   VIndex: Integer;
   Token: string;
