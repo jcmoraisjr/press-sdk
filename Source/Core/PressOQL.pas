@@ -49,14 +49,31 @@ type
     FReferencedAliasName: string;
     FReferencedFieldName: string;
     FTableName: string;
+    function GetAsString: string;
   public
-    constructor Create(AAttributeMetadata: TPressAttributeMetadata; const AReferencedAlias: string; AId: Integer);
+    constructor Create(AAttributeMetadata: TPressAttributeMetadata; const ATableAliasPrefix, AReferencedAlias: string; AId: Integer);
     property AliasName: string read FAliasName;
+    property AsString: string read GetAsString;
     property AttributeMetadata: TPressAttributeMetadata read FAttributeMetadata;
     property FieldName: string read FFieldName;
     property ReferencedAliasName: string read FReferencedAliasName;
     property ReferencedFieldName: string read FReferencedFieldName;
     property TableName: string read FTableName;
+  end;
+
+  TPressOQLTableReferences = class(TObject)
+  private
+    FList: TObjectList;
+    FTableAliasPrefix: string;
+    function GetAsString: string;
+    function GetList: TObjectList;
+  protected
+    property List: TObjectList read GetList;
+  public
+    constructor Create(const ATableAliasPrefix: string);
+    destructor Destroy; override;
+    function TableReference(const AReferencedAlias: string; AAttributeMetadata: TPressAttributeMetadata): string;
+    property AsString: string read GetAsString;    
   end;
 
   TPressOQLWhereClause = class;
@@ -68,17 +85,15 @@ type
     FMetadata: TPressObjectMetadata;
     FObjectClassName: string;
     FOrderByClause: TPressOQLOrderByClause;
-    FTableReferences: TObjectList;
+    FTableReferences: TPressOQLTableReferences;
     FWhereClause: TPressOQLWhereClause;
     function BuildFieldNames: string;
     function BuildTableNames: string;
     function GetAsSQL: string;
     function GetTableAlias: string;
-    function GetTableReferences: TObjectList;
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalRead(Reader: TPressParserReader); override;
-    property TableReferences: TObjectList read GetTableReferences;
   public
     destructor Destroy; override;
     function TableReference(const AReferencedAlias: string; AAttributeMetadata: TPressAttributeMetadata): string;
@@ -328,13 +343,13 @@ end;
 
 constructor TPressOQLTableReference.Create(
   AAttributeMetadata: TPressAttributeMetadata;
-  const AReferencedAlias: string; AId: Integer);
+  const ATableAliasPrefix, AReferencedAlias: string; AId: Integer);
 var
   VObjectMetadata: TPressObjectMetadata;
 begin
   inherited Create;
   FAttributeMetadata := AAttributeMetadata;
-  FAliasName := SPressTableAliasPrefix + InttoStr(AId);
+  FAliasName := ATableAliasPrefix + IntToStr(AId);
   if FAttributeMetadata.AttributeClass.InheritsFrom(TPressValue) then
   begin
     VObjectMetadata := FAttributeMetadata.Owner;
@@ -347,6 +362,74 @@ begin
   FFieldName := VObjectMetadata.IdMetadata.PersistentName;
   FReferencedAliasName := AReferencedAlias;
   FTableName := VObjectMetadata.PersistentName;
+end;
+
+function TPressOQLTableReference.GetAsString: string;
+begin
+  Result := Format('left outer join %s %s on %s.%s = %1:s.%4:s', [
+   TableName, AliasName, ReferencedAliasName, ReferencedFieldName, FieldName]);
+end;
+
+{ TPressOQLTableReferences }
+
+constructor TPressOQLTableReferences.Create(
+  const ATableAliasPrefix: string);
+begin
+  inherited Create;
+  FTableAliasPrefix := ATableAliasPrefix;
+end;
+
+destructor TPressOQLTableReferences.Destroy;
+begin
+  FList.Free;
+  inherited;
+end;
+
+function TPressOQLTableReferences.GetAsString: string;
+var
+  I: Integer;
+begin
+  Result := '';
+  if Assigned(FList) then
+    for I := 0 to Pred(FList.Count) do
+      Result := Result + ' ' + (FList[I] as TPressOQLTableReference).AsString;
+end;
+
+function TPressOQLTableReferences.GetList: TObjectList;
+begin
+  if not Assigned(FList) then
+    FList := TObjectList.Create(True);
+  Result := FList;
+end;
+
+function TPressOQLTableReferences.TableReference(
+  const AReferencedAlias: string;
+  AAttributeMetadata: TPressAttributeMetadata): string;
+
+  function FindReference: TPressOQLTableReference;
+  var
+    I: Integer;
+  begin
+    for I := 0 to Pred(List.Count) do
+    begin
+      Result := List[I] as TPressOQLTableReference;
+      if Result.AttributeMetadata = AAttributeMetadata then
+        Exit;
+    end;
+    Result := nil;
+  end;
+
+var
+  VReference: TPressOQLTableReference;
+begin
+  VReference := FindReference;
+  if not Assigned(VReference) then
+  begin
+    VReference := TPressOQLTableReference.Create(AAttributeMetadata,
+     FTableAliasPrefix, AReferencedAlias, Succ(List.Count));
+    List.Add(VReference);
+  end;
+  Result := VReference.AliasName;
 end;
 
 { TPressOQLSelectStatement }
@@ -364,22 +447,10 @@ begin
 end;
 
 function TPressOQLSelectStatement.BuildTableNames: string;
-var
-  VReference: TPressOQLTableReference;
-  I: Integer;
 begin
   Result := FMetadata.PersistentName + ' ' +TableAlias;
-  for I := 0 to Pred(TableReferences.Count) do
-  begin
-    VReference := TableReferences[I] as TPressOQLTableReference;
-    Result := Format('%s left outer join %s %s on %s.%s = %2:s.%5:s', [
-     Result,
-     VReference.TableName,
-     VReference.AliasName,
-     VReference.ReferencedAliasName,
-     VReference.ReferencedFieldName,
-     VReference.FieldName]);
-  end;
+  if Assigned(FTableReferences) then
+    Result := Result + ' ' + FTableReferences.AsString;
 end;
 
 destructor TPressOQLSelectStatement.Destroy;
@@ -405,13 +476,6 @@ end;
 function TPressOQLSelectStatement.GetTableAlias: string;
 begin
   Result := SPressTableAliasPrefix + '0';
-end;
-
-function TPressOQLSelectStatement.GetTableReferences: TObjectList;
-begin
-  if not Assigned(FTableReferences) then
-    FTableReferences := TObjectList.Create(True);
-  Result := FTableReferences;
 end;
 
 class function TPressOQLSelectStatement.InternalApply(
@@ -445,31 +509,11 @@ end;
 function TPressOQLSelectStatement.TableReference(
   const AReferencedAlias: string;
   AAttributeMetadata: TPressAttributeMetadata): string;
-
-  function FindReference: TPressOQLTableReference;
-  var
-    I: Integer;
-  begin
-    for I := 0 to Pred(TableReferences.Count) do
-    begin
-      Result := TableReferences[I] as TPressOQLTableReference;
-      if Result.AttributeMetadata = AAttributeMetadata then
-        Exit;
-    end;
-    Result := nil;
-  end;
-
-var
-  VReference: TPressOQLTableReference;
 begin
-  VReference := FindReference;
-  if not Assigned(VReference) then
-  begin
-    VReference := TPressOQLTableReference.Create(
-     AAttributeMetadata, AReferencedAlias, Succ(TableReferences.Count));
-    TableReferences.Add(VReference);
-  end;
-  Result := VReference.AliasName;
+  if not Assigned(FTableReferences) then
+    FTableReferences := TPressOQLTableReferences.Create(SPressTableAliasPrefix);
+  Result :=
+   FTableReferences.TableReference(AReferencedAlias, AAttributeMetadata);
 end;
 
 { TPressOQLSelectObject }
