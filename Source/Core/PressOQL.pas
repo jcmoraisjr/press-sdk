@@ -392,7 +392,7 @@ begin
   Result := '';
   if Assigned(FList) then
     for I := 0 to Pred(FList.Count) do
-      Result := Result + ' ' + (FList[I] as TPressOQLTableReference).AsString;
+      Result := Result + (FList[I] as TPressOQLTableReference).AsString;
 end;
 
 function TPressOQLTableReferences.GetList: TObjectList;
