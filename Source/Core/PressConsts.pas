@@ -43,6 +43,7 @@ const
   SPressUniqueKeyNamePrefix = 'UK_';
   SPressIndexNamePrefix = 'IDX_';
   SPressTableAliasPrefix = 't_';
+  SPressSubSelectTableAliasPrefix = 'ts%d_';
   SPressPersistentIdParamString = 'PressPersistId';
   SPressCalcString = 'Calc';
   SPressQueryItemsString = 'QueryItems';

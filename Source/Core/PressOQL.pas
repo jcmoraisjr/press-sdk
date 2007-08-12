@@ -19,6 +19,7 @@ unit PressOQL;
 interface
 
 uses
+  Classes,
   Contnrs,
   PressClasses,
   PressParser,
@@ -69,7 +70,7 @@ type
   public
     constructor Create(const ATableAliasPrefix: string);
     destructor Destroy; override;
-    function NewItem(const AReferencedAlias: string; AAttributeMetadata: TPressAttributeMetadata): string;
+    function NewStructure(const AReferencedAlias: string; AAttributeMetadata: TPressAttributeMetadata): string;
     function NewValue(const AReferencedAlias: string; AAttributeMetadata: TPressAttributeMetadata): string;
     property AsString: string read GetAsString;
   end;
@@ -198,11 +199,18 @@ type
   end;
 
   TPressOQLContainerValue = class(TPressOQLAttributeValue)
+  private
+    FSubSelectLevel: Integer;
+    FSubSelectTableAlias: string;
   protected
     function BuildFieldNames: string; virtual; abstract;
     function BuildTableNames: string; virtual; abstract;
     function BuildWhereClause: string; virtual;
     function GetAsString: string; override;
+  public
+    constructor Create(AOwner: TPressParserObject); override;
+    property SubSelectLevel: Integer read FSubSelectLevel;
+    property SubSelectTableAlias: string read FSubSelectTableAlias;
   end;
 
   TPressOQLContainerAttributeValue = class(TPressOQLContainerValue)
@@ -213,16 +221,16 @@ type
 
   TPressOQLContainerCalcValue = class(TPressOQLContainerValue)
   private
-    FAttributeMetadata: TPressAttributeMetadata;
-    FFunctionName: string;
-    FObjectMetadata: TPressObjectMetadata;
-    function GetObjectMetadata: TPressObjectMetadata;
+    FTableReferences: TPressOQLTableReferences;
+    FTokens: TStrings;
+    function GetTableReferences: TPressOQLTableReferences;
   protected
     function BuildFieldNames: string; override;
     function BuildTableNames: string; override;
     procedure InternalRead(Reader: TPressParserReader); override;
+    property TableReferences: TPressOQLTableReferences read GetTableReferences;
   public
-    property ObjectMetadata: TPressObjectMetadata read GetObjectMetadata;
+    destructor Destroy; override;
   end;
 
   TPressOQLClause = class(TPressOQLSelectObject)
@@ -349,8 +357,14 @@ begin
   if AObjectMetadata = AAttributeMetadata.Owner then
     FReferencedFieldName := AObjectMetadata.IdMetadata.PersistentName
   else if AObjectMetadata.ObjectClass = AAttributeMetadata.ObjectClass then
-    FReferencedFieldName := AAttributeMetadata.PersistentName
-  else
+  begin
+    if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItems) then
+      { TODO : Optimize for owned objects without link table
+        (future implementation) }
+      FReferencedFieldName := AAttributeMetadata.PersLinkChildName
+    else
+      FReferencedFieldName := AAttributeMetadata.PersistentName
+  end else
     raise EPressError.CreateFmt(SUnsupportedAttribute, [
      AAttributeMetadata.Owner.ClassName, AAttributeMetadata.Name]);
   FObjectMetadata := AObjectMetadata;
@@ -428,10 +442,10 @@ begin
   Result := VReference.AliasName;
 end;
 
-function TPressOQLTableReferences.NewItem(const AReferencedAlias: string;
+function TPressOQLTableReferences.NewStructure(const AReferencedAlias: string;
   AAttributeMetadata: TPressAttributeMetadata): string;
 begin
-  if not AAttributeMetadata.AttributeClass.InheritsFrom(TPressItem) then
+  if not AAttributeMetadata.AttributeClass.InheritsFrom(TPressStructure) then
     raise EPressError.CreateFmt(SUnsupportedAttribute, [
      AAttributeMetadata.Owner.ClassName, AAttributeMetadata.Name]);
   Result := NewAttribute(AReferencedAlias,
@@ -695,7 +709,8 @@ begin
     begin
       if VAttribute.AttributeClass.InheritsFrom(TPressItem) then
       begin
-        VTableAlias := VSelect.TableReferences.NewItem(VTableAlias, VAttribute);
+        VTableAlias :=
+         VSelect.TableReferences.NewStructure(VTableAlias, VAttribute);
         VMetadata := VAttribute.ObjectClass.ClassMetadata;
         Token := Reader.ReadIdentifier;
       end else if VAttribute.AttributeClass.InheritsFrom(TPressItems) then
@@ -776,14 +791,23 @@ end;
 
 function TPressOQLContainerValue.BuildWhereClause: string;
 begin
-  { TODO : Use table alias name improvement }
   if Assigned(Metadata) then
-    Result := Format('ts2.%s = %s.%s', [
+    Result := Format('%s.%s = %s.%s', [
+     SubSelectTableAlias,
      Metadata.PersLinkParentName,
      TableAlias,
      Metadata.Owner.IdMetadata.PersistentName])
   else
     Result := '';
+end;
+
+constructor TPressOQLContainerValue.Create(AOwner: TPressParserObject);
+begin
+  inherited Create(AOwner);
+  { TODO : Implement more than one subselect level }
+  FSubSelectLevel := 1;
+  FSubSelectTableAlias :=
+   Format(SPressSubSelectTableAliasPrefix, [SubSelectLevel]) + '0';
 end;
 
 function TPressOQLContainerValue.GetAsString: string;
@@ -799,7 +823,8 @@ end;
 function TPressOQLContainerAttributeValue.BuildFieldNames: string;
 begin
   if Assigned(Metadata) then
-    Result := Format('ts2.%s', [Metadata.PersLinkChildName])
+    Result := Format('%s.%s', [
+     SubSelectTableAlias, Metadata.PersLinkChildName])
   else
     Result := '';
 end;
@@ -807,7 +832,7 @@ end;
 function TPressOQLContainerAttributeValue.BuildTableNames: string;
 begin
   if Assigned(Metadata) then
-    Result := Format('%s ts2', [Metadata.PersLinkName])
+    Result := Format('%s %s', [Metadata.PersLinkName, SubSelectTableAlias])
   else
     Result := '';
 end;
@@ -815,61 +840,93 @@ end;
 { TPressOQLContainerCalcValue }
 
 function TPressOQLContainerCalcValue.BuildFieldNames: string;
+var
+  I: Integer;
 begin
-  if Assigned(FAttributeMetadata) then
-    Result := FFunctionName + '(' + FAttributeMetadata.PersistentName + ')'
-  else
-    Result := FFunctionName + '(*)';
+  Result := '';
+  if Assigned(FTokens) then
+    for I := 0 to Pred(FTokens.Count) do
+      Result := Result + FTokens[I];
 end;
 
 function TPressOQLContainerCalcValue.BuildTableNames: string;
 begin
-  { TODO : Improve table alias names }
-  { TODO : Improve for owned objects that doesn't use link table
-    (future implementation) }
   if Assigned(Metadata) then
-    Result := Format('%s ts1 inner join %s ts2 on ts1.%s = ts2.%s', [
-     ObjectMetadata.PersistentName,
-     Metadata.PersLinkName,
-     ObjectMetadata.IdMetadata.PersistentName,
-     Metadata.PersLinkChildName])
+    Result := Format('%s %s', [Metadata.PersLinkName, SubSelectTableAlias])
   else
     Result := '';
+  if Assigned(FTableReferences) then
+    Result := Result + FTableReferences.AsString;
 end;
 
-function TPressOQLContainerCalcValue.GetObjectMetadata: TPressObjectMetadata;
+destructor TPressOQLContainerCalcValue.Destroy;
 begin
-  if not Assigned(FObjectMetadata) then
-  { TODO : Validate Metadata }
-    FObjectMetadata := Metadata.ObjectClass.ClassMetadata;
-  Result := FObjectMetadata;
+  FTokens.Free;
+  FTableReferences.Free;
+  inherited;
+end;
+
+function TPressOQLContainerCalcValue.GetTableReferences: TPressOQLTableReferences;
+begin
+  if not Assigned(FTableReferences) then
+    FTableReferences := TPressOQLTableReferences.Create(
+     Format(SPressSubSelectTableAliasPrefix, [SubSelectLevel]));
+  Result := FTableReferences;
 end;
 
 procedure TPressOQLContainerCalcValue.InternalRead(Reader: TPressParserReader);
 var
-  VIndex: Integer;
+  VObjectMetadata: TPressObjectMetadata;
+  VAttribute: TPressAttributeMetadata;
+  VTableAlias: string;
+  VIndex, VLevel: Integer;
   Token: string;
 begin
   inherited;
-  { TODO : Implement support for more than one attribute }
   { TODO : Implement support for path }
-  FFunctionName := Reader.ReadIdentifier;
-  Token := Reader.ReadToken;
-  if Token = '(' then
+  if not Assigned(Metadata) then
+    Exit;
+  if not Assigned(FTokens) then
+    FTokens := TStringList.Create;
+  FTokens.Add(Reader.ReadToken);
+  if Reader.ReadToken = '(' then
   begin
-    Token := Reader.ReadIdentifier;
-    VIndex := ObjectMetadata.Map.IndexOfName(Token);
-    if VIndex = -1 then
-      Reader.ErrorExpected(SPressAttributeNameMsg, Token);
-    FAttributeMetadata := ObjectMetadata.Map[VIndex];
-    if not FAttributeMetadata.AttributeClass.InheritsFrom(TPressValue) then
-      Reader.ErrorFmt(SUnsupportedAttribute, [
-       ObjectMetadata.ObjectClassName, FAttributeMetadata.Name]);
-    Reader.ReadMatch(')');
+    VLevel := 1;
+    FTokens.Add('(');
+    VObjectMetadata := Metadata.ObjectClass.ClassMetadata;
+    VTableAlias := TableReferences.NewStructure(SubSelectTableAlias, Metadata);
   end else
   begin
+    VLevel := 0;
+    FTokens.Add('(*)');
     Reader.UnreadToken;
-    FAttributeMetadata := nil;
+    VObjectMetadata := nil;
+    VTableAlias := '';
+  end;
+  while VLevel > 0 do
+  begin
+    Token := Reader.ReadToken;
+    if IsValidIdent(Token) and (Reader.ReadNextToken <> '(') then
+    begin
+      VIndex := VObjectMetadata.Map.IndexOfName(Token);
+      if VIndex = -1 then
+        Reader.ErrorExpected(SPressAttributeNameMsg, Token);
+      VAttribute := VObjectMetadata.Map[VIndex];
+      if not VAttribute.AttributeClass.InheritsFrom(TPressValue) then
+        Reader.ErrorFmt(SUnsupportedAttribute, [
+         VObjectMetadata.ObjectClassName, VAttribute.Name]);
+      FTokens.Add(Format('%s.%s', [
+       TableReferences.NewValue(VTableAlias, VAttribute),
+       VAttribute.PersistentName]));
+    end else if Length(Token) > 0 then
+    begin
+      FTokens.Add(Token);
+      case Token[1] of
+        '(': Inc(VLevel);
+        ')': Dec(VLevel);
+      end;
+    end else
+      Reader.ErrorExpected(')', '');
   end;
 end;
 
