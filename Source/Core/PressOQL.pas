@@ -366,7 +366,7 @@ begin
       FReferencedFieldName := AAttributeMetadata.PersistentName
   end else
     raise EPressError.CreateFmt(SUnsupportedAttribute, [
-     AAttributeMetadata.Owner.ClassName, AAttributeMetadata.Name]);
+     AAttributeMetadata.Owner.ObjectClassName, AAttributeMetadata.Name]);
   FObjectMetadata := AObjectMetadata;
   FAttributeMetadata := AAttributeMetadata;
   FAliasName := ATableAliasPrefix + IntToStr(AId);
@@ -447,7 +447,7 @@ function TPressOQLTableReferences.NewStructure(const AReferencedAlias: string;
 begin
   if not AAttributeMetadata.AttributeClass.InheritsFrom(TPressStructure) then
     raise EPressError.CreateFmt(SUnsupportedAttribute, [
-     AAttributeMetadata.Owner.ClassName, AAttributeMetadata.Name]);
+     AAttributeMetadata.Owner.ObjectClassName, AAttributeMetadata.Name]);
   Result := NewAttribute(AReferencedAlias,
    AAttributeMetadata.ObjectClass.ClassMetadata, AAttributeMetadata);
 end;
@@ -457,7 +457,7 @@ function TPressOQLTableReferences.NewValue(const AReferencedAlias: string;
 begin
   if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItems) then
     raise EPressError.CreateFmt(SUnsupportedAttribute, [
-     AAttributeMetadata.Owner.ClassName, AAttributeMetadata.Name]);
+     AAttributeMetadata.Owner.ObjectClassName, AAttributeMetadata.Name]);
   Result := NewAttribute(AReferencedAlias,
    AAttributeMetadata.Owner, AAttributeMetadata);
 end;
