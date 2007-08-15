@@ -31,7 +31,6 @@ type
     FReportItem: TPressReportItem;
     procedure SetReportItem(Value: TPressReportItem);
   protected
-    function GetCaption: string; override;
     procedure InternalExecute; override;
     function InternalIsEnabled: Boolean; override;
   public
@@ -44,8 +43,6 @@ type
     FReportGroup: TPressReportGroup;
     procedure SetReportGroup(Value: TPressReportGroup);
   protected
-    function GetCaption: string; override;
-    function GetShortCut: TShortCut; override;
     procedure InternalExecute; override;
   public
     destructor Destroy; override;
@@ -58,7 +55,7 @@ type
     FReportGroup: TPressReportGroup;
   protected
     procedure AddReportGroup; virtual;
-    procedure AddReportItem(AItem: TPressObject); virtual;
+    procedure AddReportItem(AItem: TPressObject; APosition: Integer); virtual;
     function GetReportGroup: TPressReportGroup; virtual;
   public
     constructor Create(AModel: TPressMVPObjectModel);
@@ -83,14 +80,6 @@ destructor TPressExecuteReportCommand.Destroy;
 begin
   FReportItem.Free;
   inherited;
-end;
-
-function TPressExecuteReportCommand.GetCaption: string;
-begin
-  if Assigned(FReportItem) then
-    Result := FReportItem.ReportCaption
-  else
-    Result := '';
 end;
 
 procedure TPressExecuteReportCommand.InternalExecute;
@@ -123,16 +112,6 @@ begin
   inherited;
 end;
 
-function TPressManageReportsCommand.GetCaption: string;
-begin
-  Result := SPressManageReportCommand;
-end;
-
-function TPressManageReportsCommand.GetShortCut: TShortCut;
-begin
-  Result := Menus.ShortCut(VK_F9, [ssCtrl]);
-end;
-
 procedure TPressManageReportsCommand.InternalExecute;
 var
   VIndex: Integer;
@@ -159,20 +138,28 @@ procedure TPressReportManager.AddReportGroup;
 var
   VGroupCommand: TPressManageReportsCommand;
 begin
-  VGroupCommand := TPressManageReportsCommand.Create(Model);
+  VGroupCommand := TPressManageReportsCommand.Create(
+   Model, SPressManageReportCommand, Menus.ShortCut(VK_F9, [ssAlt]));
   VGroupCommand.ReportGroup := ReportGroup;
   Model.AddCommandInstance(VGroupCommand);
 end;
 
-procedure TPressReportManager.AddReportItem(AItem: TPressObject);
+procedure TPressReportManager.AddReportItem(
+  AItem: TPressObject; APosition: Integer);
 var
   VItem: TPressReportItem;
   VReportCommand: TPressExecuteReportCommand;
+  VShortCut: TShortCut;
 begin
   VItem := AItem as TPressReportItem;
   if VItem.ReportVisible then
   begin
-    VReportCommand := TPressExecuteReportCommand.Create(Model);
+    if APosition = 0 then
+      VShortCut := Menus.ShortCut(VK_F9, [ssCtrl])
+    else
+      VShortCut := 0;
+    VReportCommand := TPressExecuteReportCommand.Create(
+     Model, VItem.ReportCaption, VShortCut);
     try
       VReportCommand.ReportItem := VItem;
       Model.AddCommandInstance(VReportCommand);
@@ -195,7 +182,7 @@ begin
     try
       BeforeFirstItem;
       while NextItem do
-        AddReportItem(CurrentItem);
+        AddReportItem(CurrentItem, CurrentPosition);
     finally
       Free;
     end;
