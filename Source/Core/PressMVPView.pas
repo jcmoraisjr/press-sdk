@@ -210,7 +210,9 @@ type
     FViewMouseDownEvent: TMouseEvent;
     FViewMouseUpEvent: TMouseEvent;
     function GetModel: TPressMVPModel;
+    function GetReadOnly: Boolean;
     procedure SetAccessMode(Value: TPressAccessMode);
+    procedure SetReadOnly(Value: Boolean);
   protected
     procedure ViewClickEvent(Sender: TObject); virtual;
     procedure ViewDblClickEvent(Sender: TObject); virtual;
@@ -239,6 +241,7 @@ type
     property Control: TControl read FControl;
     property IsChanged: Boolean read FIsChanged;
     property OwnsControl: Boolean read FOwnsControl write FOwnsControl;
+    property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
   end;
 
   TPressMVPAttributeView = class(TPressMVPView)
@@ -748,6 +751,11 @@ begin
   Result := FModel;
 end;
 
+function TPressMVPView.GetReadOnly: Boolean;
+begin
+  Result := AccessMode <> amWritable;
+end;
+
 procedure TPressMVPView.InitView;
 begin
   FAccessMode := amWritable;
@@ -816,6 +824,14 @@ end;
 procedure TPressMVPView.SetModel(Value: TPressMVPModel);
 begin
   FModel := Value;
+end;
+
+procedure TPressMVPView.SetReadOnly(Value: Boolean);
+begin
+  if Value then
+    AccessMode := amVisible
+  else
+    AccessMode := amWritable;
 end;
 
 procedure TPressMVPView.Unchanged;
