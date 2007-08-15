@@ -20,6 +20,7 @@ interface
 
 uses
   Classes,
+  Contnrs,
   Controls,
   Menus,
   PressClasses,
@@ -251,10 +252,13 @@ type
   TPressMVPObject = class(TPersistent)
   private
     FDisableCount: Integer;
+    FNotifierList: TObjectList;
     function GetEventsDisabled: Boolean;
   protected
     class procedure CheckClass(AApplyClass: Boolean);
   public
+    destructor Destroy; override;
+    procedure AddNotification(AEventClasses: array of TPressEventClass; AMethod: TPressNotificationEvent);
     procedure DisableEvents;
     procedure EnableEvents;
     property EventsDisabled: Boolean read GetEventsDisabled;
@@ -309,10 +313,18 @@ type
     {$ENDIF}
   end;
 
-  TPressMVPModelUpdateDataEvent = class(TPressMVPModelEvent)
+  TPressMVPChangeType = (ctSubject, ctDisplay);
+
+  TPressMVPModelChangedEvent = class(TPressMVPModelEvent)
+  private
+    FChangeType: TPressMVPChangeType;
+  public
+    constructor Create(AOwner: TObject; AChangeType: TPressMVPChangeType);
+    property ChangeType: TPressMVPChangeType read FChangeType;
   end;
 
-  TPressMVPChangeType = (ctSubject, ctDisplay);
+  TPressMVPModelUpdateDataEvent = class(TPressMVPModelEvent)
+  end;
 
   TPressMVPModelNotifyEvent =
    procedure(AChangeType: TPressMVPChangeType) of object;
@@ -326,7 +338,6 @@ type
     FAccessUser: TPressUser;
     FCommands: TPressMVPCommands;
     FNotifier: TPressNotifier;
-    FOnChange: TPressMVPModelNotifyEvent;
     FOwnedCommands: TPressMVPCommandList;
     FParent: TPressMVPModel;
     FSelection: TPressMVPSelection;
@@ -349,7 +360,6 @@ type
     function InternalCreateSelection: TPressMVPSelection; virtual;
     function InternalIsIncluding: Boolean; virtual;
     procedure Notify(AEvent: TPressEvent); virtual;
-    procedure SetChangeEvent(Value: TPressMVPModelNotifyEvent);
     property Commands: TPressMVPCommands read GetCommands;
     property Notifier: TPressNotifier read GetNotifier;
     property OwnedCommands: TPressMVPCommandList read GetOwnedCommands;
@@ -983,11 +993,34 @@ end;
 
 { TPressMVPObject }
 
+procedure TPressMVPObject.AddNotification(
+  AEventClasses: array of TPressEventClass; AMethod: TPressNotificationEvent);
+var
+  VNotifier: TPressNotifier;
+begin
+  VNotifier := TPressNotifier.Create(AMethod);
+  try
+    VNotifier.AddNotificationItem(Self, AEventClasses);
+    if not Assigned(FNotifierList) then
+      FNotifierList := TObjectList.Create(True);
+    FNotifierList.Add(VNotifier);
+  except
+    VNotifier.Free;
+    raise;
+  end;
+end;
+
 class procedure TPressMVPObject.CheckClass(AApplyClass: Boolean);
 begin
   { TODO : Change error message, including the ClassName of the parameters }
   if not AApplyClass then
     raise EPressMVPError.CreateFmt(SUnexpectedMVPClassParam, [ClassName]);
+end;
+
+destructor TPressMVPObject.Destroy;
+begin
+  FNotifierList.Free;
+  inherited;
 end;
 
 procedure TPressMVPObject.DisableEvents;
@@ -1188,6 +1221,15 @@ begin
 end;
 {$ENDIF}
 
+{ TPressMVPModelChangedEvent }
+
+constructor TPressMVPModelChangedEvent.Create(AOwner: TObject;
+  AChangeType: TPressMVPChangeType);
+begin
+  inherited Create(AOwner);
+  FChangeType := AChangeType;
+end;
+
 { TPressMVPModel }
 
 function TPressMVPModel.AccessMode: TPressAccessMode;
@@ -1230,6 +1272,8 @@ end;
 
 procedure TPressMVPModel.Changed(AChangeType: TPressMVPChangeType);
 begin
+  if not EventsDisabled then
+    TPressMVPModelChangedEvent.Create(Self, AChangeType).Notify;
   InternalChanged(AChangeType);
 end;
 
@@ -1364,8 +1408,6 @@ end;
 
 procedure TPressMVPModel.InternalChanged(AChangeType: TPressMVPChangeType);
 begin
-  if Assigned(FOnChange) and not EventsDisabled then
-    FOnChange(AChangeType);
 end;
 
 function TPressMVPModel.InternalCreateSelection: TPressMVPSelection;
@@ -1430,11 +1472,6 @@ begin
     FAccessUser.AddRef;
     Changed(ctDisplay);
   end;
-end;
-
-procedure TPressMVPModel.SetChangeEvent(Value: TPressMVPModelNotifyEvent);
-begin
-  FOnChange := Value;
 end;
 
 procedure TPressMVPModel.UpdateData;

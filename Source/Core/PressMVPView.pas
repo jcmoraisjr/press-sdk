@@ -204,6 +204,7 @@ type
     FControl: TControl;
     FIsChanged: Boolean;
     FModel: TPressMVPModel;
+    FNotifier: TPressNotifier;
     FOwnsControl: Boolean;
     FViewClickEvent: TNotifyEvent;
     FViewDblClickEvent: TNotifyEvent;
@@ -225,6 +226,7 @@ type
     procedure InternalReset; virtual;
     procedure InternalUpdate; virtual;
     procedure ModelChanged(AChangeType: TPressMVPChangeType); virtual;
+    procedure Notify(AEvent: TPressEvent);
     procedure ReleaseControl; virtual;
     procedure SetModel(Value: TPressMVPModel);
     procedure Unchanged;
@@ -728,6 +730,7 @@ begin
   inherited Create;
   FControl := AControl;
   FOwnsControl := AOwnsControl;
+  FNotifier := TPressNotifier.Create(Notify);
   InitView;
 end;
 
@@ -739,6 +742,7 @@ end;
 
 destructor TPressMVPView.Destroy;
 begin
+  FNotifier.Free;
   if FOwnsControl then
     FControl.Free;
   inherited;
@@ -795,6 +799,12 @@ begin
   end;
 end;
 
+procedure TPressMVPView.Notify(AEvent: TPressEvent);
+begin
+  if AEvent is TPressMVPModelChangedEvent then
+    ModelChanged(TPressMVPModelChangedEvent(AEvent).ChangeType);
+end;
+
 class procedure TPressMVPView.RegisterView;
 begin
   PressDefaultMVPFactory.RegisterView(Self);
@@ -823,7 +833,14 @@ end;
 
 procedure TPressMVPView.SetModel(Value: TPressMVPModel);
 begin
-  FModel := Value;
+  if FModel <> Value then
+  begin
+    if Assigned(FModel) then
+      FNotifier.RemoveNotificationItem(FModel);
+    FModel := Value;
+    if Assigned(FModel) then
+      FNotifier.AddNotificationItem(FModel, [TPressMVPModelChangedEvent]);
+  end;
 end;
 
 procedure TPressMVPView.SetReadOnly(Value: Boolean);

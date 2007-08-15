@@ -380,8 +380,6 @@ begin
     if Assigned(FView) then
     begin
       TPressMVPPresenterViewFriend(FView).SetModel(FModel);
-      TPressMVPPresenterModelFriend(FModel).SetChangeEvent(
-       TPressMVPPresenterViewFriend(FView).ModelChanged);
       FModel.Changed(ctDisplay);
     end;
     if Assigned(FCommandMenu) then
@@ -399,8 +397,6 @@ begin
     if Assigned(FModel) then
     begin
       TPressMVPPresenterViewFriend(FView).SetModel(FModel);
-      TPressMVPPresenterModelFriend(FModel).SetChangeEvent(
-       TPressMVPPresenterViewFriend(FView).ModelChanged);
       FModel.Changed(ctDisplay);
     end;
   end;
@@ -426,10 +422,7 @@ begin
   if Assigned(FModel) then
   begin
     if Assigned(FView) then
-    begin
-      TPressMVPPresenterModelFriend(FModel).SetChangeEvent(nil);
       TPressMVPPresenterViewFriend(FView).SetModel(nil);
-    end;
     if Assigned(FCommandMenu) then
       FCommandMenu.UnassignCommands;
     FreeAndNil(FModel);
@@ -443,10 +436,7 @@ begin
     if Assigned(FCommandMenu) then
       FCommandMenu.AssignMenu(nil);
     if Assigned(FModel) then
-    begin
-      TPressMVPPresenterModelFriend(FModel).SetChangeEvent(nil);
       TPressMVPPresenterViewFriend(FView).SetModel(nil);
-    end;
     FreeAndNil(FView);
   end;
 end;
