@@ -4316,14 +4316,8 @@ end;
 procedure TPressStructure.NotifyReferenceChange;
 begin
   NotifyInvalidate;
-  if not FNotifying then
-    try
-      FNotifying := True;
-      if Assigned(Owner) then
-        Owner.NotifyInvalidate;  // friend class
-    finally
-      FNotifying := False;
-    end;
+  if Assigned(Owner) then
+    Owner.NotifyInvalidate;  // friend class
 end;
 
 function TPressStructure.ProxyType: TPressProxyType;
