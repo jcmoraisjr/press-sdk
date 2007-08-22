@@ -51,6 +51,16 @@ type
     property ChangeType: TPressMVPChangeType read FChangeType;
   end;
 
+  TPressMVPObjectModelCanSaveEvent = class(TPressMVPModelEvent)
+  private
+    FCanSave: ^Boolean;
+    function GetCanSave: Boolean;
+    procedure SetCanSave(AValue: Boolean);
+  public
+    constructor Create(AOwner: TObject; var ACanSave: Boolean);
+    property CanSave: Boolean read GetCanSave write SetCanSave;
+  end;
+
   TPressMVPModelCloseFormEvent = class(TPressMVPModelEvent)
   end;
 
@@ -440,6 +450,7 @@ type
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
     destructor Destroy; override;
     class function Apply(ASubject: TPressSubject): Boolean; override;
+    function CanSaveObject: Boolean;
     procedure RevertChanges;
     procedure UpdateData;
     property HookedSubject: TPressStructure read FHookedSubject write SetHookedSubject;
@@ -479,6 +490,25 @@ constructor TPressMVPObjectModelChangedEvent.Create(
 begin
   inherited Create(AOwner);
   FChangeType := AChangeType;
+end;
+
+{ TPressMVPObjectModelCanSaveEvent }
+
+constructor TPressMVPObjectModelCanSaveEvent.Create(AOwner: TObject; var ACanSave: Boolean);
+begin
+  inherited Create(AOwner);
+  FCanSave := @ACanSave;
+  FCanSave^ := True;
+end;
+
+function TPressMVPObjectModelCanSaveEvent.GetCanSave: Boolean;
+begin
+  Result := FCanSave^;
+end;
+
+procedure TPressMVPObjectModelCanSaveEvent.SetCanSave(AValue: Boolean);
+begin
+  FCanSave^ := AValue;
 end;
 
 { TPressMVPAttributeModel }
@@ -1796,6 +1826,11 @@ begin
     Notifier.RemoveNotificationItem(FHookedSubject);
     FreeAndNil(FHookedSubject);
   end;
+end;
+
+function TPressMVPObjectModel.CanSaveObject: Boolean;
+begin
+  TPressMVPObjectModelCanSaveEvent.Create(Self, Result).Notify;
 end;
 
 constructor TPressMVPObjectModel.Create(

@@ -847,13 +847,16 @@ end;
 procedure TPressMVPSaveObjectCommand.InternalExecute;
 begin
   Model.UpdateData;
-  if not Model.Subject.IsUpdated then
+  if Model.CanSaveObject then
   begin
-    if not InternalConfirm then
-      Exit;
-    InternalStoreObject;
+    if not Model.Subject.IsUpdated then
+    begin
+      if not InternalConfirm then
+        Exit;
+      InternalStoreObject;
+    end;
+    TPressMVPModelCloseFormEvent.Create(Model).Notify;
   end;
-  TPressMVPModelCloseFormEvent.Create(Model).Notify;
 end;
 
 function TPressMVPSaveObjectCommand.InternalIsEnabled: Boolean;
