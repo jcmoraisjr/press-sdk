@@ -165,13 +165,18 @@ function TPressMVPRegisteredFormList.IndexOfObjectClass(
   AObjectClass: TPressObjectClass;
   AFormPresenterType: TPressMVPFormPresenterType;
   AIncludeDescendants: Boolean): Integer;
+var
+  VForm: TPressMVPRegisteredForm;
 begin
   for Result := 0 to Pred(Count) do
-    with Items[Result] do
-      if (AFormPresenterType in FormPresenterTypes) and
-       ((not AIncludeDescendants and (ObjectClass = AObjectClass)) or
-       (AIncludeDescendants and ObjectClass.InheritsFrom(AObjectClass))) then
-        Exit;
+  begin
+    VForm := Items[Result];
+    if (AFormPresenterType in VForm.FormPresenterTypes) and
+     ((not AIncludeDescendants and (VForm.ObjectClass = AObjectClass)) or
+     (AIncludeDescendants and Assigned(VForm.ObjectClass) and
+     VForm.ObjectClass.InheritsFrom(AObjectClass))) then
+      Exit;
+  end;
   { TODO : Notify ambiguous presenter class }
   Result := -1;
 end;
