@@ -32,7 +32,6 @@ type
   private
     FConnectionManager: TInstantConnectionManager;
     FConnector: TInstantConnector;
-    procedure CheckIsPersistent(AMetadata: TPressObjectMetadata);
     procedure ConnectionManagerConnect(Sender: TObject; var ConnectionDef: TInstantConnectionDef; var Result: Boolean);
     function CreateInstantObject(AObject: TPressObject): TInstantObject;
     function CreatePressObject(AClass: TPressObjectClass; ADataSet: TDataSet): TPressObject;
@@ -84,14 +83,6 @@ end;
 
 { TPressInstantObjectsPersistence }
 
-procedure TPressInstantObjectsPersistence.CheckIsPersistent(
-  AMetadata: TPressObjectMetadata);
-begin
-  if not AMetadata.IsPersistent then
-    raise EPressError.CreateFmt(SClassIsNotPersistent, [
-     AMetadata.ObjectClassName]);
-end;
-
 procedure TPressInstantObjectsPersistence.ConnectionManagerConnect(Sender: TObject;
   var ConnectionDef: TInstantConnectionDef; var Result: Boolean);
 begin
@@ -106,7 +97,7 @@ function TPressInstantObjectsPersistence.CreateInstantObject(AObject: TPressObje
 var
   VInstantObjectClass: TInstantObjectClass;
 begin
-  VInstantObjectClass := InstantFindClass(AObject.PersistentName);
+  VInstantObjectClass := InstantFindClass(AObject.ClassName);
   if (AObject.IsPersistent) then
     Result := VInstantObjectClass.Retrieve(AObject.PersistentId, True)
   else
@@ -173,7 +164,7 @@ var
   VObjectClass: TPressObjectClass;
 begin
   if Assigned(AObject) then
-    VObjectClass := PressModel.ClassByPersistentName(AObject.ClassName)
+    VObjectClass := PressModel.ClassByName(AObject.ClassName)
   else
     VObjectClass := nil;
   Id := GenerateOID(VObjectClass);
@@ -201,9 +192,8 @@ var
   VInstantObject: TInstantObject;
 begin
   VMetadata := AClass.ClassMetadata;
-  CheckIsPersistent(VMetadata);
   VInstantObject := InstantFindClass(
-    VMetadata.PersistentName).Retrieve(AId, False);
+    VMetadata.ObjectClassName).Retrieve(AId, False);
   if Assigned(VInstantObject) then
     try
       VInstantObject.Dispose;
@@ -257,9 +247,8 @@ var
   VInstantObject: TInstantObject;
 begin
   VMetadata := AClass.ClassMetadata;
-  CheckIsPersistent(VMetadata);
   VInstantObject := InstantFindClass(
-   VMetadata.PersistentName).Retrieve(AId, False);
+   VMetadata.ObjectClassName).Retrieve(AId, False);
   if Assigned(VInstantObject) then
   begin
     Result := AClass.Create(Self, AMetadata);
@@ -352,7 +341,6 @@ var
   VPersistentObject: TObject;
   VInstantObject: TInstantObject;
 begin
-  CheckIsPersistent(AObject.Metadata);
   VPersistentObject := PersistentObject[AObject];
   if VPersistentObject is TInstantObject then
   begin
@@ -383,7 +371,7 @@ procedure TPressInstantObjectsPersistence.ReadInstantObject(
     end else if AInstantReference.HasValue then
     begin
       VObject := PressModel.
-       ClassByPersistentName(AInstantReference.Value.ClassName).Create(Self);
+       ClassByName(AInstantReference.Value.ClassName).Create(Self);
       ReadInstantObject(AInstantReference.Value, VObject);
       try
         APressReference.Value := VObject;
@@ -427,7 +415,7 @@ procedure TPressInstantObjectsPersistence.ReadInstantObject(
       end else
       begin
         VObject := PressModel.
-         ClassByPersistentName(AInstantParts[I].ClassName).Create(Self);
+         ClassByName(AInstantParts[I].ClassName).Create(Self);
         ReadInstantObject(AInstantParts[I], VObject);
         try
           APressParts.Add(VObject);
@@ -457,7 +445,7 @@ procedure TPressInstantObjectsPersistence.ReadInstantObject(
       end else if VReference.HasInstance then
       begin
         VObject := PressModel.
-         ClassByPersistentName(VReference.Instance.ClassName).Create(Self);
+         ClassByName(VReference.Instance.ClassName).Create(Self);
         ReadInstantObject(VReference.Instance, VObject);
         try
           APressReferences.Add(VObject);
@@ -485,7 +473,7 @@ begin
       if (VPressAttr.Name = SPressIdString) or
        not VPressAttr.Metadata.IsPersistent then
         Continue;
-      VInstantAttr := AInstantObject.AttributeByName(VPressAttr.PersistentName);
+      VInstantAttr := AInstantObject.AttributeByName(VPressAttr.Name);
       case VPressAttr.AttributeBaseType of
         attString, attMemo, attBinary, attPicture:
           VPressAttr.AsString := VInstantAttr.AsString;
@@ -543,7 +531,7 @@ procedure TPressInstantObjectsPersistence.ReadPressObject(
     AInstantParts.Clear;
     for I := 0 to Pred(APressParts.Count) do
     begin
-      VObject := InstantFindClass(APressParts[I].PersistentName).Create;
+      VObject := InstantFindClass(APressParts[I].ClassName).Create;
       try
         AInstantParts.Add(VObject);
       except
@@ -590,7 +578,7 @@ begin
      not VPressAttr.Metadata.IsPersistent or (APressObject.IsPersistent and
      not APressObject.IsOwned and not VPressAttr.IsChanged) then
       Continue;
-    VInstantAttr := AInstantObject.AttributeByName(VPressAttr.PersistentName);
+    VInstantAttr := AInstantObject.AttributeByName(VPressAttr.Name);
     case VPressAttr.AttributeBaseType of
       attString, attMemo, attBinary, attPicture:
         VInstantAttr.AsString := VPressAttr.AsString;
