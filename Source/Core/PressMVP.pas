@@ -356,7 +356,6 @@ type
     procedure InitCommands; virtual;
     function InternalAccessID: Integer; virtual;
     function InternalAccessMode: TPressAccessMode; virtual;
-    procedure InternalChanged(AChangeType: TPressMVPChangeType); virtual;
     function InternalCreateSelection: TPressMVPSelection; virtual;
     function InternalIsIncluding: Boolean; virtual;
     procedure Notify(AEvent: TPressEvent); virtual;
@@ -1274,7 +1273,6 @@ procedure TPressMVPModel.Changed(AChangeType: TPressMVPChangeType);
 begin
   if not EventsDisabled then
     TPressMVPModelChangedEvent.Create(Self, AChangeType).Notify;
-  InternalChanged(AChangeType);
 end;
 
 constructor TPressMVPModel.Create(
@@ -1404,10 +1402,6 @@ begin
     Result := amWritable
   else
     Result := amInvisible;
-end;
-
-procedure TPressMVPModel.InternalChanged(AChangeType: TPressMVPChangeType);
-begin
 end;
 
 function TPressMVPModel.InternalCreateSelection: TPressMVPSelection;

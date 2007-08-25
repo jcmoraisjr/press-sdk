@@ -1225,20 +1225,20 @@ end;
 procedure TPressMVPNotifySubModelsInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.Model, [TPressMVPObjectModelChangedEvent]);
+  Notifier.AddNotificationItem(Owner.Model, [TPressMVPModelChangedEvent]);
 end;
 
 procedure TPressMVPNotifySubModelsInteractor.Notify(AEvent: TPressEvent);
 begin
   inherited;
-  if AEvent is TPressMVPObjectModelChangedEvent then
+  if AEvent is TPressMVPModelChangedEvent then
   begin
     with (Owner as TPressMVPFormPresenter).CreatePresenterIterator do
     try
       BeforeFirstItem;
       while NextItem do
         CurrentItem.Model.Changed(
-         TPressMVPObjectModelChangedEvent(AEvent).ChangeType);
+         TPressMVPModelChangedEvent(AEvent).ChangeType);
     finally
       Free;
     end;

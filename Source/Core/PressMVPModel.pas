@@ -43,14 +43,6 @@ type
   TPressMVPModelCreateSearchFormEvent = class(TPressMVPModelCreateFormEvent)
   end;
 
-  TPressMVPObjectModelChangedEvent = class(TPressMVPModelEvent)
-  private
-    FChangeType: TPressMVPChangeType;
-  public
-    constructor Create(AOwner: TObject; AChangeType: TPressMVPChangeType);
-    property ChangeType: TPressMVPChangeType read FChangeType;
-  end;
-
   TPressMVPObjectModelCanSaveEvent = class(TPressMVPModelEvent)
   private
     FCanSave: ^Boolean;
@@ -440,7 +432,6 @@ type
     procedure SetHookedSubject(Value: TPressStructure);
   protected
     procedure InitCommands; override;
-    procedure InternalChanged(AChangeType: TPressMVPChangeType); override;
     procedure InternalCreateCancelCommand; virtual;
     procedure InternalCreateSaveCommand; virtual;
     function InternalCreateSelection: TPressMVPSelection; override;
@@ -482,15 +473,6 @@ uses
   PressDialogs,
   PressMetadata,
   PressMVPCommand;
-
-{ TPressMVPObjectModelChangedEvent }
-
-constructor TPressMVPObjectModelChangedEvent.Create(
-  AOwner: TObject; AChangeType: TPressMVPChangeType);
-begin
-  inherited Create(AOwner);
-  FChangeType := AChangeType;
-end;
 
 { TPressMVPObjectModelCanSaveEvent }
 
@@ -1869,14 +1851,6 @@ begin
   inherited;
   InternalCreateSaveCommand;
   InternalCreateCancelCommand;
-end;
-
-procedure TPressMVPObjectModel.InternalChanged(
-  AChangeType: TPressMVPChangeType);
-begin
-  if AChangeType = ctDisplay then
-  { TODO : or (HasSubject and not (Subject is TPressObject)) }
-    TPressMVPObjectModelChangedEvent.Create(Self, AChangeType).Notify;
 end;
 
 procedure TPressMVPObjectModel.InternalCreateCancelCommand;
