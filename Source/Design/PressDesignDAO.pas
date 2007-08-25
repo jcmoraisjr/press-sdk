@@ -35,7 +35,7 @@ type
     function CreateProjectModuleList: TPressProxyList;
   protected
     procedure InternalCommit; override;
-    function InternalRetrieveProxyList(AQuery: TPressQuery): TPressProxyList; override;
+    function InternalRetrieveQuery(AQuery: TPressQuery): TPressProxyList; override;
     procedure InternalRollback; override;
     procedure InternalStartTransaction; override;
     procedure InternalStore(AObject: TPressObject); override;
@@ -122,7 +122,7 @@ procedure TPressDesignDAO.InternalCommit;
 begin
 end;
 
-function TPressDesignDAO.InternalRetrieveProxyList(
+function TPressDesignDAO.InternalRetrieveQuery(
   AQuery: TPressQuery): TPressProxyList;
 var
   VTarget: TPressObjectClass;
