@@ -3510,17 +3510,17 @@ begin
   begin
     if Assigned(FBeforeChangeInstance) then
       FBeforeChangeInstance(Self, Value, pctAssigning);
+    if Assigned(Value) then
+    begin
+      FDataAccess := Value.FDataAccess;
+      if ProxyType = ptShared then
+        Value.AddRef;
+    end;
     if ProxyType <> ptWeakReference then
       FreeAndNil(FInstance);
     FInstance := Value;
     FRefClass := '';
     FRefID := '';
-    if HasInstance then
-    begin
-      FDataAccess := FInstance.DataAccess;
-      if ProxyType = ptShared then
-        FInstance.AddRef;
-    end;
     if Assigned(FAfterChangeInstance) then
       FAfterChangeInstance(Self, Value, pctAssigning);
   end;
