@@ -3422,6 +3422,7 @@ procedure TPressProxy.Finit;
 begin
   if ProxyType <> ptWeakReference then
     FInstance.Free;
+  inherited;
 end;
 
 function TPressProxy.GetInstance: TPressObject;
