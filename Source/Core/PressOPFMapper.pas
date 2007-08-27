@@ -2130,7 +2130,7 @@ constructor TPressOPFStorageModel.Create(AModel: TPressModel);
 begin
   inherited Create;
   FModel := AModel;
-  FNotifier := TPressNotifier.Create(Notify);
+  FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   FNotifier.AddNotificationItem(FModel, [TPressModelBusinessClassChangedEvent]); 
   FHasClassIdStorage := TPressInstanceClass.ClassMetadata.IsPersistent;
 end;

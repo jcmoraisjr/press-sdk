@@ -27,7 +27,6 @@ uses
   Grids,
   Forms,
   PressCompatibility,
-  PressClasses,
   PressNotifier,
   PressSubject,
   PressUser,
@@ -730,7 +729,7 @@ begin
   inherited Create;
   FControl := AControl;
   FOwnsControl := AOwnsControl;
-  FNotifier := TPressNotifier.Create(Notify);
+  FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   InitView;
 end;
 
@@ -769,10 +768,10 @@ begin
     FViewDblClickEvent := OnDblClick;
     FViewMouseDownEvent := OnMouseDown;
     FViewMouseUpEvent := OnMouseUp;
-    OnClick := ViewClickEvent;
-    OnDblClick := ViewDblClickEvent;
-    OnMouseDown := ViewMouseDownEvent;
-    OnMouseUp := ViewMouseUpEvent;
+    OnClick := {$IFDEF FPC}@{$ENDIF}ViewClickEvent;
+    OnDblClick := {$IFDEF FPC}@{$ENDIF}ViewDblClickEvent;
+    OnMouseDown := {$IFDEF FPC}@{$ENDIF}ViewMouseDownEvent;
+    OnMouseUp := {$IFDEF FPC}@{$ENDIF}ViewMouseUpEvent;
   end;
 end;
 
@@ -970,11 +969,11 @@ begin
     FViewKeyDownEvent := OnKeyDown;
     FViewKeyPressEvent := OnKeyPress;
     FViewKeyUpEvent := OnKeyUp;
-    OnEnter := ViewEnterEvent;
-    OnExit := ViewExitEvent;
-    OnKeyDown := ViewKeyDownEvent;
-    OnKeyPress := ViewKeyPressEvent;
-    OnKeyUp := ViewKeyUpEvent;
+    OnEnter := {$IFDEF FPC}@{$ENDIF}ViewEnterEvent;
+    OnExit := {$IFDEF FPC}@{$ENDIF}ViewExitEvent;
+    OnKeyDown := {$IFDEF FPC}@{$ENDIF}ViewKeyDownEvent;
+    OnKeyPress := {$IFDEF FPC}@{$ENDIF}ViewKeyPressEvent;
+    OnKeyUp := {$IFDEF FPC}@{$ENDIF}ViewKeyUpEvent;
   end;
 end;
 
@@ -1110,7 +1109,7 @@ begin
   with TPressMVPViewCustomEditFriend(Control) do
   begin
     FViewChangeEvent := OnChange;
-    OnChange := ViewChangeEvent;
+    OnChange := {$IFDEF FPC}@{$ENDIF}ViewChangeEvent;
   end;
 end;
 
@@ -1354,11 +1353,11 @@ begin
     {$IFDEF FPC}
     FViewSelectEvent := OnSelect;
     {$ENDIF}
-    OnChange := ViewChangeEvent;
-    OnDrawItem := ViewDrawItemEvent;
-    OnDropDown := ViewDropDownEvent;
+    OnChange := {$IFDEF FPC}@{$ENDIF}ViewChangeEvent;
+    OnDrawItem := {$IFDEF FPC}@{$ENDIF}ViewDrawItemEvent;
+    OnDropDown := {$IFDEF FPC}@{$ENDIF}ViewDropDownEvent;
     {$IFDEF FPC}
-    OnSelect := ViewSelectEvent;
+    OnSelect := {$IFDEF FPC}@{$ENDIF}ViewSelectEvent;
     {$ENDIF}
   end;
 end;
@@ -1550,7 +1549,7 @@ begin
   with TPressMVPViewCustomListBoxFriend(Control) do
   begin
     FViewDrawItemEvent := OnDrawItem;
-    OnDrawItem := ViewDrawItemEvent;
+    OnDrawItem := {$IFDEF FPC}@{$ENDIF}ViewDrawItemEvent;
     Style := lbOwnerDrawFixed;
     { TODO : Implement multi selection }
     MultiSelect := False; //True;
@@ -1637,8 +1636,9 @@ begin
   with Control do
   begin
     FViewDrawCellEvent := OnDrawCell;
-    OnDrawCell := ViewDrawCellEvent;
-    Options := Options + [goColSizing, goRowSelect] - [goHorzLine, goRangeSelect];
+    OnDrawCell := {$IFDEF FPC}@{$ENDIF}ViewDrawCellEvent;
+    Options := Options +
+     [goColSizing, goRowSelect] - [goHorzLine, goRangeSelect];
   end;
 end;
 
@@ -1884,7 +1884,7 @@ begin
   with TPressMVPViewCustomFormFriend(Control) do
   begin
     FViewCloseEvent := OnClose;
-    OnClose := ViewCloseEvent;
+    OnClose := {$IFDEF FPC}@{$ENDIF}ViewCloseEvent;
   end;
 end;
 

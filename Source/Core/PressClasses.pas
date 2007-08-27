@@ -22,7 +22,6 @@ interface
 uses
   SysUtils,
   Classes,
-  Contnrs,
   SyncObjs,
   PressCompatibility;
 
@@ -47,7 +46,6 @@ type
     property Column: Integer read FColumn;
   end;
 
-  PBoolean = ^Boolean;
   PComponent = ^TComponent;
 
   TChars = set of Char;
@@ -485,7 +483,7 @@ end;
 
 function TPressList.Extract(AObject: TObject): TObject;
 begin
-  Result := inherited Extract(AObject);
+  Result := TObject(inherited Extract(AObject));
 end;
 
 function TPressList.First: TObject;

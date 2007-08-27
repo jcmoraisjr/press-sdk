@@ -441,7 +441,7 @@ begin
   if Assigned(FMenuItem) then
   begin
     OnClickEvent := FMenuItem.OnClick;
-    FMenuItem.OnClick := ComponentClick;
+    FMenuItem.OnClick := {$IFDEF FPC}@{$ENDIF}ComponentClick;
     FMenuItem.Enabled := Command.Enabled;
     FMenuItem.Visible := Command.Visible;
   end;
@@ -494,7 +494,8 @@ begin
   if Assigned(FControl) then
   begin
     OnClickEvent := TPressMVPControlFriend(FControl).OnClick;
-    TPressMVPControlFriend(FControl).OnClick := ComponentClick;
+    TPressMVPControlFriend(FControl).OnClick :=
+     {$IFDEF FPC}@{$ENDIF}ComponentClick;
     FControl.Enabled := Command.Enabled;
     FControl.Visible := Command.Visible;
   end;
@@ -661,7 +662,7 @@ begin
   FShortCut := AShortCut;
   VerifyAccess;
   FEnabled := VerifyEnabled;
-  FNotifier := TPressNotifier.Create(Notify);
+  FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   InitNotifier;
 end;
 
@@ -1340,7 +1341,7 @@ end;
 function TPressMVPModel.GetNotifier: TPressNotifier;
 begin
   if not Assigned(FNotifier) then
-    FNotifier := TPressNotifier.Create(Notify);
+    FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   Result := FNotifier;
 end;
 

@@ -187,7 +187,7 @@ constructor TPressDAO.Create;
 begin
   inherited;
   FCache := InternalCacheClass.Create;
-  FNotifier := TPressNotifier.Create(Notify);
+  FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   FNotifier.AddNotificationItem(Self, [TPressDAOCommit]);
 end;
 
@@ -205,8 +205,11 @@ begin
         TPressObjectFriend(VObject).BeforeDispose;
         VObject.DisableChanges;
         try
-          {$IFDEF PressLogDAOInterface}PressLogMsg(Self, 'Disposing', [VObject]);{$ENDIF}
-          TPressObjectFriend(VObject).InternalDispose(DisposeObject);
+{$IFDEF PressLogDAOInterface}
+          PressLogMsg(Self, 'Disposing', [VObject]);
+{$ENDIF}
+          TPressObjectFriend(VObject).InternalDispose(
+           {$IFDEF FPC}@{$ENDIF}DisposeObject);
           PressAssignPersistentId(VObject, '');
         finally
           VObject.EnableChanges;
@@ -517,7 +520,8 @@ begin
 {$IFDEF PressLogDAOInterface}
           PressLogMsg(Self, 'Storing', [AObject]);
 {$ENDIF}
-          TPressObjectFriend(AObject).InternalStore(InternalStore);
+          TPressObjectFriend(AObject).InternalStore(
+           {$IFDEF FPC}@{$ENDIF}InternalStore);
           PressAssignPersistentId(AObject, AObject.Id);
         finally
           AObject.EnableChanges;

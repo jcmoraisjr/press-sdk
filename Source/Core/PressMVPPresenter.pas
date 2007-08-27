@@ -298,7 +298,7 @@ end;
 function TPressMVPInteractor.GetNotifier: TPressNotifier;
 begin
   if not Assigned(FNotifier) then
-    FNotifier := TPressNotifier.Create(Notify);
+    FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   Result := FNotifier;
 end;
 
@@ -1059,7 +1059,7 @@ begin
      TPressMVPView.CreateFromControl(Application.MainForm) as TPressMVPCustomFormView;
 
   inherited Create(nil, VModel, VView);
-  FNotifier := TPressNotifier.Create(Notify);
+  FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   FNotifier.AddNotificationItem(PressApp, [TPressApplicationEvent]);
 end;
 

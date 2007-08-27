@@ -20,7 +20,7 @@ interface
 
 uses
   SysUtils,
-  {$IFDEF D6+}Variants,{$ENDIF}
+  {$IFNDEF D5}Variants,{$ENDIF}
   Classes,
   TypInfo,
   Contnrs,
@@ -1143,7 +1143,7 @@ begin
   FTypeAddress := ATypeAddress;
   VTypeData := GetTypeData(FTypeAddress);
   FItems := TStringList.Create;
-  for I := VTypeData.MinValue to VTypeData.MaxValue do
+  for I := VTypeData^.MinValue to VTypeData^.MaxValue do
     FItems.Add(RemoveEnumItemPrefix(GetEnumName(FTypeAddress, I)));
 end;
 
@@ -1158,7 +1158,7 @@ begin
   VTypeData := GetTypeData(FTypeAddress);
   FItems := TStringList.Create;
   J := Low(AEnumValues);
-  for I := VTypeData.MinValue to VTypeData.MaxValue do
+  for I := VTypeData^.MinValue to VTypeData^.MaxValue do
     if J <= High(AEnumValues) then
     begin
       FItems.Add(AEnumValues[J]);
@@ -2203,7 +2203,7 @@ begin
   FEnumMetadatas := TPressEnumMetadataList.Create(True);
   FDefaultKeyType := TPressString;
   {$IFNDEF PressRelease}
-  FNotifier := TPressNotifier.Create(Notify);
+  FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   FNotifier.AddNotificationItem(PressApp, [TPressApplicationRunningEvent]);
   {$ENDIF}
 end;
@@ -2580,11 +2580,12 @@ begin
   Result := '';
   if Self <> TPressObject then
   begin
-    VMetadataMethod := InternalMetadataStr;
+    VMetadataMethod := {$IFDEF FPC}@{$ENDIF}InternalMetadataStr;
     VObjectClass := TPressObjectClass(ClassParent);
-    VParentMetadataMethod := VObjectClass.InternalMetadataStr;
+    VParentMetadataMethod :=
+     {$IFDEF FPC}@{$ENDIF}VObjectClass.InternalMetadataStr;
     if TMethod(VMetadataMethod).Code <> TMethod(VParentMetadataMethod).Code then
-      Result := VMetadataMethod;
+      Result := VMetadataMethod();
   end;
   if Result = '' then
     Result := ClassName;
@@ -3270,7 +3271,7 @@ end;
 
 constructor TPressSingletonObject.Instance;
 begin
-  Self := TPressSingletonObject(Retrieve(SingletonOID));
+  Self := inherited Retrieve(SingletonOID) as TPressSingletonObject;
 end;
 
 class procedure TPressSingletonObject.RegisterOID(AOID: string);
@@ -3909,7 +3910,7 @@ end;
 function TPressAttribute.GetNotifier: TPressNotifier;
 begin
   if not Assigned(FNotifier) then
-    FNotifier := TPressNotifier.Create(Notify);
+    FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   Result := FNotifier;
 end;
 
@@ -4256,11 +4257,11 @@ end;
 
 procedure TPressStructure.BindProxy(AProxy: TPressProxy);
 begin
-  AProxy.AfterChangeInstance := AfterChangeInstance;
-  AProxy.AfterChangeReference := AfterChangeReference;
-  AProxy.BeforeChangeInstance := BeforeChangeInstance;
-  AProxy.BeforeChangeReference := BeforeChangeReference;
-  AProxy.BeforeRetrieveInstance := BeforeRetrieveInstance;
+  AProxy.AfterChangeInstance := {$IFDEF FPC}@{$ENDIF}AfterChangeInstance;
+  AProxy.AfterChangeReference := {$IFDEF FPC}@{$ENDIF}AfterChangeReference;
+  AProxy.BeforeChangeInstance := {$IFDEF FPC}@{$ENDIF}BeforeChangeInstance;
+  AProxy.BeforeChangeReference := {$IFDEF FPC}@{$ENDIF}BeforeChangeReference;
+  AProxy.BeforeRetrieveInstance := {$IFDEF FPC}@{$ENDIF}BeforeRetrieveInstance;
   if AProxy.HasInstance then
     BindInstance(AProxy.Instance);
 end;

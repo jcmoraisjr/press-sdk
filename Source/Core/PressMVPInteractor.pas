@@ -24,7 +24,9 @@ uses
   Graphics,
   StdCtrls,
   Grids,
+{$IFDEF DELPHI}
   PressCompatibility,
+{$ENDIF}
   PressNotifier,
   PressSubject,
   PressAttributes,
@@ -339,7 +341,6 @@ implementation
 
 uses
   SysUtils,
-  Math,          
   PressConsts,
   PressMVPFactory,
   PressMVPCommand;
@@ -845,11 +846,12 @@ end;
 procedure TPressMVPDrawComboBoxInteractor.InitInteractor;
 begin
   inherited;
-  {$IFDEF PressViewNotification}
+{$IFDEF PressViewNotification}
   Notifier.AddNotificationItem(Owner.View, [TPressMVPViewDrawItemEvent]);
-  {$ELSE}{$IFDEF PressViewDirectEvent}
-  (Owner.View as TPressMVPComboBoxView).OnDrawItem := DrawItem;
-  {$ENDIF}{$ENDIF}
+{$ELSE}{$IFDEF PressViewDirectEvent}
+  (Owner.View as TPressMVPComboBoxView).OnDrawItem :=
+   {$IFDEF FPC}@{$ENDIF}DrawItem;
+{$ENDIF}{$ENDIF}
 end;
 
 procedure TPressMVPDrawComboBoxInteractor.Notify(AEvent: TPressEvent);
@@ -917,11 +919,12 @@ end;
 procedure TPressMVPDrawListBoxInteractor.InitInteractor;
 begin
   inherited;
-  {$IFDEF PressViewNotification}
+{$IFDEF PressViewNotification}
   Notifier.AddNotificationItem(Owner.View, [TPressMVPViewDrawItemEvent]);
-  {$ELSE}{$IFDEF PressViewDirectEvent}
-  (Owner.View as TPressMVPListBoxView).OnDrawItem := DrawItem;
-  {$ENDIF}{$ENDIF}
+{$ELSE}{$IFDEF PressViewDirectEvent}
+  (Owner.View as TPressMVPListBoxView).OnDrawItem :=
+   {$IFDEF FPC}@{$ENDIF}DrawItem;
+{$ENDIF}{$ENDIF}
 end;
 
 procedure TPressMVPDrawListBoxInteractor.Notify(AEvent: TPressEvent);
@@ -982,11 +985,11 @@ end;
 procedure TPressMVPDrawGridInteractor.InitInteractor;
 begin
   inherited;
-  {$IFDEF PressViewNotification}
+{$IFDEF PressViewNotification}
   Notifier.AddNotificationItem(Owner.View, [TPressMVPViewDrawCellEvent]);
-  {$ELSE}{$IFDEF PressViewDirectEvent}
-  (Owner.View as TPressMVPGridView).OnDrawCell := DrawCell;
-  {$ENDIF}{$ENDIF}
+{$ELSE}{$IFDEF PressViewDirectEvent}
+  (Owner.View as TPressMVPGridView).OnDrawCell := {$IFDEF FPC}@{$ENDIF}DrawCell;
+{$ENDIF}{$ENDIF}
 end;
 
 procedure TPressMVPDrawGridInteractor.Notify(AEvent: TPressEvent);
@@ -1089,11 +1092,12 @@ end;
 procedure TPressMVPSortItemsInteractor.InitInteractor;
 begin
   inherited;
-  {$IFDEF PressViewNotification}
+{$IFDEF PressViewNotification}
   Notifier.AddNotificationItem(Owner.View, [TPressMVPViewClickHeaderEvent]);
-  {$ELSE}{$IFDEF PressViewDirectEvent}
-  (Owner.View as TPressMVPGridView).OnClickHeader := ClickHeader;
-  {$ENDIF}{$ENDIF}
+{$ELSE}{$IFDEF PressViewDirectEvent}
+  (Owner.View as TPressMVPGridView).OnClickHeader :=
+   {$IFDEF FPC}@{$ENDIF}ClickHeader;
+{$ENDIF}{$ENDIF}
 end;
 
 procedure TPressMVPSortItemsInteractor.Notify(AEvent: TPressEvent);

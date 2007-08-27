@@ -322,7 +322,7 @@ begin
   inherited Create(AOwner);
   if Assigned(ACommand) then
   begin
-    FNotifier := TPressNotifier.Create(Notify);
+    FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
     FCommand := ACommand;
     Caption := FCommand.Caption;
     Enabled := FCommand.Enabled;

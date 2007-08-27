@@ -19,7 +19,7 @@ unit PressOPFClasses;
 interface
 
 uses
-  {$IFDEF D6+}Variants,{$ENDIF}
+  {$IFNDEF D5}Variants,{$ENDIF}
   PressClasses;
 
 type

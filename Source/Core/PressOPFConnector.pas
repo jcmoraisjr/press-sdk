@@ -19,7 +19,7 @@ unit PressOPFConnector;
 interface
 
 uses
-  {$IFDEF D6+}Variants,{$ENDIF}
+  {$IFNDEF D5}Variants,{$ENDIF}
   Classes,
   Contnrs,
   PressClasses,

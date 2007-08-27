@@ -1334,7 +1334,7 @@ end;
 function TPressMVPObjectItem.GetNotifier: TPressNotifier;
 begin
   if not Assigned(FNotifier) then
-    FNotifier := TPressNotifier.Create(Notify);
+    FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   Result := FNotifier;
 end;
 
@@ -1555,7 +1555,7 @@ end;
 procedure TPressMVPObjectList.Reindex(AColumn: Integer);
 begin
   GOrderColumn := AColumn;
-  Sort(PressCompareItems);
+  Sort({$IFDEF FPC}@{$ENDIF}PressCompareItems);
 end;
 
 function TPressMVPObjectList.Remove(AObject: TPressMVPObjectItem): Integer;

@@ -23,7 +23,6 @@ uses
   Classes,
   Contnrs,
   Forms,
-  PressCompatibility,
   PressClasses,
   PressNotifier,
   PressConfig;
@@ -901,7 +900,7 @@ procedure TPressApplication.Init(AIsStatic: Boolean);
 begin
   FRunning := True;
   FOnIdle := Application.OnIdle;
-  Application.OnIdle := ApplicationIdle;
+  Application.OnIdle := {$IFDEF FPC}@{$ENDIF}ApplicationIdle;
   TPressApplicationInitEvent.Create(Self).Notify;
   TPressApplicationRunningEvent.Create(Self).QueueNotification;
   if AIsStatic then
