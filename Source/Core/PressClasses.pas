@@ -23,6 +23,7 @@ uses
   SysUtils,
   Classes,
   Contnrs,
+  SyncObjs,
   PressCompatibility;
 
 type
@@ -60,9 +61,14 @@ type
 
   TPressManagedObject = class(TPersistent, IInterface)
   private
+    FCriticalSection: TCriticalSection;
+    FLockCount: Integer;
     FRefCount: Integer;
+    function GetIsLocked: Boolean;
   protected
     procedure Finit; virtual;
+    procedure InternalLock; virtual;
+    procedure InternalUnlock; virtual;
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
@@ -71,8 +77,11 @@ type
     function AddRef: Integer; virtual;
     procedure AfterConstruction; override;
     procedure FreeInstance; override;
+    procedure Lock;
     class function NewInstance: TObject; override;
     function Release: Integer; virtual;
+    procedure Unlock;
+    property IsLocked: Boolean read GetIsLocked;
     property RefCount: Integer read FRefCount;
   end;
 
@@ -317,11 +326,11 @@ end;
 
 destructor TPressManagedObject.Destroy;
 begin
-  inherited;
 end;
 
 procedure TPressManagedObject.Finit;
 begin
+  FreeAndNil(FCriticalSection);
 end;
 
 procedure TPressManagedObject.FreeInstance;
@@ -335,10 +344,38 @@ begin
     end;
 end;
 
+function TPressManagedObject.GetIsLocked: Boolean;
+begin
+  Result := FLockCount > 0;
+end;
+
+procedure TPressManagedObject.InternalLock;
+begin
+end;
+
+procedure TPressManagedObject.InternalUnlock;
+begin
+end;
+
+procedure TPressManagedObject.Lock;
+begin
+  Inc(FLockCount);
+  if FLockCount = 1 then
+  begin
+    FCriticalSection.Acquire;
+    InternalLock;
+  end;
+end;
+
 class function TPressManagedObject.NewInstance: TObject;
 begin
   Result := inherited NewInstance;
-  TPressManagedObject(Result).FRefCount := 1;
+  with TPressManagedObject(Result) do
+  begin
+    FLockCount := 0;
+    FRefCount := 1;
+    FCriticalSection := TCriticalSection.Create;
+  end;
 end;
 
 function TPressManagedObject.QueryInterface(
@@ -355,6 +392,17 @@ begin
   Result := DecLock(FRefCount);
   if FRefCount < 0 then
     raise EPressError.CreateFmt(SCannotReleaseInstance, [ClassName]);
+end;
+
+procedure TPressManagedObject.Unlock;
+begin
+  if FLockCount >= 1 then
+    Dec(FLockCount);
+  if FLockCount = 0 then
+  begin
+    InternalUnlock;
+    FCriticalSection.Release;
+  end;
 end;
 
 function TPressManagedObject._AddRef: Integer; stdcall;
