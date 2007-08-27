@@ -29,9 +29,9 @@ uses
   PressMVPModel;
 
 type
-  { TPressMVPCommandMenuItem }
+  { TPressMVPMenuItem }
 
-  TPressMVPCommandMenuItem = class(TMenuItem)
+  TPressMVPMenuItem = class(TMenuItem)
   private
     FNotifier: TPressNotifier;
     FCommand: TPressMVPCommand;
@@ -315,9 +315,9 @@ uses
 type
   TPressMVPPopupCommandControlFriend = class(TControl);
 
-{ TPressMVPCommandMenuItem }
+{ TPressMVPMenuItem }
 
-constructor TPressMVPCommandMenuItem.Create(AOwner: TComponent; ACommand: TPressMVPCommand);
+constructor TPressMVPMenuItem.Create(AOwner: TComponent; ACommand: TPressMVPCommand);
 begin
   inherited Create(AOwner);
   if Assigned(ACommand) then
@@ -332,20 +332,20 @@ begin
     Caption := '-';
 end;
 
-procedure TPressMVPCommandMenuItem.Click;
+procedure TPressMVPMenuItem.Click;
 begin
   inherited;
   if Assigned(FCommand) then
     FCommand.Execute;
 end;
 
-destructor TPressMVPCommandMenuItem.Destroy;
+destructor TPressMVPMenuItem.Destroy;
 begin
   FNotifier.Free;
   inherited;
 end;
 
-procedure TPressMVPCommandMenuItem.Notify(AEvent: TPressEvent);
+procedure TPressMVPMenuItem.Notify(AEvent: TPressEvent);
 begin
   if Assigned(FCommand) then
     Enabled := FCommand.Enabled;
@@ -378,7 +378,7 @@ end;
 
 procedure TPressMVPPopupCommandMenu.InternalAddItem(ACommand: TPressMVPCommand);
 begin
-  Menu.Items.Add(TPressMVPCommandMenuItem.Create(Menu, ACommand));
+  Menu.Items.Add(TPressMVPMenuItem.Create(Menu, ACommand));
 end;
 
 procedure TPressMVPPopupCommandMenu.InternalAssignMenu(AControl: TControl);
