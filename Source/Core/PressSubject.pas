@@ -552,6 +552,15 @@ type
   TPressObjectChangedEvent = class(TPressSubjectChangedEvent)
   end;
 
+  TPressLockingEvent = class(TPressSubjectEvent)
+  end;
+
+  TPressLockObjectEvent = class(TPressLockingEvent)
+  end;
+
+  TPressUnlockObjectEvent = class(TPressLockingEvent)
+  end;
+
   TDate = TDateTime;
   TTime = TDateTime;
 
@@ -567,7 +576,6 @@ type
     FAttributes: TPressAttributeList;
     FDataAccess: IPressDAO;
     FDisableChangesCount: Integer;
-    FDisableUpdatesCount: Integer;
     FId: TPressAttribute;
     FIsChanged: Boolean;
     FMap: TPressClassMap;
@@ -592,7 +600,6 @@ type
     function GetMetadata: TPressObjectMetadata;
     function GetObjectOwner: TPressObject;
     function GetPersistentName: string;
-    function GetUpdatesDisabled: Boolean;
     procedure NotifyMementos(AAttribute: TPressAttribute);
     procedure SetId(const Value: string);
     procedure UnchangeAttributes;
@@ -613,7 +620,9 @@ type
     procedure InternalCalcAttribute(AAttribute: TPressAttribute); virtual;
     procedure InternalDispose(ADisposeMethod: TPressObjectOperation); virtual;
     function InternalIsValid: Boolean; virtual;
+    procedure InternalLock; override;
     procedure InternalStore(AStoreMethod: TPressObjectOperation); virtual;
+    procedure InternalUnlock; override;
     class function InternalMetadataStr: string; virtual;
     procedure NotifyChange;
     procedure NotifyInvalidate;
@@ -636,10 +645,8 @@ type
     function CreateAttributeIterator: TPressAttributeIterator;
     function CreateMemento: TPressObjectMemento;
     procedure DisableChanges;
-    procedure DisableUpdates;
     procedure Dispose;
     procedure EnableChanges;
-    procedure EnableUpdates;
     function FindAttribute(const AAttributeName: string): TPressAttribute;
     function FindPathAttribute(const APath: string; ASilent: Boolean = True): TPressAttribute;
     class function ObjectMetadataClass: TPressObjectMetadataClass; virtual;
@@ -664,7 +671,6 @@ type
     property PersistentName: string read GetPersistentName;
     property PersUpdateCount: Integer read FPersUpdateCount;
     property UpdateCount: Integer read FUpdateCount;
-    property UpdatesDisabled: Boolean read GetUpdatesDisabled;
   end;
 
   TPressObjectIterator = class;
@@ -2663,14 +2669,6 @@ begin
   Inc(FDisableChangesCount);
 end;
 
-procedure TPressObject.DisableUpdates;
-begin
-  { TODO : Disable updates in structured attributes }
-  Inc(FDisableUpdatesCount);
-  if FDisableUpdatesCount = 1 then
-    NotifyInvalidate;
-end;
-
 procedure TPressObject.Dispose;
 begin
   if IsPersistent then
@@ -2681,14 +2679,6 @@ procedure TPressObject.EnableChanges;
 begin
   if FDisableChangesCount > 0 then
     Dec(FDisableChangesCount);
-end;
-
-procedure TPressObject.EnableUpdates;
-begin
-  if FDisableUpdatesCount > 0 then
-    Dec(FDisableUpdatesCount);
-  if FDisableUpdatesCount = 0 then
-    NotifyInvalidate;
 end;
 
 function TPressObject.FindAttribute(const AAttributeName: string): TPressAttribute;
@@ -2828,11 +2818,6 @@ begin
   Result := Metadata.PersistentName;
 end;
 
-function TPressObject.GetUpdatesDisabled: Boolean;
-begin
-  Result := FDisableUpdatesCount > 0;
-end;
-
 procedure TPressObject.Init;
 begin
   FAttributes := TPressAttributeList.Create(True);
@@ -2866,6 +2851,13 @@ begin
   Result := True;
 end;
 
+procedure TPressObject.InternalLock;
+begin
+  inherited;
+  { TODO : Implement lock attributes }
+  TPressLockObjectEvent.Create(Self).Notify;
+end;
+
 class function TPressObject.InternalMetadataStr: string;
 begin
   Result := '';
@@ -2876,16 +2868,17 @@ begin
   AStoreMethod(Self);
 end;
 
+procedure TPressObject.InternalUnlock;
+begin
+  inherited;
+  { TODO : Implement lock attributes }
+  TPressUnlockObjectEvent.Create(Self).Notify;
+end;
+
 procedure TPressObject.NotifyChange;
 begin
-  if not FNotifying then
-    try
-      FNotifying := True;
-      {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s changed', [Signature]));{$ENDIF}
-      TPressObjectChangedEvent.Create(Self).Notify;
-    finally
-      FNotifying := False;
-    end;
+  {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s changed', [Signature]));{$ENDIF}
+  TPressObjectChangedEvent.Create(Self).Notify;
 end;
 
 procedure TPressObject.NotifyInvalidate;

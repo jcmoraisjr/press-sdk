@@ -229,6 +229,7 @@ type
   private
     function GetModel: TPressMVPObjectModel;
   protected
+    procedure InitNotifier; override;
     function InternalIsEnabled: Boolean; override;
   public
     class function Apply(AModel: TPressMVPModel): Boolean; override;
@@ -822,9 +823,16 @@ begin
   Result := inherited Model as TPressMVPObjectModel;
 end;
 
+procedure TPressMVPObjectCommand.InitNotifier;
+begin
+  inherited;
+  if Model.HasSubject then
+    Notifier.AddNotificationItem(Model.Subject, [TPressLockingEvent]);
+end;
+
 function TPressMVPObjectCommand.InternalIsEnabled: Boolean;
 begin
-  Result := not Model.HasSubject or not Model.Subject.UpdatesDisabled;
+  Result := not Model.HasSubject or not Model.Subject.IsLocked;
 end;
 
 { TPressMVPSaveObjectCommand }
@@ -866,18 +874,10 @@ begin
 end;
 
 procedure TPressMVPSaveObjectCommand.InternalStoreObject;
-var
-  VSubject: TPressObject;
 begin
   if not Model.Store then
     Exit;
-  VSubject := Model.Subject;
-  VSubject.DisableUpdates;
-  try
-    VSubject.Store;
-  finally
-    VSubject.EnableUpdates;
-  end;
+  Model.Subject.Store;
 end;
 
 { TPressMVPSaveConfirmObjectCommand }
