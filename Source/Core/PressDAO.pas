@@ -507,24 +507,31 @@ procedure TPressDAO.Store(AObject: TPressObject);
 begin
   if Assigned(AObject) and not AObject.IsOwned and not AObject.IsUpdated then
   begin
-    TPressObjectFriend(AObject).BeforeStore;
-    StartTransaction;
+    AObject.Lock;
     try
-      AObject.DisableChanges;
+      TPressObjectFriend(AObject).BeforeStore;
+      StartTransaction;
       try
-        {$IFDEF PressLogDAOInterface}PressLogMsg(Self, 'Storing', [AObject]);{$ENDIF}
-        TPressObjectFriend(AObject).InternalStore(InternalStore);
-        PressAssignPersistentId(AObject, AObject.Id);
-      finally
-        AObject.EnableChanges;
+        AObject.DisableChanges;
+        try
+{$IFDEF PressLogDAOInterface}
+          PressLogMsg(Self, 'Storing', [AObject]);
+{$ENDIF}
+          TPressObjectFriend(AObject).InternalStore(InternalStore);
+          PressAssignPersistentId(AObject, AObject.Id);
+        finally
+          AObject.EnableChanges;
+        end;
+        AObject.Unchanged;
+        Commit;
+      except
+        Rollback;
+        raise;
       end;
-      AObject.Unchanged;
-      Commit;
-    except
-      Rollback;
-      raise;
+      TPressObjectFriend(AObject).AfterStore;
+    finally
+      AObject.Unlock;
     end;
-    TPressObjectFriend(AObject).AfterStore;
   end;
 end;
 
