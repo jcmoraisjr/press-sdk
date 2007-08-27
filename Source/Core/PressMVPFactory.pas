@@ -109,12 +109,18 @@ uses
   PressConsts;
 
 var
-  _MVPFactory: IPressHolder; //TPressMVPFactory;
+  // fpc work around
+  _MVPFactory: {$IFDEF DELPHI}IPressHolder{$ELSE}TPressHolder{$ENDIF}; //TPressMVPFactory;
 
 function PressDefaultMVPFactory: TPressMVPFactory;
 begin
   if not Assigned(_MVPFactory) then
+  begin
     _MVPFactory := TPressHolder.Create(TPressMVPFactory.Create);
+{$IFDEF FPC}
+    _MVPFactory.AddRef;
+{$ENDIF}
+  end;
   Result := TPressMVPFactory(_MVPFactory.Instance);
 end;
 
@@ -426,5 +432,12 @@ begin
     if AClass.InheritsFrom(AClasses[I]) then
       AClasses.Delete(I);
 end;
+
+{$IFDEF FPC}
+initialization
+
+finalization
+  _MVPFactory.Free;
+{$ENDIF}
 
 end.
