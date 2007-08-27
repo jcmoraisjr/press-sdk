@@ -23,6 +23,7 @@ uses
   TypInfo,
   Graphics,
   PressClasses,
+  PressNotifier,
   PressSubject;
 
 type
@@ -600,7 +601,6 @@ type
 
   TPressPart = class(TPressItem)
   protected
-    procedure AfterChangeItem(AItem: TPressObject); override;
     procedure BeforeChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
     procedure BeforeChangeItem(AItem: TPressObject); override;
     procedure BeforeRetrieveInstance(Sender: TPressProxy); override;
@@ -608,6 +608,7 @@ type
     procedure InternalAssignItem(AProxy: TPressProxy); override;
     function InternalProxyType: TPressProxyType; override;
     procedure InternalUnchange; override;
+    procedure Notify(AEvent: TPressEvent); override;
     procedure ReleaseInstance(AInstance: TPressObject); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
@@ -616,16 +617,16 @@ type
 
   TPressReference = class(TPressItem)
   protected
-    procedure AfterChangeItem(AItem: TPressObject); override;
     procedure InternalAssignItem(AProxy: TPressProxy); override;
     function InternalProxyType: TPressProxyType; override;
+    procedure Notify(AEvent: TPressEvent); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
   end;
 
   TPressItemsEventType =
-   (ietAdd, ietInsert, ietModify, ietNotify, ietRemove, ietRebuild, ietClear);
+   (ietAdd, ietInsert, ietModify, ietRemove, ietRebuild, ietClear);
 
   TPressItemsChangedEvent = class(TPressAttributeChangedEvent)
   private
@@ -657,7 +658,7 @@ type
     procedure SetObjects(AIndex: Integer; AValue: TPressObject);
   protected
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
-    procedure ChangedItem(AItem: TPressObject; ASubjectChanged: Boolean = True);
+    procedure ChangedItem(AItem: TPressObject);
     procedure ChangedList(Sender: TPressProxyList; Item: TPressProxy; Action: TListNotification);
     procedure ClearObjectCache;
     procedure Finit; override;
@@ -718,7 +719,6 @@ type
 
   TPressParts = class(TPressItems)
   protected
-    procedure AfterChangeItem(AItem: TPressObject); override;
     procedure BeforeChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
     procedure BeforeChangeItem(AItem: TPressObject); override;
     procedure BeforeRetrieveInstance(Sender: TPressProxy); override;
@@ -726,6 +726,7 @@ type
     procedure InternalAssignItem(AProxy: TPressProxy); override;
     function InternalProxyType: TPressProxyType; override;
     procedure InternalUnchange; override;
+    procedure Notify(AEvent: TPressEvent); override;
     procedure ReleaseInstance(AInstance: TPressObject); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
@@ -734,9 +735,9 @@ type
 
   TPressReferences = class(TPressItems)
   protected
-    procedure AfterChangeItem(AItem: TPressObject); override;
     procedure InternalAssignItem(AProxy: TPressProxy); override;
     function InternalProxyType: TPressProxyType; override;
+    procedure Notify(AEvent: TPressEvent); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
@@ -3497,12 +3498,6 @@ end;
 
 { TPressPart }
 
-procedure TPressPart.AfterChangeItem(AItem: TPressObject);
-begin
-  inherited;
-  Changed;
-end;
-
 class function TPressPart.AttributeBaseType: TPressAttributeBaseType;
 begin
   Result := attPart;
@@ -3564,6 +3559,13 @@ begin
     FProxy.Instance.Unchanged;
 end;
 
+procedure TPressPart.Notify(AEvent: TPressEvent);
+begin
+  inherited;
+  if AEvent is TPressObjectChangedEvent then
+    Changed;
+end;
+
 procedure TPressPart.ReleaseInstance(AInstance: TPressObject);
 begin
   inherited;
@@ -3571,12 +3573,6 @@ begin
 end;
 
 { TPressReference }
-
-procedure TPressReference.AfterChangeItem(AItem: TPressObject);
-begin
-  inherited;
-  NotifyReferenceChange;
-end;
 
 class function TPressReference.AttributeBaseType: TPressAttributeBaseType;
 begin
@@ -3599,6 +3595,12 @@ begin
     Result := ptWeakReference
   else
     Result := ptShared;
+end;
+
+procedure TPressReference.Notify(AEvent: TPressEvent);
+begin
+  inherited;
+  ReferenceChanged(Value);
 end;
 
 { TPressItemsChangedEvent }
@@ -3649,10 +3651,8 @@ procedure TPressItems.AfterChangeInstance(
   ChangeType: TPressProxyChangeType);
 begin
   inherited;
-  { TODO : Verify this improvement }
-  //ChangedItem(Instance, ChangeType = pctAssigning);
   if ChangeType = pctAssigning then
-    ChangedItem(Instance, True);
+    ChangedItem(Instance);
 end;
 
 procedure TPressItems.Assign(Source: TPersistent);
@@ -3707,26 +3707,17 @@ begin
   end;
 end;
 
-procedure TPressItems.ChangedItem(
-  AItem: TPressObject; ASubjectChanged: Boolean);
+procedure TPressItems.ChangedItem(AItem: TPressObject);
 var
   VIndex: Integer;
-  VEventType: TPressItemsEventType;
 begin
   if ChangesDisabled then
     Exit;
   VIndex := ProxyList.IndexOfInstance(AItem);
   if VIndex >= 0 then
-  begin
-    if ASubjectChanged then
-      VEventType := ietModify
-    else
-      VEventType := ietNotify;
     TPressItemsChangedEvent.Create(
-     Self, ProxyList[VIndex], VIndex, VEventType).Notify;
-  end;
-  if ASubjectChanged then
-    Changed;
+     Self, ProxyList[VIndex], VIndex, ietModify).Notify;
+  Changed;
 end;
 
 procedure TPressItems.ChangedList(
@@ -3974,8 +3965,6 @@ begin
   if ChangesDisabled then
     Exit;
   TPressItemsChangedEvent.Create(Self, nil, -1, ietRebuild).Notify;
-  if Assigned(Owner) then
-    TPressObjectFriend(Owner).NotifyInvalidate;
 end;
 
 function TPressItems.Remove(AObject: TPressObject): Integer;
@@ -4005,12 +3994,6 @@ begin
 end;
 
 { TPressParts }
-
-procedure TPressParts.AfterChangeItem(AItem: TPressObject);
-begin
-  inherited;
-  ChangedItem(AItem);
-end;
 
 class function TPressParts.AttributeBaseType: TPressAttributeBaseType;
 begin
@@ -4086,6 +4069,14 @@ begin
       Proxies[I].Instance.Unchanged;
 end;
 
+procedure TPressParts.Notify(AEvent: TPressEvent);
+begin
+  inherited;
+  if (AEvent is TPressObjectChangedEvent) and
+   (AEvent.Owner is TPressObject) then
+    ChangedItem(TPressObject(AEvent.Owner));
+end;
+
 procedure TPressParts.ReleaseInstance(AInstance: TPressObject);
 begin
   inherited;
@@ -4093,13 +4084,6 @@ begin
 end;
 
 { TPressReferences }
-
-procedure TPressReferences.AfterChangeItem(AItem: TPressObject);
-begin
-  inherited;
-  ChangedItem(AItem, False);
-  NotifyReferenceChange;
-end;
 
 class function TPressReferences.AttributeBaseType: TPressAttributeBaseType;
 begin
@@ -4125,6 +4109,14 @@ begin
     Result := ptWeakReference
   else
     Result := ptShared;
+end;
+
+procedure TPressReferences.Notify(AEvent: TPressEvent);
+begin
+  inherited;
+  if (AEvent is TPressObjectChangedEvent) and
+   (AEvent.Owner is TPressObject) then
+    ReferenceChanged(TPressObject(AEvent.Owner));
 end;
 
 initialization

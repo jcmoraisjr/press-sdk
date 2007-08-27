@@ -314,17 +314,20 @@ type
   private
     FAttributes: TPressAttributeList;
     FItemNumber: Integer;
+    FNotifier: TPressNotifier;
     FOwner: TPressMVPObjectList;
     FProxy: TPressProxy;
     function GetAttributes: TPressAttributeList;
     function GetDisplayText(ACol: Integer): string;
     function GetInstance: TPressObject;
+    function GetNotifier: TPressNotifier;
+    procedure Notify(AEvent: TPressEvent);
   protected
     property Attributes: TPressAttributeList read GetAttributes;
+    property Notifier: TPressNotifier read GetNotifier;
   public
     constructor Create(AOwner: TPressMVPObjectList; AProxy: TPressProxy; AItemNumber: Integer);
     destructor Destroy; override;
-    function AddAttribute(AAttribute: TPressAttribute): Integer;
     procedure ClearAttributes;
     function HasAttributes: Boolean;
     property DisplayText[ACol: Integer]: string read GetDisplayText;
@@ -334,18 +337,19 @@ type
   end;
 
   TPressMVPObjectIterator = class;
+  TPressMVPItemsModel = class;
 
   TPressMVPObjectList = class(TPressList)
   private
     FColumnData: TPressMVPColumnData;
-    procedure CreateAttributes(AObjectItem: TPressMVPObjectItem);
+    FModel: TPressMVPItemsModel;
     function CreateObjectItem(AProxy: TPressProxy): TPressMVPObjectItem;
     function GetItems(AIndex: Integer): TPressMVPObjectItem;
     procedure SetItems(AIndex: Integer; Value: TPressMVPObjectItem);
   protected
     function InternalCreateIterator: TPressCustomIterator; override;
   public
-    constructor Create(AColumnData: TPressMVPColumnData);
+    constructor Create(AModel: TPressMVPItemsModel; AColumnData: TPressMVPColumnData);
     function Add(AObject: TPressMVPObjectItem): Integer;
     function AddProxy(AProxy: TPressProxy): Integer;
     function CreateIterator: TPressMVPObjectIterator;
@@ -358,7 +362,9 @@ type
     procedure Reindex(AColumn: Integer);
     function Remove(AObject: TPressMVPObjectItem): Integer;
     function RemoveProxy(AProxy: TPressProxy): Integer;
+    property ColumnData: TPressMVPColumnData read FColumnData;
     property Items[AIndex: Integer]: TPressMVPObjectItem read GetItems write SetItems; default;
+    property Model: TPressMVPItemsModel read FModel;
   end;
 
   TPressMVPObjectIterator = class(TPressIterator)
@@ -1185,8 +1191,13 @@ end;
 procedure TPressMVPReferenceModel.Notify(AEvent: TPressEvent);
 begin
   inherited;
-  if (AEvent is TPressAttributeChangedEvent) and HasSubject then
-    Selection.Select(Subject.Value);
+  { TODO : Listen all reference attributes within the path }
+  if AEvent is TPressAttributeChangedEvent then
+  begin
+    if HasSubject then
+      Selection.Select(Subject.Value);
+  end else if AEvent is TPressReferenceChangedEvent then
+    Changed(ctSubject);
 end;
 
 function TPressMVPReferenceModel.ObjectOf(AIndex: Integer): TPressObject;
@@ -1213,17 +1224,9 @@ end;
 
 { TPressMVPObjectItem }
 
-function TPressMVPObjectItem.AddAttribute(
-  AAttribute: TPressAttribute): Integer;
-begin
-  { TODO : Assert AAttribute is TPressValue }
-  Result := Attributes.Add(AAttribute);
-  if Assigned(AAttribute) then
-    AAttribute.AddRef;
-end;
-
 procedure TPressMVPObjectItem.ClearAttributes;
 begin
+  FreeAndNil(FNotifier);
   FreeAndNil(FAttributes);
 end;
 
@@ -1239,17 +1242,76 @@ end;
 
 destructor TPressMVPObjectItem.Destroy;
 begin
+  FNotifier.Free;
   FProxy.Free;
   FAttributes.Free;
   inherited;
 end;
 
 function TPressMVPObjectItem.GetAttributes: TPressAttributeList;
+
+  function FindAttribute(const AAttributeName: string): TPressValue;
+
+    function FindPathAttribute(
+      AInstance: TPressObject; const APath: string): TPressAttribute;
+    var
+      VItemPart: string;
+      VPos: Integer;
+    begin
+      VPos := Pos(SPressAttributeSeparator, APath);
+      if VPos = 0 then
+        Result := AInstance.AttributeByName(APath)
+      else
+      begin
+        VItemPart := Copy(APath, 1, VPos - 1);
+        Result := AInstance.AttributeByName(VItemPart);
+        if Result is TPressItem then
+          if Assigned(TPressItem(Result).Value) then
+          begin
+            Notifier.AddNotificationItem(
+             TPressItem(Result), [TPressReferenceChangedEvent]);
+            Result := FindPathAttribute(TPressItem(Result).Value,
+             Copy(APath, VPos + 1, Length(APath) - VPos));
+          end else
+            Result := nil
+        else
+          raise EPressError.CreateFmt(SAttributeIsNotItem,
+           [AInstance.ClassName, VItemPart]);
+      end;
+    end;
+
+  begin
+    Result := FindPathAttribute(Instance, AAttributeName) as TPressValue;
+  end;
+
+  procedure AddReferencedAttributes;
+  var
+    VColumnData: TPressMVPColumnData;
+    VAttribute: TPressValue;
+    VSubject: TPressItems;
+    I: Integer;
+  begin
+    if FOwner.Model.HasSubject then
+      VSubject := FOwner.Model.Subject
+    else
+      VSubject := nil;
+    if VSubject is TPressReferences then
+      Notifier.AddNotificationItem(VSubject, [TPressReferenceChangedEvent]);
+    VColumnData := FOwner.ColumnData;
+    for I := 0 to Pred(VColumnData.ColumnCount) do
+    begin
+      VAttribute := FindAttribute(VColumnData[I].AttributeName);
+      FAttributes.Add(VAttribute);
+      if Assigned(VAttribute) then
+        VAttribute.AddRef;
+    end;
+  end;
+
 begin
   if not Assigned(FAttributes) then
   begin
     FAttributes := TPressAttributeList.Create(True);
-    FOwner.CreateAttributes(Self);
+    AddReferencedAttributes;
   end;
   Result := FAttributes;
 end;
@@ -1269,9 +1331,22 @@ begin
   Result := Proxy.Instance;
 end;
 
+function TPressMVPObjectItem.GetNotifier: TPressNotifier;
+begin
+  if not Assigned(FNotifier) then
+    FNotifier := TPressNotifier.Create(Notify);
+  Result := FNotifier;
+end;
+
 function TPressMVPObjectItem.HasAttributes: Boolean;
 begin
   Result := Assigned(FAttributes);
+end;
+
+procedure TPressMVPObjectItem.Notify(AEvent: TPressEvent);
+begin
+  ClearAttributes;
+  FOwner.Model.Changed(ctSubject);
 end;
 
 { TPressMVPObjectList }
@@ -1294,20 +1369,12 @@ begin
   end;
 end;
 
-constructor TPressMVPObjectList.Create(AColumnData: TPressMVPColumnData);
+constructor TPressMVPObjectList.Create(
+  AModel: TPressMVPItemsModel; AColumnData: TPressMVPColumnData);
 begin
   inherited Create(True);
   FColumnData := AColumnData;
-end;
-
-procedure TPressMVPObjectList.CreateAttributes(
-  AObjectItem: TPressMVPObjectItem);
-var
-  I: Integer;
-begin
-  for I := 0 to Pred(FColumnData.ColumnCount) do
-    AObjectItem.AddAttribute(AObjectItem.Instance.
-     FindPathAttribute(FColumnData[I].AttributeName, False));
+  FModel := AModel;
 end;
 
 function TPressMVPObjectList.CreateIterator: TPressMVPObjectIterator;
@@ -1547,7 +1614,7 @@ end;
 function TPressMVPItemsModel.GetObjectList: TPressMVPObjectList;
 begin
   if not Assigned(FObjectList) then
-    FObjectList := TPressMVPObjectList.Create(ColumnData);
+    FObjectList := TPressMVPObjectList.Create(Self, ColumnData);
   Result := FObjectList;
 end;
 
@@ -1694,7 +1761,7 @@ begin
       AddItem;
     ietInsert:
       InsertItem;
-    ietModify, ietNotify:
+    ietModify:
       ModifyItem;
     ietRemove:
       RemoveItem;
@@ -1703,8 +1770,7 @@ begin
     ietRebuild:
       RebuildObjectList;
   end;
-  if AEvent.EventType <> ietNotify then
-    Changed(ctSubject);
+  Changed(ctSubject);
 end;
 
 function TPressMVPItemsModel.ItemNumber(ARow: Integer): Integer;

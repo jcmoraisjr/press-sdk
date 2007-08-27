@@ -506,11 +506,6 @@ type
   end;
 
   TPressSubjectChangedEvent = class(TPressSubjectEvent)
-  private
-    FContentChanged: Boolean;
-  public
-    constructor Create(AOwner: TObject; AContentChanged: Boolean = True);
-    property ContentChanged: Boolean read FContentChanged;
   end;
 
   TPressSubjectClass = class of TPressSubject;
@@ -550,6 +545,11 @@ type
   end;
 
   TPressObjectChangedEvent = class(TPressSubjectChangedEvent)
+  private
+    FAttribute: TPressAttribute;
+  public
+    constructor Create(AOwner: TObject; AAttribute: TPressAttribute);
+    property Attribute: TPressAttribute read FAttribute;
   end;
 
   TPressLockingEvent = class(TPressSubjectEvent)
@@ -581,7 +581,6 @@ type
     FMap: TPressClassMap;
     FMementos: TPressObjectMementoList;
     FMetadata: TPressObjectMetadata;
-    FNotifying: Boolean;
     FOwnerAttribute: TPressStructure;
     FPersistentId: string;
     FPersUpdateCount: Integer;
@@ -624,8 +623,7 @@ type
     procedure InternalStore(AStoreMethod: TPressObjectOperation); virtual;
     procedure InternalUnlock; override;
     class function InternalMetadataStr: string; virtual;
-    procedure NotifyChange;
-    procedure NotifyInvalidate;
+    procedure NotifyChange(AAttribute: TPressAttribute);
     procedure NotifyUnchange;
     procedure SetOwnerContext(AOwner: TPressStructure);
   public
@@ -931,7 +929,6 @@ type
     procedure InternalUnchange; virtual;
     procedure Notify(AEvent: TPressEvent); virtual;
     procedure NotifyChange;
-    procedure NotifyInvalidate;
     procedure NotifyUnchange;
     procedure ReleaseCalcNotification(AInstance: TPressObject);
     procedure SetAsBoolean(AValue: Boolean); virtual;
@@ -1019,15 +1016,21 @@ type
     property UnassignedObject: TPressObject read FUnassignedObject;
   end;
 
+  TPressReferenceChangedEvent = class(TPressSubjectEvent)
+  private
+    FInstance: TPressObject;
+  public
+    constructor Create(AOwner: TObject; AInstance: TPressObject);
+    property Instance: TPressObject read FInstance;
+  end;
+
   TPressStructureClass = class of TPressStructure;
 
   TPressStructure = class(TPressAttribute)
   private
-    FNotifying: Boolean;
     function GetObjectClass: TPressObjectClass;
   protected
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); virtual;
-    procedure AfterChangeItem(AItem: TPressObject); virtual;
     procedure AfterChangeReference(Sender: TPressProxy; const AClassName, AId: string); virtual;
     procedure BeforeChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); virtual;
     procedure BeforeChangeItem(AItem: TPressObject); virtual;
@@ -1039,8 +1042,7 @@ type
     procedure InternalAssignObject(AObject: TPressObject); virtual; abstract;
     function InternalProxyType: TPressProxyType; virtual; abstract;
     procedure InternalUnassignObject(AObject: TPressObject); virtual; abstract;
-    procedure Notify(AEvent: TPressEvent); override;
-    procedure NotifyReferenceChange;
+    procedure ReferenceChanged(AInstance: TPressObject);
     procedure ReleaseInstance(AInstance: TPressObject); virtual;
     procedure ValidateObject(AObject: TPressObject);
     procedure ValidateObjectClass(AClass: TPressObjectClass); overload;
@@ -2460,20 +2462,20 @@ begin
 end;
 {$ENDIF}
 
-{ TPressSubjectChangedEvent }
-
-constructor TPressSubjectChangedEvent.Create(
-  AOwner: TObject; AContentChanged: Boolean);
-begin
-  inherited Create(AOwner);
-  FContentChanged := AContentChanged;
-end;
-
 { TPressSubject }
 
 function TPressSubject.GetSignature: string;
 begin
   Result := ClassName;
+end;
+
+{ TPressObjectChangedEvent }
+
+constructor TPressObjectChangedEvent.Create(
+  AOwner: TObject; AAttribute: TPressAttribute);
+begin
+  inherited Create(AOwner);
+  FAttribute := AAttribute;
 end;
 
 { TPressObject }
@@ -2546,7 +2548,7 @@ begin
   if ChangesDisabled then
     Exit;
   FIsChanged := True;
-  NotifyChange;
+  NotifyChange(AAttribute);
 end;
 
 procedure TPressObject.Changing(AAttribute: TPressAttribute);
@@ -2875,22 +2877,10 @@ begin
   TPressUnlockObjectEvent.Create(Self).Notify;
 end;
 
-procedure TPressObject.NotifyChange;
+procedure TPressObject.NotifyChange(AAttribute: TPressAttribute);
 begin
   {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s changed', [Signature]));{$ENDIF}
-  TPressObjectChangedEvent.Create(Self).Notify;
-end;
-
-procedure TPressObject.NotifyInvalidate;
-begin
-  if not FNotifying then
-    try
-      FNotifying := True;
-      {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s invalidated', [Signature]));{$ENDIF}
-      TPressObjectChangedEvent.Create(Self, False).Notify;
-    finally
-      FNotifying := False;
-    end;
+  TPressObjectChangedEvent.Create(Self, AAttribute).Notify;
 end;
 
 procedure TPressObject.NotifyMementos(AAttribute: TPressAttribute);
@@ -2908,14 +2898,8 @@ end;
 
 procedure TPressObject.NotifyUnchange;
 begin
-  if not FNotifying then
-    try
-      FNotifying := True;
-      {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s unchanged', [Signature]));{$ENDIF}
-      TPressObjectUnchangedEvent.Create(Self).Notify;
-    finally
-      FNotifying := False;
-    end;
+  {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s unchanged', [Signature]));{$ENDIF}
+  TPressObjectUnchangedEvent.Create(Self).Notify;
 end;
 
 class function TPressObject.ObjectMetadataClass: TPressObjectMetadataClass;
@@ -3995,24 +3979,14 @@ end;
 
 procedure TPressAttribute.Notify(AEvent: TPressEvent);
 begin
-  if AEvent.ClassType.InheritsFrom(TPressAttributeChangedEvent) and
-   IsCalcAttribute then
-  begin
+  if AEvent is TPressAttributeChangedEvent and IsCalcAttribute then
     FCalcUpdated := False;
-    NotifyInvalidate;
-  end;
 end;
 
 procedure TPressAttribute.NotifyChange;
 begin
   {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Attribute %s changed', [Signature]));{$ENDIF}
   TPressAttributeChangedEvent.Create(Self).Notify;
-end;
-
-procedure TPressAttribute.NotifyInvalidate;
-begin
-  {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Attribute %s invalidated', [Signature]));{$ENDIF}
-  TPressAttributeChangedEvent.Create(Self, False).Notify;
 end;
 
 procedure TPressAttribute.NotifyUnchange;
@@ -4208,6 +4182,15 @@ begin
   inherited;
 end;
 
+{ TPressReferenceChangedEvent }
+
+constructor TPressReferenceChangedEvent.Create(AOwner: TObject;
+  AInstance: TPressObject);
+begin
+  inherited Create(AOwner);
+  FInstance := AInstance;
+end;
+
 { TPressStructure }
 
 procedure TPressStructure.AfterChangeInstance(
@@ -4218,10 +4201,6 @@ begin
     BindInstance(Instance);
   if ChangeType = pctAssigning then
     Changed;
-end;
-
-procedure TPressStructure.AfterChangeItem(AItem: TPressObject);
-begin
 end;
 
 procedure TPressStructure.AfterChangeReference(
@@ -4294,29 +4273,14 @@ begin
     Result := ValidObjectClass;
 end;
 
-procedure TPressStructure.Notify(AEvent: TPressEvent);
-begin
-  inherited;
-  if not FNotifying then
-    try
-      FNotifying := True;
-      if AEvent.Owner is TPressObject then
-        AfterChangeItem(TPressObject(AEvent.Owner));
-    finally
-      FNotifying := False;
-    end;
-end;
-
-procedure TPressStructure.NotifyReferenceChange;
-begin
-  NotifyInvalidate;
-  if Assigned(Owner) then
-    Owner.NotifyInvalidate;  // friend class
-end;
-
 function TPressStructure.ProxyType: TPressProxyType;
 begin
   Result := InternalProxyType;
+end;
+
+procedure TPressStructure.ReferenceChanged(AInstance: TPressObject);
+begin
+  TPressReferenceChangedEvent.Create(Self, AInstance).Notify;
 end;
 
 procedure TPressStructure.ReleaseInstance(AInstance: TPressObject);
