@@ -412,7 +412,7 @@ var
   begin
     VView.HideReferences;
     Owner.Model.UpdateData;
-    VView.SelectAll;
+    inherited;
   end;
 
 begin
