@@ -140,7 +140,7 @@ begin
     begin
       Result := ObjectList[I];
       if (Result.PersistentId = AId) and
-       (not Assigned(AClass) or (Result.ClassType = AClass)) then
+       (not Assigned(AClass) or (Result.ClassType.InheritsFrom(AClass))) then
         Exit;
     end;
   Result := nil;
