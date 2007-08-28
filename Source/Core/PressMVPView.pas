@@ -297,6 +297,7 @@ type
   private
     FViewChangeEvent: TNotifyEvent;
     function GetControl: TCustomEdit;
+    function GetSelectedText: string;
   protected
     procedure ViewChangeEvent(Sender: TObject); virtual;
     procedure ViewEnterEvent(Sender: TObject); override;
@@ -311,6 +312,7 @@ type
   public
     class function Apply(AControl: TControl): Boolean; override;
     property Control: TCustomEdit read GetControl;
+    property SelectedText: string read GetSelectedText;
   end;
 
   TPressMVPDateTimeView = class(TPressMVPWinView)
@@ -356,6 +358,7 @@ type
     procedure ViewExitEvent(Sender: TObject); override;
   protected
     function GetReferencesVisible: Boolean; virtual;
+    function GetSelectedText: string; virtual;
     procedure InternalAddReference(const ACaption: string); virtual; abstract;
     procedure InternalClearReferences; virtual; abstract;
   public
@@ -363,6 +366,7 @@ type
     procedure AssignReferences(AItems: TStrings);
     procedure ClearReferences;
     property ReferencesVisible: Boolean read GetReferencesVisible;
+    property SelectedText: string read GetSelectedText;
   end;
 
   TPressMVPComboBoxView = class(TPressMVPItemView)
@@ -392,6 +396,7 @@ type
     function GetAsString: string; override;
     function GetIsClear: Boolean; override;
     function GetReferencesVisible: Boolean; override;
+    function GetSelectedText: string; override;
     procedure InitView; override;
     procedure InternalAddReference(const ACaption: string); override;
     procedure InternalClear; override;
@@ -1103,6 +1108,11 @@ begin
   Result := Control.Text = '';
 end;
 
+function TPressMVPEditView.GetSelectedText: string;
+begin
+  Result := Control.SelText;
+end;
+
 procedure TPressMVPEditView.InitView;
 begin
   inherited;
@@ -1290,6 +1300,11 @@ begin
   Result := False;
 end;
 
+function TPressMVPItemView.GetSelectedText: string;
+begin
+  Result := '';
+end;
+
 procedure TPressMVPItemView.ViewEnterEvent(Sender: TObject);
 begin
   InternalClearReferences;
@@ -1335,6 +1350,11 @@ end;
 function TPressMVPComboBoxView.GetReferencesVisible: Boolean;
 begin
   Result := Control.DroppedDown;
+end;
+
+function TPressMVPComboBoxView.GetSelectedText: string;
+begin
+  Result := Control.SelText;
 end;
 
 procedure TPressMVPComboBoxView.HideReferences;

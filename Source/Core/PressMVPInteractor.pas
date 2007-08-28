@@ -463,10 +463,20 @@ begin
 end;
 
 procedure TPressMVPOpenComboInteractor.Notify(AEvent: TPressEvent);
+var
+  VView: TPressMVPItemView;
+  VQueryString: string;
 begin
   inherited;
   if AEvent is TPressMVPViewDropDownEvent then
-    Owner.UpdateReferences('');
+  begin
+    VView := Owner.View;
+    if VView.SelectedText = '' then
+      VQueryString := VView.AsString
+    else
+      VQueryString := '';
+    Owner.UpdateReferences(VQueryString);
+  end;
 end;
 
 { TPressMVPChangeModelInteractor }
