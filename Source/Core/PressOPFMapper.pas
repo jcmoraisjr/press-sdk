@@ -118,7 +118,7 @@ type
     destructor Destroy; override;
     procedure DisposeObject(AObject: TPressObject);
     procedure DisposeRecord(const AId: string);
-    procedure RetrieveAttributes(AObject: TPressObject; ADataRow: TPressOPFDataRow);
+    procedure ReadAttributes(AObject: TPressObject; ADataRow: TPressOPFDataRow);
     function RetrieveBaseMaps(const AId: string; AMetadata: TPressObjectMetadata; out ADataset: TPressOPFDataset): TPressObject;
     function RetrieveComplementaryMaps(AObject: TPressObject; ABaseClass: TPressObjectClass; out ADataset: TPressOPFDataset): Boolean;
     procedure Store(AObject: TPressObject);
@@ -527,7 +527,7 @@ function TPressOPFObjectMapper.Retrieve(AClass: TPressObjectClass;
       I := Pred(VMaps.Count);
       while (I >= 0) and (VMaps[I].ObjectClass <> AClass) do
       begin
-        AttributeMapper[VMaps[I]].RetrieveAttributes(AObject, VDataset[0]);
+        AttributeMapper[VMaps[I]].ReadAttributes(AObject, VDataset[0]);
         Dec(I);
       end;
     end;
@@ -551,7 +551,7 @@ begin
         if (VObject.ClassType <> AClass) and (VObject is AClass) then
           ReadComplementaryMaps(VObject);
         for I := Pred(VMaps.Count) downto 0 do
-          AttributeMapper[VMaps[I]].RetrieveAttributes(VObject, VDataset[0]);
+          AttributeMapper[VMaps[I]].ReadAttributes(VObject, VDataset[0]);
         PressAssignPersistentId(VObject, AId);
         VObject.EnableChanges;
       except
@@ -914,7 +914,7 @@ begin
   Result := FInsertDataset;
 end;
 
-procedure TPressOPFAttributeMapper.RetrieveAttributes(
+procedure TPressOPFAttributeMapper.ReadAttributes(
   AObject: TPressObject; ADataRow: TPressOPFDataRow);
 var
   VDataset: TPressOPFDataset;
