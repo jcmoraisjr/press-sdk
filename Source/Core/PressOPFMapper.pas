@@ -104,7 +104,7 @@ type
     function DeleteDataset: TPressOPFDataset;
     function InsertDataset: TPressOPFDataset;
     function SelectBaseDataset: TPressOPFDataset;
-    function SelectComplementaryDataset(ABaseMap: TPressOPFStorageMap): TPressOPFDataset;
+    function SelectComplementaryDataset(ABaseClass: TPressObjectClass): TPressOPFDataset;
     function UpdateDataset(AObject: TPressObject): TPressOPFDataset;
   protected
     procedure DoConcurrencyError(AObject: TPressObject); virtual;
@@ -120,7 +120,7 @@ type
     procedure DisposeRecord(const AId: string);
     procedure RetrieveAttributes(AObject: TPressObject; ADataRow: TPressOPFDataRow);
     function RetrieveBaseMaps(const AId: string; AMetadata: TPressObjectMetadata; out ADataset: TPressOPFDataset): TPressObject;
-    function RetrieveComplementaryMaps(AObject: TPressObject; ABaseMap: TPressOPFStorageMap; out ADataset: TPressOPFDataset): Boolean;
+    function RetrieveComplementaryMaps(AObject: TPressObject; ABaseClass: TPressObjectClass; out ADataset: TPressOPFDataset): Boolean;
     procedure Store(AObject: TPressObject);
     property Map: TPressOPFStorageMap read FMap;
     property Maps: TPressOPFStorageMapList read FMaps;
@@ -171,7 +171,7 @@ type
   protected
     function BuildFieldList(AFieldListType: TPressOPFFieldListType; AHelperFields: TPressOPFHelperFields; AMaps: TPressOPFStorageMapArray = nil): string;
     function BuildLinkList(const APrefix: string; AMetadata: TPressAttributeMetadata): string;
-    function BuildMapArray(ABaseMap: TPressOPFStorageMap): TPressOPFStorageMapArray;
+    function BuildMapArray(ABaseClass: TPressObjectClass): TPressOPFStorageMapArray;
     function BuildTableAlias(AIndex: Integer): string;
     function BuildTableList(AMaps: TPressOPFStorageMapArray): string;
     function CreateAssignParamToFieldList(AObject: TPressObject): string;
@@ -186,16 +186,18 @@ type
     function InsertLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
     function InsertStatement: string; virtual;
     function SelectLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
-    function SelectStatement(ABaseMap: TPressOPFStorageMap = nil): string; virtual;
+    function SelectStatement(ABaseClass: TPressObjectClass = nil): string; virtual;
     function UpdateStatement(AObject: TPressObject): string; virtual;
   end;
 
   TPressOPFStorageMap = class(TPressAttributeMetadataList)
   private
     FMetadata: TPressObjectMetadata;
+    FObjectClass: TPressObjectClass;
   public
     constructor Create(AMetadata: TPressObjectMetadata);
     property Metadata: TPressObjectMetadata read FMetadata;
+    property ObjectClass: TPressObjectClass read FObjectClass;
   end;
 
   TPressOPFStorageMapIterator = class;
@@ -533,7 +535,7 @@ begin
           VComplementaryMaps := StorageModel.Maps[VObject.ClassType];
           if
            AttributeMapper[VComplementaryMaps.Last].RetrieveComplementaryMaps(
-           VObject, VRootMap, VComplementaryDataset) then
+           VObject, AClass, VComplementaryDataset) then
           begin
             I := Pred(VComplementaryMaps.Count);
             while (I >= 0) and
@@ -997,10 +999,10 @@ begin
 end;
 
 function TPressOPFAttributeMapper.RetrieveComplementaryMaps(
-  AObject: TPressObject; ABaseMap: TPressOPFStorageMap;
+  AObject: TPressObject; ABaseClass: TPressObjectClass;
   out ADataset: TPressOPFDataset): Boolean;
 begin
-  ADataset := SelectComplementaryDataset(ABaseMap);
+  ADataset := SelectComplementaryDataset(ABaseClass);
   AddPersistentIdParam(ADataset, AObject.Id);
   ADataset.Execute;
   Result := ADataset.Count = 1;
@@ -1020,11 +1022,11 @@ begin
 end;
 
 function TPressOPFAttributeMapper.SelectComplementaryDataset(
-  ABaseMap: TPressOPFStorageMap): TPressOPFDataset;
+  ABaseClass: TPressObjectClass): TPressOPFDataset;
 begin
   if not Assigned(FSelectComplementaryDataset) then
     FSelectComplementaryDataset := Connector.CreateDataset;
-  FSelectComplementaryDataset.SQL := DMLBuilder.SelectStatement(ABaseMap);
+  FSelectComplementaryDataset.SQL := DMLBuilder.SelectStatement(ABaseClass);
   Result := FSelectComplementaryDataset;
 end;
 
@@ -1533,7 +1535,7 @@ begin
 end;
 
 function TPressOPFDMLBuilder.BuildMapArray(
-  ABaseMap: TPressOPFStorageMap): TPressOPFStorageMapArray;
+  ABaseClass: TPressObjectClass): TPressOPFStorageMapArray;
 var
   I, J: Integer;
 begin
@@ -1542,7 +1544,7 @@ begin
   for I := Pred(Maps.Count) downto 0 do
   begin
     Result[J] := Maps[I];
-    if Result[J] = ABaseMap then
+    if Result[J].ObjectClass = ABaseClass then
     begin
       SetLength(Result, J);
       Exit;
@@ -1689,7 +1691,7 @@ begin
 end;
 
 function TPressOPFDMLBuilder.SelectStatement(
-  ABaseMap: TPressOPFStorageMap): string;
+  ABaseClass: TPressObjectClass): string;
 
   function BuildKeyName(AMaps: TPressOPFStorageMapArray): string;
   begin
@@ -1702,7 +1704,7 @@ function TPressOPFDMLBuilder.SelectStatement(
 var
   VMaps: TPressOPFStorageMapArray;
 begin
-  VMaps := BuildMapArray(ABaseMap);
+  VMaps := BuildMapArray(ABaseClass);
   Result := Format('select %s from %s where %s = %s', [
    BuildFieldList(ftSimple, [hfClassId, hfUpdateCount], VMaps),
    BuildTableList(VMaps),
@@ -1739,6 +1741,7 @@ constructor TPressOPFStorageMap.Create(AMetadata: TPressObjectMetadata);
 begin
   inherited Create(False);
   FMetadata := AMetadata;
+  FObjectClass := FMetadata.ObjectClass;
 end;
 
 { TPressOPFStorageMapList }
