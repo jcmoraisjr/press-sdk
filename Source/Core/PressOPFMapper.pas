@@ -513,43 +513,45 @@ end;
 
 function TPressOPFObjectMapper.Retrieve(AClass: TPressObjectClass;
   const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
+
+  procedure ReadComplementaryMaps(AObject: TPressObject);
+  var
+    VMaps: TPressOPFStorageMapList;
+    VDataset: TPressOPFDataset;
+    I: Integer;
+  begin
+    VMaps := StorageModel.Maps[AObject.ClassType];
+    if AttributeMapper[VMaps.Last].RetrieveComplementaryMaps(
+     AObject, AClass, VDataset) then
+    begin
+      I := Pred(VMaps.Count);
+      while (I >= 0) and (VMaps[I].ObjectClass <> AClass) do
+      begin
+        AttributeMapper[VMaps[I]].RetrieveAttributes(AObject, VDataset[0]);
+        Dec(I);
+      end;
+    end;
+  end;
+
 var
-  VMaps, VComplementaryMaps: TPressOPFStorageMapList;
-  VRootMap: TPressOPFStorageMap;
-  I: Integer;
-  VBaseDataset, VComplementaryDataset: TPressOPFDataset;
+  VMaps: TPressOPFStorageMapList;
+  VDataset: TPressOPFDataset;
   VObject: TPressObject;
+  I: Integer;
 begin
   VMaps := StorageModel.Maps[AClass];
-  VRootMap := VMaps.Last;
   if VMaps.Count > 0 then
   begin
-    VObject := AttributeMapper[VRootMap].RetrieveBaseMaps(
-     AId, AMetadata, VBaseDataset);
+    VObject := AttributeMapper[VMaps.Last].RetrieveBaseMaps(
+     AId, AMetadata, VDataset);
     if Assigned(VObject) then
     begin
       try
         VObject.DisableChanges;
         if (VObject.ClassType <> AClass) and (VObject is AClass) then
-        begin
-          VComplementaryMaps := StorageModel.Maps[VObject.ClassType];
-          if
-           AttributeMapper[VComplementaryMaps.Last].RetrieveComplementaryMaps(
-           VObject, AClass, VComplementaryDataset) then
-          begin
-            I := Pred(VComplementaryMaps.Count);
-            while (I >= 0) and
-             (VComplementaryMaps[I].Metadata <> VRootMap.Metadata) do
-            begin
-              AttributeMapper[VComplementaryMaps[I]].RetrieveAttributes(
-               VObject, VComplementaryDataset[0]);
-              Dec(I);
-            end;
-          end;
-        end;
+          ReadComplementaryMaps(VObject);
         for I := Pred(VMaps.Count) downto 0 do
-          AttributeMapper[VMaps[I]].RetrieveAttributes(
-           VObject, VBaseDataset[0]);
+          AttributeMapper[VMaps[I]].RetrieveAttributes(VObject, VDataset[0]);
         PressAssignPersistentId(VObject, AId);
         VObject.EnableChanges;
       except
