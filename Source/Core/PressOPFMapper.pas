@@ -776,7 +776,7 @@ begin
   FConnector := FObjectMapper.Connector;
   FPersistence := FObjectMapper.Persistence;
   FMap := AMap;
-  FMaps := ObjectMapper.StorageModel.Maps[FMap.Metadata.ObjectClass];
+  FMaps := ObjectMapper.StorageModel.Maps[FMap.ObjectClass];
   FDDLBuilder := FObjectMapper.DDLBuilder;
   FDMLBuilder := FObjectMapper.DMLBuilderClass.Create(Maps);
 end;
@@ -977,7 +977,7 @@ begin
   ADataset.Execute;
   if ADataset.Count <> 1 then
     Exit;
-  VBaseClass := Map.Metadata.ObjectClass;
+  VBaseClass := Map.ObjectClass;
   if Map.Metadata.ClassIdName <> '' then
   begin
     VClass := ObjectMapper.StorageModel.ClassById(
