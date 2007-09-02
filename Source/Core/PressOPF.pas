@@ -23,7 +23,8 @@ uses
   PressSubject,
   PressPersistence,
   PressOPFConnector,
-  PressOPFMapper;
+  PressOPFMapper,
+  PressOPFStorage;
 
 const
   CPressOPFBrokerService = CPressDataAccessServicesBase + $0003;

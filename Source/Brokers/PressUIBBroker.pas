@@ -24,6 +24,7 @@ uses
   PressOPF,
   PressOPFConnector,
   PressOPFMapper,
+  PressOPFSQLBuilder,
   PressDataSetBroker,
   jvuib,
   jvuiblib,

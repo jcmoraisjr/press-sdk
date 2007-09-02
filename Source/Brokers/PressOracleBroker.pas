@@ -20,7 +20,9 @@ interface
 
 uses
   PressOPFClasses,
-  PressOPFMapper;
+  PressOPFMapper,
+  PressOPFSQLBuilder,
+  PressOPFStorage;
 
 type
   TPressOracleDDLBuilder = class(TPressOPFDDLBuilder)

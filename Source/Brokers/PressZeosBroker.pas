@@ -23,6 +23,7 @@ uses
   PressOPF,
   PressOPFConnector,
   PressOPFMapper,
+  PressOPFSQLBuilder,
   PressDataSetBroker,
   ZCompatibility,
   ZConnection,

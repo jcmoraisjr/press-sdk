@@ -20,7 +20,8 @@ interface
 
 uses
   PressOPFClasses,
-  PressOPFMapper;
+  PressOPFMapper,
+  PressOPFSQLBuilder;
 
 type
   TPressIBFbDDLBuilder = class(TPressOPFDDLBuilder)

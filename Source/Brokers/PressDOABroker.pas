@@ -24,6 +24,7 @@ uses
   PressOPF,
   PressOPFConnector,
   PressOPFMapper,
+  PressOPFSQLBuilder,
   PressDataSetBroker,
   Oracle,
   OracleData;

@@ -22,6 +22,7 @@ uses
   PressOPF,
   PressOPFConnector,
   PressOPFMapper,
+  PressOPFSQLBuilder,
   PressDataSetBroker,
   sqldb;
 
