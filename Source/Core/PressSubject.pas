@@ -777,6 +777,7 @@ type
     FBeforeRetrieveInstance: TPressProxyRetrieveInstanceEvent;
     FDataAccess: IPressDAO;
     FInstance: TPressObject;
+    FOwner: TPressProxyList;
     FProxyType: TPressProxyType;
     FRefClass: TPressObjectClass;
     FRefCount: Integer;
@@ -3499,11 +3500,17 @@ begin
 end;
 
 procedure TPressProxy.SetInstance(Value: TPressObject);
+var
+  VChangeType: TPressProxyChangeType;
 begin
   if FInstance <> Value then
   begin
+    if SameReference(Value) then
+      VChangeType := pctDereferencing
+    else
+      VChangeType := pctAssigning;
     if Assigned(FBeforeChangeInstance) then
-      FBeforeChangeInstance(Self, Value, pctAssigning);
+      FBeforeChangeInstance(Self, Value, VChangeType);
     if Assigned(Value) then
     begin
       FDataAccess := Value.FDataAccess;
@@ -3516,7 +3523,7 @@ begin
     FRefClass := nil;
     FRefID := '';
     if Assigned(FAfterChangeInstance) then
-      FAfterChangeInstance(Self, Value, pctAssigning);
+      FAfterChangeInstance(Self, Value, VChangeType);
   end;
 end;
 
@@ -3670,9 +3677,12 @@ begin
   Result := CreateIterator;
 end;
 
-procedure TPressProxyList.Notify(
-  Ptr: Pointer; Action: TListNotification);
+procedure TPressProxyList.Notify(Ptr: Pointer; Action: TListNotification);
 begin
+  if (Action = lnAdded) and not Assigned(TPressProxy(Ptr).FOwner) then
+    TPressProxy(Ptr).FOwner := Self  // friend class
+  else if TPressProxy(Ptr).FOwner = Self then  {lnExtracted, lnDeleted}
+    TPressProxy(Ptr).FOwner := nil;  // friend class
   if Assigned(FOnChangeList) and not NotificationDisabled then
     FOnChangeList(Self, TPressProxy(Ptr), Action);
   inherited;
