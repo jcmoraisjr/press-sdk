@@ -888,5 +888,6 @@ initialization
 
 finalization
   TPressInstanceClass.UnregisterClass;
+  _PressStorageModel.Free;
 
 end.
