@@ -20,6 +20,7 @@ interface
 
 uses
   Classes,
+  PressClasses,
   PressSubject,
   PressAttributes,
   PressOPFClasses,
@@ -68,6 +69,7 @@ type
     FMaps: TPressOPFStorageMapList;
   protected
     function BuildFieldList(AFieldListType: TPressOPFFieldListType; AHelperFields: TPressOPFHelperFields; AMaps: TPressOPFStorageMapArray = nil): string;
+    function BuildKeyName(AMaps: TPressOPFStorageMapArray): string;
     function BuildLinkList(const APrefix: string; AMetadata: TPressAttributeMetadata): string;
     function BuildMapArray(ABaseClass: TPressObjectClass): TPressOPFStorageMapArray;
     function BuildTableAlias(AIndex: Integer): string;
@@ -83,6 +85,7 @@ type
     function DeleteStatement: string; virtual;
     function InsertLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
     function InsertStatement: string; virtual;
+    function SelectGroupStatement(AIdCount: Integer; ABaseClass: TPressObjectClass = nil): string; virtual;
     function SelectLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
     function SelectStatement(ABaseClass: TPressObjectClass = nil): string; virtual;
     function UpdateStatement(AObject: TPressObject): string; virtual;
@@ -446,6 +449,15 @@ begin
     BuildRootMap(Map, Result, False);
 end;
 
+function TPressOPFDMLBuilder.BuildKeyName(
+  AMaps: TPressOPFStorageMapArray): string;
+begin
+  if Length(AMaps) > 1 then
+    Result := BuildTableAlias(0) + '.' + Map.Metadata.KeyName
+  else
+    Result := Map.Metadata.KeyName;
+end;
+
 function TPressOPFDMLBuilder.BuildLinkList(
   const APrefix: string; AMetadata: TPressAttributeMetadata): string;
 
@@ -607,6 +619,19 @@ begin
    BuildFieldList(ftParams, [hfOID, hfClassId, hfUpdateCount])]);
 end;
 
+function TPressOPFDMLBuilder.SelectGroupStatement(
+  AIdCount: Integer; ABaseClass: TPressObjectClass): string;
+var
+  VMaps: TPressOPFStorageMapArray;
+begin
+  VMaps := BuildMapArray(ABaseClass);
+  Result := Format('select %s from %s where %s in (%s)', [
+   BuildFieldList(ftSimple, [hfOID, hfClassId, hfUpdateCount], VMaps),
+   BuildTableList(VMaps),
+   BuildKeyName(VMaps),
+   CreateIdParamList(AIdCount)]);
+end;
+
 function TPressOPFDMLBuilder.SelectLinkStatement(
   AMetadata: TPressAttributeMetadata): string;
 begin
@@ -621,15 +646,6 @@ end;
 
 function TPressOPFDMLBuilder.SelectStatement(
   ABaseClass: TPressObjectClass): string;
-
-  function BuildKeyName(AMaps: TPressOPFStorageMapArray): string;
-  begin
-    if Length(AMaps) > 1 then
-      Result := BuildTableAlias(0) + '.' + Map.Metadata.KeyName
-    else
-      Result := Map.Metadata.KeyName;
-  end;
-
 var
   VMaps: TPressOPFStorageMapArray;
 begin

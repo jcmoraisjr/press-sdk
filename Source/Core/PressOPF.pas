@@ -46,10 +46,12 @@ type
     function CreatePressObject(AClass: TPressObjectClass; ADataset: TPressOPFDataset; ADatasetIndex: Integer): TPressObject;
     procedure DoneService; override;
     procedure Finit; override;
+    procedure InternalBulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer); override;
     procedure InternalCommit; override;
     function InternalDBMSName: string; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
     function InternalExecuteStatement(const AStatement: string): Integer; override;
+    function InternalImplementsBulkRetrieve: Boolean; override;
     procedure InternalIsDefaultChanged; override;
     function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
@@ -189,6 +191,12 @@ begin
   Result := FStatementDataset;
 end;
 
+procedure TPressOPF.InternalBulkRetrieve(
+  AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
+begin
+  Mapper.BulkRetrieve(AProxyList, AStartingAt, AItemCount, ADepth);
+end;
+
 procedure TPressOPF.InternalCommit;
 begin
   Connector.Commit;
@@ -209,6 +217,11 @@ function TPressOPF.InternalExecuteStatement(const AStatement: string): Integer;
 begin
   StatementDataset.SQL := AStatement;
   Result := StatementDataset.Execute;
+end;
+
+function TPressOPF.InternalImplementsBulkRetrieve: Boolean;
+begin
+  Result := True;
 end;
 
 procedure TPressOPF.InternalIsDefaultChanged;

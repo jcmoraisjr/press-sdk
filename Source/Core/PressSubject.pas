@@ -78,6 +78,7 @@ type
 
   TPressObject = class;
   TPressObjectClass = class of TPressObject;
+  TPressObjectClassArray = array of TPressObjectClass;
 
   TPressCalcMetadata = class(TObject)
   private
@@ -523,6 +524,7 @@ type
   IPressDAO = interface(IInterface)
   ['{8B46DE54-6987-477B-8AA4-9176D66018D4}']
     procedure AssignObject(AObject: TPressObject);
+    procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function ExecuteStatement(const AStatement: string): Integer;
@@ -683,6 +685,7 @@ type
     function Add(AObject: TPressObject): Integer;
     function CreateIterator: TPressObjectIterator;
     function IndexOf(AObject: TPressObject): Integer;
+    function IndexOfId(AId: string): Integer;
     procedure Insert(Index: Integer; AObject: TPressObject);
     function Remove(AObject: TPressObject): Integer;
     property Items[AIndex: Integer]: TPressObject read GetItems write SetItems; default;
@@ -782,6 +785,7 @@ type
     FRefClass: TPressObjectClass;
     FRefCount: Integer;
     FRefID: string;
+    procedure BulkRetrieve;
     procedure Dereference;
     function GetInstance: TPressObject;
     function GetObjectClassName: string;
@@ -3006,6 +3010,14 @@ begin
   Result := inherited IndexOf(AObject);
 end;
 
+function TPressObjectList.IndexOfId(AId: string): Integer;
+begin
+  for Result := 0 to Pred(Count) do
+    if Items[Result].Id = AId then
+      Exit;
+  Result := -1;
+end;
+
 procedure TPressObjectList.Insert(Index: Integer; AObject: TPressObject);
 begin
   inherited Insert(Index, AObject);
@@ -3333,6 +3345,18 @@ begin
     FAfterChangeReference(Self, ARefClass, ARefID);
 end;
 
+procedure TPressProxy.BulkRetrieve;
+var
+  VIndex: Integer;
+begin
+  if Assigned(FOwner) and Assigned(FDataAccess) then
+  begin
+    VIndex := FOwner.IndexOf(Self);
+    if VIndex >= 0 then
+      FDataAccess.BulkRetrieve(FOwner, VIndex, 50, 0);
+  end;
+end;
+
 procedure TPressProxy.Clear;
 begin
   ClearInstance;
@@ -3417,7 +3441,11 @@ begin
   if Assigned(FBeforeRetrieveInstance) then
     FBeforeRetrieveInstance(Self);
   if HasReference and not HasInstance then
-    Dereference;
+  begin
+    BulkRetrieve;
+    if not HasInstance then
+      Dereference;
+  end;
   Result := FInstance;
 end;
 

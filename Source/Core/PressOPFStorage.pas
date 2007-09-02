@@ -31,10 +31,12 @@ type
 
   TPressOPFStorageMap = class(TPressAttributeMetadataList)
   private
+    FIdType: TPressAttributeBaseType;
     FMetadata: TPressObjectMetadata;
     FObjectClass: TPressObjectClass;
   public
     constructor Create(AMetadata: TPressObjectMetadata);
+    property IdType: TPressAttributeBaseType read FIdType;
     property Metadata: TPressObjectMetadata read FMetadata;
     property ObjectClass: TPressObjectClass read FObjectClass;
   end;
@@ -262,6 +264,7 @@ begin
   inherited Create(False);
   FMetadata := AMetadata;
   FObjectClass := FMetadata.ObjectClass;
+  FIdType := FMetadata.IdMetadata.AttributeClass.AttributeBaseType;
 end;
 
 { TPressOPFStorageMapList }

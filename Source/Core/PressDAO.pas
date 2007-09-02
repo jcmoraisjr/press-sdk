@@ -57,11 +57,13 @@ type
   protected
     procedure DoneService; override;
     procedure Finit; override;
+    procedure InternalBulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer); virtual;
     function InternalCacheClass: TPressDAOCacheClass; virtual;
     procedure InternalCommit; virtual;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); virtual;
     function InternalExecuteStatement(const AStatement: string): Integer; virtual;
     function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; virtual;
+    function InternalImplementsBulkRetrieve: Boolean; virtual;    
     function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; virtual;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; virtual;
     function InternalRetrieveQuery(AQuery: TPressQuery): TPressProxyList; virtual;
@@ -77,9 +79,11 @@ type
   public
     constructor Create; override;
     procedure AssignObject(AObject: TPressObject);
+    procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function ExecuteStatement(const AStatement: string): Integer;
+    function FindObject(AClass: TPressObjectClass; const AId: string): TPressObject;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
     function OQLQuery(const AOQLStatement: string): TPressProxyList;
     procedure ReleaseObject(AObject: TPressObject);
@@ -168,6 +172,21 @@ begin
   FCache.AddObject(AObject);
 end;
 
+procedure TPressDAO.BulkRetrieve(
+  AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
+begin
+  if not InternalImplementsBulkRetrieve then
+    Exit;
+  StartTransaction;
+  try
+    InternalBulkRetrieve(AProxyList, AStartingAt, AItemCount, ADepth);
+    Commit;
+  except
+    Rollback;
+    raise;
+  end;
+end;
+
 procedure TPressDAO.Commit;
 begin
   if FTransactionLevel < 1 then
@@ -250,6 +269,12 @@ begin
   end;
 end;
 
+function TPressDAO.FindObject(
+  AClass: TPressObjectClass; const AId: string): TPressObject;
+begin
+  Result := Cache.FindObject(AClass, AId);
+end;
+
 procedure TPressDAO.Finit;
 begin
   FNotifier.Free;
@@ -261,6 +286,12 @@ function TPressDAO.GenerateOID(AClass: TPressObjectClass;
   const AAttributeName: string): string;
 begin
   Result := InternalGenerateOID(AClass, AAttributeName);
+end;
+
+procedure TPressDAO.InternalBulkRetrieve(
+  AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
+begin
+  raise UnsupportedFeatureError('Bulk retrieve');
 end;
 
 function TPressDAO.InternalCacheClass: TPressDAOCacheClass;
@@ -288,6 +319,11 @@ function TPressDAO.InternalGenerateOID(AClass: TPressObjectClass;
   const AAttributeName: string): string;
 begin
   raise UnsupportedFeatureError('Generator');
+end;
+
+function TPressDAO.InternalImplementsBulkRetrieve: Boolean;
+begin
+  Result := False;
 end;
 
 function TPressDAO.InternalOQLQuery(
