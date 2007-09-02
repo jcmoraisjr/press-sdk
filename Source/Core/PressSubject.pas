@@ -763,7 +763,7 @@ type
    ChangeType: TPressProxyChangeType) of object;
 
   TPressProxyChangeReferenceEvent = procedure(
-   Sender: TPressProxy; const AClassName, AId: string) of object;
+   Sender: TPressProxy; AClass: TPressObjectClass; const AId: string) of object;
 
   TPressProxyRetrieveInstanceEvent = procedure(
    Sender: TPressProxy) of object;
@@ -778,7 +778,7 @@ type
     FDataAccess: IPressDAO;
     FInstance: TPressObject;
     FProxyType: TPressProxyType;
-    FRefClass: string;
+    FRefClass: TPressObjectClass;
     FRefCount: Integer;
     FRefID: string;
     procedure Dereference;
@@ -786,14 +786,15 @@ type
     function GetObjectClassName: string;
     function GetObjectClassType: TPressObjectClass;
     function GetObjectId: string;
-    function IsEmptyReference(const ARefClass, ARefID: string): Boolean;
+    function IsEmptyReference(ARefClass: TPressObjectClass; const ARefID: string): Boolean;
     procedure SetInstance(Value: TPressObject);
   protected
     procedure Finit; override;
   public
     constructor Create(AProxyType: TPressProxyType; AObject: TPressObject = nil);
     procedure Assign(Source: TPersistent); override;
-    procedure AssignReference(const ARefClass, ARefID: string; ADataAccess: IPressDAO);
+    procedure AssignReference(const ARefClass, ARefID: string; ADataAccess: IPressDAO); overload;
+    procedure AssignReference(ARefClass: TPressObjectClass; const ARefID: string; ADataAccess: IPressDAO); overload;
     procedure Clear;
     procedure ClearInstance;
     procedure ClearReference;
@@ -803,6 +804,7 @@ type
     function IsEmpty: Boolean;
     function SameReference(AObject: TPressObject): Boolean; overload;
     function SameReference(const ARefClass, ARefID: string): Boolean; overload;
+    function SameReference(ARefClass: TPressObjectClass; const ARefID: string): Boolean; overload;
     property AfterChangeInstance: TPressProxyChangeInstanceEvent read FAfterChangeInstance write FAfterChangeInstance;
     property AfterChangeReference: TPressProxyChangeReferenceEvent read FAfterChangeReference write FAfterChangeReference;
     property BeforeChangeInstance: TPressProxyChangeInstanceEvent read FBeforeChangeInstance write FBeforeChangeInstance;
@@ -1031,10 +1033,10 @@ type
     function GetObjectClass: TPressObjectClass;
   protected
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); virtual;
-    procedure AfterChangeReference(Sender: TPressProxy; const AClassName, AId: string); virtual;
+    procedure AfterChangeReference(Sender: TPressProxy; AClass: TPressObjectClass; const AId: string); virtual;
     procedure BeforeChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); virtual;
     procedure BeforeChangeItem(AItem: TPressObject); virtual;
-    procedure BeforeChangeReference(Sender: TPressProxy; const AClassName, AId: string); virtual;
+    procedure BeforeChangeReference(Sender: TPressProxy; AClass: TPressObjectClass; const AId: string); virtual;
     procedure BeforeRetrieveInstance(Sender: TPressProxy); virtual;
     procedure BindInstance(AInstance: TPressObject); virtual;
     procedure BindProxy(AProxy: TPressProxy);
@@ -3314,6 +3316,12 @@ end;
 procedure TPressProxy.AssignReference(
   const ARefClass, ARefID: string; ADataAccess: IPressDAO);
 begin
+  AssignReference(PressModel.ClassByName(ARefClass), ARefID, ADataAccess);
+end;
+
+procedure TPressProxy.AssignReference(
+  ARefClass: TPressObjectClass; const ARefID: string; ADataAccess: IPressDAO);
+begin
   if Assigned(FBeforeChangeReference) then
     FBeforeChangeReference(Self, ARefClass, ARefID);
   ClearInstance;
@@ -3349,11 +3357,11 @@ begin
   if not HasReference then
     Exit;
   if Assigned(FBeforeChangeReference) then
-    FBeforeChangeReference(Self, '', '');
-  FRefClass := '';
+    FBeforeChangeReference(Self, nil, '');
+  FRefClass := nil;
   FRefID := '';
   if Assigned(FAfterChangeReference) then
-    FAfterChangeReference(Self, '', '');
+    FAfterChangeReference(Self, nil, '');
 end;
 
 function TPressProxy.Clone: TPressProxy;
@@ -3388,7 +3396,7 @@ begin
     else
       VInstance.Release;
     FInstance := VInstance;
-    FRefClass := '';
+    FRefClass := nil;
     FRefID := '';
     if Assigned(FAfterChangeInstance) then
       FAfterChangeInstance(Self, VInstance, pctDereferencing);
@@ -3416,18 +3424,18 @@ function TPressProxy.GetObjectClassName: string;
 begin
   if HasInstance then
     Result := FInstance.ClassName
+  else if Assigned(FRefClass) then
+    Result := FRefClass.ClassName
   else
-    Result := FRefClass;
+    Result := '';
 end;
 
 function TPressProxy.GetObjectClassType: TPressObjectClass;
 begin
   if HasInstance then
     Result := FInstance.ClassType
-  else if FRefClass <> '' then
-    Result := PressModel.ClassByName(FRefClass)
   else
-    Result := nil;
+    Result := FRefClass;
 end;
 
 function TPressProxy.GetObjectId: string;
@@ -3454,7 +3462,7 @@ begin
 end;
 
 function TPressProxy.IsEmptyReference(
-  const ARefClass, ARefID: string): Boolean;
+  ARefClass: TPressObjectClass; const ARefID: string): Boolean;
 begin
   Result := ARefID = '';
 end;
@@ -3466,19 +3474,26 @@ begin
       Result := AObject = FInstance
     else
       Result := AObject.IsPersistent and (AObject.PersistentId = FRefID) and
-       ((FRefClass = '') or (SameText(AObject.ClassName, FRefClass)))
+       (not Assigned(FRefClass) or (AObject is FRefClass))
   else
     Result := IsEmpty;
 end;
 
 function TPressProxy.SameReference(const ARefClass, ARefID: string): Boolean;
 begin
+  Result := SameReference(PressModel.ClassByName(ARefClass), ARefID);
+end;
+
+function TPressProxy.SameReference(
+  ARefClass: TPressObjectClass; const ARefID: string): Boolean;
+begin
   if HasInstance then
     Result := FInstance.IsPersistent and (FInstance.PersistentId = ARefID) and
-     ((ARefClass = '') or SameText(FInstance.ClassName, ARefClass))
+     (not Assigned(ARefClass) or (FInstance is ARefClass))
   else if HasReference then
     Result := (FRefID = ARefID) and
-     ((ARefClass = '') or SameText(FRefClass, ARefClass))
+     (not Assigned(ARefClass) or
+      (Assigned(FRefClass) and FRefClass.InheritsFrom(ARefClass)))
   else
     Result := IsEmptyReference(ARefClass, ARefID);
 end;
@@ -3498,7 +3513,7 @@ begin
     if ProxyType <> ptWeakReference then
       FreeAndNil(FInstance);
     FInstance := Value;
-    FRefClass := '';
+    FRefClass := nil;
     FRefID := '';
     if Assigned(FAfterChangeInstance) then
       FAfterChangeInstance(Self, Value, pctAssigning);
@@ -4205,7 +4220,7 @@ begin
 end;
 
 procedure TPressStructure.AfterChangeReference(
-  Sender: TPressProxy; const AClassName, AId: string);
+  Sender: TPressProxy; AClass: TPressObjectClass; const AId: string);
 begin
   Changed;
 end;
@@ -4238,10 +4253,10 @@ begin
 end;
 
 procedure TPressStructure.BeforeChangeReference(
-  Sender: TPressProxy; const AClassName, AId: string);
+  Sender: TPressProxy; AClass: TPressObjectClass; const AId: string);
 begin
-  if AClassName <> '' then
-    ValidateObjectClass(AClassName);
+  if Assigned(AClass) then
+    ValidateObjectClass(AClass);
   Changing;
 end;
 
