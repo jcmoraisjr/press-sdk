@@ -99,6 +99,7 @@ type
     function UpdateDataset(AObject: TPressObject): TPressOPFDataset;
   protected
     procedure DoConcurrencyError(AObject: TPressObject); virtual;
+    procedure ReadAttributes(AObject: TPressObject; ADataRow: TPressOPFDataRow);
     property Connector: TPressOPFConnector read FConnector;
     property DDLBuilder: TPressOPFDDLBuilder read FDDLBuilder;
     property DMLBuilder: TPressOPFDMLBuilder read FDMLBuilder;
@@ -109,9 +110,8 @@ type
     destructor Destroy; override;
     procedure DisposeObject(AObject: TPressObject);
     procedure DisposeRecord(const AId: string);
-    procedure ReadAttributes(AObject: TPressObject; ADataRow: TPressOPFDataRow);
-    function RetrieveBaseMaps(const AId: string; AMetadata: TPressObjectMetadata; out ADataset: TPressOPFDataset): TPressObject;
-    function RetrieveComplementaryMaps(AObject: TPressObject; ABaseClass: TPressObjectClass; out ADataset: TPressOPFDataset): Boolean;
+    function RetrieveBaseMaps(const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
+    procedure RetrieveComplementaryMaps(AObject: TPressObject; ABaseClass: TPressObjectClass);
     procedure Store(AObject: TPressObject);
     property Map: TPressOPFStorageMap read FMap;
     property Maps: TPressOPFStorageMapList read FMaps;
@@ -252,45 +252,21 @@ end;
 
 function TPressOPFObjectMapper.Retrieve(AClass: TPressObjectClass;
   const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
-
-  procedure ReadComplementaryMaps(AObject: TPressObject);
-  var
-    VMaps: TPressOPFStorageMapList;
-    VDataset: TPressOPFDataset;
-    I: Integer;
-  begin
-    VMaps := StorageModel.Maps[AObject.ClassType];
-    if AttributeMapper[VMaps.Last].RetrieveComplementaryMaps(
-     AObject, AClass, VDataset) then
-    begin
-      I := Pred(VMaps.Count);
-      while (I >= 0) and (VMaps[I].ObjectClass <> AClass) do
-      begin
-        AttributeMapper[VMaps[I]].ReadAttributes(AObject, VDataset[0]);
-        Dec(I);
-      end;
-    end;
-  end;
-
 var
   VMaps: TPressOPFStorageMapList;
-  VDataset: TPressOPFDataset;
   VObject: TPressObject;
-  I: Integer;
 begin
   VMaps := StorageModel.Maps[AClass];
   if VMaps.Count > 0 then
   begin
-    VObject := AttributeMapper[VMaps.Last].RetrieveBaseMaps(
-     AId, AMetadata, VDataset);
+    VObject := AttributeMapper[VMaps.Last].RetrieveBaseMaps(AId, AMetadata);
     if Assigned(VObject) then
     begin
       try
         VObject.DisableChanges;
         if (VObject.ClassType <> AClass) and (VObject is AClass) then
-          ReadComplementaryMaps(VObject);
-        for I := Pred(VMaps.Count) downto 0 do
-          AttributeMapper[VMaps[I]].ReadAttributes(VObject, VDataset[0]);
+          AttributeMapper[StorageModel.Maps[VObject.ClassType].Last].
+           RetrieveComplementaryMaps(VObject, AClass);
         PressAssignPersistentId(VObject, AId);
         VObject.EnableChanges;
       except
@@ -705,22 +681,23 @@ begin
 end;
 
 function TPressOPFAttributeMapper.RetrieveBaseMaps(
-  const AId: string; AMetadata: TPressObjectMetadata;
-  out ADataset: TPressOPFDataset): TPressObject;
+  const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
 var
   VBaseClass, VClass: TPressObjectClass;
+  VDataset: TPressOPFDataset;
+  I: Integer;
 begin
   Result := nil;
-  ADataset := SelectBaseDataset;
-  AddPersistentIdParam(ADataset, AId);
-  ADataset.Execute;
-  if ADataset.Count <> 1 then
+  VDataset := SelectBaseDataset;
+  AddPersistentIdParam(VDataset, AId);
+  VDataset.Execute;
+  if VDataset.Count <> 1 then
     Exit;
   VBaseClass := Map.ObjectClass;
   if Map.Metadata.ClassIdName <> '' then
   begin
     VClass := ObjectMapper.StorageModel.ClassById(
-     ADataset[0].FieldByName(Map.Metadata.ClassIdName).Value);
+     VDataset[0].FieldByName(Map.Metadata.ClassIdName).Value);
     if not VClass.InheritsFrom(VBaseClass) then
       Exit;
   end else
@@ -729,9 +706,13 @@ begin
   try
     Result.DisableChanges;
     Result.Id := AId;
+    ReadAttributes(Result, VDataset[0]);
+    for I := Maps.Count - 2 downto 0 do
+      ObjectMapper.AttributeMapper[Maps[I]].ReadAttributes(
+       Result, VDataset[0]);
     if Result.Metadata.UpdateCountName <> '' then
       PressAssignUpdateCount(Result,
-       ADataset[0].FieldByName(Result.Metadata.UpdateCountName).Value);
+       VDataset[0].FieldByName(Result.Metadata.UpdateCountName).Value);
     Result.EnableChanges;
   except
     FreeAndNil(Result);
@@ -739,17 +720,29 @@ begin
   end;
 end;
 
-function TPressOPFAttributeMapper.RetrieveComplementaryMaps(
-  AObject: TPressObject; ABaseClass: TPressObjectClass;
-  out ADataset: TPressOPFDataset): Boolean;
+procedure TPressOPFAttributeMapper.RetrieveComplementaryMaps(
+  AObject: TPressObject; ABaseClass: TPressObjectClass);
+var
+  VDataset: TPressOPFDataset;
+  I: Integer;
 begin
-  ADataset := SelectComplementaryDataset(ABaseClass);
-  AddPersistentIdParam(ADataset, AObject.Id);
-  ADataset.Execute;
-  Result := ADataset.Count = 1;
-  if Result and (AObject.Metadata.UpdateCountName <> '') then
-    PressAssignUpdateCount(AObject,
-     ADataset[0].FieldByName(AObject.Metadata.UpdateCountName).Value);
+  VDataset := SelectComplementaryDataset(ABaseClass);
+  AddPersistentIdParam(VDataset, AObject.Id);
+  VDataset.Execute;
+  if VDataset.Count = 1 then
+  begin
+    if AObject.Metadata.UpdateCountName <> '' then
+      PressAssignUpdateCount(AObject,
+       VDataset[0].FieldByName(AObject.Metadata.UpdateCountName).Value);
+    ReadAttributes(AObject, VDataset[0]);
+    I := Maps.Count - 2;
+    while (I >= 0) and (Maps[I].ObjectClass <> ABaseClass) do
+    begin
+      ObjectMapper.AttributeMapper[Maps[I]].ReadAttributes(
+       AObject, VDataset[0]);
+      Dec(I);
+    end;
+  end;
 end;
 
 function TPressOPFAttributeMapper.SelectBaseDataset: TPressOPFDataset;
