@@ -473,7 +473,6 @@ type
     procedure AddClass(AClass: TPressObjectClass);
     function AttributeByName(const AAttributeName: string): TPressAttributeClass;
     function ClassByName(const AClassName: string): TPressObjectClass;
-    function ClassByPersistentName(const APersistentName: string): TPressObjectClass;
     function CreateMetadataIterator: TPressObjectMetadataIterator;
     function EnumMetadataByName(const AEnumName: string): TPressEnumMetadata;
     function FindAttribute(const AAttributeName: string): TPressAttributeClass;
@@ -2164,22 +2163,6 @@ begin
     raise EPressError.CreateFmt(SClassNotFound, [AClassName]);
 end;
 
-function TPressModel.ClassByPersistentName(
-  const APersistentName: string): TPressObjectClass;
-var
-  I: Integer;
-begin
-  FetchAllMetadatas;
-  for I := 0 to Pred(Metadatas.Count) do
-    with Metadatas[I] do
-      if SameText(PersistentName, APersistentName) then
-      begin
-        Result := ClassByName(ObjectClassName);
-        Exit;
-      end;
-  raise EPressError.CreateFmt(SPersistentClassNotFound, [APersistentName]);
-end;
-
 procedure TPressModel.ClearAllMetadatas;
 
   function FindRootMetadata: TPressObjectMetadata;
@@ -2248,8 +2231,13 @@ begin
   if not FMetadatasFetched then
   begin
     FMetadatasFetched := True;
-    for I := 0 to Pred(FClasses.Count) do
-      TPressObjectClass(FClasses[I]).ClassMap;
+    try
+      for I := 0 to Pred(FClasses.Count) do
+        TPressObjectClass(FClasses[I]).ClassMap;
+    except
+      FMetadatasFetched := False;
+      raise;
+    end;
   end;
 end;
 
@@ -2302,7 +2290,7 @@ begin
   for I := 0 to Pred(Metadatas.Count) do
   begin
     Result := Metadatas[I];
-    if Result.ObjectClassName = AClassName then
+    if SameText(Result.ObjectClassName, AClassName) then
       Exit;
   end;
   Result := nil;
