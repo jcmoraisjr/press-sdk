@@ -125,8 +125,6 @@ type
     function GetAsString: string; override;
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalRead(Reader: TPressParserReader); override;
-  public
-    property AsString: string read GetAsString;
   end;
 
   TPressOQLFormulaItem = class(TPressOQLExpression)
@@ -142,7 +140,6 @@ type
     class function IsSign(const AStr: string): Boolean;
     class function IsValueOperator(const AStr: string): Boolean;
   public
-    property AsString: string read GetAsString;
     property NextOperator: string read FNextOperator;
   end;
 
@@ -622,14 +619,13 @@ end;
 
 class function TPressOQLFormulaItem.IsSign(const AStr: string): Boolean;
 begin
-  Result := (AStr <> '') and (AStr[1] in ['+', '-']);
+  Result := (Length(AStr) = 1) and (AStr[1] in ['+', '-']);
 end;
 
 class function TPressOQLFormulaItem.IsValueOperator(
   const AStr: string): Boolean;
 begin
-  { TODO : Improve }
-  Result := (AStr = '+') or (AStr = '-') or (AStr = '*') or (AStr = '/');
+  Result := (Length(AStr) = 1) and (AStr[1] in ['+', '-', '*', '/']);
 end;
 
 { TPressOQLLiteral }
