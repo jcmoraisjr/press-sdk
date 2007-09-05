@@ -115,6 +115,7 @@ end;
 function TPressInstantObjectsPersistence.CreateDBParams(
   AParams: TPressParamList): TParams;
 var
+  VParam: TPressParam;
   I: Integer;
 begin
   if Assigned(AParams) and (AParams.Count > 0) then
@@ -123,8 +124,9 @@ begin
     try
       for I := 0 to Pred(AParams.Count) do
       begin
-        Result.CreateParam(
-         PressParamToDBParam(AParams[I].ParamType), AParams[I].Name, ptInput).Value := AParams[I].Value;
+        VParam := AParams[I];
+        Result.CreateParam(PressParamToDBParam(VParam.ParamType),
+         VParam.Name, ptInput).Value := VParam.Value;
       end;
     except
       FreeAndNil(Result);
@@ -134,7 +136,8 @@ begin
     Result := nil;
 end;
 
-function TPressInstantObjectsPersistence.CreateInstantObject(AObject: TPressObject): TInstantObject;
+function TPressInstantObjectsPersistence.CreateInstantObject(
+  AObject: TPressObject): TInstantObject;
 var
   VInstantObjectClass: TInstantObjectClass;
 begin
