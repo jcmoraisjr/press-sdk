@@ -96,13 +96,13 @@ type
   protected
     procedure InternalCommit; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
-    function InternalExecuteStatement(const AStatement: string): Integer; override;
-    function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; override;
+    function InternalExecuteStatement(const AStatement: string; AParams: TPressParamList): Integer; override;
+    function InternalOQLQuery(const AOQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
     function InternalRetrieveQuery(AQuery: TPressQuery): TPressProxyList; override;
     procedure InternalRollback; override;
-    function InternalSQLProxy(const ASQLStatement: string): TPressProxyList; override;
-    function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList; override;
+    function InternalSQLProxy(const ASQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
+    function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
     procedure InternalStartTransaction; override;
     procedure InternalStore(AObject: TPressObject); override;
   end;
@@ -121,13 +121,13 @@ begin
 end;
 
 function TPressPhoneBookPersistence.InternalExecuteStatement(
-  const AStatement: string): Integer;
+  const AStatement: string; AParams: TPressParamList): Integer;
 begin
   Result := 0;
 end;
 
 function TPressPhoneBookPersistence.InternalOQLQuery(
-  const AOQLStatement: string): TPressProxyList;
+  const AOQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   { TODO : Implement }
   Result := InternalRetrieveQuery(nil);
@@ -166,14 +166,15 @@ begin
 end;
 
 function TPressPhoneBookPersistence.InternalSQLProxy(
-  const ASQLStatement: string): TPressProxyList;
+  const ASQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   { TODO : Implement }
   Result := InternalRetrieveQuery(nil);
 end;
 
 function TPressPhoneBookPersistence.InternalSQLQuery(
-  AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
+  AClass: TPressObjectClass; const ASQLStatement: string;
+  AParams: TPressParamList): TPressProxyList;
 begin
   { TODO : Implement }
   Result := InternalRetrieveQuery(nil);
