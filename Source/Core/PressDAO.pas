@@ -61,17 +61,17 @@ type
     function InternalCacheClass: TPressDAOCacheClass; virtual;
     procedure InternalCommit; virtual;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); virtual;
-    function InternalExecuteStatement(const AStatement: string): Integer; virtual;
+    function InternalExecuteStatement(const AStatement: string; AParams: TPressParamList): Integer; virtual;
     function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; virtual;
-    function InternalImplementsBulkRetrieve: Boolean; virtual;    
-    function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; virtual;
+    function InternalImplementsBulkRetrieve: Boolean; virtual;
+    function InternalOQLQuery(const AOQLStatement: string; AParams: TPressParamList): TPressProxyList; virtual;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; virtual;
     function InternalRetrieveQuery(AQuery: TPressQuery): TPressProxyList; virtual;
     procedure InternalRollback; virtual;
     class function InternalServiceType: TPressServiceType; override;
     procedure InternalShowConnectionManager; virtual;
-    function InternalSQLProxy(const ASQLStatement: string): TPressProxyList; virtual;
-    function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList; virtual;
+    function InternalSQLProxy(const ASQLStatement: string; AParams: TPressParamList): TPressProxyList; virtual;
+    function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string; AParams: TPressParamList): TPressProxyList; virtual;
     procedure InternalStartTransaction; virtual;
     procedure InternalStore(AObject: TPressObject); virtual;
     function UnsupportedFeatureError(const AFeatureName: string): EPressError;
@@ -82,17 +82,17 @@ type
     procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
-    function ExecuteStatement(const AStatement: string): Integer;
+    function ExecuteStatement(const AStatement: string; AParams: TPressParamList = nil): Integer;
     function FindObject(AClass: TPressObjectClass; const AId: string): TPressObject;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
-    function OQLQuery(const AOQLStatement: string): TPressProxyList;
+    function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure ReleaseObject(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil): TPressObject;
     function RetrieveQuery(AQuery: TPressQuery): TPressProxyList;
     procedure Rollback;
     procedure ShowConnectionManager;
-    function SQLProxy(const ASQLStatement: string): TPressProxyList;
-    function SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
+    function SQLProxy(const ASQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
+    function SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure StartTransaction;
     procedure Store(AObject: TPressObject);
     property LazyCommit: Boolean read FLazyCommit write FLazyCommit;
@@ -257,11 +257,12 @@ begin
     Cache.ReleaseObjects;
 end;
 
-function TPressDAO.ExecuteStatement(const AStatement: string): Integer;
+function TPressDAO.ExecuteStatement(
+  const AStatement: string; AParams: TPressParamList): Integer;
 begin
   StartTransaction;
   try
-    Result := InternalExecuteStatement(AStatement);
+    Result := InternalExecuteStatement(AStatement, AParams);
     Commit;
   except
     Rollback;
@@ -310,7 +311,8 @@ begin
   raise UnsupportedFeatureError('Dispose object');
 end;
 
-function TPressDAO.InternalExecuteStatement(const AStatement: string): Integer;
+function TPressDAO.InternalExecuteStatement(
+  const AStatement: string; AParams: TPressParamList): Integer;
 begin
   raise UnsupportedFeatureError('Execute statement');
 end;
@@ -327,7 +329,7 @@ begin
 end;
 
 function TPressDAO.InternalOQLQuery(
-  const AOQLStatement: string): TPressProxyList;
+  const AOQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   raise UnsupportedFeatureError('OQL Query');
 end;
@@ -385,11 +387,12 @@ begin
   {$IFDEF PressLogDAOPersistence}PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');{$ENDIF}
   case AQuery.Style of
     qsOQL:
-      Result := OQLQuery(VQueryStr);
+      Result := OQLQuery(VQueryStr, AQuery.Params);
     qsReference:
-      Result := SQLProxy(VQueryStr);
+      Result := SQLProxy(VQueryStr, AQuery.Params);
     else {qsCustom}
-      Result := SQLQuery(AQuery.Metadata.ItemObjectClass, VQueryStr);
+      Result := SQLQuery(
+       AQuery.Metadata.ItemObjectClass, VQueryStr, AQuery.Params);
   end;
 end;
 
@@ -408,13 +411,13 @@ begin
 end;
 
 function TPressDAO.InternalSQLProxy(
-  const ASQLStatement: string): TPressProxyList;
+  const ASQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   raise UnsupportedFeatureError('SQL Proxy');
 end;
 
-function TPressDAO.InternalSQLQuery(
-  AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
+function TPressDAO.InternalSQLQuery(AClass: TPressObjectClass;
+  const ASQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   raise UnsupportedFeatureError('SQL Query');
 end;
@@ -438,11 +441,12 @@ begin
   end;
 end;
 
-function TPressDAO.OQLQuery(const AOQLStatement: string): TPressProxyList;
+function TPressDAO.OQLQuery(
+  const AOQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   StartTransaction;
   try
-    Result := InternalOQLQuery(AOQLStatement);
+    Result := InternalOQLQuery(AOQLStatement, AParams);
     Commit;
   except
     Rollback;
@@ -507,11 +511,11 @@ begin
 end;
 
 function TPressDAO.SQLProxy(
-  const ASQLStatement: string): TPressProxyList;
+  const ASQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   StartTransaction;
   try
-    Result := InternalSQLProxy(ASQLStatement);
+    Result := InternalSQLProxy(ASQLStatement, AParams);
     Commit;
   except
     Rollback;
@@ -519,11 +523,12 @@ begin
   end;
 end;
 
-function TPressDAO.SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
+function TPressDAO.SQLQuery(AClass: TPressObjectClass;
+  const ASQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   StartTransaction;
   try
-    Result := InternalSQLQuery(AClass, ASQLStatement);
+    Result := InternalSQLQuery(AClass, ASQLStatement, AParams);
     Commit;
   except
     Rollback;

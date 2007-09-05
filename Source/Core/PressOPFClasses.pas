@@ -20,7 +20,8 @@ interface
 
 uses
   {$IFNDEF D5}Variants,{$ENDIF}
-  PressClasses;
+  PressClasses,
+  PressSubject;
 
 type
   EPressOPFError = class(EPressError);
@@ -87,6 +88,7 @@ type
 
   TPressOPFParamList = class(TPressList)
   private
+    procedure AssignParam(AParam: TPressParam);
     function GetItems(AIndex: Integer): TPressOPFParam;
     procedure SetItems(AIndex: Integer; const Value: TPressOPFParam);
   protected
@@ -94,6 +96,7 @@ type
   public
     function Add(const AName: string): TPressOPFParam; overload;
     function Add(AObject: TPressOPFParam): Integer; overload;
+    procedure AssignParams(AParams: TPressParamList);
     function CreateIterator: TPressOPFParamIterator;
     function Extract(AObject: TPressOPFParam): TPressOPFParam;
     function FindParam(const AName: string): TPressOPFParam;
@@ -116,7 +119,9 @@ type
 implementation
 
 uses
-  SysUtils;
+  SysUtils,
+  TypInfo,
+  PressConsts;
 
 { TPressOPFParam }
 
@@ -360,6 +365,51 @@ end;
 function TPressOPFParamList.Add(AObject: TPressOPFParam): Integer;
 begin
   Result := inherited Add(AObject);
+end;
+
+procedure TPressOPFParamList.AssignParam(AParam: TPressParam);
+var
+  VParam: TPressOPFParam;
+begin
+  VParam := Add(AParam.Name);
+  case AParam.ParamType of
+    attString:
+      VParam.AsString := AParam.Value;
+    attInteger:
+      VParam.AsInt32 := AParam.Value;
+    attFloat:
+      VParam.AsFloat := AParam.Value;
+    attCurrency:
+      VParam.AsCurrency := AParam.Value;
+    attEnum:
+      VParam.AsInt16 := AParam.Value;
+    attBoolean:
+      VParam.AsBoolean := AParam.Value;
+    attDate:
+      VParam.AsDate := AParam.Value;
+    attTime:
+      VParam.AsTime := AParam.Value;
+    attDateTime:
+      VParam.AsDateTime := AParam.Value;
+    attVariant:
+      VParam.AsVariant := AParam.Value;
+    attMemo:
+      VParam.AsMemo := AParam.Value;
+    attBinary, attPicture:
+      VParam.AsBinary := AParam.Value;
+    else
+      raise EPressOPFError.CreateFmt(SUnsupportedAttributeType, [
+       GetEnumName(TypeInfo(TPressAttributeBaseType), Ord(AParam.ParamType))]);
+  end;
+end;
+
+procedure TPressOPFParamList.AssignParams(AParams: TPressParamList);
+var
+  I: Integer;
+begin
+  if Assigned(AParams) then
+    for I := 0 to Pred(AParams.Count) do
+      AssignParam(AParams[I]);
 end;
 
 function TPressOPFParamList.CreateIterator: TPressOPFParamIterator;

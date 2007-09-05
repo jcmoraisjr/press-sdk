@@ -32,14 +32,18 @@ type
   private
     FConnectionManager: TInstantConnectionManager;
     FConnector: TInstantConnector;
+    function AcquireInstantDataSet(const AStatement: string; AParams: TPressParamList): TDataSet;
     procedure ConnectionManagerConnect(Sender: TObject; var ConnectionDef: TInstantConnectionDef; var Result: Boolean);
+    function CreateDBParams(AParams: TPressParamList): TParams;
     function CreateInstantObject(AObject: TPressObject): TInstantObject;
     function CreatePressObject(AClass: TPressObjectClass; ADataSet: TDataSet): TPressObject;
     procedure InstantGenerateOID(Sender: TObject; const AObject: TInstantObject; var Id: string);
     procedure InstantLog(const AString: string);
+    function PressParamToDBParam(AParamType: TPressAttributeBaseType): TFieldType;
     { TODO : Use streaming to copy an InstantObject to a PressObject and vice-versa }
     procedure ReadInstantObject(AInstantObject: TInstantObject; APressObject: TPressObject);
     procedure ReadPressObject(APressObject: TPressObject; AInstantObject: TInstantObject);
+    procedure ReleaseInstantDataSet(ADataSet: TDataSet);
   protected
     procedure Finit; override;
     procedure InitService; override;
@@ -47,11 +51,11 @@ type
     function InternalDBMSName: string; override;
     procedure InternalShowConnectionManager; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
-    function InternalExecuteStatement(const AStatement: string): Integer; override;
-    function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; override;
+    function InternalExecuteStatement(const AStatement: string; AParams: TPressParamList): Integer; override;
+    function InternalOQLQuery(const AOQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
-    function InternalSQLProxy(const ASQLStatement: string): TPressProxyList; override;
-    function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList; override;
+    function InternalSQLProxy(const ASQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
+    function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
     procedure InternalRollback; override;
     procedure InternalStartTransaction; override;
     procedure InternalStore(AObject: TPressObject); override;
@@ -62,6 +66,7 @@ implementation
 
 uses
   SysUtils,
+  TypInfo,
   PressClasses,
   PressConsts,
   {$IFDEF PressLog}PressLog,{$ENDIF}
@@ -83,6 +88,20 @@ end;
 
 { TPressInstantObjectsPersistence }
 
+function TPressInstantObjectsPersistence.AcquireInstantDataSet(
+  const AStatement: string; AParams: TPressParamList): TDataSet;
+var
+  VParams: TParams;
+begin
+  VParams := CreateDBParams(AParams);
+  try
+    Result := (DefaultConnector.Broker as TInstantSQLBroker).AcquireDataSet(
+     AStatement, VParams);
+  finally
+    VParams.Free;
+  end;
+end;
+
 procedure TPressInstantObjectsPersistence.ConnectionManagerConnect(Sender: TObject;
   var ConnectionDef: TInstantConnectionDef; var Result: Boolean);
 begin
@@ -91,6 +110,28 @@ begin
   FConnector.OnGenerateId := InstantGenerateOID;
   FConnector.IsDefault := True;
   Result := True;
+end;
+
+function TPressInstantObjectsPersistence.CreateDBParams(
+  AParams: TPressParamList): TParams;
+var
+  I: Integer;
+begin
+  if Assigned(AParams) and (AParams.Count > 0) then
+  begin
+    Result := TParams.Create;
+    try
+      for I := 0 to Pred(AParams.Count) do
+      begin
+        Result.CreateParam(
+         PressParamToDBParam(AParams[I].ParamType), AParams[I].Name, ptInput).Value := AParams[I].Value;
+      end;
+    except
+      FreeAndNil(Result);
+      raise;
+    end;
+  end else
+    Result := nil;
 end;
 
 function TPressInstantObjectsPersistence.CreateInstantObject(AObject: TPressObject): TInstantObject;
@@ -203,16 +244,24 @@ begin
 end;
 
 function TPressInstantObjectsPersistence.InternalExecuteStatement(
-  const AStatement: string): Integer;
+  const AStatement: string; AParams: TPressParamList): Integer;
+var
+  VParams: TParams;
 begin
-  Result :=
-   (Connector.Broker as TInstantCustomRelationalBroker).Execute(AStatement);
+  VParams := CreateDBParams(AParams);
+  try
+    Result := (Connector.Broker as TInstantCustomRelationalBroker).Execute(
+     AStatement, VParams);
+  finally
+    VParams.Free;
+  end;
 end;
 
 function TPressInstantObjectsPersistence.InternalOQLQuery(
-  const AOQLStatement: string): TPressProxyList;
+  const AOQLStatement: string; AParams: TPressParamList): TPressProxyList;
 var
   VInstantQuery: TInstantQuery;
+  VParams: TParams;
   I: Integer;
 begin
   VInstantQuery := DefaultConnector.CreateQuery;
@@ -220,6 +269,15 @@ begin
     Result := TPressProxyList.Create(True, ptShared);
     try
       VInstantQuery.Command := AOQLStatement;
+      VParams := CreateDBParams(AParams);
+      if Assigned(VParams) then
+      begin
+        try
+          VInstantQuery.Params := VParams;
+        finally
+          FreeAndNil(VParams);
+        end;
+      end;
       VInstantQuery.Open;
       if VInstantQuery is TInstantSQLQuery then
         for I := 0 to Pred(VInstantQuery.ObjectCount) do
@@ -275,13 +333,11 @@ begin
 end;
 
 function TPressInstantObjectsPersistence.InternalSQLProxy(
-  const ASQLStatement: string): TPressProxyList;
+  const ASQLStatement: string; AParams: TPressParamList): TPressProxyList;
 var
-  VBroker: TInstantSQLBroker;
   VDataSet: TDataSet;
 begin
-  VBroker := DefaultConnector.Broker as TInstantSQLBroker;
-  VDataSet := VBroker.AcquireDataSet(ASQLStatement);
+  VDataSet := AcquireInstantDataSet(ASQLStatement, AParams);
   try
     Result := TPressProxyList.Create(True, ptShared);
     try
@@ -297,19 +353,18 @@ begin
       raise;
     end;
   finally
-    VBroker.ReleaseDataSet(VDataSet);
+    ReleaseInstantDataSet(VDataSet);
   end;
 end;
 
 function TPressInstantObjectsPersistence.InternalSQLQuery(
-  AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
+  AClass: TPressObjectClass; const ASQLStatement: string;
+  AParams: TPressParamList): TPressProxyList;
 var
-  VBroker: TInstantSQLBroker;
   VDataSet: TDataSet;
   VInstance: TPressObject;
 begin
-  VBroker := DefaultConnector.Broker as TInstantSQLBroker;
-  VDataSet := VBroker.AcquireDataSet(ASQLStatement);
+  VDataSet := AcquireInstantDataSet(ASQLStatement, AParams);
   try
     Result := TPressProxyList.Create(True, ptShared);
     try
@@ -326,7 +381,7 @@ begin
       raise;
     end;
   finally
-    VBroker.ReleaseDataSet(VDataSet);
+    ReleaseInstantDataSet(VDataSet);
   end;
 end;
 
@@ -354,6 +409,35 @@ begin
   VInstantObject.Store;
   if AObject.Id = '' then
     AObject.Id := VInstantObject.Id;
+end;
+
+function TPressInstantObjectsPersistence.PressParamToDBParam(
+  AParamType: TPressAttributeBaseType): TFieldType;
+const
+  CFieldType: array[TPressAttributeBaseType] of TFieldType = (
+   ftUnknown,    // attUnknown
+   ftString,     // attString
+   ftInteger,    // attInteger
+   ftFloat,      // attFloat
+   ftCurrency,   // attCurrency
+   ftSmallint,   // attEnum
+   ftBoolean,    // attBoolean
+   ftDate,       // attDate
+   ftTime,       // attTime
+   ftDateTime,   // attDateTime
+   ftUnknown,    // attVariant
+   ftMemo,       // attMemo
+   ftBlob,       // attBinary
+   ftBlob,       // attPicture
+   ftUnknown,    // attPart
+   ftUnknown,    // attReference
+   ftUnknown,    // attParts
+   ftUnknown);   // attReferences
+begin
+  Result := CFieldType[AParamType];
+  if Result = ftUnknown then
+    raise EPressError.CreateFmt(SUnsupportedAttributeType, [
+     GetEnumName(TypeInfo(TPressAttributeBaseType), Ord(AParamType))]);
 end;
 
 procedure TPressInstantObjectsPersistence.ReadInstantObject(
@@ -605,6 +689,12 @@ begin
          [APressObject.ClassName, VPressAttr.Name]);
     end;
   end;
+end;
+
+procedure TPressInstantObjectsPersistence.ReleaseInstantDataSet(
+  ADataSet: TDataSet);
+begin
+  (DefaultConnector.Broker as TInstantSQLBroker).ReleaseDataSet(ADataSet);
 end;
 
 initialization

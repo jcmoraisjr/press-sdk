@@ -23,6 +23,7 @@ uses
   Classes,
   Contnrs,
   PressClasses,
+  PressSubject,
   PressOPFClasses;
 
 type
@@ -124,6 +125,7 @@ type
   public
     constructor Create(AConnector: TPressOPFConnector);
     destructor Destroy; override;
+    procedure AssignParams(AParams: TPressParamList);
     function Count: Integer;
     function Execute: Integer;
     property FieldDefs: TPressOPFFieldDefList read GetFieldDefs;
@@ -326,6 +328,11 @@ begin
   if Assigned(FFieldDefs) then
     for I := 0 to Pred(FFieldDefs.Count) do
       Result.FieldList.Add(TPressOPFField.Create(FFieldDefs[I].FieldType));  // friend class
+end;
+
+procedure TPressOPFDataset.AssignParams(AParams: TPressParamList);
+begin
+  Params.AssignParams(AParams)
 end;
 
 procedure TPressOPFDataset.ClearDataset;

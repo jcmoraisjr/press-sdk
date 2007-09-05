@@ -493,6 +493,43 @@ type
     property DefaultKeyType: TPressAttributeClass read FDefaultKeyType write SetDefaultKeyType;
   end;
 
+  { DAO Params declarations }
+
+  TPressAttributeBaseType = (attUnknown, attString, attInteger, attFloat,
+   attCurrency, attEnum, attBoolean, attDate, attTime, attDateTime, attVariant,
+   attMemo, attBinary, attPicture,
+   attPart, attReference, attParts, attReferences);
+
+  TPressParam = class(TObject)
+  private
+    FName: string;
+    FValue: Variant;
+    FParamType: TPressAttributeBaseType;
+  public
+    constructor Create(const AName: string; AParamType: TPressAttributeBaseType);
+    property Name: string read FName;
+    property ParamType: TPressAttributeBaseType read FParamType;
+    property Value: Variant read FValue write FValue;
+  end;
+
+  TPressParamIterator = class;
+
+  TPressParamList = class(TPressList)
+  private
+    function GetItems(AIndex: Integer): TPressParam;
+    procedure SetItems(AIndex: Integer; AValue: TPressParam);
+  protected
+    function InternalCreateIterator: TPressCustomIterator; override;
+  public
+    function Add(AObject: TPressParam): Integer;
+    function CreateIterator: TPressParamIterator;
+    procedure Insert(AIndex: Integer; AObject: TPressParam);
+    property Items[AIndex: Integer]: TPressParam read GetItems write SetItems; default;
+  end;
+
+  TPressParamIterator = class(TPressIterator)
+  end;
+
   { Abstract Subject declarations }
 
   TPressSubjectEvent = class(TPressEvent)
@@ -526,16 +563,16 @@ type
     procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
-    function ExecuteStatement(const AStatement: string): Integer;
+    function ExecuteStatement(const AStatement: string; AParams: TPressParamList = nil): Integer;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
-    function OQLQuery(const AOQLStatement: string): TPressProxyList;
+    function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure ReleaseObject(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil): TPressObject;
     function RetrieveQuery(AQuery: TPressQuery): TPressProxyList;
     procedure Rollback;
     procedure ShowConnectionManager;
-    function SQLProxy(const ASQLStatement: string): TPressProxyList;
-    function SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList;
+    function SQLProxy(const ASQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
+    function SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure StartTransaction;
     procedure Store(AObject: TPressObject);
   end;
@@ -708,13 +745,16 @@ type
     FQueryItems: TPressAttribute;  // TPressReferences;
     FItemsDataAccess: IPressDAO;
     FMatchEmptyAndNull: Boolean;
+    FParams: TPressParamList;
     FStyle: TPressQueryStyle;
     function GetItemsDataAccess: IPressDAO;
     function GetMetadata: TPressQueryMetadata;
     function GetObjects(AIndex: Integer): TPressObject;
+    function GetParams: TPressParamList;
     procedure SetStyle(AValue: TPressQueryStyle);
   protected
     procedure ConcatStatements(const AStatementStr, AConnectorToken: string; var ABuffer: string);
+    procedure Finit; override;
     function GetFieldNamesClause: string; virtual;
     function GetFromClause: string; virtual;
     function GetGroupByClause: string; virtual;
@@ -726,6 +766,9 @@ type
     procedure InternalExecute; virtual;
   public
     function Add(AObject: TPressObject): Integer;
+    function AddAttributeParam(AAttribute: TPressAttribute): string;
+    function AddParam(AParamType: TPressAttributeBaseType; const AName: string = ''): TPressParam;
+    function AddValueParam(AValue: Variant; AAttributeType: TPressAttributeBaseType): string;
     procedure Clear;
     function Count: Integer;
     class function ClassMetadata: TPressQueryMetadata;
@@ -742,6 +785,7 @@ type
     property Metadata: TPressQueryMetadata read GetMetadata;
     property Objects[AIndex: Integer]: TPressObject read GetObjects; default;
     property OrderByClause: string read GetOrderByClause;
+    property Params: TPressParamList read GetParams;
     property Style: TPressQueryStyle read FStyle write SetStyle;
     property WhereClause: string read GetWhereClause;
   end;
@@ -876,11 +920,6 @@ type
 
   TPressAttributeChangedEvent = class(TPressSubjectChangedEvent)
   end;
-
-  TPressAttributeBaseType = (attUnknown, attString, attInteger, attFloat,
-   attCurrency, attEnum, attBoolean, attDate, attTime, attDateTime, attVariant,
-   attMemo, attBinary, attPicture,
-   attPart, attReference, attParts, attReferences);
 
   TPressAttribute = class(TPressSubject)
   private
@@ -2448,6 +2487,48 @@ begin
   Metadatas.Remove(AMetadata);
 end;
 
+{ TPressParam }
+
+constructor TPressParam.Create(
+  const AName: string; AParamType: TPressAttributeBaseType);
+begin
+  inherited Create;
+  FName := AName;
+  FParamType := AParamType;
+end;
+
+{ TPressParamList }
+
+function TPressParamList.Add(AObject: TPressParam): Integer;
+begin
+  Result := inherited Add(AObject);
+end;
+
+function TPressParamList.CreateIterator: TPressParamIterator;
+begin
+  Result := TPressParamIterator.Create(Self);
+end;
+
+function TPressParamList.GetItems(AIndex: Integer): TPressParam;
+begin
+  Result := inherited Items[AIndex] as TPressParam;
+end;
+
+procedure TPressParamList.Insert(AIndex: Integer; AObject: TPressParam);
+begin
+  inherited Insert(AIndex, AObject);
+end;
+
+function TPressParamList.InternalCreateIterator: TPressCustomIterator;
+begin
+  Result := CreateIterator;
+end;
+
+procedure TPressParamList.SetItems(AIndex: Integer; AValue: TPressParam);
+begin
+  inherited Items[AIndex] := AValue;
+end;
+
 { TPressSubjectEvent }
 
 {$IFNDEF PressLogSubjectEvents}
@@ -3040,6 +3121,60 @@ begin
   Result := TPressReferences(FQueryItems).Add(AObject);
 end;
 
+function TPressQuery.AddAttributeParam(AAttribute: TPressAttribute): string;
+var
+  VParamType: TPressAttributeBaseType;
+  VParamValue: Variant;
+  VParam: TPressParam;
+begin
+  if AAttribute is TPressValue then
+  begin
+    VParamType := AAttribute.AttributeBaseType;
+    VParamValue := AAttribute.AsVariant;
+  end else if AAttribute is TPressReference then
+  begin
+    if Assigned(AAttribute.Metadata) then
+      VParamType :=
+       AAttribute.Metadata.ObjectClass.ClassMetadata.IdMetadata.AttributeClass.AttributeBaseType
+    else
+      VParamType := attUnknown;
+    if Assigned(TPressReference(AAttribute).Value) then
+      VParamValue := TPressReference(AAttribute).Value.PersistentId
+    else
+      VParamValue := Null;
+  end else
+    VParamType := attUnknown;
+  if VParamType = attUnknown then
+    raise EPressError.CreateFmt(SUnsupportedAttributeType, [
+     AAttribute.AttributeName]);
+  VParam := AddParam(VParamType);
+  VParam.Value := VParamValue;
+  Result := VParam.Name;
+end;
+
+function TPressQuery.AddParam(
+  AParamType: TPressAttributeBaseType; const AName: string): TPressParam;
+var
+  VName: string;
+begin
+  if AName <> '' then
+    VName := AName
+  else
+    VName := SPressSubjectParamPrefix + IntToStr(Params.Count + 1);
+  Result := TPressParam.Create(VName, AParamType);
+  Params.Add(Result);
+end;
+
+function TPressQuery.AddValueParam(
+  AValue: Variant; AAttributeType: TPressAttributeBaseType): string;
+var
+  VParam: TPressParam;
+begin
+  VParam := AddParam(AAttributeType);
+  VParam.Value := AValue;
+  Result := VParam.Name;
+end;
+
 class function TPressQuery.ClassMetadata: TPressQueryMetadata;
 begin
   Result := inherited ClassMetadata as TPressQueryMetadata;
@@ -3072,7 +3207,14 @@ end;
 
 procedure TPressQuery.Execute;
 begin
+  Params.Clear;
   InternalExecute;
+end;
+
+procedure TPressQuery.Finit;
+begin
+  FParams.Free;
+  inherited;
 end;
 
 function TPressQuery.GetFieldNamesClause: string;
@@ -3114,6 +3256,13 @@ begin
   Result := Metadata.OrderFieldName;
 end;
 
+function TPressQuery.GetParams: TPressParamList;
+begin
+  if not Assigned(FParams) then
+    FParams := TPressParamList.Create(True);
+  Result := FParams;
+end;
+
 function TPressQuery.GetWhereClause: string;
 begin
   Result := '';
@@ -3145,58 +3294,41 @@ begin
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
 
-
 function TPressQuery.InternalBuildStatement(
   AAttribute: TPressAttribute): string;
 var
   VMetadata: TPressQueryAttributeMetadata;
 
-  { TODO : Move build statement logic to the DAO }
-
-  { TODO : Find DataName in the BO metadata - use the PersistentName }
-
-  function FormatStringItem(const AMask: string): string;
+  function FormatOperatorItem(const AOperator: string): string;
   begin
-    { TODO : Escape quotes into the AAttribute.AsString }
-    Result := Format(AMask, [VMetadata.DataName,
-     '''', AAttribute.AsString]);
+    Result := Format('%s %s :%s', [
+     VMetadata.DataName, AOperator, AddAttributeParam(AAttribute)]);
   end;
 
-  function FormatValueItem(const AMask: string): string;
-
-    function AttributeToSQL(AAttribute: TPressAttribute): string;
-    begin
-      case AAttribute.AttributeBaseType of
-        attString:
-          Result := AnsiQuotedStr(AAttribute.AsString, '''');
-        attFloat, attCurrency:
-          Result := StringReplace(AAttribute.AsString, ',', '.', [rfReplaceAll]);
-        attDate:
-          Result := AnsiQuotedStr(FormatDateTime('yyyy-mm-dd', AAttribute.AsDate), '''');
-        attTime:
-          Result := AnsiQuotedStr(FormatDateTime('hh:nn:ss', AAttribute.AsTime), '''');
-        attDateTime:
-          Result := AnsiQuotedStr(FormatDateTime('yyyy-mm-dd hh:nn:ss', AAttribute.AsDateTime), '''');
-        attReference:
-          { TODO : Valid only to IDs stored in string format }
-          Result := AnsiQuotedStr(TPressReference(AAttribute).Value.PersistentId, '''');
-        else
-          Result := AAttribute.AsString;
-      end;
-    end;
-
+  function FormatStringItem(const AParamValue: string): string;
   begin
-    Result := Format(AMask, [VMetadata.DataName, AttributeToSQL(AAttribute)]);
+    Result := Format('%s like :%s', [
+     VMetadata.DataName, AddValueParam(AParamValue, attString)]);
+  end;
+
+  function FormatContainsItem: string;
+  begin
+    if AAttribute is TPressReference then
+      Result := Format(':%s in %s', [
+       AddAttributeParam(AAttribute), VMetadata.DataName])
+    else
+      Result := FormatStringItem('%' + AAttribute.AsString + '%');
   end;
 
   function IsEmptyStatement: string;
   begin
-    Result := Format('%s = %s%1:s', [VMetadata.DataName, '''']);
+    Result := Format('%s = :%s', [
+     VMetadata.DataName, AddValueParam('', attString)]);
   end;
 
   function IsNullStatement: string;
   begin
-    Result := Format('%s is Null', [VMetadata.DataName]);
+    Result := Format('%s is null', [VMetadata.DataName]);
   end;
 
 begin
@@ -3208,25 +3340,21 @@ begin
    (not AAttribute.IsNull and not (AAttribute is TPressString)) then
     case VMetadata.MatchType of
       mtEqual:
-        Result := FormatValueItem('%s = %s');
+        Result := FormatOperatorItem('=');
       mtStarting:
-        Result := FormatStringItem('%s LIKE %s%%%s%1:s');
+        Result := FormatStringItem(AAttribute.AsString + '%');
       mtFinishing:
-        Result := FormatStringItem('%s LIKE %s%s%%%1:s');
+        Result := FormatStringItem('%' + AAttribute.AsString);
       mtContains:
-        { TODO : new MatchType Enums for containers? }
-        if AAttribute is TPressReference then
-          Result := FormatValueItem('%1:s IN %0:s')
-        else
-          Result := FormatStringItem('%s LIKE %s%%%s%%%1:s');
+        Result := FormatContainsItem;
       mtGreaterThan:
-        Result := FormatValueItem('%s > %s');
+        Result := FormatOperatorItem('>');
       mtGreaterThanOrEqual:
-        Result := FormatValueItem('%s >= %s');
+        Result := FormatOperatorItem('>=');
       mtLesserThan:
-        Result := FormatValueItem('%s < %s');
+        Result := FormatOperatorItem('<');
       mtLesserThanOrEqual:
-        Result := FormatValueItem('%s <= %s');
+        Result := FormatOperatorItem('<=');
     end
   else if VMetadata.IncludeIfEmpty then
     if AAttribute is TPressString then

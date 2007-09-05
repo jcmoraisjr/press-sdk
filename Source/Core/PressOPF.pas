@@ -50,15 +50,15 @@ type
     procedure InternalCommit; override;
     function InternalDBMSName: string; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
-    function InternalExecuteStatement(const AStatement: string): Integer; override;
+    function InternalExecuteStatement(const AStatement: string; AParams: TPressParamList): Integer; override;
     function InternalImplementsBulkRetrieve: Boolean; override;
     procedure InternalIsDefaultChanged; override;
-    function InternalOQLQuery(const AOQLStatement: string): TPressProxyList; override;
+    function InternalOQLQuery(const AOQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
     procedure InternalRollback; override;
     procedure InternalShowConnectionManager; override;
-    function InternalSQLProxy(const ASQLStatement: string): TPressProxyList; override;
-    function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string): TPressProxyList; override;
+    function InternalSQLProxy(const ASQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
+    function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
     procedure InternalStartTransaction; override;
     procedure InternalStore(AObject: TPressObject); override;
     property StatementDataset: TPressOPFDataset read GetStatementDataset;
@@ -213,9 +213,11 @@ begin
   Mapper.Dispose(AClass, AId);
 end;
 
-function TPressOPF.InternalExecuteStatement(const AStatement: string): Integer;
+function TPressOPF.InternalExecuteStatement(
+  const AStatement: string; AParams: TPressParamList): Integer;
 begin
   StatementDataset.SQL := AStatement;
+  StatementDataset.AssignParams(AParams);
   Result := StatementDataset.Execute;
 end;
 
@@ -234,7 +236,7 @@ begin
 end;
 
 function TPressOPF.InternalOQLQuery(
-  const AOQLStatement: string): TPressProxyList;
+  const AOQLStatement: string; AParams: TPressParamList): TPressProxyList;
 var
   VOQLParser: TPressOQLSelectStatement;
   VOQLReader: TPressOQLReader;
@@ -249,6 +251,7 @@ begin
     VDataset := Connector.CreateDataset;
     try
       VDataset.SQL := VOQLParser.AsSQL;
+      VDataset.AssignParams(AParams);
       VDataset.Execute;
       Result := TPressProxyList.Create(True, ptShared);
       try
@@ -293,7 +296,7 @@ begin
 end;
 
 function TPressOPF.InternalSQLProxy(
-  const ASQLStatement: string): TPressProxyList;
+  const ASQLStatement: string; AParams: TPressParamList): TPressProxyList;
 var
   VDataset: TPressOPFDataset;
   I: Integer;
@@ -303,6 +306,7 @@ begin
     Result := TPressProxyList.Create(True, ptShared);
     try
       VDataset.SQL := ASQLStatement;
+      VDataset.AssignParams(AParams);
       VDataset.Execute;
       for I := 0 to Pred(VDataset.Count) do
         Result.AddReference(
@@ -317,7 +321,7 @@ begin
 end;
 
 function TPressOPF.InternalSQLQuery(AClass: TPressObjectClass;
-  const ASQLStatement: string): TPressProxyList;
+  const ASQLStatement: string; AParams: TPressParamList): TPressProxyList;
 var
   VDataset: TPressOPFDataset;
   VInstance: TPressObject;
@@ -328,6 +332,7 @@ begin
     Result := TPressProxyList.Create(True, ptShared);
     try
       VDataset.SQL := ASQLStatement;
+      VDataset.AssignParams(AParams);
       VDataset.Execute;
       for I := 0 to Pred(VDataset.Count) do
       begin

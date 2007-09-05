@@ -38,6 +38,7 @@ const
   SPressItemPosString = 'ItemPos';
   SPressUpdateCountString = 'UpdateCount';
   SPressConfigFileExt = '.cf';
+  SPressSubjectParamPrefix = 'par';
   SPressPrimaryKeyNamePrefix = 'PK_';
   SPressForeignKeyNamePrefix = 'FK_';
   SPressUniqueKeyNamePrefix = 'UK_';

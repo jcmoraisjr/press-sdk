@@ -153,6 +153,15 @@ type
     class function IsLiteral(const AStr: string): Boolean;
   end;
 
+  TPressOQLParam = class(TPressOQLFormulaItem)
+  private
+    FParamName: string;
+  protected
+    class function InternalApply(Reader: TPressParserReader): Boolean; override;
+    function InternalAsString: string; override;
+    procedure InternalReadValue(Reader: TPressParserReader); override;
+  end;
+
   TPressOQLAttributeValue = class;
 
   TPressOQLAttribute = class(TPressOQLFormulaItem)
@@ -572,6 +581,7 @@ class function TPressOQLFormula.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
   Result := TPressOQLLiteral.Apply(Reader) or
+   TPressOQLParam.Apply(Reader) or
    TPressOQLPlainAttribute.Apply(Reader);
 end;
 
@@ -580,7 +590,7 @@ begin
   inherited;
   repeat
   until TPressOQLFormulaItem(Parse(Reader, [
-   TPressOQLLiteral, TPressOQLPlainAttribute],
+   TPressOQLLiteral, TPressOQLParam, TPressOQLPlainAttribute],
    Self, True, SPressAttributeNameMsg)).NextOperator = '';
 end;
 
@@ -657,7 +667,26 @@ end;
 
 class function TPressOQLLiteral.IsLiteral(const AStr: string): Boolean;
 begin
-  Result := (AStr <> '') and (AStr[1] in ['0'..'9', '''', '"']); 
+  Result := (AStr <> '') and (AStr[1] in ['0'..'9', '''', '"']);
+end;
+
+{ TPressOQLParam }
+
+class function TPressOQLParam.InternalApply(
+  Reader: TPressParserReader): Boolean;
+begin
+  Result := Reader.ReadToken = ':';
+end;
+
+function TPressOQLParam.InternalAsString: string;
+begin
+  Result := ':' + FParamName;
+end;
+
+procedure TPressOQLParam.InternalReadValue(Reader: TPressParserReader);
+begin
+  Reader.ReadMatch(':');
+  FParamName := Reader.ReadIdentifier;
 end;
 
 { TPressOQLAttribute }
