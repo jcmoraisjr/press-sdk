@@ -343,6 +343,7 @@ begin
       try
         for I := Pred(VMaps.Count) downto 0 do
           AttributeMapper[VMaps[I]].DisposeObject(VObject);
+        PressAssignPersistentId(VObject, '');
       finally
         VObject.Free;
       end;
