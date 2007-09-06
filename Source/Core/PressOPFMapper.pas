@@ -714,7 +714,7 @@ procedure TPressOPFAttributeMapper.DisposeObject(AObject: TPressObject);
     begin
       VProxy := AAttribute.Proxy;
       if not VProxy.IsEmpty then
-        Persistence.Dispose(VProxy.ObjectClassType, VProxy.ObjectId);
+        ObjectMapper.Dispose(VProxy.ObjectClassType, VProxy.ObjectId);
     end;
 
   var
@@ -749,7 +749,7 @@ procedure TPressOPFAttributeMapper.DisposeObject(AObject: TPressObject);
         BeforeFirstItem;
         while NextItem do
           if not CurrentItem.IsEmpty then
-            Persistence.Dispose(
+            ObjectMapper.Dispose(
              CurrentItem.ObjectClassType, CurrentItem.ObjectId);
       finally
         Free;
