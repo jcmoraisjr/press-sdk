@@ -1,5 +1,5 @@
 (*
-  PressObjects, Core Persistence Class
+  PressObjects, Core Persistence Classes
   Copyright (C) 2007 Laserpress Ltda.
 
   http://www.pressobjects.org
@@ -23,8 +23,7 @@ uses
   PressSubject,
   PressPersistence,
   PressOPFConnector,
-  PressOPFMapper,
-  PressOPFStorage;
+  PressOPFMapper;
 
 const
   CPressOPFBrokerService = CPressDataAccessServicesBase + $0003;
@@ -107,6 +106,7 @@ uses
   SysUtils,
   PressConsts,
   PressOPFClasses,
+  PressOPFStorage,
   PressOQL;
 
 var
