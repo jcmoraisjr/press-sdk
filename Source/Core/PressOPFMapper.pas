@@ -38,7 +38,6 @@ type
 
   TPressOPFObjectMapper = class(TObject)
   private
-    { TODO : Implement owned Part(s) objects mapping }
     FAttributeMapperList: TObjectList;
     FConnector: TPressOPFConnector;
     FDDLBuilder: TPressOPFDDLBuilder;
@@ -532,10 +531,20 @@ procedure TPressOPFAttributeMapper.AddAttributeParams(
   ADataset: TPressOPFDataset; AObject: TPressObject);
 var
   VAttribute: TPressAttribute;
+  VPartsAttribute: TPressAttributeMetadata;
   I: Integer;
 begin
   if not AObject.IsPersistent then
     AddClassIdParam(ADataset, AObject);
+  VPartsAttribute := AObject.Metadata.OwnerPartsMetadata;
+  if Assigned(VPartsAttribute) then
+    if Assigned(AObject.Owner) and (AObject.Owner.PersistentId <> '') then
+    begin
+      AddStringParam(ADataset, VPartsAttribute.PersLinkParentName,
+       AObject.Owner.PersistentId);
+      AddIntegerParam(ADataset, VPartsAttribute.PersLinkPosName, 0);
+    end else
+      raise EPressOPFError.Create(SCannotStoreOrphanObject);
   for I := 0 to Pred(Map.Count) do
   begin
     VAttribute := AObject.AttributeByName(Map[I].Name);
@@ -718,6 +727,7 @@ procedure TPressOPFAttributeMapper.DisposeObject(AObject: TPressObject);
         ObjectMapper.Dispose(VProxy.ObjectClassType, VProxy.ObjectId);
     end;
 
+  {procedure DisposePartObjects;}
   var
     VMetadata: TPressAttributeMetadata;
     I: Integer;
@@ -757,6 +767,7 @@ procedure TPressOPFAttributeMapper.DisposeObject(AObject: TPressObject);
       end;
     end;
 
+  {procedure DisposeLinkedObjects;}
   var
     VMetadata: TPressAttributeMetadata;
     VItems: TPressItems;
@@ -770,7 +781,8 @@ procedure TPressOPFAttributeMapper.DisposeObject(AObject: TPressObject);
         if VMetadata.AttributeClass.InheritsFrom(TPressItems) then
         begin
           VItems := AObject.AttributeByName(VMetadata.Name) as TPressItems;
-          DisposeLinks(VItems);
+          if not VMetadata.IsEmbeddedLink then
+            DisposeLinks(VItems);
           if VItems is TPressParts then
             DisposePartsObjects(TPressParts(VItems));
         end;
@@ -1014,14 +1026,18 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
   var
     VDataset: TPressOPFDataset;
 
-    procedure UpdateLinks(AItems: TPressItems);
+    function NeedRebuild: Boolean;
+    begin
+      { TODO : Implement (for embedded and external links) }
+      Result := True;
+    end;
 
-      function NeedRebuild: Boolean;
-      begin
-        { TODO : Implement }
-        Result := True;
-      end;
+    procedure UpdateEmbeddedLinks(AItems: TPressItems);
+    begin
+      { TODO : Implement }
+    end;
 
+    procedure UpdateExternalLinks(AItems: TPressItems);
     var
       VCount, I: Integer;
     begin
@@ -1063,6 +1079,8 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
       VObject: TPressObject;
       I: Integer;
     begin
+      if AParts.Metadata.IsEmbeddedLink then
+        UpdateEmbeddedLinks(AParts);
       for I := 0 to Pred(AParts.Count) do
       begin
         VProxy := AParts.Proxies[I];
@@ -1073,7 +1091,8 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
             ObjectMapper.Store(VObject);
         end;
       end;
-      UpdateLinks(AParts);
+      if not AParts.Metadata.IsEmbeddedLink then
+        UpdateExternalLinks(AParts);
       for I := 0 to Pred(AParts.RemovedProxies.Count) do
         with AParts.RemovedProxies[I] do
           ObjectMapper.Dispose(ObjectClassType, ObjectId);
@@ -1095,9 +1114,10 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
             Persistence.Store(VObject);
         end;
       end;
-      UpdateLinks(AReferences);
+      UpdateExternalLinks(AReferences);
     end;
 
+  {procedure StoreItems;}
   var
     VAttribute: TPressAttribute;
     I: Integer;

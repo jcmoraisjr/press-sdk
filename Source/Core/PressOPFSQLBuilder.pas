@@ -384,7 +384,7 @@ function TPressOPFDMLBuilder.BuildFieldList(
 
   procedure AddStatement(const AStatement: string; var ABuffer: string);
   begin
-    if AStatement <> '' then
+    if (AStatement <> '') and (AStatement[Length(AStatement)] <> '.') then
       case AFieldListType of
         ftSimple:
           ConcatStatements(AStatement, ', ', ABuffer);
@@ -397,6 +397,7 @@ function TPressOPFDMLBuilder.BuildFieldList(
     AMap: TPressOPFStorageMap; var ABuffer: string; ANeedTableAlias: Boolean);
   var
     VAttribute: TPressAttributeMetadata;
+    VPartsAttribute: TPressAttributeMetadata;
     VFieldPrefix: string;
     I: Integer;
   begin
@@ -412,6 +413,12 @@ function TPressOPFDMLBuilder.BuildFieldList(
         AddStatement(VFieldPrefix + AMap.Metadata.ClassIdName, ABuffer);
       if hfUpdateCount in AHelperFields then
         AddStatement(VFieldPrefix + AMap.Metadata.UpdateCountName, ABuffer);
+    end;
+    VPartsAttribute := Map.Metadata.OwnerPartsMetadata;
+    if Assigned(VPartsAttribute) then
+    begin
+      AddStatement(VFieldPrefix + VPartsAttribute.PersLinkParentName, ABuffer);
+      AddStatement(VFieldPrefix + VPartsAttribute.PersLinkPosName, ABuffer);
     end;
     for I := 1 to Pred(AMap.Count) do  // skips ID
     begin
@@ -540,14 +547,22 @@ function TPressOPFDMLBuilder.CreateAssignParamToFieldList(
 
   procedure AddParam(const AParamName: string);
   begin
-    ConcatStatements(Format('%s = :%0:s', [AParamName]), ', ', Result);
+    if AParamName <> '' then
+      ConcatStatements(Format('%s = :%0:s', [AParamName]), ', ', Result);
   end;
 
 var
   VAttribute: TPressAttribute;
+  VOwnerParts: TPressAttributeMetadata;
   I: Integer;
 begin
   Result := '';
+  VOwnerParts := Map.Metadata.OwnerPartsMetadata;
+  if Assigned(VOwnerParts) then
+  begin
+    AddParam(VOwnerParts.PersLinkParentName);
+    AddParam(VOwnerParts.PersLinkPosName);
+  end;
   for I := 0 to Pred(Map.Count) do
   begin
     VAttribute := AObject.AttributeByName(Map[I].Name);

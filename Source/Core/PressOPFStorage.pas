@@ -700,6 +700,10 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
         AddForeignKey(ATableMetadata, VField, VObjectMetadata);
       end;
 
+      procedure AddOwnedPartsMetadata;
+      begin
+      end;
+
       procedure AddItemsMetadata;
       var
         VTableMetadata: TPressOPFTableMetadata;
@@ -755,13 +759,18 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
         end;
       end;
 
+    {procedure AddAttributeMetadata(AAttributeMetadata: TPressAttributeMetadata;
+      ATableMetadata: TPressOPFTableMetadata);}
     begin
       if AAttributeMetadata.AttributeClass.InheritsFrom(TPressValue) then
         AddFieldMetadata
       else if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItem) then
         AddItemMetadata
       else if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItems) then
-        AddItemsMetadata;
+        if AAttributeMetadata.IsEmbeddedLink then
+          AddOwnedPartsMetadata
+        else
+          AddItemsMetadata;
     end;
 
     function AddFieldMetadata(const AFieldName, AShortFieldName: string;
@@ -781,10 +790,13 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
       Result := VField;
     end;
 
+  {procedure AddObjectMetadata(
+    AStorageMap: TPressOPFStorageMap; ATableMetadatas: TObjectList);}
   var
     VTableMetadata: TPressOPFTableMetadata;
     VFieldMetadata: TPressOPFFieldMetadata;
     VMetadata: TPressObjectMetadata;
+    VIdMetadata: TPressAttributeMetadata;
     I: Integer;
   begin
     VMetadata := AStorageMap.Metadata;
@@ -792,6 +804,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
      VMetadata.PersistentName, VMetadata.ShortName);
     ATableMetadatas.Add(VTableMetadata);
     AddAttributeMetadata(VMetadata.IdMetadata, VTableMetadata);
+
     if VMetadata.ClassIdName <> '' then
     begin
       VFieldMetadata := AddFieldMetadata(VMetadata.ClassIdName, '',
@@ -801,13 +814,33 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
       if HasClassIdStorage then
         AddForeignKey(VTableMetadata, VFieldMetadata, ClassIdMetadata);
     end;
+
     if VMetadata.UpdateCountName <> '' then
       AddFieldMetadata(VMetadata.UpdateCountName, '',
        attInteger, 0, [foNotNull], [], VTableMetadata);
+
+    if Assigned(VMetadata.OwnerPartsMetadata) then
+    begin
+      if VMetadata.OwnerPartsMetadata.PersLinkParentName <> '' then
+      begin
+        VIdMetadata := VMetadata.OwnerMetadata.IdMetadata;
+        VFieldMetadata := AddFieldMetadata(
+         VMetadata.OwnerPartsMetadata.PersLinkParentName, '',
+         VIdMetadata.AttributeClass.AttributeBaseType, VIdMetadata.Size,
+         [foNotNull], [], VTableMetadata);
+        AddForeignKey(
+         VTableMetadata, VFieldMetadata, VMetadata.OwnerMetadata);
+      end;
+      if VMetadata.OwnerPartsMetadata.PersLinkPosName <> '' then
+        AddFieldMetadata(VMetadata.OwnerPartsMetadata.PersLinkPosName, '',
+         attInteger, 0, [foNotNull], [], VTableMetadata);
+    end;
+
     for I := 1 to Pred(AStorageMap.Count) do  // skips ID
       AddAttributeMetadata(AStorageMap[I], VTableMetadata);
   end;
 
+{function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;}
 begin
   Result := TObjectList.Create(True);
   try

@@ -60,6 +60,8 @@ type
   TPressOQLTableReferences = class(TObject)
   private
     FList: TObjectList;
+    FMainAliasName: string;
+    FMainTableName: string;
     FTableAliasPrefix: string;
     function FindReference(AMetadata: TPressObjectMetadata): TPressOQLTableReference;
     function GetAsString: string;
@@ -70,6 +72,7 @@ type
   public
     constructor Create(const ATableAliasPrefix: string);
     destructor Destroy; override;
+    function MainReference(const AMainTableName: string): string;
     function NewStructure(const AReferencedAlias: string; AAttributeMetadata: TPressAttributeMetadata): string;
     function NewValue(const AReferencedAlias: string; AAttributeMetadata: TPressAttributeMetadata): string;
     property AsString: string read GetAsString;
@@ -365,8 +368,6 @@ begin
   else if AObjectMetadata.ObjectClass = AAttributeMetadata.ObjectClass then
   begin
     if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItems) then
-      { TODO : Optimize for owned objects without link table
-        (future implementation) }
       FReferencedFieldName := AAttributeMetadata.PersLinkChildName
     else
       FReferencedFieldName := AAttributeMetadata.PersistentName
@@ -388,8 +389,7 @@ end;
 
 { TPressOQLTableReferences }
 
-constructor TPressOQLTableReferences.Create(
-  const ATableAliasPrefix: string);
+constructor TPressOQLTableReferences.Create(const ATableAliasPrefix: string);
 begin
   inherited Create;
   FTableAliasPrefix := ATableAliasPrefix;
@@ -419,7 +419,10 @@ function TPressOQLTableReferences.GetAsString: string;
 var
   I: Integer;
 begin
-  Result := '';
+  if (FMainTableName <> '') then
+    Result := FMainTableName + ' ' + FMainAliasName
+  else
+    Result := '';
   if Assigned(FList) then
     for I := 0 to Pred(FList.Count) do
       Result := Result + ' ' + (FList[I] as TPressOQLTableReference).AsString;
@@ -432,20 +435,34 @@ begin
   Result := FList;
 end;
 
+function TPressOQLTableReferences.MainReference(
+  const AMainTableName: string): string;
+begin
+  FMainTableName := AMainTableName;
+  FMainAliasName := FTableAliasPrefix + '0';
+  Result := FMainAliasName;
+end;
+
 function TPressOQLTableReferences.NewAttribute(const AReferencedAlias: string;
   AObjectMetadata: TPressObjectMetadata;
   AAttributeMetadata: TPressAttributeMetadata): string;
 var
   VReference: TPressOQLTableReference;
 begin
-  VReference := FindReference(AObjectMetadata);
-  if not Assigned(VReference) then
+  if (FMainTableName = '') or
+   not SameText(AObjectMetadata.PersistentName, FMainTableName) then
   begin
-    VReference := TPressOQLTableReference.Create(AObjectMetadata,
-     AAttributeMetadata, FTableAliasPrefix, AReferencedAlias, Succ(List.Count));
-    List.Add(VReference);
-  end;
-  Result := VReference.AliasName;
+    VReference := FindReference(AObjectMetadata);
+    if not Assigned(VReference) then
+    begin
+      VReference := TPressOQLTableReference.Create(
+       AObjectMetadata, AAttributeMetadata,
+       FTableAliasPrefix, AReferencedAlias, Succ(List.Count));
+      List.Add(VReference);
+    end;
+    Result := VReference.AliasName;
+  end else
+    Result := FMainAliasName;
 end;
 
 function TPressOQLTableReferences.NewStructure(const AReferencedAlias: string;
@@ -876,12 +893,10 @@ end;
 
 function TPressOQLContainerCalcValue.BuildTableNames: string;
 begin
-  if Assigned(Metadata) then
-    Result := Format('%s %s', [Metadata.PersLinkName, SubSelectTableAlias])
+  if Assigned(FTableReferences) then
+    Result := FTableReferences.AsString
   else
     Result := '';
-  if Assigned(FTableReferences) then
-    Result := Result + FTableReferences.AsString;
 end;
 
 destructor TPressOQLContainerCalcValue.Destroy;
@@ -913,13 +928,14 @@ begin
     Exit;
   if not Assigned(FTokens) then
     FTokens := TStringList.Create;
+  VTableAlias := TableReferences.MainReference(Metadata.PersLinkName);
   FTokens.Add(Reader.ReadToken);
   if Reader.ReadToken = '(' then
   begin
     VLevel := 1;
     FTokens.Add('(');
     VObjectMetadata := Metadata.ObjectClass.ClassMetadata;
-    VTableAlias := TableReferences.NewStructure(SubSelectTableAlias, Metadata);
+    VTableAlias := TableReferences.NewStructure(VTableAlias, Metadata);
   end else
   begin
     VLevel := 0;
