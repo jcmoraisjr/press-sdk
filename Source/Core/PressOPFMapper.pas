@@ -515,7 +515,7 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
     end else
       AddNullParam(ADataset, AReference.PersistentName,
        DDLBuilder.AttributeTypeToFieldType(
-       AReference.Metadata.ObjectClass.ClassMetadata.IdMetadata.AttributeClass.AttributeBaseType));
+       AReference.Metadata.ObjectClassMetadata.IdMetadata.AttributeClass.AttributeBaseType));
   end;
 
 begin

@@ -692,7 +692,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
       begin
         VField := ATableMetadata.AddField(
          AAttributeMetadata.PersistentName, AAttributeMetadata.ShortName);
-        VObjectMetadata := AAttributeMetadata.ObjectClass.ClassMetadata;
+        VObjectMetadata := AAttributeMetadata.ObjectClassMetadata;
         VField.DataType :=
          VObjectMetadata.IdMetadata.AttributeClass.AttributeBaseType;
         VField.Size := VObjectMetadata.IdMetadata.Size;
@@ -741,7 +741,7 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
 
         VField :=
          VTableMetadata.AddField(AAttributeMetadata.PersLinkChildName, '');
-        VObjectMetadata := AAttributeMetadata.ObjectClass.ClassMetadata;
+        VObjectMetadata := AAttributeMetadata.ObjectClassMetadata;
         VField.DataType :=
          VObjectMetadata.IdMetadata.AttributeClass.AttributeBaseType;
         VField.Size := VObjectMetadata.IdMetadata.Size;

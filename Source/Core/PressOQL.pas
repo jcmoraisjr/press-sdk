@@ -472,7 +472,7 @@ begin
     raise EPressError.CreateFmt(SUnsupportedAttribute, [
      AAttributeMetadata.Owner.ObjectClassName, AAttributeMetadata.Name]);
   Result := NewAttribute(AReferencedAlias,
-   AAttributeMetadata.ObjectClass.ClassMetadata, AAttributeMetadata);
+   AAttributeMetadata.ObjectClassMetadata, AAttributeMetadata);
 end;
 
 function TPressOQLTableReferences.NewValue(const AReferencedAlias: string;
@@ -753,7 +753,7 @@ begin
       begin
         VTableAlias :=
          VSelect.TableReferences.NewStructure(VTableAlias, VAttribute);
-        VMetadata := VAttribute.ObjectClass.ClassMetadata;
+        VMetadata := VAttribute.ObjectClassMetadata;
         Token := Reader.ReadIdentifier;
       end else if VAttribute.AttributeClass.InheritsFrom(TPressItems) then
       begin
@@ -934,7 +934,7 @@ begin
   begin
     VLevel := 1;
     FTokens.Add('(');
-    VObjectMetadata := Metadata.ObjectClass.ClassMetadata;
+    VObjectMetadata := Metadata.ObjectClassMetadata;
     VTableAlias := TableReferences.NewStructure(VTableAlias, Metadata);
   end else
   begin

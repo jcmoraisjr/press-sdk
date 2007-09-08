@@ -1351,7 +1351,7 @@ function TPressAttributeMetadata.BuildPersLinkChildName: string;
 begin
   if Assigned(Owner) then
     if IsEmbeddedLink then
-      Result := ObjectClass.ClassMetadata.IdMetadata.PersistentName
+      Result := ObjectClassMetadata.IdMetadata.PersistentName
     else
       Result := ShortName + SPressIdString
   else
@@ -1362,7 +1362,7 @@ function TPressAttributeMetadata.BuildPersLinkName: string;
 begin
   if Assigned(Owner) then
     if IsEmbeddedLink then
-      Result := ObjectClass.ClassMetadata.PersistentName
+      Result := ObjectClassMetadata.PersistentName
     else
       Result := Owner.ShortName + '_' + ShortName
   else
@@ -3178,7 +3178,7 @@ begin
   begin
     if Assigned(AAttribute.Metadata) then
       VParamType :=
-       AAttribute.Metadata.ObjectClass.ClassMetadata.IdMetadata.AttributeClass.AttributeBaseType
+       AAttribute.Metadata.ObjectClassMetadata.IdMetadata.AttributeClass.AttributeBaseType
     else
       VParamType := attUnknown;
     if Assigned(TPressReference(AAttribute).Value) then
