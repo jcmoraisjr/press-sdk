@@ -53,6 +53,7 @@ type
     function InternalImplementsBulkRetrieve: Boolean; override;
     procedure InternalIsDefaultChanged; override;
     function InternalOQLQuery(const AOQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
+    procedure InternalRefresh(AObject: TPressObject); override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
     procedure InternalRollback; override;
     procedure InternalShowConnectionManager; override;
@@ -277,6 +278,11 @@ begin
     VOQLParser.Free;
     VOQLReader.Free;
   end;
+end;
+
+procedure TPressOPF.InternalRefresh(AObject: TPressObject);
+begin
+  Mapper.Refresh(AObject);
 end;
 
 function TPressOPF.InternalRetrieve(AClass: TPressObjectClass;

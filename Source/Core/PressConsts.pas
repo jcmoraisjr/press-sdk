@@ -130,6 +130,7 @@ resourcestring
   SPressSelectItemCommand = 'Selecionar itens';
   SPressEditItemCommand = 'Alterar item';
   SPressRemoveItemCommand = 'Remover item';
+  SPressRefreshCommand = 'Atualizar';
   SPressSaveFormCommand = 'Salvar';
   SPressCancelFormCommand = 'Cancelar';
   SPressCloseFormCommand = 'Fechar';

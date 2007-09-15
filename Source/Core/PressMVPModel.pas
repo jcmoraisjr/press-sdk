@@ -439,6 +439,7 @@ type
   protected
     procedure InitCommands; override;
     procedure InternalCreateCancelCommand; virtual;
+    procedure InternalCreateRefreshCommand; virtual;
     procedure InternalCreateSaveCommand; virtual;
     function InternalCreateSelection: TPressMVPSelection; override;
     function InternalIsIncluding: Boolean; override;
@@ -1915,6 +1916,7 @@ end;
 procedure TPressMVPObjectModel.InitCommands;
 begin
   inherited;
+  InternalCreateRefreshCommand;
   InternalCreateSaveCommand;
   InternalCreateCancelCommand;
 end;
@@ -1922,6 +1924,11 @@ end;
 procedure TPressMVPObjectModel.InternalCreateCancelCommand;
 begin
   AddCommand(TPressMVPCancelObjectCommand);
+end;
+
+procedure TPressMVPObjectModel.InternalCreateRefreshCommand;
+begin
+  AddCommand(TPressMVPRefreshObjectCommand);
 end;
 
 procedure TPressMVPObjectModel.InternalCreateSaveCommand;

@@ -236,6 +236,14 @@ type
     property Model: TPressMVPObjectModel read GetModel;
   end;
 
+  TPressMVPRefreshObjectCommand = class(TPressMVPObjectCommand)
+  protected
+    function GetCaption: string; override;
+    function GetShortCut: TShortCut; override;
+    procedure InternalExecute; override;
+    function InternalIsEnabled: Boolean; override;
+  end;
+
   TPressMVPSaveObjectCommand = class(TPressMVPObjectCommand)
   protected
     function GetCaption: string; override;
@@ -833,6 +841,28 @@ end;
 function TPressMVPObjectCommand.InternalIsEnabled: Boolean;
 begin
   Result := not Model.HasSubject or not Model.Subject.IsLocked;
+end;
+
+{ TPressMVPRefreshObjectCommand }
+
+function TPressMVPRefreshObjectCommand.GetCaption: string;
+begin
+  Result := SPressRefreshCommand;
+end;
+
+function TPressMVPRefreshObjectCommand.GetShortCut: TShortCut;
+begin
+  Result := 0;
+end;
+
+procedure TPressMVPRefreshObjectCommand.InternalExecute;
+begin
+  Model.Subject.Refresh;
+end;
+
+function TPressMVPRefreshObjectCommand.InternalIsEnabled: Boolean;
+begin
+  Result := True;
 end;
 
 { TPressMVPSaveObjectCommand }

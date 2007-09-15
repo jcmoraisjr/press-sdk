@@ -65,6 +65,7 @@ type
     function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; virtual;
     function InternalImplementsBulkRetrieve: Boolean; virtual;
     function InternalOQLQuery(const AOQLStatement: string; AParams: TPressParamList): TPressProxyList; virtual;
+    procedure InternalRefresh(AObject: TPressObject); virtual;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; virtual;
     function InternalRetrieveQuery(AQuery: TPressQuery): TPressProxyList; virtual;
     procedure InternalRollback; virtual;
@@ -86,6 +87,7 @@ type
     function FindObject(AClass: TPressObjectClass; const AId: string): TPressObject;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
     function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
+    procedure Refresh(AObject: TPressObject);
     procedure ReleaseObject(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil): TPressObject;
     function RetrieveQuery(AQuery: TPressQuery): TPressProxyList;
@@ -334,6 +336,11 @@ begin
   raise UnsupportedFeatureError('OQL Query');
 end;
 
+procedure TPressDAO.InternalRefresh(AObject: TPressObject);
+begin
+  raise UnsupportedFeatureError('Refresh object');
+end;
+
 function TPressDAO.InternalRetrieve(
   AClass: TPressObjectClass; const AId: string;
   AMetadata: TPressObjectMetadata): TPressObject;
@@ -447,6 +454,30 @@ begin
   StartTransaction;
   try
     Result := InternalOQLQuery(AOQLStatement, AParams);
+    Commit;
+  except
+    Rollback;
+    raise;
+  end;
+end;
+
+procedure TPressDAO.Refresh(AObject: TPressObject);
+begin
+  if not AObject.IsPersistent then
+    Exit;
+  StartTransaction;
+  try
+    AObject.DisableChanges;
+    try
+{$IFDEF PressLogDAOInterface}
+      PressLogMsg(Self, 'Refresh', [AObject]);
+{$ENDIF}
+      TPressObjectFriend(AObject).InternalRefresh(
+       {$IFDEF FPC}@{$ENDIF}InternalRefresh);
+    finally
+      AObject.EnableChanges;
+    end;
+    AObject.Unchanged;
     Commit;
   except
     Rollback;

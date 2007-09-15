@@ -53,6 +53,7 @@ type
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
     function InternalExecuteStatement(const AStatement: string; AParams: TPressParamList): Integer; override;
     function InternalOQLQuery(const AOQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
+    procedure InternalRefresh(AObject: TPressObject); override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
     function InternalSQLProxy(const ASQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
     function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
@@ -298,6 +299,22 @@ begin
   finally
     VInstantQuery.Free;
   end;
+end;
+
+procedure TPressInstantObjectsPersistence.InternalRefresh(
+  AObject: TPressObject);
+var
+  VPersistentObject: TObject;
+  VInstantObject: TInstantObject;
+begin
+  VPersistentObject := PersistentObject[AObject];
+  if VPersistentObject is TInstantObject then
+    VInstantObject := TInstantObject(VPersistentObject)
+  else
+    raise EPressError.CreateFmt(SInstanceNotFound,
+     [AObject.ClassName, AObject.PersistentId]);
+  VInstantObject.Refresh;
+  ReadInstantObject(VInstantObject, AObject);
 end;
 
 function TPressInstantObjectsPersistence.InternalRetrieve(

@@ -601,6 +601,7 @@ type
     function ExecuteStatement(const AStatement: string; AParams: TPressParamList = nil): Integer;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
     function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
+    procedure Refresh(AObject: TPressObject);
     procedure ReleaseObject(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil): TPressObject;
     function RetrieveQuery(AQuery: TPressQuery): TPressProxyList;
@@ -691,6 +692,7 @@ type
     procedure InternalDispose(ADisposeMethod: TPressObjectOperation); virtual;
     function InternalIsValid: Boolean; virtual;
     procedure InternalLock; override;
+    procedure InternalRefresh(ARefreshMethod: TPressObjectOperation); virtual;
     procedure InternalStore(AStoreMethod: TPressObjectOperation); virtual;
     procedure InternalUnchanged; override;
     procedure InternalUnlock; override;
@@ -716,6 +718,7 @@ type
     function FindAttribute(const AAttributeName: string): TPressAttribute;
     function FindPathAttribute(const APath: string; ASilent: Boolean = True): TPressAttribute;
     class function ObjectMetadataClass: TPressObjectMetadataClass; virtual;
+    procedure Refresh;
     class procedure RegisterClass;
     procedure Store;
     class procedure UnregisterClass;
@@ -3140,6 +3143,11 @@ begin
   Result := '';
 end;
 
+procedure TPressObject.InternalRefresh(ARefreshMethod: TPressObjectOperation);
+begin
+  ARefreshMethod(Self);
+end;
+
 procedure TPressObject.InternalStore(AStoreMethod: TPressObjectOperation);
 begin
   AStoreMethod(Self);
@@ -3187,6 +3195,11 @@ end;
 class function TPressObject.ObjectMetadataClass: TPressObjectMetadataClass;
 begin
   Result := TPressObjectMetadata;
+end;
+
+procedure TPressObject.Refresh;
+begin
+  DataAccess.Refresh(Self);
 end;
 
 class procedure TPressObject.RegisterClass;
