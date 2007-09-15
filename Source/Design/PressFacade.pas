@@ -466,9 +466,17 @@ begin
 end;
 
 initialization
+  TPressRuntimeObject.RegisterClass;
+  TPressRuntimeQuery.RegisterClass;
+  TPressRuntimeParts.RegisterAttribute;
+  TPressRuntimeReferences.RegisterAttribute;
   _PressDesignFacade := TPressFacade.Create;
 
 finalization
   _PressDesignFacade.Free;
+  TPressRuntimeObject.UnregisterClass;
+  TPressRuntimeQuery.UnregisterClass;
+  TPressRuntimeParts.UnregisterAttribute;
+  TPressRuntimeReferences.UnregisterAttribute;
 
 end.
