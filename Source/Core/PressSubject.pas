@@ -558,10 +558,35 @@ type
   TPressSubjectClass = class of TPressSubject;
 
   TPressSubject = class(TPressStreamable)
+  private
+    FChangedWhenDisabled: Boolean;
+    FChangedWhenUpdating: Boolean;
+    FChangesDisabled: Boolean;
+    FChangesDisabledCount: Integer;
+    FIsChanged: Boolean;
+    FUpdating: Boolean;
+    FUpdatingCount: Integer;
   protected
+    procedure Changed(AUpdateIsChangedFlag: Boolean = True);
+    procedure Changing;
     function GetSignature: string; virtual;
+    procedure InternalChanged(AChangedWhenDisabled: Boolean); virtual;
+    procedure InternalChangesDisabled; virtual;
+    procedure InternalChangesEnabled; virtual;
+    procedure InternalChanging; virtual;
+    procedure InternalUnchanged; virtual;
+    procedure InternalUpdateFinished; virtual;
+    procedure InternalUpdateStarted; virtual;
   public
+    procedure BeginUpdate;
+    procedure DisableChanges;
+    procedure EnableChanges;
+    procedure EndUpdate;
+    procedure Unchanged;
+    property ChangesDisabled: Boolean read FChangesDisabled;
+    property IsChanged: Boolean read FIsChanged;
     property Signature: string read GetSignature;
+    property Updating: Boolean read FUpdating;
   end;
 
   TPressQuery = class;
@@ -593,11 +618,6 @@ type
   end;
 
   TPressObjectChangedEvent = class(TPressSubjectChangedEvent)
-  private
-    FAttribute: TPressAttribute;
-  public
-    constructor Create(AOwner: TObject; AAttribute: TPressAttribute);
-    property Attribute: TPressAttribute read FAttribute;
   end;
 
   TPressLockingEvent = class(TPressSubjectEvent)
@@ -623,9 +643,7 @@ type
   private
     FAttributes: TPressAttributeList;
     FDataAccess: IPressDAO;
-    FDisableChangesCount: Integer;
     FId: TPressAttribute;
-    FIsChanged: Boolean;
     FMap: TPressClassMap;
     FMementos: TPressObjectMementoList;
     FMetadata: TPressObjectMetadata;
@@ -633,9 +651,10 @@ type
     FPersistentId: string;
     FPersUpdateCount: Integer;
     FUpdateCount: Integer;
+    procedure AttributesDisableChanges;
+    procedure AttributesEnableChanges;
     procedure CreateAttributes;
     function GetAttributes(AIndex: Integer): TPressAttribute;
-    function GetChangesDisabled: Boolean;
     function GetDataAccess: IPressDAO;
     function GetId: string;
     function GetIsOwned: Boolean;
@@ -665,13 +684,18 @@ type
     procedure Init; virtual;
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; virtual;
     procedure InternalCalcAttribute(AAttribute: TPressAttribute); virtual;
+    procedure InternalChanged(AChangedWhenDisabled: Boolean); override;
+    procedure InternalChangesDisabled; override;
+    procedure InternalChangesEnabled; override;
+    procedure InternalChanging; override;
     procedure InternalDispose(ADisposeMethod: TPressObjectOperation); virtual;
     function InternalIsValid: Boolean; virtual;
     procedure InternalLock; override;
     procedure InternalStore(AStoreMethod: TPressObjectOperation); virtual;
+    procedure InternalUnchanged; override;
     procedure InternalUnlock; override;
     class function InternalMetadataStr: string; virtual;
-    procedure NotifyChange(AAttribute: TPressAttribute);
+    procedure NotifyChange;
     procedure NotifyUnchange;
     procedure SetOwnerContext(AOwner: TPressStructure);
   public
@@ -681,8 +705,6 @@ type
     function AttributeByName(const AAttributeName: string): TPressAttribute;
     function AttributeByPath(const APath: string): TPressAttribute;
     function AttributeCount: Integer;
-    procedure Changed(AAttribute: TPressAttribute);
-    procedure Changing(AAttribute: TPressAttribute);
     class function ClassMap: TPressClassMap;
     class function ClassMetadata: TPressObjectMetadata;
     class function ClassMetadataStr: string;
@@ -690,21 +712,16 @@ type
     function Clone: TPressObject;
     function CreateAttributeIterator: TPressAttributeIterator;
     function CreateMemento: TPressObjectMemento;
-    procedure DisableChanges;
     procedure Dispose;
-    procedure EnableChanges;
     function FindAttribute(const AAttributeName: string): TPressAttribute;
     function FindPathAttribute(const APath: string; ASilent: Boolean = True): TPressAttribute;
     class function ObjectMetadataClass: TPressObjectMetadataClass; virtual;
     class procedure RegisterClass;
     procedure Store;
-    procedure Unchanged;
     class procedure UnregisterClass;
     property Attributes[AIndex: Integer]: TPressAttribute read GetAttributes;
-    property ChangesDisabled: Boolean read GetChangesDisabled;
     property DataAccess: IPressDAO read GetDataAccess;
     property Id: string read GetId write SetId;
-    property IsChanged: Boolean read FIsChanged;
     property IsOwned: Boolean read GetIsOwned;
     property IsPersistent: Boolean read GetIsPersistent;
     property IsUpdated: Boolean read GetIsUpdated;
@@ -825,6 +842,8 @@ type
    Sender: TPressProxy) of object;
 
   TPressProxy = class(TPressManagedObject)
+  { TODO : Refactor some notifications and the Structure attributes
+    in order to make the Proxy works as noiselessly as possible }
   private
     FAfterChangeInstance: TPressProxyChangeInstanceEvent;
     FAfterChangeReference: TPressProxyChangeReferenceEvent;
@@ -934,9 +953,7 @@ type
   TPressAttribute = class(TPressSubject)
   private
     FCalcUpdated: Boolean;
-    FDisableChangesCount: Integer;
     FIsCalculating: Boolean;
-    FIsChanged: Boolean;
     FIsNull: Boolean;
     FMetadata: TPressAttributeMetadata;
     FNotifier: TPressNotifier;
@@ -944,7 +961,6 @@ type
     FUsePublishedGetter: Boolean;
     FUsePublishedSetter: Boolean;
     function CreateMemento: TPressAttributeMemento;
-    function GetChangesDisabled: Boolean;
     function GetDataAccess: IPressDAO;
     function GetDefaultValue: string;
     function GetEditMask: string;
@@ -956,7 +972,6 @@ type
     function GetUsePublishedGetter: Boolean;
     function GetUsePublishedSetter: Boolean;
     procedure InitPropInfo;
-    procedure SetIsChanged(AValue: Boolean);
   protected
     function AccessError(const AAttributeName: string): EPressError;
     { TODO : Use exception messages from the PressDialog class }
@@ -965,7 +980,6 @@ type
     function InvalidValueError(AValue: Variant; E: EVariantError): EPressError;
     { TODO : Review the need of As<Type> methods }
     procedure BindCalcNotification(AInstance: TPressObject);
-    procedure Changing;
     procedure Finit; override;
     function GetAsBoolean: Boolean; virtual;
     function GetAsCurrency: Currency; virtual;
@@ -979,9 +993,12 @@ type
     function GetDisplayText: string; virtual;
     function GetIsEmpty: Boolean; virtual;
     procedure Initialize; virtual;
+    procedure InternalChanged(AChangedWhenDisabled: Boolean); override;
+    procedure InternalChanging; override;
     function InternalCreateMemento: TPressAttributeMemento; virtual; abstract;
+    procedure InternalReset; virtual;
     function InternalTypeKinds: TTypeKinds; virtual;
-    procedure InternalUnchange; virtual;
+    procedure InternalUnchanged; override;
     procedure Notify(AEvent: TPressEvent); virtual;
     procedure NotifyChange;
     procedure NotifyUnchange;
@@ -996,6 +1013,8 @@ type
     procedure SetAsTime(AValue: TTime); virtual;
     procedure SetAsVariant(AValue: Variant); virtual;
     function ValidateChars(const AStr: string; const AChars: TChars): Boolean;
+    procedure ValueAssigned(AUpdateIsChangedFlag: Boolean = True);
+    procedure ValueUnassigned;
     procedure VerifyCalcAttribute;
     property UsePublishedGetter: Boolean read GetUsePublishedGetter;
     property UsePublishedSetter: Boolean read GetUsePublishedSetter;
@@ -1004,14 +1023,10 @@ type
     constructor Create(AOwner: TPressObject; AMetadata: TPressAttributeMetadata); virtual;
     class function AttributeBaseType: TPressAttributeBaseType; virtual; abstract;
     class function AttributeName: string; virtual; abstract;
-    procedure Changed;
     {$IFDEF FPC}class{$ENDIF} function ClassType: TPressAttributeClass;
     procedure Clear;
     function Clone: TPressAttribute;
-    procedure DisableChanges;
-    procedure EnableChanges;
     class procedure RegisterAttribute;
-    procedure Reset; virtual;
     class procedure UnregisterAttribute;
     property AsBoolean: Boolean read GetAsBoolean write SetAsBoolean;
     property AsCurrency: Currency read GetAsCurrency write SetAsCurrency;
@@ -1022,14 +1037,12 @@ type
     property AsString: string read GetAsString write SetAsString;
     property AsTime: TTime read GetAsTime write SetAsTime;
     property AsVariant: Variant read GetAsVariant write SetAsVariant;
-    property ChangesDisabled: Boolean read GetChangesDisabled;
     property DataAccess: IPressDAO read GetDataAccess;
     property DefaultValue: string read GetDefaultValue;
     property DisplayText: string read GetDisplayText;
     property EditMask: string read GetEditMask;
     property IsCalcAttribute: Boolean read GetIsCalcAttribute;
     property IsCalculating: Boolean read FIsCalculating;
-    property IsChanged: Boolean read FIsChanged write SetIsChanged;
     property IsEmpty: Boolean read GetIsEmpty;
     property IsNull: Boolean read GetIsNull;
     property Metadata: TPressAttributeMetadata read FMetadata;
@@ -1093,6 +1106,7 @@ type
     procedure BeforeRetrieveInstance(Sender: TPressProxy); virtual;
     procedure BindInstance(AInstance: TPressObject); virtual;
     procedure BindProxy(AProxy: TPressProxy);
+    procedure ChangedItem(AInstance: TPressObject; AUpdateIsChangedFlag: Boolean); virtual;
     procedure InternalAssignItem(AProxy: TPressProxy); virtual; abstract;
     procedure InternalAssignObject(AObject: TPressObject); virtual; abstract;
     function InternalProxyType: TPressProxyType; virtual; abstract;
@@ -2042,11 +2056,17 @@ procedure TPressObjectMemento.Restore;
 var
   I: Integer;
 begin
-  {$IFDEF PressLogSubjectMemento}PressLogMsg(Self, 'Restoring ' + Owner.Signature, []);{$ENDIF}
-  { TODO : Retrieve under ChangesDisabled state }
-  if Assigned(FAttributes) then
-    for I := Pred(FAttributes.Count) downto 0 do
-      FAttributes[I].Restore;
+{$IFDEF PressLogSubjectMemento}
+  PressLogMsg(Self, 'Restoring ' + Owner.Signature, []);
+{$ENDIF}
+  Owner.DisableChanges;
+  try
+    if Assigned(FAttributes) then
+      for I := Pred(FAttributes.Count) downto 0 do
+        FAttributes[I].Restore;
+  finally
+    Owner.EnableChanges;
+  end;
   if not FIsChanged then
     Owner.Unchanged;
 end;
@@ -2141,7 +2161,7 @@ end;
 procedure TPressAttributeMemento.RestoreChanged;
 begin
   if not FIsChanged then
-    Owner.IsChanged := False;
+    Owner.Unchanged;
 end;
 
 { TPressAttributeMementoList }
@@ -2583,18 +2603,120 @@ end;
 
 { TPressSubject }
 
+procedure TPressSubject.BeginUpdate;
+begin
+  Inc(FUpdatingCount);
+  if FUpdatingCount = 1 then
+  begin
+    FUpdating := True;
+    InternalUpdateStarted;
+  end;
+end;
+
+procedure TPressSubject.Changed(AUpdateIsChangedFlag: Boolean);
+begin
+  if not ChangesDisabled then
+  begin
+    if not Updating then
+    begin
+      if AUpdateIsChangedFlag then
+        FIsChanged := True;
+      InternalChanged(False);
+    end else
+      FChangedWhenUpdating := True;
+  end else
+    FChangedWhenDisabled := True;
+end;
+
+procedure TPressSubject.Changing;
+begin
+  if not ChangesDisabled then
+    InternalChanging;
+end;
+
+procedure TPressSubject.DisableChanges;
+begin
+  Inc(FChangesDisabledCount);
+  if FChangesDisabledCount = 1 then
+  begin
+    FChangesDisabled := True;
+    InternalChangesDisabled;
+  end;
+end;
+
+procedure TPressSubject.EnableChanges;
+begin
+  if not ChangesDisabled then
+    Exit;
+  Dec(FChangesDisabledCount);
+  FChangesDisabled := FChangesDisabledCount > 0;
+  if not ChangesDisabled then
+  begin
+    if FChangedWhenDisabled then
+    begin
+      FChangedWhenDisabled := False;
+      InternalChanged(True);
+    end;
+    InternalChangesEnabled;
+  end;
+end;
+
+procedure TPressSubject.EndUpdate;
+begin
+  if not Updating then
+    Exit;
+  Dec(FUpdatingCount);
+  FUpdating := FUpdatingCount > 0;
+  if not Updating then
+  begin
+    if FChangedWhenUpdating then
+    begin
+      FChangedWhenUpdating := False;
+      Changed;
+    end;
+    InternalUpdateFinished;
+  end;
+end;
+
 function TPressSubject.GetSignature: string;
 begin
   Result := ClassName;
 end;
 
-{ TPressObjectChangedEvent }
-
-constructor TPressObjectChangedEvent.Create(
-  AOwner: TObject; AAttribute: TPressAttribute);
+procedure TPressSubject.InternalChanged(AChangedWhenDisabled: Boolean);
 begin
-  inherited Create(AOwner);
-  FAttribute := AAttribute;
+end;
+
+procedure TPressSubject.InternalChangesDisabled;
+begin
+end;
+
+procedure TPressSubject.InternalChangesEnabled;
+begin
+end;
+
+procedure TPressSubject.InternalChanging;
+begin
+end;
+
+procedure TPressSubject.InternalUnchanged;
+begin
+end;
+
+procedure TPressSubject.InternalUpdateFinished;
+begin
+end;
+
+procedure TPressSubject.InternalUpdateStarted;
+begin
+end;
+
+procedure TPressSubject.Unchanged;
+begin
+  if ChangesDisabled then
+    Exit;
+  FIsChanged := False;
+  InternalUnchanged;
 end;
 
 { TPressObject }
@@ -2650,6 +2772,34 @@ begin
   Result := FAttributes.Count;
 end;
 
+procedure TPressObject.AttributesDisableChanges;
+var
+  I: Integer;
+begin
+  if Assigned(FAttributes) then
+    for I := 0 to Pred(FAttributes.Count) do
+      FAttributes[I].DisableChanges;
+end;
+
+procedure TPressObject.AttributesEnableChanges;
+var
+  VAttributesChanged: Boolean;
+  VAttribute: TPressAttribute;
+  I: Integer;
+begin
+  VAttributesChanged := False;
+  if Assigned(FAttributes) then
+    for I := 0 to Pred(FAttributes.Count) do
+    begin
+      VAttribute := FAttributes[I];
+      VAttributesChanged := VAttributesChanged or
+       VAttribute.FChangedWhenDisabled;  // friend class
+      VAttribute.EnableChanges;
+    end;
+  if VAttributesChanged then
+    NotifyChange;
+end;
+
 procedure TPressObject.BeforeCreateAttributes;
 begin
 end;
@@ -2660,23 +2810,6 @@ end;
 
 procedure TPressObject.BeforeStore;
 begin
-end;
-
-procedure TPressObject.Changed(AAttribute: TPressAttribute);
-begin
-  if ChangesDisabled then
-    Exit;
-  FIsChanged := True;
-  NotifyChange(AAttribute);
-end;
-
-procedure TPressObject.Changing(AAttribute: TPressAttribute);
-begin
-  if AAttribute.ChangesDisabled or ChangesDisabled then
-    Exit;
-  if Assigned(FOwnerAttribute) then
-    FOwnerAttribute.BeforeChangeItem(Self);  // friend class
-  NotifyMementos(AAttribute);
 end;
 
 class function TPressObject.ClassMap: TPressClassMap;
@@ -2786,21 +2919,10 @@ begin
   end;
 end;
 
-procedure TPressObject.DisableChanges;
-begin
-  Inc(FDisableChangesCount);
-end;
-
 procedure TPressObject.Dispose;
 begin
   if IsPersistent then
     DataAccess.Dispose(ClassType, PersistentId);
-end;
-
-procedure TPressObject.EnableChanges;
-begin
-  if FDisableChangesCount > 0 then
-    Dec(FDisableChangesCount);
 end;
 
 function TPressObject.FindAttribute(const AAttributeName: string): TPressAttribute;
@@ -2860,12 +2982,6 @@ begin
   Result := FAttributes[AIndex];
 end;
 
-function TPressObject.GetChangesDisabled: Boolean;
-begin
-  Result := (FDisableChangesCount > 0) or
-   (IsOwned and FOwnerAttribute.ChangesDisabled);
-end;
-
 function TPressObject.GetDataAccess: IPressDAO;
 begin
   if not Assigned(FDataAccess) then
@@ -2892,8 +3008,20 @@ begin
 end;
 
 function TPressObject.GetIsUpdated: Boolean;
+var
+  VAttribute: TPressAttribute;
+  I: Integer;
 begin
   Result := not IsChanged and IsPersistent;
+  if not Result then
+    for I := 0 to Pred(AttributeCount) do
+    begin
+      VAttribute := Attributes[I];
+      if Assigned(VAttribute.Metadata) and
+       VAttribute.Metadata.IsPersistent and VAttribute.IsChanged then
+        Exit;
+    end;
+  Result := True;
 end;
 
 function TPressObject.GetIsValid: Boolean;
@@ -2963,6 +3091,33 @@ procedure TPressObject.InternalCalcAttribute(AAttribute: TPressAttribute);
 begin
 end;
 
+procedure TPressObject.InternalChanged(AChangedWhenDisabled: Boolean);
+begin
+  inherited;
+  NotifyChange;
+  if Assigned(FOwnerAttribute) then
+    FOwnerAttribute.ChangedItem(Self, not AChangedWhenDisabled);  // friend class
+end;
+
+procedure TPressObject.InternalChangesDisabled;
+begin
+  inherited;
+  AttributesDisableChanges;
+end;
+
+procedure TPressObject.InternalChangesEnabled;
+begin
+  inherited;
+  AttributesEnableChanges;
+end;
+
+procedure TPressObject.InternalChanging;
+begin
+  inherited;
+  if Assigned(FOwnerAttribute) then
+    FOwnerAttribute.BeforeChangeItem(Self);  // friend class
+end;
+
 procedure TPressObject.InternalDispose(ADisposeMethod: TPressObjectOperation);
 begin
   ADisposeMethod(Self);
@@ -2990,6 +3145,13 @@ begin
   AStoreMethod(Self);
 end;
 
+procedure TPressObject.InternalUnchanged;
+begin
+  inherited;
+  UnchangeAttributes;
+  NotifyUnchange;
+end;
+
 procedure TPressObject.InternalUnlock;
 begin
   inherited;
@@ -2997,10 +3159,10 @@ begin
   TPressUnlockObjectEvent.Create(Self).Notify;
 end;
 
-procedure TPressObject.NotifyChange(AAttribute: TPressAttribute);
+procedure TPressObject.NotifyChange;
 begin
   {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s changed', [Signature]));{$ENDIF}
-  TPressObjectChangedEvent.Create(Self, AAttribute).Notify;
+  TPressObjectChangedEvent.Create(Self).Notify;
 end;
 
 procedure TPressObject.NotifyMementos(AAttribute: TPressAttribute);
@@ -3080,19 +3242,10 @@ begin
   try
     BeforeFirstItem;
     while NextItem do
-      CurrentItem.IsChanged := False;
+      CurrentItem.Unchanged;
   finally
     Free;
   end;
-end;
-
-procedure TPressObject.Unchanged;
-begin
-  if ChangesDisabled then
-    Exit;
-  UnchangeAttributes;
-  FIsChanged := False;
-  NotifyUnchange;
 end;
 
 class procedure TPressObject.UnregisterClass;
@@ -3929,18 +4082,6 @@ begin
     Metadata.CalcMetadata.BindCalcNotification(AInstance, Notifier);
 end;
 
-procedure TPressAttribute.Changed;
-begin
-  FIsNull := False;
-  IsChanged := True;
-end;
-
-procedure TPressAttribute.Changing;
-begin
-  if not IsCalculating and Assigned(FOwner) then
-    FOwner.Changing(Self);
-end;
-
 {$IFDEF FPC}class{$ENDIF} function TPressAttribute.ClassType: TPressAttributeClass;
 begin
   Result := TPressAttributeClass(inherited ClassType);
@@ -3951,8 +4092,8 @@ begin
   if not FIsNull then
   begin
     Changing;
-    FIsNull := True;
-    Reset;
+    InternalReset;
+    ValueUnassigned;
   end;
 end;
 
@@ -3994,16 +4135,6 @@ end;
 function TPressAttribute.CreateMemento: TPressAttributeMemento;
 begin
   Result := InternalCreateMemento;
-end;
-
-procedure TPressAttribute.DisableChanges;
-begin
-  Inc(FDisableChangesCount);
-end;
-
-procedure TPressAttribute.EnableChanges;
-begin
-  Dec(FDisableChangesCount);
 end;
 
 procedure TPressAttribute.Finit;
@@ -4055,12 +4186,6 @@ end;
 function TPressAttribute.GetAsVariant: Variant;
 begin
   raise AccessError(TPressVariant.AttributeName);
-end;
-
-function TPressAttribute.GetChangesDisabled: Boolean;
-begin
-  Result := (FDisableChangesCount > 0) or
-   (Assigned(FOwner) and FOwner.ChangesDisabled);
 end;
 
 function TPressAttribute.GetDataAccess: IPressDAO;
@@ -4168,13 +4293,34 @@ begin
   end;
 end;
 
+procedure TPressAttribute.InternalChanged(AChangedWhenDisabled: Boolean);
+begin
+  inherited;
+  NotifyChange;
+  if Assigned(FOwner) then
+    FOwner.Changed(not AChangedWhenDisabled);
+end;
+
+procedure TPressAttribute.InternalChanging;
+begin
+  inherited;
+  if Assigned(FOwner) and not IsCalculating then
+    FOwner.NotifyMementos(Self);  // friend class
+end;
+
+procedure TPressAttribute.InternalReset;
+begin
+end;
+
 function TPressAttribute.InternalTypeKinds: TTypeKinds;
 begin
   Result := [];
 end;
 
-procedure TPressAttribute.InternalUnchange;
+procedure TPressAttribute.InternalUnchanged;
 begin
+  inherited;
+  NotifyUnchange;
 end;
 
 function TPressAttribute.InvalidClassError(const AClassName: string): EPressError;
@@ -4217,10 +4363,6 @@ procedure TPressAttribute.ReleaseCalcNotification(AInstance: TPressObject);
 begin
   if IsCalcAttribute and Assigned(AInstance) then
     Metadata.CalcMetadata.ReleaseCalcNotification(AInstance, Notifier);
-end;
-
-procedure TPressAttribute.Reset;
-begin
 end;
 
 procedure TPressAttribute.SetAsBoolean(AValue: Boolean);
@@ -4268,23 +4410,6 @@ begin
   raise AccessError(TPressVariant.AttributeName);
 end;
 
-procedure TPressAttribute.SetIsChanged(AValue: Boolean);
-begin
-  if ChangesDisabled then
-    Exit;
-  FIsChanged := AValue;
-  if FIsChanged then
-  begin
-    NotifyChange;
-    if Assigned(Owner) then
-      Owner.Changed(Self);
-  end else
-  begin
-    NotifyUnchange;
-    InternalUnchange;
-  end;
-end;
-
 class procedure TPressAttribute.UnregisterAttribute;
 begin
   PressModel.RemoveAttribute(Self);
@@ -4302,6 +4427,18 @@ begin
     if not (AStr[I] in AChars) then
       Exit;
   Result := True;
+end;
+
+procedure TPressAttribute.ValueAssigned(AUpdateIsChangedFlag: Boolean);
+begin
+  FIsNull := False;
+  Changed(AUpdateIsChangedFlag);
+end;
+
+procedure TPressAttribute.ValueUnassigned;
+begin
+  FIsNull := True;
+  Changed;
 end;
 
 procedure TPressAttribute.VerifyCalcAttribute;
@@ -4413,13 +4550,19 @@ begin
   if Assigned(Instance) then
     BindInstance(Instance);
   if ChangeType = pctAssigning then
-    Changed;
+    if Assigned(Instance) then
+      ValueAssigned
+    else
+      ValueUnassigned;
 end;
 
 procedure TPressStructure.AfterChangeReference(
   Sender: TPressProxy; AClass: TPressObjectClass; const AId: string);
 begin
-  Changed;
+  if not Sender.IsEmpty then
+    ValueAssigned
+  else
+    ValueUnassigned;
 end;
 
 procedure TPressStructure.AssignItem(AProxy: TPressProxy);
@@ -4476,6 +4619,11 @@ begin
   AProxy.BeforeRetrieveInstance := {$IFDEF FPC}@{$ENDIF}BeforeRetrieveInstance;
   if AProxy.HasInstance then
     BindInstance(AProxy.Instance);
+end;
+
+procedure TPressStructure.ChangedItem(
+  AInstance: TPressObject; AUpdateIsChangedFlag: Boolean);
+begin
 end;
 
 function TPressStructure.GetObjectClass: TPressObjectClass;

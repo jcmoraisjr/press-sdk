@@ -164,6 +164,7 @@ type
     function GetAsVariant: Variant; override;
     function GetIsEmpty: Boolean; override;
     function GetValue: string; virtual;
+    procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
@@ -178,7 +179,6 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
-    procedure Reset; override;
     property PubValue: string read GetPubValue write SetPubValue;
     property Value: string read GetValue write SetValue;
   end;
@@ -214,6 +214,7 @@ type
     function GetIsEmpty: Boolean; override;
     function GetIsRelativelyChanged: Boolean; override;
     function GetValue: Integer; virtual;
+    procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsFloat(AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
@@ -226,7 +227,6 @@ type
     class function AttributeName: string; override;
     procedure Decrement(AValue: Integer = 1); virtual;
     procedure Increment(AValue: Integer = 1); virtual;
-    procedure Reset; override;
     property Diff: Integer read FDiff;
     property PubValue: Integer read GetPubValue write SetPubValue;
     property Value: Integer read GetValue write SetValue;
@@ -246,6 +246,7 @@ type
     function GetIsEmpty: Boolean; override;
     function GetIsRelativelyChanged: Boolean; override;
     function GetValue: Double; virtual;
+    procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsFloat(AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
@@ -258,7 +259,6 @@ type
     class function AttributeName: string; override;
     procedure Decrement(AValue: Double = 1); virtual;
     procedure Increment(AValue: Double = 1); virtual;
-    procedure Reset; override;
     property Diff: Double read FDiff;
     property PubValue: Double read GetPubValue write SetPubValue;
     property Value: Double read GetValue write SetValue;
@@ -280,6 +280,7 @@ type
     function GetIsRelativelyChanged: Boolean; override;
     function GetDisplayText: string; override;
     function GetValue: Currency; virtual;
+    procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsCurrency(AValue: Currency); override;
     procedure SetAsFloat(AValue: Double); override;
@@ -293,7 +294,6 @@ type
     class function AttributeName: string; override;
     procedure Decrement(AValue: Currency = 1); virtual;
     procedure Increment(AValue: Currency = 1); virtual;
-    procedure Reset; override;
     property Diff: Currency read FDiff;
     property PubValue: Currency read GetPubValue write SetPubValue;
     property Value: Currency read GetValue write SetValue;
@@ -315,6 +315,7 @@ type
     function GetAsVariant: Variant; override;
     function GetIsEmpty: Boolean; override;
     function GetValue: Integer; virtual;
+    procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
@@ -329,7 +330,6 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
-    procedure Reset; override;
     property PubValue: Integer read GetPubValue write SetPubValue;
     property Value: Integer read GetValue write SetValue;
   end;
@@ -349,6 +349,7 @@ type
     function GetDisplayText: string; override;
     function GetValue: Boolean; virtual;
     procedure Initialize; override;
+    procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsFloat(AValue: Double); override;
@@ -360,7 +361,6 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
-    procedure Reset; override;
     property PubValue: Boolean read GetPubValue write SetPubValue;
     property Value: Boolean read GetValue write SetValue;
   end;
@@ -380,6 +380,7 @@ type
     function GetDisplayText: string; override;
     function GetValue: TDate; virtual;
     procedure Initialize; override;
+    procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
@@ -392,7 +393,6 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
-    procedure Reset; override;
     property PubValue: TDate read GetPubValue write SetPubValue;
     property Value: TDate read GetValue write SetValue;
   end;
@@ -412,6 +412,7 @@ type
     function GetDisplayText: string; override;
     function GetValue: TTime; virtual;
     procedure Initialize; override;
+    procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
@@ -424,7 +425,6 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
-    procedure Reset; override;
     property PubValue: TTime read GetPubValue write SetPubValue;
     property Value: TTime read GetValue write SetValue;
   end;
@@ -444,6 +444,7 @@ type
     function GetDisplayText: string; override;
     function GetValue: TDateTime; virtual;
     procedure Initialize; override;
+    procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
@@ -456,7 +457,6 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
-    procedure Reset; override;
     property PubValue: TDateTime read GetPubValue write SetPubValue;
     property Value: TDateTime read GetValue write SetValue;
   end;
@@ -476,6 +476,7 @@ type
     function GetAsTime: TTime; override;
     function GetAsVariant: Variant; override;
     function GetValue: Variant; virtual;
+    procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
@@ -490,7 +491,6 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
-    procedure Reset; override;
     property PubValue: Variant read GetPubValue write SetPubValue;
     property Value: Variant read GetValue write SetValue;
   end;
@@ -508,6 +508,7 @@ type
     procedure Finit; override;
     function GetAsString: string; override;
     function GetAsVariant: Variant; override;
+    procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -516,7 +517,6 @@ type
     procedure Assign(Source: TPersistent); override;
     procedure ClearBuffer;
     procedure LoadFromStream(AStream: TStream);
-    procedure Reset; override;
     procedure SaveToStream(AStream: TStream);
     function WriteBuffer(const ABuffer; ACount: Integer): Boolean;
     property PubValue: string read GetPubValue write SetPubValue;
@@ -583,6 +583,7 @@ type
     function GetSignature: string; override;
     procedure InternalAssignObject(AObject: TPressObject); override;
     function InternalCreateMemento: TPressAttributeMemento; override;
+    procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure InternalUnassignObject(AObject: TPressObject); override;
     procedure SetAsInteger(AValue: Integer); override;
@@ -591,7 +592,6 @@ type
   public
     procedure Assign(Source: TPersistent); override;
     procedure AssignReference(const AClassName, AId: string);
-    procedure Reset; override;
     function SameReference(AObject: TPressObject): Boolean; overload;
     function SameReference(const ARefClass, ARefID: string): Boolean; overload;
     property Proxy: TPressProxy read GetProxy;
@@ -605,10 +605,10 @@ type
     procedure BeforeChangeItem(AItem: TPressObject); override;
     procedure BeforeRetrieveInstance(Sender: TPressProxy); override;
     procedure BindInstance(AInstance: TPressObject); override;
+    procedure ChangedItem(AInstance: TPressObject; AUpdateIsChangedFlag: Boolean); override;
     procedure InternalAssignItem(AProxy: TPressProxy); override;
     function InternalProxyType: TPressProxyType; override;
-    procedure InternalUnchange; override;
-    procedure Notify(AEvent: TPressEvent); override;
+    procedure InternalUnchanged; override;
     procedure ReleaseInstance(AInstance: TPressObject); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
@@ -658,16 +658,17 @@ type
     procedure SetObjects(AIndex: Integer; AValue: TPressObject);
   protected
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
-    procedure ChangedItem(AItem: TPressObject);
+    procedure ChangedInstance(AInstance: TPressObject; AUpdateIsChangedFlag: Boolean = True);
     procedure ChangedList(Sender: TPressProxyList; Item: TPressProxy; Action: TListNotification);
     procedure ClearObjectCache;
     procedure Finit; override;
     function GetIsEmpty: Boolean; override;
     procedure InternalAssignObject(AObject: TPressObject); override;
+    procedure InternalChanged(AChangedWhenDisabled: Boolean); override;
     function InternalCreateIterator: TPressItemsIterator; virtual;
     function InternalCreateMemento: TPressAttributeMemento; override;
     procedure InternalUnassignObject(AObject: TPressObject); override;
-    procedure InternalUnchange; override;
+    procedure InternalUnchanged; override;
     procedure NotifyMementos(AProxy: TPressProxy; AItemState: TPressItemState; AOldIndex: Integer = -1);
     procedure NotifyRebuild;
     property Mementos: TPressItemsMementoList read GetMementos;
@@ -723,10 +724,10 @@ type
     procedure BeforeChangeItem(AItem: TPressObject); override;
     procedure BeforeRetrieveInstance(Sender: TPressProxy); override;
     procedure BindInstance(AInstance: TPressObject); override;
+    procedure ChangedItem(AInstance: TPressObject; AUpdateIsChangedFlag: Boolean); override;
     procedure InternalAssignItem(AProxy: TPressProxy); override;
     function InternalProxyType: TPressProxyType; override;
-    procedure InternalUnchange; override;
-    procedure Notify(AEvent: TPressEvent); override;
+    procedure InternalUnchanged; override;
     procedure ReleaseInstance(AInstance: TPressObject); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
@@ -1288,15 +1289,15 @@ begin
   Result := FValue;
 end;
 
+procedure TPressString.InternalReset;
+begin
+  inherited;
+  FValue := '';
+end;
+
 function TPressString.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkString, tkLString, tkWString];
-end;
-
-procedure TPressString.Reset;
-begin
-  FValue := '';
-  IsChanged := True;
 end;
 
 procedure TPressString.SetAsBoolean(AValue: Boolean);
@@ -1381,7 +1382,7 @@ begin
     end;
     Changing;
     FValue := AValue;
-    Changed;
+    ValueAssigned;
   end;
 end;
 
@@ -1517,19 +1518,19 @@ begin
     FValue := FValue + AValue;
     if (FDiff <> 0) or not IsChanged then
       FDiff := FDiff + AValue;
-    Changed;
+    ValueAssigned;
   end;
+end;
+
+procedure TPressInteger.InternalReset;
+begin
+  inherited;
+  FValue := 0;
 end;
 
 function TPressInteger.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkInteger];
-end;
-
-procedure TPressInteger.Reset;
-begin
-  FValue := 0;
-  IsChanged := True;
 end;
 
 procedure TPressInteger.SetAsFloat(AValue: Double);
@@ -1587,7 +1588,7 @@ begin
     Changing;
     FValue := AValue;
     FDiff := 0;
-    Changed;
+    ValueAssigned;
   end;
 end;
 
@@ -1671,19 +1672,19 @@ begin
     FValue := FValue + AValue;
     if (FDiff <> 0) or not IsChanged then
       FDiff := FDiff + AValue;
-    Changed;
+    ValueAssigned;
   end;
+end;
+
+procedure TPressFloat.InternalReset;
+begin
+  inherited;
+  FValue := 0;
 end;
 
 function TPressFloat.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkFloat];
-end;
-
-procedure TPressFloat.Reset;
-begin
-  FValue := 0;
-  IsChanged := True;
 end;
 
 procedure TPressFloat.SetAsFloat(AValue: Double);
@@ -1741,7 +1742,7 @@ begin
     Changing;
     FValue := AValue;
     FDiff := 0;
-    Changed;
+    ValueAssigned;
   end;
 end;
 
@@ -1840,19 +1841,19 @@ begin
     FValue := FValue + AValue;
     if (FDiff <> 0) or not IsChanged then
       FDiff := FDiff + AValue;
-    Changed;
+    ValueAssigned;
   end;
+end;
+
+procedure TPressCurrency.InternalReset;
+begin
+  inherited;
+  FValue := 0;
 end;
 
 function TPressCurrency.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkFloat];
-end;
-
-procedure TPressCurrency.Reset;
-begin
-  FValue := 0;
-  IsChanged := True;
 end;
 
 procedure TPressCurrency.SetAsCurrency(AValue: Currency);
@@ -1915,7 +1916,7 @@ begin
     Changing;
     FValue := AValue;
     FDiff := 0;
-    Changed;
+    ValueAssigned;
   end;
 end;
 
@@ -2007,15 +2008,15 @@ begin
   Result := FValue;
 end;
 
+procedure TPressEnum.InternalReset;
+begin
+  inherited;
+  FValue := -1;
+end;
+
 function TPressEnum.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkEnumeration];
-end;
-
-procedure TPressEnum.Reset;
-begin
-  FValue := -1;
-  IsChanged := True;
 end;
 
 procedure TPressEnum.SetAsBoolean(AValue: Boolean);
@@ -2097,7 +2098,7 @@ begin
   begin
     Changing;
     FValue := AValue;
-    Changed;
+    ValueAssigned;
   end;
 end;
 
@@ -2191,15 +2192,15 @@ begin
     Value := False;
 end;
 
+procedure TPressBoolean.InternalReset;
+begin
+  inherited;
+  FValue := False;
+end;
+
 function TPressBoolean.InternalTypeKinds: TTypeKinds;
 begin
   Result := [{$IFDEF FPC}tkBool{$ELSE}tkEnumeration{$ENDIF}];
-end;
-
-procedure TPressBoolean.Reset;
-begin
-  FValue := False;
-  IsChanged := True;
 end;
 
 procedure TPressBoolean.SetAsBoolean(AValue: Boolean);
@@ -2258,7 +2259,7 @@ begin
   begin
     Changing;
     FValue := AValue;
-    Changed;
+    ValueAssigned;
   end;
 end;
 
@@ -2353,15 +2354,15 @@ begin
     inherited;
 end;
 
+procedure TPressDate.InternalReset;
+begin
+  inherited;
+  FValue := 0;
+end;
+
 function TPressDate.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkFloat];
-end;
-
-procedure TPressDate.Reset;
-begin
-  FValue := 0;
-  IsChanged := True;
 end;
 
 procedure TPressDate.SetAsDate(AValue: TDate);
@@ -2432,7 +2433,7 @@ begin
     else
     begin
       FValue := Int(AValue);
-      Changed;
+      ValueAssigned;
     end;
   end;
 end;
@@ -2522,15 +2523,15 @@ begin
     inherited;
 end;
 
+procedure TPressTime.InternalReset;
+begin
+  inherited;
+  FValue := 0;
+end;
+
 function TPressTime.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkFloat];
-end;
-
-procedure TPressTime.Reset;
-begin
-  FValue := 0;
-  IsChanged := True;
 end;
 
 procedure TPressTime.SetAsDate(AValue: TDate);
@@ -2597,7 +2598,7 @@ begin
   begin
     Changing;
     FValue := Frac(AValue);
-    Changed;
+    ValueAssigned;
   end;
 end;
 
@@ -2696,15 +2697,15 @@ begin
     inherited;
 end;
 
+procedure TPressDateTime.InternalReset;
+begin
+  inherited;
+  FValue := 0;
+end;
+
 function TPressDateTime.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkFloat];
-end;
-
-procedure TPressDateTime.Reset;
-begin
-  FValue := 0;
-  IsChanged := True;
 end;
 
 procedure TPressDateTime.SetAsDate(AValue: TDate);
@@ -2775,7 +2776,7 @@ begin
     else
     begin
       FValue := AValue;
-      Changed;
+      ValueAssigned;
     end;
   end;
 end;
@@ -2927,15 +2928,15 @@ begin
   Result := FValue;
 end;
 
+procedure TPressVariant.InternalReset;
+begin
+  inherited;
+  FValue := Null;
+end;
+
 function TPressVariant.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkVariant];
-end;
-
-procedure TPressVariant.Reset;
-begin
-  FValue := Null;
-  IsChanged := True;
 end;
 
 procedure TPressVariant.SetAsBoolean(AValue: Boolean);
@@ -2996,7 +2997,7 @@ begin
     else
     begin
       FValue := AValue;
-      Changed;
+      ValueAssigned;
     end;
   end;
 end;
@@ -3017,7 +3018,7 @@ begin
   begin
     Changing;
     FStream.Clear;
-    IsChanged := True;
+    ValueUnassigned;
   end;
 end;
 
@@ -3072,6 +3073,13 @@ begin
     Result := '';
 end;
 
+procedure TPressBlob.InternalReset;
+begin
+  inherited;
+  if Assigned(FStream) and (FStream.Size > 0) then
+    FStream.Clear;
+end;
+
 function TPressBlob.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkString, tkLString, tkWString];
@@ -3083,13 +3091,8 @@ begin
   begin
     Changing;
     Stream.LoadFromStream(AStream);
-    Changed;
+    ValueAssigned;
   end;
-end;
-
-procedure TPressBlob.Reset;
-begin
-  ClearBuffer;
 end;
 
 procedure TPressBlob.SaveToStream(AStream: TStream);
@@ -3134,7 +3137,7 @@ begin
   else if IsNull then
   begin
     Changing;
-    Changed;
+    ValueAssigned;
   end else
     ClearBuffer;
 end;
@@ -3168,9 +3171,12 @@ begin
       Stream.Position := 0;
       Stream.Size := ACount;
       Stream.WriteBuffer(ABuffer, ACount);
+      ValueAssigned;
     end else
+    begin
       Stream.Clear;
-    Changed;
+      ValueUnassigned;
+    end;
   end;
 end;
 
@@ -3240,7 +3246,7 @@ begin
     Changing;
     Stream.Clear;
     Stream.CopyFrom(VStream, 0);
-    Changed;
+    ValueAssigned;
   finally
     VStream.Free;
   end;
@@ -3252,7 +3258,7 @@ begin
   Stream.Clear;
   if Assigned(AValue) then
     AValue.SaveToStream(Stream);
-  Changed;
+  ValueAssigned;
 end;
 
 procedure TPressPicture.AssignPicture(APicture: TPicture);
@@ -3429,6 +3435,14 @@ begin
   Result := TPressItemMemento.Create(Self, Proxy);
 end;
 
+procedure TPressItem.InternalReset;
+begin
+  inherited;
+  { TODO : Changed notification duplicated }
+  if Assigned(FProxy) then
+    FProxy.Instance := nil;
+end;
+
 function TPressItem.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkClass];
@@ -3438,12 +3452,6 @@ procedure TPressItem.InternalUnassignObject(AObject: TPressObject);
 begin
   if Proxy.SameReference(AObject) then
     Proxy.ClearInstance;
-end;
-
-procedure TPressItem.Reset;
-begin
-  if Assigned(FProxy) then
-    FProxy.Instance := nil;
 end;
 
 function TPressItem.SameReference(AObject: TPressObject): Boolean;
@@ -3544,6 +3552,13 @@ begin
   TPressObjectFriend(AInstance).SetOwnerContext(Self);
 end;
 
+procedure TPressPart.ChangedItem(
+  AInstance: TPressObject; AUpdateIsChangedFlag: Boolean);
+begin
+  inherited;
+  ValueAssigned(AUpdateIsChangedFlag);
+end;
+
 procedure TPressPart.InternalAssignItem(AProxy: TPressProxy);
 begin
   PubValue := AProxy.Instance.Clone;
@@ -3554,18 +3569,11 @@ begin
   Result := ptOwned;
 end;
 
-procedure TPressPart.InternalUnchange;
+procedure TPressPart.InternalUnchanged;
 begin
   inherited;
   if Assigned(FProxy) and FProxy.HasInstance then
     FProxy.Instance.Unchanged;
-end;
-
-procedure TPressPart.Notify(AEvent: TPressEvent);
-begin
-  inherited;
-  if AEvent is TPressObjectChangedEvent then
-    Changed;
 end;
 
 procedure TPressPart.ReleaseInstance(AInstance: TPressObject);
@@ -3602,7 +3610,8 @@ end;
 procedure TPressReference.Notify(AEvent: TPressEvent);
 begin
   inherited;
-  ReferenceChanged(Value);
+  if AEvent is TPressObjectChangedEvent then
+    ReferenceChanged(Value);
 end;
 
 { TPressItemsChangedEvent }
@@ -3654,7 +3663,7 @@ procedure TPressItems.AfterChangeInstance(
 begin
   inherited;
   if ChangeType = pctAssigning then
-    ChangedItem(Instance);
+    ChangedInstance(Instance);
 end;
 
 procedure TPressItems.Assign(Source: TPersistent);
@@ -3709,17 +3718,18 @@ begin
   end;
 end;
 
-procedure TPressItems.ChangedItem(AItem: TPressObject);
+procedure TPressItems.ChangedInstance(
+  AInstance: TPressObject; AUpdateIsChangedFlag: Boolean);
 var
   VIndex: Integer;
 begin
   if ChangesDisabled then
     Exit;
-  VIndex := ProxyList.IndexOfInstance(AItem);
+  VIndex := ProxyList.IndexOfInstance(AInstance);
   if VIndex >= 0 then
     TPressItemsChangedEvent.Create(
      Self, ProxyList[VIndex], VIndex, ietModify).Notify;
-  Changed;
+  ValueAssigned(AUpdateIsChangedFlag);
 end;
 
 procedure TPressItems.ChangedList(
@@ -3784,7 +3794,6 @@ procedure TPressItems.ChangedList(
         end;
     end;
     TPressItemsChangedEvent.Create(Self, Item, VIndex, VEventType).Notify;
-    Changed;
   end;
 
   procedure UpdateInstance;
@@ -3805,6 +3814,10 @@ begin
     UpdateInstance
   else
     DoChanges;
+  if Count > 0 then
+    ValueAssigned
+  else
+    ValueUnassigned;
 end;
 
 procedure TPressItems.Clear;
@@ -3921,6 +3934,13 @@ begin
   Add(AObject);
 end;
 
+procedure TPressItems.InternalChanged(AChangedWhenDisabled: Boolean);
+begin
+  inherited;
+  if AChangedWhenDisabled then
+    NotifyRebuild;
+end;
+
 function TPressItems.InternalCreateIterator: TPressItemsIterator;
 begin
   Result := TPressItemsIterator.Create(ProxyList);
@@ -3942,7 +3962,7 @@ begin
   ProxyList.RemoveInstance(AObject);
 end;
 
-procedure TPressItems.InternalUnchange;
+procedure TPressItems.InternalUnchanged;
 begin
   inherited;
   ClearObjectCache;
@@ -4051,6 +4071,13 @@ begin
   TPressObjectFriend(AInstance).SetOwnerContext(Self);
 end;
 
+procedure TPressParts.ChangedItem(
+  AInstance: TPressObject; AUpdateIsChangedFlag: Boolean);
+begin
+  inherited;
+  ChangedInstance(AInstance, AUpdateIsChangedFlag);
+end;
+
 procedure TPressParts.InternalAssignItem(AProxy: TPressProxy);
 begin
   Add(AProxy.Instance.Clone);
@@ -4061,7 +4088,7 @@ begin
   Result := ptOwned;
 end;
 
-procedure TPressParts.InternalUnchange;
+procedure TPressParts.InternalUnchanged;
 var
   I: Integer;
 begin
@@ -4069,14 +4096,6 @@ begin
   for I := 0 to Pred(Count) do
     if Proxies[I].HasInstance then
       Proxies[I].Instance.Unchanged;
-end;
-
-procedure TPressParts.Notify(AEvent: TPressEvent);
-begin
-  inherited;
-  if (AEvent is TPressObjectChangedEvent) and
-   (AEvent.Owner is TPressObject) then
-    ChangedItem(TPressObject(AEvent.Owner));
 end;
 
 procedure TPressParts.ReleaseInstance(AInstance: TPressObject);
@@ -4116,9 +4135,8 @@ end;
 procedure TPressReferences.Notify(AEvent: TPressEvent);
 begin
   inherited;
-  if (AEvent is TPressObjectChangedEvent) and
-   (AEvent.Owner is TPressObject) then
-    ReferenceChanged(TPressObject(AEvent.Owner));
+  if AEvent is TPressObjectChangedEvent then
+    ReferenceChanged(AEvent.Owner as TPressObject);
 end;
 
 initialization
