@@ -3523,7 +3523,9 @@ procedure TPressPart.BeforeChangeInstance(
   ChangeType: TPressProxyChangeType);
 begin
   inherited;
-
+  if Assigned(Instance) and Instance.IsOwned then
+    raise EPressError.CreateFmt(SInstanceAlreadyOwned,
+     [Instance.ClassType, Instance.Id]);
 end;
 
 procedure TPressPart.BeforeChangeItem(AItem: TPressObject);
@@ -4034,6 +4036,9 @@ procedure TPressParts.BeforeChangeInstance(Sender: TPressProxy;
   Instance: TPressObject; ChangeType: TPressProxyChangeType);
 begin
   inherited;
+  if Assigned(Instance) and Instance.IsOwned then
+    raise EPressError.CreateFmt(SInstanceAlreadyOwned,
+     [Instance.ClassName, Instance.Id]);
   if not ChangesDisabled and (ChangeType = pctAssigning) then
     NotifyMementos(Sender, isModified);
 end;

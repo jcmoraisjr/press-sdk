@@ -78,6 +78,7 @@ resourcestring
   SEnumMetadataNotFound = 'Enumeration metadata ''%s'' não encontrado';
   SEnumOutOfBounds = 'Enumeration ''%s'' fora do limite (%d)';
   SFieldNotFound = 'Campo ''%s'' não foi encontrado';
+  SInstanceAlreadyOwned = 'O objeto %s(''%s'') já possui proprietário';
   SInstanceNotFound = 'Instance not found: %s(''%s'')';
   SInvalidAttributeClass = 'O atributo %s(''%s'') requer objetos da classe ''%s''';
   SInvalidAttributeValue = 'Valor ''%s'' inválido para %s(''%s'')';
