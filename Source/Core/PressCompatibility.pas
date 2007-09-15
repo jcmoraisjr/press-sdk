@@ -15,6 +15,7 @@
 unit PressCompatibility;
 { TODO : Rename to PressUtils }
 
+{$DEFINE PressBaseUnit}
 {$I Press.inc}
 
 interface
