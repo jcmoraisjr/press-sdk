@@ -362,6 +362,7 @@ type
     function GetSubjectChanged: Boolean;
   protected
     procedure Notify(AAttribute: TPressAttribute);
+    procedure Unchange;
     property Attributes: TPressAttributeMementoList read GetAttributes;
     property IsChanged: Boolean read FIsChanged;
     property Owner: TPressObject read FOwner;
@@ -670,6 +671,7 @@ type
     procedure NotifyMementos(AAttribute: TPressAttribute);
     procedure SetId(const Value: string);
     procedure UnchangeAttributes;
+    procedure UnchangeMementos;
     property Mementos: TPressObjectMementoList read GetMementos;
   protected
     procedure AfterCreateAttributes; virtual;
@@ -2074,6 +2076,12 @@ begin
     Owner.Unchanged;
 end;
 
+procedure TPressObjectMemento.Unchange;
+begin
+  if Assigned(FAttributes) then
+    FAttributes.Clear;
+end;
+
 { TPressObjectMementoList }
 
 function TPressObjectMementoList.Add(
@@ -3156,6 +3164,7 @@ end;
 procedure TPressObject.InternalUnchanged;
 begin
   inherited;
+  UnchangeMementos;
   UnchangeAttributes;
   NotifyUnchange;
 end;
@@ -3174,16 +3183,12 @@ begin
 end;
 
 procedure TPressObject.NotifyMementos(AAttribute: TPressAttribute);
+var
+  I: Integer;
 begin
   if Assigned(FMementos) then
-    with FMementos.CreateIterator do
-    try
-      BeforeFirstItem;
-      while NextItem do
-        CurrentItem.Notify(AAttribute);
-    finally
-      Free;
-    end;
+    for I := 0 to Pred(FMementos.Count) do
+      FMementos[I].Notify(AAttribute);
 end;
 
 procedure TPressObject.NotifyUnchange;
@@ -3259,6 +3264,15 @@ begin
   finally
     Free;
   end;
+end;
+
+procedure TPressObject.UnchangeMementos;
+var
+  I: Integer;
+begin
+  if Assigned(FMementos) then
+    for I := 0 to Pred(FMementos.Count) do
+      FMementos[I].Unchange;
 end;
 
 class procedure TPressObject.UnregisterClass;
