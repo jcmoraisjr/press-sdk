@@ -1339,7 +1339,11 @@ begin
         ProxyList.AddProxy(VProxy);
         Inc(I);
       end else
+      begin
         VProxy.Instance := VObject;
+        if VProxy.ProxyType = ptOwned then
+          VObject.AddRef;
+      end;
     end;
     Inc(J);
   end;
