@@ -137,6 +137,7 @@ type
   private
     FMaps: TObjectList;
     FObjectMapper: TPressOPFObjectMapper;
+    FPersistence: TPressPersistence;
     FProxyList: TPressOPFBulkProxyList;
     function GetProxyList: TPressOPFBulkProxyList;
   protected
@@ -146,6 +147,7 @@ type
     function InternalOwnsProxy: Boolean; virtual; abstract;
     procedure RetrieveMaps;
     procedure UpdateProxies;
+    property Persistence: TPressPersistence read FPersistence;
     property ProxyList: TPressOPFBulkProxyList read GetProxyList;
   public
     constructor Create(AObjectMapper: TPressOPFObjectMapper);
@@ -1191,6 +1193,7 @@ constructor TPressOPFCustomBulkRetrieve.Create(AObjectMapper: TPressOPFObjectMap
 begin
   inherited Create;
   FObjectMapper := AObjectMapper;
+  FPersistence := AObjectMapper.Persistence;
 end;
 
 procedure TPressOPFCustomBulkRetrieve.CreateMaps;
@@ -1322,7 +1325,6 @@ procedure TPressOPFBulkRetrieve.CreateProxies(
   AStartingAt, AItemCount: Integer);
 var
   VProxy: TPressProxy;
-  VObject: TPressObject;
   I, J: Integer;
 begin
   I := 0;
@@ -1330,20 +1332,11 @@ begin
   while (I < AItemCount) and (J < FSourceProxyList.Count) do
   begin
     VProxy := FSourceProxyList[J];
+    Persistence.SynchronizeProxy(VProxy);
     if VProxy.HasReference and not VProxy.HasInstance then
     begin
-      VObject := ObjectMapper.Persistence.FindObject(
-       VProxy.ObjectClassType, VProxy.ObjectId);
-      if not Assigned(VObject) then
-      begin
-        ProxyList.AddProxy(VProxy);
-        Inc(I);
-      end else
-      begin
-        VProxy.Instance := VObject;
-        if VProxy.ProxyType = ptOwned then
-          VObject.AddRef;
-      end;
+      ProxyList.AddProxy(VProxy);
+      Inc(I);
     end;
     Inc(J);
   end;

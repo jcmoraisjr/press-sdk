@@ -84,7 +84,6 @@ type
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function ExecuteStatement(const AStatement: string; AParams: TPressParamList = nil): Integer;
-    function FindObject(AClass: TPressObjectClass; const AId: string): TPressObject;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
     function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure Refresh(AObject: TPressObject);
@@ -97,6 +96,7 @@ type
     function SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure StartTransaction;
     procedure Store(AObject: TPressObject);
+    procedure SynchronizeProxy(AProxy: TPressProxy);
     property LazyCommit: Boolean read FLazyCommit write FLazyCommit;
   end;
 
@@ -270,12 +270,6 @@ begin
     Rollback;
     raise;
   end;
-end;
-
-function TPressDAO.FindObject(
-  AClass: TPressObjectClass; const AId: string): TPressObject;
-begin
-  Result := Cache.FindObject(AClass, AId);
 end;
 
 procedure TPressDAO.Finit;
@@ -607,6 +601,23 @@ begin
       TPressObjectFriend(AObject).AfterStore;
     finally
       AObject.Unlock;
+    end;
+  end;
+end;
+
+procedure TPressDAO.SynchronizeProxy(AProxy: TPressProxy);
+var
+  VObject: TPressObject;
+begin
+  if not AProxy.HasInstance and AProxy.HasReference then
+  begin
+    VObject := Cache.FindObject(AProxy.ObjectClassType, AProxy.ObjectId);
+    if Assigned(VObject) then
+    begin
+      { TODO : Lock between assignment and AddRef call }
+      AProxy.Instance := VObject;
+      if AProxy.ProxyType = ptOwned then
+        VObject.AddRef;
     end;
   end;
 end;
