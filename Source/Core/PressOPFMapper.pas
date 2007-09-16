@@ -61,6 +61,7 @@ type
     function DMLBuilderClass: TPressOPFDMLBuilderClass;
     procedure Refresh(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
+    procedure Rollback;
     procedure Store(AObject: TPressObject);
     property Connector: TPressOPFConnector read FConnector;
     property DDLBuilder: TPressOPFDDLBuilder read GetDDLBuilder;
@@ -475,6 +476,13 @@ begin
     Result := VObject;
   end else
     Result := nil;
+end;
+
+procedure TPressOPFObjectMapper.Rollback;
+begin
+  { TODO : Remove this method as well as ResetClassList from StorageModel
+    after implement object transaction control }
+  StorageModel.ResetClassList;
 end;
 
 procedure TPressOPFObjectMapper.Store(AObject: TPressObject);

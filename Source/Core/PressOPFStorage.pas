@@ -184,6 +184,7 @@ type
     function ClassById(const AClassId: string): TPressObjectClass;
     function ClassIdByName(const AClassName: string): string;
     function ClassNameById(const AClassId: string): string;
+    procedure ResetClassList;
     function TableMetadataCount: Integer;
     property HasClassIdStorage: Boolean read FHasClassIdStorage;
     property Maps[AClass: TPressObjectClass]: TPressOPFStorageMapList read GetMaps;
@@ -910,6 +911,12 @@ begin
     FreeAndNil(FMapsList);
     FreeAndNil(FTableMetadatas);
   end;
+end;
+
+procedure TPressOPFStorageModel.ResetClassList;
+begin
+  FreeAndNil(FClassIdList);
+  FreeAndNil(FClassNameList);
 end;
 
 function TPressOPFStorageModel.TableMetadataCount: Integer;

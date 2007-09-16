@@ -293,6 +293,7 @@ end;
 
 procedure TPressOPF.InternalRollback;
 begin
+  Mapper.Rollback;
   Connector.Rollback;
 end;
 
