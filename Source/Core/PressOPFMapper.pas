@@ -54,6 +54,7 @@ type
   public
     constructor Create(APersistence: TPressPersistence; AStorageModel: TPressOPFStorageModel; AConnector: TPressOPFConnector);
     destructor Destroy; override;
+    procedure BulkRefresh(AProxyList: TPressProxyList);
     procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
     function CreateDatabaseStatement(ACreateClearDatabaseStatements: Boolean = False): string;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
@@ -120,6 +121,7 @@ type
     destructor Destroy; override;
     procedure DisposeObject(AObject: TPressObject);
     procedure DisposeRecord(const AId: string);
+    procedure RefreshStructures(AObjects: array of TPressObject);
     function RetrieveBaseMaps(const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
     procedure RetrieveBaseMapsList(AIDs: TPressStringArray; AObjects: TPressObjectList);
     procedure RetrieveComplementaryMaps(AObject: TPressObject; ABaseClass: TPressObjectClass);
@@ -179,6 +181,18 @@ type
     function InternalOwnsProxy: Boolean; override;
   public
     constructor Create(AObjectMapper: TPressOPFObjectMapper; ASourceProxyList: TPressOPFBulkProxyList; ABaseClass: TPressObjectClass);
+    procedure Execute;
+  end;
+
+  TPressOPFBulkRefresh = class(TPressOPFCustomBulkRetrieve)
+  private
+    FSourceProxyList: TPressProxyList;
+  protected
+    procedure CreateProxies;
+    function InternalCreateMap(AClass: TPressObjectClass): TPressOPFCustomBulkMap; override;
+    function InternalOwnsProxy: Boolean; override;
+  public
+    constructor Create(AObjectMapper: TPressOPFObjectMapper; ASourceProxyList: TPressProxyList);
     procedure Execute;
   end;
 
@@ -256,6 +270,11 @@ type
     procedure Retrieve; override;
   end;
 
+  TPressOPFBulkMapRefresh = class(TPressOPFCustomBulkMap)
+  public
+    procedure Retrieve; override;
+  end;
+
 implementation
 
 uses
@@ -265,6 +284,18 @@ uses
   PressConsts;
 
 { TPressOPFObjectMapper }
+
+procedure TPressOPFObjectMapper.BulkRefresh(AProxyList: TPressProxyList);
+var
+  VBulkRefresh: TPressOPFBulkRefresh;
+begin
+  VBulkRefresh := TPressOPFBulkRefresh.Create(Self, AProxyList);
+  try
+    VBulkRefresh.Execute;
+  finally
+    VBulkRefresh.Free;
+  end;
+end;
 
 procedure TPressOPFObjectMapper.BulkRetrieve(
   AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
@@ -404,8 +435,18 @@ begin
 end;
 
 procedure TPressOPFObjectMapper.Refresh(AObject: TPressObject);
+var
+  VAttributeMapper: TPressOPFAttributeMapper;
+  VMaps: TPressOPFStorageMapList;
 begin
-  { TODO : Implement }
+  VMaps := StorageModel.Maps[AObject.ClassType];
+  if VMaps.Count > 0 then
+  begin
+    AObject.Id := AObject.PersistentId;
+    VAttributeMapper := AttributeMapper[VMaps.Last];
+    VAttributeMapper.RetrieveComplementaryMaps(AObject, nil);
+    VAttributeMapper.RefreshStructures([AObject]);
+  end;
 end;
 
 function TPressOPFObjectMapper.Retrieve(AClass: TPressObjectClass;
@@ -904,6 +945,64 @@ begin
       Exit;
     ObjectMapper.AttributeMapper[Maps[I]].ReadAttributes(
      AObject, ADataRow);
+  end;
+end;
+
+procedure TPressOPFAttributeMapper.RefreshStructures(
+  AObjects: array of TPressObject);
+var
+  VProxyList: TPressProxyList;
+
+  procedure CheckProxy(AProxy: TPressProxy);
+  begin
+    Persistence.SynchronizeProxy(AProxy);
+    if AProxy.HasInstance then
+    begin
+      if not Assigned(VProxyList) then
+        VProxyList := TPressProxyList.Create(False, ptShared);
+      VProxyList.Add(AProxy);
+    end;
+  end;
+
+  procedure RefreshItem(AItem: TPressItem);
+  begin
+    CheckProxy(AItem.Proxy);
+  end;
+
+  procedure RefreshItems(AItems: TPressItems);
+  var
+    I: Integer;
+  begin
+    for I := 0 to Pred(AItems.Count) do
+      CheckProxy(AItems.Proxies[I]);
+  end;
+
+var
+  VMetadata: TPressAttributeMetadata;
+  VAttribute: TPressAttribute;
+  I, J: Integer;
+begin
+  VProxyList := nil;
+  try
+    for I := 0 to Pred(Map.Count) do
+    begin
+      VMetadata := Map[I];
+      if VMetadata.AttributeClass.InheritsFrom(TPressStructure) then
+      begin
+        for J := 0 to Pred(Length(AObjects)) do
+        begin
+          VAttribute := AObjects[J].AttributeByName(VMetadata.Name);
+          if VAttribute is TPressItem then
+            RefreshItem(TPressItem(VAttribute))
+          else if VAttribute is TPressItems then
+            RefreshItems(TPressItems(VAttribute));
+        end;
+      end;
+    end;
+    if Assigned(VProxyList) then
+      ObjectMapper.BulkRefresh(VProxyList);
+  finally
+    VProxyList.Free;
   end;
 end;
 
@@ -1425,6 +1524,48 @@ begin
   Result := False;
 end;
 
+{ TPressOPFBulkRefresh }
+
+constructor TPressOPFBulkRefresh.Create(
+  AObjectMapper: TPressOPFObjectMapper;
+  ASourceProxyList: TPressProxyList);
+begin
+  inherited Create(AObjectMapper);
+  FSourceProxyList := ASourceProxyList;
+end;
+
+procedure TPressOPFBulkRefresh.CreateProxies;
+var
+  VProxy: TPressProxy;
+  I: Integer;
+begin
+  if Assigned(FSourceProxyList) then
+    for I := 0 to Pred(FSourceProxyList.Count) do
+    begin
+      VProxy := FSourceProxyList[I];
+      if VProxy.HasInstance then
+        ProxyList.AddProxy(VProxy);
+    end;
+end;
+
+procedure TPressOPFBulkRefresh.Execute;
+begin
+  CreateProxies;
+  CreateMaps;
+  RetrieveMaps;
+end;
+
+function TPressOPFBulkRefresh.InternalCreateMap(
+  AClass: TPressObjectClass): TPressOPFCustomBulkMap;
+begin
+  Result := TPressOPFBulkMapRefresh.Create(Self, AClass);
+end;
+
+function TPressOPFBulkRefresh.InternalOwnsProxy: Boolean;
+begin
+  Result := True;
+end;
+
 { TPressOPFBulkProxy }
 
 procedure TPressOPFBulkProxy.AddProxy(AProxy: TPressProxy);
@@ -1669,6 +1810,27 @@ begin
   VObjects := CreateObjectArray;
   ObjectMapper.AttributeMapper[Maps.Last].RetrieveComplementaryMapsArray(
    VObjects, FBaseClass);
+end;
+
+{ TPressOPFBulkMapRefresh }
+
+procedure TPressOPFBulkMapRefresh.Retrieve;
+var
+  VObjects: TPressObjectArray;
+  VObject: TPressObject;
+  VAttributeMapper: TPressOPFAttributeMapper;
+  I: Integer;
+begin
+  inherited;
+  VObjects := CreateObjectArray;
+  for I := 0 to Pred(Length(VObjects)) do
+  begin
+    VObject := VObjects[I];
+    VObject.Id := VObject.PersistentId;
+  end;
+  VAttributeMapper := ObjectMapper.AttributeMapper[Maps.Last];
+  VAttributeMapper.RetrieveComplementaryMapsArray(VObjects, nil);
+  VAttributeMapper.RefreshStructures(VObjects);
 end;
 
 end.
