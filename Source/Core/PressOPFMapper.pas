@@ -165,7 +165,7 @@ type
     function InternalCreateMap(AClass: TPressObjectClass): TPressOPFCustomBulkMap; override;
     function InternalOwnsProxy: Boolean; override;
   public
-    constructor Create(AObjectMapper: TPressOPFObjectMapper; AProxyList: TPressProxyList; ADepth: Integer);
+    constructor Create(AObjectMapper: TPressOPFObjectMapper; ASourceProxyList: TPressProxyList; ADepth: Integer);
     procedure Execute(AStartingAt, AItemCount: Integer);
   end;
 
@@ -208,6 +208,7 @@ type
   protected
     function InternalCreateIterator: TPressCustomIterator; override;
   public
+    function Add(AProxy: TPressOPFBulkProxy): Integer;
     procedure AddProxy(AProxy: TPressProxy);
     procedure AssignInstances(AInstances: TPressObjectList);
     function CreateIterator: TPressOPFBulkProxyIterator;
@@ -1321,10 +1322,10 @@ end;
 
 constructor TPressOPFBulkRetrieve.Create(
   AObjectMapper: TPressOPFObjectMapper;
-  AProxyList: TPressProxyList; ADepth: Integer);
+  ASourceProxyList: TPressProxyList; ADepth: Integer);
 begin
   inherited Create(AObjectMapper);
-  FSourceProxyList := AProxyList;
+  FSourceProxyList := ASourceProxyList;
   FDepth := ADepth;
 end;
 
@@ -1471,6 +1472,11 @@ begin
 end;
 
 { TPressOPFBulkProxyList }
+
+function TPressOPFBulkProxyList.Add(AProxy: TPressOPFBulkProxy): Integer;
+begin
+  Result := inherited Add(AProxy);
+end;
 
 procedure TPressOPFBulkProxyList.AddProxy(AProxy: TPressProxy);
 var
