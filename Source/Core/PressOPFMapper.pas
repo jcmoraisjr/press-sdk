@@ -960,7 +960,10 @@ begin
   AddPersistentIdParam(VDataset, AObject.Id);
   VDataset.Execute;
   if VDataset.Count = 1 then
-    ReadObject(AObject, ABaseClass, VDataset[0]);
+    ReadObject(AObject, ABaseClass, VDataset[0])
+  else
+    raise EPressOPFError.CreateFmt(SInstanceNotFound,
+     [AObject.ClassName, AObject.Id]);
 end;
 
 procedure TPressOPFAttributeMapper.RetrieveComplementaryMapsArray(
@@ -985,17 +988,26 @@ procedure TPressOPFAttributeMapper.RetrieveComplementaryMapsArray(
 
 var
   VDataset: TPressOPFDataset;
+  VIDs: TPressStringArray;
   VIndex, I: Integer;
 begin
   VDataset := SelectComplementaryGroupDataset(Length(AObjects), ABaseClass);
-  AddIdArrayParam(VDataset, BuildIDs);
+  VIDs := BuildIDs;
+  AddIdArrayParam(VDataset, VIDs);
   VDataset.Execute;
   for I := 0 to Pred(VDataset.Count) do
   begin
     VIndex := IndexOfId(VDataset[I].FieldByName(Map[0].PersistentName).Value);
     if VIndex >= 0 then
+    begin
       ReadObject(AObjects[VIndex], ABaseClass, VDataset[I]);
+      VIDs[VIndex] := '';
+    end;
   end;
+  for I := 0 to Pred(Length(VIDs)) do
+    if VIDs[I] <> '' then
+      raise EPressOPFError.CreateFmt(SInstanceNotFound,
+       [AObjects[I].ClassName, VIDs[I]]);
 end;
 
 function TPressOPFAttributeMapper.SelectBaseDataset: TPressOPFDataset;
