@@ -861,6 +861,7 @@ var
     VDataset.SQL := DMLBuilder.SelectLinkStatement(AItems.Metadata);
     AddPersistentIdParam(VDataset, AObject.Id);
     VDataset.Execute;
+    AItems.Clear;
     for I := 0 to Pred(VDataset.Count) do
       AItems.AddReference(AItems.ObjectClass.ClassName,
        VDataset[I][0].Value, Persistence);
