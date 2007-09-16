@@ -146,7 +146,6 @@ type
     function InternalCreateMap(AClass: TPressObjectClass): TPressOPFCustomBulkMap; virtual; abstract;
     function InternalOwnsProxy: Boolean; virtual; abstract;
     procedure RetrieveMaps;
-    procedure UpdateProxies;
     property Persistence: TPressPersistence read FPersistence;
     property ProxyList: TPressOPFBulkProxyList read GetProxyList;
   public
@@ -164,6 +163,7 @@ type
     procedure CreateProxies(AStartingAt, AItemCount: Integer);
     function InternalCreateMap(AClass: TPressObjectClass): TPressOPFCustomBulkMap; override;
     function InternalOwnsProxy: Boolean; override;
+    procedure UpdateProxies;
   public
     constructor Create(AObjectMapper: TPressOPFObjectMapper; ASourceProxyList: TPressProxyList; ADepth: Integer);
     procedure Execute(AStartingAt, AItemCount: Integer);
@@ -1309,15 +1309,6 @@ begin
       (FMaps[I] as TPressOPFCustomBulkMap).Retrieve;
 end;
 
-procedure TPressOPFCustomBulkRetrieve.UpdateProxies;
-var
-  I: Integer;
-begin
-  if Assigned(FProxyList) then
-    for I := 0 to Pred(FProxyList.Count) do
-      (FProxyList[I] as TPressOPFBulkProxy).UpdateProxy;
-end;
-
 { TPressOPFBulkRetrieve }
 
 constructor TPressOPFBulkRetrieve.Create(
@@ -1368,6 +1359,15 @@ end;
 function TPressOPFBulkRetrieve.InternalOwnsProxy: Boolean;
 begin
   Result := True;
+end;
+
+procedure TPressOPFBulkRetrieve.UpdateProxies;
+var
+  I: Integer;
+begin
+  if Assigned(FProxyList) then
+    for I := 0 to Pred(FProxyList.Count) do
+      (FProxyList[I] as TPressOPFBulkProxy).UpdateProxy;
 end;
 
 { TPressOPFBulkRetrieveComplementary }
