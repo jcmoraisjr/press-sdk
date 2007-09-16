@@ -1417,6 +1417,8 @@ end;
 procedure TPressOPFBulkProxy.AddProxy(AProxy: TPressProxy);
 begin
   FProxyList.Add(AProxy);
+  if not Assigned(FInstance) and AProxy.HasInstance then
+    Instance := AProxy.Instance;
 end;
 
 constructor TPressOPFBulkProxy.Create(AProxy: TPressProxy);
@@ -1425,6 +1427,8 @@ begin
   FProxyList := TObjectList.Create(False);
   FObjectId := AProxy.ObjectId;
   FObjectClass := AProxy.ObjectClassType;
+  if AProxy.HasInstance then
+    Instance := AProxy.Instance;
   FProxyList.Add(AProxy);
 end;
 
