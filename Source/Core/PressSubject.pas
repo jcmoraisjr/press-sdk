@@ -3680,7 +3680,7 @@ procedure TPressProxy.BulkRetrieve;
 var
   VIndex: Integer;
 begin
-  if Assigned(FOwner) and Assigned(FDataAccess) then
+  if Assigned(FOwner) and (FOwner.Count > 1) and Assigned(FDataAccess) then
   begin
     VIndex := FOwner.IndexOf(Self);
     if VIndex >= 0 then
