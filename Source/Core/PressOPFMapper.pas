@@ -123,7 +123,7 @@ type
     function RetrieveBaseMaps(const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
     procedure RetrieveBaseMapsList(AIDs: TPressStringArray; AObjects: TPressObjectList);
     procedure RetrieveComplementaryMaps(AObject: TPressObject; ABaseClass: TPressObjectClass);
-    procedure RetrieveComplementaryMapsList(AObjects: TPressObjectList; ABaseClass: TPressObjectClass);
+    procedure RetrieveComplementaryMapsArray(AObjects: array of TPressObject; ABaseClass: TPressObjectClass);
     procedure Store(AObject: TPressObject);
     property Map: TPressOPFStorageMap read FMap;
     property Maps: TPressOPFStorageMapList read FMaps;
@@ -226,6 +226,7 @@ type
     FProxyList: TPressOPFBulkProxyList;
   protected
     function BuildIDs: TPressStringArray;
+    function CreateObjectArray: TPressObjectArray;
   public
     constructor Create(AOwner: TPressOPFCustomBulkRetrieve; AClass: TPressObjectClass);
     destructor Destroy; override;
@@ -249,8 +250,6 @@ type
   TPressOPFBulkMapComplementary = class(TPressOPFCustomBulkMap)
   private
     FBaseClass: TPressObjectClass;
-  protected
-    function CreateObjectList: TPressObjectList;
   public
     constructor Create(AOwner: TPressOPFBulkRetrieveComplementary; AClass, ABaseClass: TPressObjectClass);
     procedure Retrieve; override;
@@ -962,29 +961,36 @@ begin
     ReadObject(AObject, ABaseClass, VDataset[0]);
 end;
 
-procedure TPressOPFAttributeMapper.RetrieveComplementaryMapsList(
-  AObjects: TPressObjectList; ABaseClass: TPressObjectClass);
+procedure TPressOPFAttributeMapper.RetrieveComplementaryMapsArray(
+  AObjects: array of TPressObject; ABaseClass: TPressObjectClass);
 
   function BuildIDs: TPressStringArray;
   var
     I: Integer;
   begin
-    SetLength(Result, AObjects.Count);
-    for I := 0 to Pred(AObjects.Count) do
+    SetLength(Result, Length(AObjects));
+    for I := 0 to Pred(Length(AObjects)) do
       Result[I] := AObjects[I].Id;
+  end;
+
+  function IndexOfId(const AId: string): Integer;
+  begin
+    for Result := 0 to Pred(Length(AObjects)) do
+      if AObjects[Result].Id = AId then
+        Exit;
+    Result := -1;
   end;
 
 var
   VDataset: TPressOPFDataset;
   VIndex, I: Integer;
 begin
-  VDataset := SelectComplementaryGroupDataset(AObjects.Count, ABaseClass);
+  VDataset := SelectComplementaryGroupDataset(Length(AObjects), ABaseClass);
   AddIdArrayParam(VDataset, BuildIDs);
   VDataset.Execute;
   for I := 0 to Pred(VDataset.Count) do
   begin
-    VIndex := AObjects.IndexOfId(
-     VDataset[I].FieldByName(Map[0].PersistentName).Value);
+    VIndex := IndexOfId(VDataset[I].FieldByName(Map[0].PersistentName).Value);
     if VIndex >= 0 then
       ReadObject(AObjects[VIndex], ABaseClass, VDataset[I]);
   end;
@@ -1559,6 +1565,15 @@ begin
   FMaps := FObjectMapper.StorageModel.Maps[AClass];
 end;
 
+function TPressOPFCustomBulkMap.CreateObjectArray: TPressObjectArray;
+var
+  I: Integer;
+begin
+  SetLength(Result, ProxyList.Count);
+  for I := 0 to Pred(ProxyList.Count) do
+    Result[I] := ProxyList[I].Instance;
+end;
+
 destructor TPressOPFCustomBulkMap.Destroy;
 begin
   FProxyList.Free;
@@ -1623,32 +1638,14 @@ begin
   FBaseClass := ABaseClass;
 end;
 
-function TPressOPFBulkMapComplementary.CreateObjectList: TPressObjectList;
-var
-  I: Integer;
-begin
-  Result := TPressObjectList.Create(False);
-  try
-    for I := 0 to Pred(ProxyList.Count) do
-      Result.Add(ProxyList[I].Instance);
-  except
-    FreeAndNil(Result);
-    raise;
-  end;
-end;
-
 procedure TPressOPFBulkMapComplementary.Retrieve;
 var
-  VObjects: TPressObjectList;
+  VObjects: TPressObjectArray;
 begin
   inherited;
-  VObjects := CreateObjectList;
-  try
-    ObjectMapper.AttributeMapper[Maps.Last].RetrieveComplementaryMapsList(
-     VObjects, FBaseClass);
-  finally
-    VObjects.Free;
-  end;
+  VObjects := CreateObjectArray;
+  ObjectMapper.AttributeMapper[Maps.Last].RetrieveComplementaryMapsArray(
+   VObjects, FBaseClass);
 end;
 
 end.

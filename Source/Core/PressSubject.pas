@@ -78,6 +78,7 @@ type
 
   TPressObject = class;
   TPressObjectClass = class of TPressObject;
+  TPressObjectArray = array of TPressObject;
   TPressObjectClassArray = array of TPressObjectClass;
 
   TPressCalcMetadata = class(TObject)
@@ -753,7 +754,6 @@ type
     function Add(AObject: TPressObject): Integer;
     function CreateIterator: TPressObjectIterator;
     function IndexOf(AObject: TPressObject): Integer;
-    function IndexOfId(AId: string): Integer;
     procedure Insert(Index: Integer; AObject: TPressObject);
     function Remove(AObject: TPressObject): Integer;
     property Items[AIndex: Integer]: TPressObject read GetItems write SetItems; default;
@@ -3300,14 +3300,6 @@ end;
 function TPressObjectList.IndexOf(AObject: TPressObject): Integer;
 begin
   Result := inherited IndexOf(AObject);
-end;
-
-function TPressObjectList.IndexOfId(AId: string): Integer;
-begin
-  for Result := 0 to Pred(Count) do
-    if Items[Result].Id = AId then
-      Exit;
-  Result := -1;
 end;
 
 procedure TPressObjectList.Insert(Index: Integer; AObject: TPressObject);
