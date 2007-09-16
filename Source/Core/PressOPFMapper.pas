@@ -1298,7 +1298,7 @@ var
 begin
   if Assigned(FMaps) then
     for I := 0 to Pred(FMaps.Count) do
-      (FMaps[I] as TPressOPFBulkMap).Retrieve;
+      (FMaps[I] as TPressOPFCustomBulkMap).Retrieve;
 end;
 
 procedure TPressOPFCustomBulkRetrieve.UpdateProxies;
@@ -1442,6 +1442,7 @@ begin
   FInstance := AValue;
   FInstance.AddRef;
   FInstance.DisableChanges;
+  FObjectClass := FInstance.ClassType;
 end;
 
 procedure TPressOPFBulkProxy.UpdateProxy;
