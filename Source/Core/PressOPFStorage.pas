@@ -172,6 +172,7 @@ type
     FTableMetadatas: TObjectList;
     procedure BuildClassLists;
     function CreateTableMetadatas: TObjectList;
+    function FindClass(var AClassList: TStrings; const AValue: string): Integer;
     function GetClassIdMetadata: TPressObjectMetadata;
     function GetMaps(AClass: TPressObjectClass): TPressOPFStorageMapList;
     function GetTableMetadatas(AIndex: Integer): TPressOPFTableMetadata;
@@ -584,8 +585,7 @@ begin
   { TODO : Remove coupling with the default DAO }
   if HasClassIdStorage and (AClassName <> '') then
   begin
-    BuildClassLists;
-    VIndex := FClassNameList.IndexOf(AClassName);
+    VIndex := FindClass(FClassNameList, AClassName);
     if VIndex >= 0 then
       Result := FClassIdList[VIndex]
     else
@@ -612,8 +612,7 @@ var
 begin
   if HasClassIdStorage and (AClassId <> '') then
   begin
-    BuildClassLists;
-    VIndex := FClassIdList.IndexOf(AClassId);
+    VIndex := FindClass(FClassIdList, AClassId);
     if VIndex >= 0 then
       Result := FClassNameList[VIndex]
     else
@@ -627,7 +626,7 @@ begin
   inherited Create;
   FModel := AModel;
   FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
-  FNotifier.AddNotificationItem(FModel, [TPressModelBusinessClassChangedEvent]); 
+  FNotifier.AddNotificationItem(FModel, [TPressModelBusinessClassChangedEvent]);
   FHasClassIdStorage := TPressInstanceClass.ClassMetadata.IsPersistent;
 end;
 
@@ -868,6 +867,20 @@ begin
   FMapsList.Free;
   FTableMetadatas.Free;
   inherited;
+end;
+
+function TPressOPFStorageModel.FindClass(
+  var AClassList: TStrings; const AValue: string): Integer;
+begin
+  BuildClassLists;
+  Result := AClassList.IndexOf(AValue);
+  if Result = -1 then
+  begin
+    FreeAndNil(FClassIdList);
+    FreeAndNil(FClassNameList);
+    BuildClassLists;
+    Result := AClassList.IndexOf(AValue);
+  end;
 end;
 
 function TPressOPFStorageModel.GetClassIdMetadata: TPressObjectMetadata;
