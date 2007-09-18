@@ -1,6 +1,6 @@
 (*
-  PressObjects, Dialog Classes
-  Copyright (C) 2006 Laserpress Ltda.
+  PressObjects, Dialogs and Messages Classes
+  Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -23,6 +23,7 @@ uses
 
 const
   CPressDialogService = CPressDialogServicesBase + $0001;
+  CPressMessagesService = CPressDialogServicesBase + $0002;
 
 type
   TPressDialogs = class(TPressService)
@@ -41,6 +42,11 @@ type
     function SaveChanges: Boolean;
   end;
 
+  TPressMessages = class(TPressService)
+  protected
+    class function InternalServiceType: TPressServiceType; override;
+  end;
+
 function PressDialog: TPressDialogs;
 
 implementation
@@ -49,7 +55,8 @@ uses
   SysUtils,
   Controls,
   Dialogs,
-  PressConsts;
+  PressConsts,
+  PressMessages_ptbr;
 
 function PressDialog: TPressDialogs;
 begin
@@ -116,5 +123,16 @@ function TPressDialogs.SaveChanges: Boolean;
 begin
   Result := InternalSaveChanges;
 end;
+
+{ TPressMessages }
+
+class function TPressMessages.InternalServiceType: TPressServiceType;
+begin
+  Result := CPressMessagesService;
+end;
+
+initialization
+  PressApp.Registry[CPressMessagesService].ServiceTypeName := SPressMessagesServiceName;
+  PressApp.Registry[CPressMessagesService].Mandatory := True;
 
 end.

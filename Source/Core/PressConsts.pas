@@ -54,115 +54,130 @@ const
   SPressOIDGeneratorServiceName = 'OIDGen';
   SPressOPFBrokerServiceName = 'OPFBroker';
   SPressUserServiceName = 'User';
+  SPressMessagesServiceName = 'Messages';
 
-resourcestring
-  SAmbiguousClass = 'Ambiguidade entre as classes ''%s'' e ''%s''';
-  SAttributeAccessError = 'Não é possível acessar o atributo %s(''%s'') como ''%s''';
-  SAttributeConversionError = 'Erro ao converter valor para o atributo %s(''%s''):' + #10 + '"%s"';
-  SAttributeIsNotItem = 'O atributo %s(''%s'') não é Part ou Reference';
-  SAttributeIsNotValue = 'O atributo %s(''%s'') não é Value';
-  SAttributeNotFound = 'O atributo %s(''%s'') não foi encontrado';
-  SAttributeTypeNotFound = 'O atributo ''%s'' não foi encontrado';
-  SCannotChangeOPFBroker = 'Não é possível alterar o Broker de acesso a dados';
-  SCannotReleaseInstance = 'Não é possível liberar a instância ''%s''';
-  SCannotStoreOrphanObject = 'Não é possível gravar objetos órfãos';
-  SCannotUseAggregateFunctionHere = 'Não é possível utilizar função de agregação aqui';
-  SClassIsNotPersistent = 'Classe ''%s'' não é persistente';
-  SClassNotFound = 'Classe ''%s'' não encontrada';
-  SColumnDataParseError = 'Erro ao interpretar dados da coluna %s(''%s''): "%s"';
-  SComponentIsNotAControl = 'O componente %s(''%s'') não é um controle';
-  SComponentNotFound = 'O componente %s(''%s'') não foi encontrado';
-  SDatabaseIdentifierTooLong = 'Estes identificadores são muito grandes' + #10 + 'e causarão erro no banco de dados:';
-  SDisplayNamesAlreadyAssigned = 'DisplayNames já foi associado';
-  SEnumItemNotFound = 'Enumeration ''%s'' não encontrado';
-  SEnumMetadataNotFound = 'Enumeration metadata ''%s'' não encontrado';
-  SEnumOutOfBounds = 'Enumeration ''%s'' fora do limite (%d)';
-  SFieldNotFound = 'Campo ''%s'' não foi encontrado';
-  SInstanceAlreadyOwned = 'O objeto %s(''%s'') já possui proprietário';
-  SInstanceNotFound = 'Instance not found: %s(''%s'')';
-  SInvalidAttributeClass = 'O atributo %s(''%s'') requer objetos da classe ''%s''';
-  SInvalidAttributeValue = 'Valor ''%s'' inválido para %s(''%s'')';
-  SInvalidClassInheritance = 'Classe ''%s'' não é decendente de ''%s''';
-  SMaxItemCountReached = 'A consulta retornou %d itens, o limite é %d';
-  SMetadataNotFound = 'Metadata ''%s'' não encontrado';
-  SMetadataParseError = 'Erro ao interpretar metadata: "(%d,%d) %s"' + SPressLineBreak + '"%s"';
-  SNoLoggedUser = 'Não existe usuário logado';
-  SNoReferenceOrDataAccess = 'Não existe referência ou DAO';
-  SObjectChangedError = 'O objeto %s(''%s'') foi alterado em outra sessão';
-  SPathReferencesNil = 'O caminho %s(''%s'') possui atributo(s) Reference apontando para nil';
-  SPersistentClassNotFound = 'Classe persistente ''%s'' não encontrada';
-  SPropertyIsReadOnly = 'A propriedade ''%s.%s'' é somente leitura';
-  SPropertyNotFound = 'A propriedade ''%s.%s'' não foi encontrada';
-  SSingletonClassNotFound = 'Classe Singleton ''%s'' não encontrada';
-  SStringLengthOutOfBounds = 'String muito grande';
-  SStringOverflow = 'String overflow: %s(''%s'')';
-  STokenExpected = '''%s'' esperado, mas ''%s'' foi encontrado';
-  STokenLengthOutOfBounds = 'Token muito grande';
-  SUnassignedAttributeType = 'Tipo de atributo não associado para %s(''%s'')';
-  SUnassignedItemObjectClass = 'Classe de negócio dos itens da Query ''%s'' não está associado';
-  SUnassignedMainForm = 'Formulário principal não está associado';
-  SUnassignedModel = 'Model não está associado';
-  SUnassignedPersistenceConnector = 'Conector de persistência não foi associado';
-  SUnassignedPersistenceService = 'Serviço de persistência não foi associado ou não é do PressObjects';
-  SUnassignedServiceType = 'Nenhum serviço ''%s'' foi associado ou registrado';
-  SUnassignedSubject = 'Subject não foi associado';
-  SUnexpectedEof = 'Final de arquivo inesperado';
-  SUnexpectedMVPClassParam = 'Classe MVP ''%s'' inicializada com parâmetros inesperados';
-  SUnsupportedAttribute = 'O atributo %s(''%s'') não é suportado';
-  SUnsupportedAttributeType = 'O tipo de atributo ''%s'' não é suportado';
-  SUnsupportedComponent = 'O componente ''%s'' não é suportado';
-  SUnsupportedConnector = 'O conector ''%s'' não é suportado';
-  SUnsupportedControl = 'O controle %s(''%s'') não é suportado';
-  SUnsupportedDisplayNames = 'DisplayNames não é suportado para o atributo %s(''%s.%s'')';
-  SUnsupportedFeature = 'Feature ''%s'' não é suportada';
-  SUnsupportedFieldType = 'O tipo de campo ''%s'' não é suportado';
-  SUnsupportedGraphicFormat = 'Formato de arquivo gráfico não suportado';
-  SUnsupportedModel = 'Model ''%s'' não é suportado por ''%s''';
-  SUnsupportedObject = 'Nenhuma classe ''%s'' suporta objetos ''%s''';
-  SViewAccessError = 'Não é possível acessar a view %s(''%s'') como ''%s''';
+var
+  { TODO : Implement messages ID }
+  // Error messages from core classes
+  SCannotReleaseInstance,
+  SEnumItemNotFound,
+  SMessageAlreadyAssigned,
+  SNoLoggedUser,
+  SPropertyIsReadOnly,
+  SPropertyNotFound,
+  SStringLengthOutOfBounds,
+  STokenExpected,
+  STokenLengthOutOfBounds,
+  SUnassignedServiceType,
+  SUnexpectedEof,
+  SUnsupportedFeature: string;
 
-  SConnectionManagerCaption = 'Conector';
+  // Error messages from the Data Type (Subject) framework
+  SAttributeAccessError,
+  SAttributeConversionError,
+  SAttributeIsNotItem,
+  SAttributeIsNotValue,
+  SAttributeNotFound,
+  SAttributeTypeNotFound,
+  SClassNotFound,
+  SEnumMetadataNotFound,
+  SEnumOutOfBounds,
+  SInstanceAlreadyOwned,
+  SInstanceNotFound,
+  SInvalidAttributeClass,
+  SInvalidAttributeValue,
+  SInvalidClassInheritance,
+  SMetadataNotFound,
+  SMetadataParseError,
+  SNoReferenceOrDataAccess,
+  SPathReferencesNil,
+  SSingletonClassNotFound,
+  SStringOverflow,
+  SUnsupportedAttribute,
+  SUnsupportedAttributeType,
+  SUnsupportedGraphicFormat: string;
 
-  SPressTodayCommand = 'Hoje';
-  SPressLoadPictureCommand = 'Carregar figura';
-  SPressRemovePictureCommand = 'Remover figura';
-  SPressIncludeObjectCommand = 'Cadastrar novo item';
-  SPressAddItemCommand = 'Adicionar item';
-  SPressSelectItemCommand = 'Selecionar itens';
-  SPressEditItemCommand = 'Alterar item';
-  SPressRemoveItemCommand = 'Remover item';
-  SPressRefreshCommand = 'Atualizar';
-  SPressSaveFormCommand = 'Salvar';
-  SPressCancelFormCommand = 'Cancelar';
-  SPressCloseFormCommand = 'Fechar';
-  SPressExecuteQueryCommand = 'Executar';
-  SPressAssignSelectionQueryCommand = 'Selecionar';
-  SPressSelectAllCommand = 'Selecionar tudo';
-  SPressSelectNoneCommand = 'Remover seleção';
-  SPressSelectCurrentCommand = 'Selecionar/remover atual';
-  SPressSelectInvertCommand = 'Inverter seleção';
-  SPressSortByCommand = 'Ordernar por ''%s''';
-  SPressManageReportCommand = 'Gerenciar Relatório';
+  // Error messages from the MVP framework
+  SAmbiguousClass,
+  SColumnDataParseError,
+  SComponentIsNotAControl,
+  SComponentNotFound,
+  SDisplayNamesAlreadyAssigned,
+  SMaxItemCountReached,
+  SUnassignedAttributeType,
+  SUnassignedItemObjectClass,
+  SUnassignedMainForm,
+  SUnassignedModel,
+  SUnassignedSubject,
+  SUnexpectedMVPClassParam,
+  SUnsupportedComponent,
+  SUnsupportedControl,
+  SUnsupportedDisplayNames,
+  SUnsupportedModel,
+  SUnsupportedObject,
+  SViewAccessError: string;
 
-  SPressAttributeNameMsg = 'nome de atributo';
-  SPressBooleanValueMsg = 'Valor lógico';
-  SPressClassNameMsg = 'nome de classe';
-  SPressExpressionMsg = 'Expressão';
-  SPressEofMsg = 'Final de arquivo';
-  SPressFunctionMsg = 'Função';
-  SPressIdentifierMsg = 'Identificador';
-  SPressIntegerValueMsg = 'Inteiro';
-  SPressLineBreakMsg = 'Quebra de linha';
-  SPressNumberValueMsg = 'Número';
-  SPressPropertyNameMsg = 'nome de propriedade';
-  SPressReportErrorMsg = ' ##Erro## ';
-  SPressStringDelimiterMsg = 'Delimitador de string';
-  SPressStringValueMsg = 'String';
+  // Error messages from the OPF framework
+  SCannotChangeOPFBroker,
+  SCannotStoreOrphanObject,
+  SCannotUseAggregateFunctionHere,
+  SClassIsNotPersistent,
+  SDatabaseIdentifierTooLong,
+  SFieldNotFound,
+  SObjectChangedError,
+  SUnassignedPersistenceService,
+  SUnsupportedConnector,
+  SUnsupportedFieldType: string;
 
-  SPressCancelChangesDialog = 'Cancelar alterações?';
-  SPressConfirmRemoveOneItemDialog = 'Um item selecionado. Confirma remoção?';
-  SPressConfirmRemoveItemsDialog = '%d itens selecionados. Confirma remoção?';
-  SPressSaveChangesDialog = 'Gravar alterações?';
+  // Error messages from brokers
+  SUnassignedPersistenceConnector: string;
+
+  // Messages for visual components
+  SConnectionManagerCaption: string;
+
+  // Messages for Commands
+  SPressTodayCommand,
+  SPressLoadPictureCommand,
+  SPressRemovePictureCommand,
+  SPressIncludeObjectCommand,
+  SPressAddItemCommand,
+  SPressSelectItemCommand,
+  SPressEditItemCommand,
+  SPressRemoveItemCommand,
+  SPressRefreshCommand,
+  SPressSaveFormCommand,
+  SPressCancelFormCommand,
+  SPressCloseFormCommand,
+  SPressExecuteQueryCommand,
+  SPressAssignSelectionQueryCommand,
+  SPressSelectAllCommand,
+  SPressSelectNoneCommand,
+  SPressSelectCurrentCommand,
+  SPressSelectInvertCommand,
+  SPressSortByCommand,
+  SPressManageReportCommand: string;
+
+  // Partial translations for parsers or another error messages
+  SPressAttributeNameMsg,
+  SPressBooleanValueMsg,
+  SPressClassNameMsg,
+  SPressExpressionMsg,
+  SPressEofMsg,
+  SPressFunctionMsg,
+  SPressIdentifierMsg,
+  SPressIntegerValueMsg,
+  SPressLineBreakMsg,
+  SPressNumberValueMsg,
+  SPressPropertyNameMsg,
+  SPressReportErrorMsg,
+  SPressStringDelimiterMsg,
+  SPressStringValueMsg: string;
+
+  // Messages for dialog box
+  SPressCancelChangesDialog,
+  SPressConfirmRemoveOneItemDialog,
+  SPressConfirmRemoveItemsDialog,
+  SPressSaveChangesDialog: string;
 
 implementation
 
