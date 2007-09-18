@@ -142,6 +142,7 @@ type
     FConfigSections: TObjectList;
     FDefaultService: TPressService;
     FDefaultServiceClass: TPressServiceClass;
+    FMandatory: Boolean;
     FServiceClasses: TPressServiceClassList;
     FServices: TPressServiceList;
     FServiceType: TPressServiceType;
@@ -174,6 +175,7 @@ type
     property ConfigSections[AIndex: Integer]: TPressConfigSection read GetConfigSections;
     property DefaultService: TPressService read GetDefaultService write SetDefaultService;
     property DefaultServiceClass: TPressServiceClass read GetDefaultServiceClass write SetDefaultServiceClass;
+    property Mandatory: Boolean read FMandatory write FMandatory;
     property ServiceType: TPressServiceType read FServiceType;
     property ServiceTypeName: string read FServiceTypeName write FServiceTypeName;
   published
@@ -220,6 +222,7 @@ type
     FRegistries: TPressRegistryList;
     FRunning: Boolean;
     procedure ApplicationIdle(Sender: TObject; var Done: Boolean);
+    procedure CheckRegistries;
     procedure DoneApplication;
     function GetConfigFileName: string;
     function GetRegistry(AServiceType: TPressServiceType): TPressRegistry;
@@ -803,6 +806,19 @@ begin
     FOnIdle(Sender, Done);
 end;
 
+procedure TPressApplication.CheckRegistries;
+var
+  VRegistry: TPressRegistry;
+  I: Integer;
+begin
+  for I := 0 to Pred(Registries.Count) do
+  begin
+    VRegistry := Registries[I];
+    if VRegistry.Mandatory and (VRegistry.Services.Count = 0) then  // friend class
+      VRegistry.DefaultServiceClass.Create;
+  end;
+end;
+
 constructor TPressApplication.Create;
 begin
   inherited Create;
@@ -898,6 +914,7 @@ end;
 
 procedure TPressApplication.Init(AIsStatic: Boolean);
 begin
+  CheckRegistries;
   FRunning := True;
   FOnIdle := Application.OnIdle;
   Application.OnIdle := {$IFDEF FPC}@{$ENDIF}ApplicationIdle;
