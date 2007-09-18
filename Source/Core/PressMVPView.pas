@@ -383,7 +383,7 @@ type
     function GetControl: TCustomComboBox;
   protected
     procedure ViewChangeEvent(Sender: TObject); virtual;
-    {$IFNDEF FPC}
+    {$IFDEF BORLAND_CG}
     procedure ViewClickEvent(Sender: TObject); override;
     {$ENDIF}
     procedure ViewDrawItemEvent(AControl: TWinControl; AIndex: Integer; ARect: TRect; AState: TOwnerDrawState); virtual;
@@ -1452,7 +1452,7 @@ begin
     FViewChangeEvent(Sender);
 end;
 
-{$IFNDEF FPC}
+{$IFDEF BORLAND_CG}
 procedure TPressMVPComboBoxView.ViewClickEvent(Sender: TObject);
 begin
   if EventsDisabled then

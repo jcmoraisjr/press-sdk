@@ -240,7 +240,7 @@ begin
   begin
     FQuery := TZReadOnlyQuery.Create(nil);
     FQuery.Connection := Connector.Connection;
-    {$IFNDEF D5}
+    {$IFNDEF D5Down}
     FQuery.IsUniDirectional := True;
     {$ENDIF}
   end;

@@ -110,7 +110,7 @@ uses
 
 var
   // fpc work around
-  _MVPFactory: {$IFDEF DELPHI}IPressHolder{$ELSE}TPressHolder{$ENDIF}; //TPressMVPFactory;
+  _MVPFactory: {$IFDEF BORLAND_CG}IPressHolder{$ELSE}TPressHolder{$ENDIF}; //TPressMVPFactory;
 
 function PressDefaultMVPFactory: TPressMVPFactory;
 begin

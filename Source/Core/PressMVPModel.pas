@@ -20,7 +20,7 @@ interface
 
 uses
   Classes,
-  {$IFDEF D6+}Variants,{$ENDIF}
+  {$IFDEF D6Up}Variants,{$ENDIF}
   PressClasses,
   PressNotifier,
   PressSubject,
@@ -474,6 +474,9 @@ type
 implementation
 
 uses
+{$IFDEF BORLAND_CG}{$IFDEF MSWINDOWS}
+  Windows,
+{$ENDIF}{$ENDIF}
   SysUtils,
   Menus,
   PressConsts,

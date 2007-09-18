@@ -22,16 +22,16 @@ interface
 
 uses
   Classes,
-  {$IFDEF D6+}Variants,{$ENDIF}
+  {$IFDEF D6Up}Variants,{$ENDIF}
   {$IFDEF FPC}Calendar{$ELSE}ComCtrls{$ENDIF}, Grids
-  {$IFDEF DELPHI}, Windows{$ENDIF};
+  {$IFDEF BORLAND_CG}, Windows{$ENDIF};
 
 type
-  {$IFDEF D5}
+  {$IFDEF D5Down}
   IInterface = IUnknown;
   {$ENDIF}
 
-  {$IFDEF DELPHI}
+  {$IFDEF BORLAND_CG}
   TRect = Windows.TRect;
   TCustomDrawGrid = TDrawGrid;
   {$ENDIF}
@@ -60,12 +60,12 @@ uses
   PressClasses,
   PressConsts,
   {$IFDEF FPC}MaskEdit{$ELSE}ActiveX, ComObj,
-  {$IFDEF D6+}MaskUtils{$ELSE}Mask{$ENDIF}{$ENDIF};
+  {$IFDEF D6Up}MaskUtils{$ELSE}Mask{$ENDIF}{$ENDIF};
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
 begin
   Result :=
-   {$IFDEF FPC}Value{$ELSE}{$IFDEF D6+}MaskUtils{$ELSE}Mask{$ENDIF}
+   {$IFDEF FPC}Value{$ELSE}{$IFDEF D6Up}MaskUtils{$ELSE}Mask{$ENDIF}
    .FormatMaskText(EditMask, Value){$ENDIF};
 end;
 
@@ -134,7 +134,7 @@ begin
           tkEnumeration:
             begin
               VPropValue := GetEnumValue(
-               VPropInfo^.PropType{$IFNDEF FPC}^{$ENDIF}, AValue);
+               VPropInfo^.PropType{$IFDEF BORLAND_CG}^{$ENDIF}, AValue);
               if VPropValue < 0 then
                 raise EPressError.CreateFmt(SEnumItemNotFound, [AValue]);
             end;

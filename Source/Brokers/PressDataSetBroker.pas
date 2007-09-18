@@ -39,7 +39,7 @@ type
 implementation
 
 uses
-  {$IFDEF D6+}Variants,{$ENDIF}
+  {$IFDEF D6Up}Variants,{$ENDIF}
   SysUtils,
   TypInfo,
   PressConsts;

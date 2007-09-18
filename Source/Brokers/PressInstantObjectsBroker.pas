@@ -14,7 +14,7 @@
 
 unit PressInstantObjectsBroker;
 
-{.$DEFINE IO2.1}
+{.$DEFINE IO21}
 {$I Press.inc}
 
 interface
@@ -72,7 +72,7 @@ uses
   PressConsts,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressAttributes,
-  {$IFDEF IO2.1}InstantBrokers,{$ENDIF}
+  {$IFDEF IO21}InstantBrokers,{$ENDIF}
   InstantClasses;
 
 type

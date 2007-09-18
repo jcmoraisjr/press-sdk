@@ -584,7 +584,7 @@ procedure TPressReportItem.LoadMetadatas;
       VDataSource: TPressReportDataSource;
       VDataSetName: string;
     begin
-      {$IFDEF Press-LogReport}
+      {$IFDEF PressLogReport}
       PressLogMsg(Self, 'Reading '+ AMetadata.Owner.ObjectClass.ClassName +'('+
        AMetadata.Name +')');
       {$ENDIF}

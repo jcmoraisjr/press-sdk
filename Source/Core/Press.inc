@@ -113,44 +113,19 @@
   {$UNDEF PressLogDAOPersistence}
 {$ENDIF}
 
-{$IFDEF VER130}
-  {$DEFINE MSWINDOWS}
-  {$DEFINE DELPHI}
-  {$DEFINE D5}
-  {$DEFINE D5+}
-{$ENDIF}
-
-{$IFDEF VER140}
-  {$DEFINE DELPHI}
-  {$DEFINE D5+}
-  {$DEFINE D6}
-  {$DEFINE D6+}
-{$ENDIF}
-
-{$IFDEF VER150}
-  {$DEFINE DELPHI}
-  {$DEFINE D5+}
-  {$DEFINE D6+}
-  {$DEFINE D7}
-  {$DEFINE D7+}
-{$ENDIF}
-
-{$IFDEF VER170}
-  {$DEFINE DELPHI}
-  {$DEFINE D5+}
-  {$DEFINE D6+}
-  {$DEFINE D7+}
-  {$DEFINE D9}
-  {$DEFINE D9+}
-{$ENDIF}
-
-{$IFDEF VER180}
-  {$DEFINE DELPHI}
-  {$DEFINE D5+}
-  {$DEFINE D6+}
-  {$DEFINE D7+}
-  {$DEFINE D9+}
-  {$DEFINE D10}
-  {$DEFINE D10+}
-{$ENDIF}
-
+{$IFNDEF FPC}              // Only FPC and Delphi are supported
+  {$DEFINE BORLAND_CG}
+  {$IFDEF VER130}          // D5 -- D < 5 is not supported
+    {$DEFINE MSWINDOWS}
+    {$DEFINE D5Up}
+    {$DEFINE D5Down}
+    {$DEFINE D6Down}
+  {$ELSE}{$IFDEF VER140}   // D6
+    {$DEFINE D5Up}
+    {$DEFINE D6Up}
+    {$DEFINE D6Down}
+  {$ELSE}                  // D >= 7
+    {$DEFINE D5Up}
+    {$DEFINE D6Up}
+    {$DEFINE D7Up}
+{$ENDIF}{$ENDIF}{$ENDIF}

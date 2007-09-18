@@ -20,7 +20,7 @@ interface
 
 uses
   SysUtils,
-  {$IFNDEF D5}Variants,{$ENDIF}
+  {$IFNDEF D5Down}Variants,{$ENDIF}
   Classes,
   TypInfo,
   Contnrs,

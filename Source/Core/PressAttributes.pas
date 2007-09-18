@@ -751,7 +751,7 @@ implementation
 uses
   SysUtils,
   Contnrs,
-  {$IFNDEF D5}Variants,{$ENDIF}
+  {$IFNDEF D5Down}Variants,{$ENDIF}
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressConsts;
 
@@ -778,7 +778,7 @@ begin
   //PressRegisterGraphicFormat(TPressGraphicFormat.Create(png, #137#80#78#71#13#10#26#10));
   //PressRegisterGraphicFormat(TPressGraphicFormat.Create(dcx, #177#104#222#58));
   //PressRegisterGraphicFormat(TPressGraphicFormat.Create(pcx, #10));
-{$IFDEF DELPHI}
+{$IFDEF BORLAND_CG}
   PressRegisterGraphicFormat(TPressGraphicFormat.Create(TMetafile, #215#205#198#154));
 {$ENDIF}
   //PressRegisterGraphicFormat(TPressGraphicFormat.Create(emf, #1#0#0#0));

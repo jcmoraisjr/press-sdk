@@ -24,7 +24,7 @@ uses
   Graphics,
   StdCtrls,
   Grids,
-{$IFDEF DELPHI}
+{$IFDEF BORLAND_CG}
   PressCompatibility,
 {$ENDIF}
   PressNotifier,
