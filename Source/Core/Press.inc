@@ -113,19 +113,24 @@
   {$UNDEF PressLogDAOPersistence}
 {$ENDIF}
 
-{$IFNDEF FPC}              // Only FPC and Delphi are supported
+{$IFNDEF FPC}              // Only FPC and Delphi >= 5 are supported
   {$DEFINE BORLAND_CG}
-  {$IFDEF VER130}          // D5 -- D < 5 is not supported
+  {$IFDEF VER130}          // D5
     {$DEFINE MSWINDOWS}
     {$DEFINE D5Up}
     {$DEFINE D5Down}
     {$DEFINE D6Down}
-  {$ELSE}{$IFDEF VER140}   // D6
-    {$DEFINE D5Up}
-    {$DEFINE D6Up}
-    {$DEFINE D6Down}
-  {$ELSE}                  // D >= 7
-    {$DEFINE D5Up}
-    {$DEFINE D6Up}
-    {$DEFINE D7Up}
-{$ENDIF}{$ENDIF}{$ENDIF}
+  {$ELSE}
+    {$IFDEF VER140}        // D6
+      {$DEFINE D5Up}
+      {$DEFINE D6Up}
+      {$DEFINE D6Down}
+    {$ELSE}
+      {$DEFINE D5Up}
+      {$DEFINE D6Up}
+      {$IF COMPILERVERSION >= 18.0}
+        {$DEFINE D2006Up}
+      {$IFEND}
+    {$ENDIF}
+  {$ENDIF}
+{$ENDIF}
