@@ -317,7 +317,6 @@ uses
   PressConsts,
   PressApplication,
   PressDialogs,
-  PressPersistence,
   PressMVPPresenter;
 
 type
