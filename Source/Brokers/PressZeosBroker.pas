@@ -20,6 +20,9 @@ interface
 
 uses
   Classes,
+{$IFDEF D2006Up}
+  DBCommonTypes,
+{$ENDIF}
   PressOPF,
   PressOPFConnector,
   PressOPFMapper,
@@ -240,9 +243,6 @@ begin
   begin
     FQuery := TZReadOnlyQuery.Create(nil);
     FQuery.Connection := Connector.Connection;
-    {$IFNDEF D5Down}
-    FQuery.IsUniDirectional := True;
-    {$ENDIF}
   end;
   Result := FQuery;
 end;
