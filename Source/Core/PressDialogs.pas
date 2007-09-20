@@ -56,7 +56,7 @@ uses
   Controls,
   Dialogs,
   PressConsts,
-  PressMessages_ptbr;
+  PressMessages_en;
 
 function PressDialog: TPressDialogs;
 begin
