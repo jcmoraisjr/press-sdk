@@ -218,6 +218,7 @@ type
   private
     FConfigFile: TPressConfigFile;
     FConfigFileName: string;
+    FInitialized: Boolean;
     FOnIdle: TIdleEvent;
     FRegistries: TPressRegistryList;
     FRunning: Boolean;
@@ -227,7 +228,6 @@ type
     function GetConfigFileName: string;
     function GetRegistry(AServiceType: TPressServiceType): TPressRegistry;
     procedure Init(AIsStatic: Boolean);
-    procedure InitApplication;
     procedure ReadConfigFile;
     procedure SetConfigFileName(const Value: string);
   protected
@@ -242,6 +242,7 @@ type
     function DefaultServiceClass(AServiceType: TPressServiceType): TPressServiceClass;
     procedure DonePackage;
     procedure Finalize;
+    procedure InitApplication;
     procedure InitPackage;
     procedure RegisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass; AIsDefault: Boolean);
     procedure Run;
@@ -914,6 +915,9 @@ end;
 
 procedure TPressApplication.Init(AIsStatic: Boolean);
 begin
+  if FInitialized then
+    Exit;
+  FInitialized := True;
   CheckRegistries;
   FRunning := True;
   FOnIdle := Application.OnIdle;

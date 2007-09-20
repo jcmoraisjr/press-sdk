@@ -1085,6 +1085,7 @@ begin
       raise EPressError.CreateFmt(SClassNotFound, [ClassName]);
   end;
   _PressMVPMainPresenter.Free;
+  PressApp.InitApplication;
   _PressMVPMainPresenter := Create;
 end;
 
