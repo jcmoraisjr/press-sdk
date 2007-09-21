@@ -923,9 +923,9 @@ begin
   FOnIdle := Application.OnIdle;
   Application.OnIdle := {$IFDEF FPC}@{$ENDIF}ApplicationIdle;
   TPressApplicationInitEvent.Create(Self).Notify;
-  TPressApplicationRunningEvent.Create(Self).QueueNotification;
   if AIsStatic then
     ReadConfigFile;
+  TPressApplicationRunningEvent.Create(Self).QueueNotification;
 end;
 
 procedure TPressApplication.InitApplication;
