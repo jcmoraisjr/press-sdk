@@ -595,10 +595,10 @@ begin
     AddClassIdParam(ADataset, AObject);
   VPartsAttribute := AObject.Metadata.OwnerPartsMetadata;
   if Assigned(VPartsAttribute) then
-    if Assigned(AObject.Owner) and (AObject.Owner.PersistentId <> '') then
+    if Assigned(AObject.Owner) and (AObject.Owner.Id <> '') then
     begin
       AddStringParam(ADataset, VPartsAttribute.PersLinkParentName,
-       AObject.Owner.PersistentId);
+       AObject.Owner.Id);
       AddIntegerParam(ADataset, VPartsAttribute.PersLinkPosName, 0);
     end else
       raise EPressOPFError.Create(SCannotStoreOrphanObject);
