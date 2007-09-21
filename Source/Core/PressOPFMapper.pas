@@ -75,7 +75,6 @@ type
       createdataset calls }
     FConnector: TPressOPFConnector;
     FDeleteDataset: TPressOPFDataset;
-    FDDLBuilder: TPressOPFDDLBuilder;
     FDMLBuilder: TPressOPFDMLBuilder;
     FInsertDataset: TPressOPFDataset;
     FMap: TPressOPFStorageMap;
@@ -100,6 +99,7 @@ type
     procedure AddStringParam(ADataset: TPressOPFDataset; const AParamName, AValue: string);
     procedure AddUpdateCountParam(ADataset: TPressOPFDataset; AObject: TPressObject);
     function DeleteDataset: TPressOPFDataset;
+    function GetDDLBuilder: TPressOPFDDLBuilder;
     function InsertDataset: TPressOPFDataset;
     function SelectBaseDataset: TPressOPFDataset;
     function SelectBaseGroupDataset(AIdCount: Integer): TPressOPFDataset;
@@ -113,7 +113,7 @@ type
     procedure ReadObject(AObject: TPressObject; ABaseClass: TPressObjectClass; ADataRow: TPressOPFDataRow);
     function ResolveClassType(ADataRow: TPressOPFDataRow): TPressObjectClass;
     property Connector: TPressOPFConnector read FConnector;
-    property DDLBuilder: TPressOPFDDLBuilder read FDDLBuilder;
+    property DDLBuilder: TPressOPFDDLBuilder read GetDDLBuilder;
     property DMLBuilder: TPressOPFDMLBuilder read FDMLBuilder;
     property ObjectMapper: TPressOPFObjectMapper read FObjectMapper;
     property Persistence: TPressPersistence read FPersistence;
@@ -714,7 +714,6 @@ begin
   FPersistence := FObjectMapper.Persistence;
   FMap := AMap;
   FMaps := ObjectMapper.StorageModel.Maps[FMap.ObjectClass];
-  FDDLBuilder := FObjectMapper.DDLBuilder;
   FDMLBuilder := FObjectMapper.DMLBuilderClass.Create(Maps);
 end;
 
@@ -874,6 +873,11 @@ begin
   { TODO : Implement }
   raise EPressOPFError.CreateFmt(SObjectChangedError, [
    AObject.ClassName, AObject.Signature]);
+end;
+
+function TPressOPFAttributeMapper.GetDDLBuilder: TPressOPFDDLBuilder;
+begin
+  Result := ObjectMapper.DDLBuilder;
 end;
 
 function TPressOPFAttributeMapper.InsertDataset: TPressOPFDataset;
