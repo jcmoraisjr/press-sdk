@@ -3023,16 +3023,20 @@ var
   VAttribute: TPressAttribute;
   I: Integer;
 begin
-  Result := not IsChanged and IsPersistent;
-  if not Result then
-    for I := 0 to Pred(AttributeCount) do
-    begin
-      VAttribute := Attributes[I];
-      if Assigned(VAttribute.Metadata) and
-       VAttribute.Metadata.IsPersistent and VAttribute.IsChanged then
-        Exit;
-    end;
-  Result := True;
+  if IsPersistent then
+  begin
+    Result := not IsChanged;
+    if not Result then
+      for I := 0 to Pred(AttributeCount) do
+      begin
+        VAttribute := Attributes[I];
+        if Assigned(VAttribute.Metadata) and
+         VAttribute.Metadata.IsPersistent and VAttribute.IsChanged then
+          Exit;
+      end;
+    Result := True;
+  end else
+    Result := False;
 end;
 
 function TPressObject.GetIsValid: Boolean;
