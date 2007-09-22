@@ -350,6 +350,7 @@ type
     function GetSelection: TPressMVPSelection;
     function GetSubject: TPressSubject;
     procedure SetAccessChangeObjectID(Value: Integer);
+    procedure SetAccessID(Value: Integer);
     procedure SetAccessNewObjectID(Value: Integer);
     procedure SetAccessUser(Value: TPressUser);
   protected
@@ -379,6 +380,7 @@ type
     class procedure RegisterModel;
     procedure UpdateData;
     property AccessChangeObjectID: Integer read FAccessChangeObjectID write SetAccessChangeObjectID;
+    property AccessID: Integer write SetAccessID;
     property AccessNewObjectID: Integer read FAccessNewObjectID write SetAccessNewObjectID;
     property AccessUser: TPressUser read FAccessUser write SetAccessUser;
     property HasParent: Boolean read GetHasParent;
@@ -1447,6 +1449,13 @@ begin
     FAccessChangeObjectID := Value;
     Changed(ctDisplay);
   end;
+end;
+
+procedure TPressMVPModel.SetAccessID(Value: Integer);
+begin
+  { TODO : Improve notification }
+  AccessNewObjectID := Value;
+  AccessChangeObjectID := Value;
 end;
 
 procedure TPressMVPModel.SetAccessNewObjectID(Value: Integer);
