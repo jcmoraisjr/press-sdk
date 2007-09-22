@@ -164,6 +164,7 @@ begin
       TPressUserLogonEvent.Create(Self).Notify;
       FCurrentUser.AfterLogon;  // friend class
     except
+      FCurrentUser := nil;
       VNewUser.Free;
       raise;
     end;
