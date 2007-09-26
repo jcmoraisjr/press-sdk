@@ -229,6 +229,7 @@ type
     function GetModel: TPressMVPObjectModel;
   protected
     procedure InitNotifier; override;
+    procedure InternalExecute; override;
     function InternalIsEnabled: Boolean; override;
   public
     class function Apply(AModel: TPressMVPModel): Boolean; override;
@@ -285,6 +286,8 @@ type
   TPressMVPQueryCommand = class(TPressMVPCommand)
   private
     function GetModel: TPressMVPQueryModel;
+  protected
+    procedure InternalExecute; override;
   public
     class function Apply(AModel: TPressMVPModel): Boolean; override;
     property Model: TPressMVPQueryModel read GetModel;
@@ -846,6 +849,12 @@ begin
     Notifier.AddNotificationItem(Model.Subject, [TPressLockingEvent]);
 end;
 
+procedure TPressMVPObjectCommand.InternalExecute;
+begin
+  inherited;
+  Model.UpdateData;
+end;
+
 function TPressMVPObjectCommand.InternalIsEnabled: Boolean;
 begin
   Result := not Model.HasSubject or not Model.Subject.IsLocked;
@@ -894,7 +903,6 @@ end;
 procedure TPressMVPSaveObjectCommand.InternalExecute;
 begin
   inherited;
-  Model.UpdateData;
   if Model.CanSaveObject then
   begin
     if not Model.Subject.IsUpdated then
@@ -951,7 +959,6 @@ end;
 procedure TPressMVPCancelObjectCommand.InternalExecute;
 begin
   inherited;
-  Model.UpdateData;
   if Model.IsChanged then
   begin
     if not InternalConfirm then
@@ -999,6 +1006,12 @@ begin
   Result := inherited Model as TPressMVPQueryModel;
 end;
 
+procedure TPressMVPQueryCommand.InternalExecute;
+begin
+  inherited;
+  Model.UpdateData;
+end;
+
 { TPressMVPExecuteQueryCommand }
 
 function TPressMVPExecuteQueryCommand.GetCaption: string;
@@ -1014,7 +1027,6 @@ end;
 procedure TPressMVPExecuteQueryCommand.InternalExecute;
 begin
   inherited;
-  Model.UpdateData;
   Model.Execute;
 end;
 
