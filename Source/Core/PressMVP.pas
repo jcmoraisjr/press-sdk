@@ -138,7 +138,7 @@ type
     function GetCaption: string; virtual;
     function GetShortCut: TShortCut; virtual;
     procedure InitNotifier; virtual;
-    procedure InternalExecute; virtual; abstract;
+    procedure InternalExecute; virtual;
     function InternalIsEnabled: Boolean; virtual;
     property ComponentList: TPressMVPCommandComponentList read GetComponentList;
     property Notifier: TPressNotifier read FNotifier;
@@ -715,6 +715,10 @@ begin
   if Model.HasSubject and (Model.Subject is TPressObject) then
     Notifier.AddNotificationItem(Model.Subject, [TPressObjectChangedEvent]);
   Notifier.AddNotificationItem(nil, [TPressUserEvent]);
+end;
+
+procedure TPressMVPCommand.InternalExecute;
+begin
 end;
 
 function TPressMVPCommand.InternalIsEnabled: Boolean;

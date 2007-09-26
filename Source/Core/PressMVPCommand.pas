@@ -65,7 +65,6 @@ type
 
   TPressMVPNullCommand = class(TPressMVPCommand)
   protected
-    procedure InternalExecute; override;
     function InternalIsEnabled: Boolean; override;
   end;
 
@@ -412,10 +411,6 @@ end;
 
 { TPressMVPNullCommand }
 
-procedure TPressMVPNullCommand.InternalExecute;
-begin
-end;
-
 function TPressMVPNullCommand.InternalIsEnabled: Boolean;
 begin
   Result := False;
@@ -447,6 +442,7 @@ end;
 
 procedure TPressMVPTodayCommand.InternalExecute;
 begin
+  inherited;
   Subject.AsDate := Date;
 end;
 
@@ -477,6 +473,7 @@ end;
 
 procedure TPressMVPLoadPictureCommand.InternalExecute;
 begin
+  inherited;
   with TOpenPictureDialog.Create(nil) do
   try
     if Execute then
@@ -507,6 +504,7 @@ end;
 
 procedure TPressMVPRemovePictureCommand.InternalExecute;
 begin
+  inherited;
   Subject.ClearPicture;
 end;
 
@@ -542,6 +540,7 @@ end;
 
 procedure TPressMVPEditItemCommand.InternalExecute;
 begin
+  inherited;
   TPressMVPModelCreatePresentFormEvent.Create(Model).Notify;
 end;
 
@@ -579,6 +578,7 @@ procedure TPressMVPIncludeObjectCommand.InternalExecute;
 var
   VObject: TPressObject;
 begin
+  inherited;
   VObject := Model.ObjectClass.Create;
   Model.Subject.Value := VObject;
   VObject.Release;
@@ -609,6 +609,7 @@ procedure TPressMVPAssignSelectionCommand.InternalExecute;
 var
   VHookedSubject: TPressStructure;
 begin
+  inherited;
   if Model.HasParent and (Model.Parent is TPressMVPObjectModel) and
    (Model.Selection.Count > 0) then
   begin
@@ -646,6 +647,7 @@ procedure TPressMVPCustomAddItemsCommand.InternalExecute;
 var
   VModel: TPressMVPItemsModel;
 begin
+  inherited;
   VModel := Model;
   VModel.Selection.Select(InternalCreateObject);
   TPressMVPModelCreateIncludeFormEvent.Create(VModel).Notify;
@@ -682,6 +684,7 @@ end;
 
 procedure TPressMVPAddReferencesCommand.InternalExecute;
 begin
+  inherited;
   TPressMVPModelCreateSearchFormEvent.Create(Model).Notify;
 end;
 
@@ -702,6 +705,7 @@ var
   VSelection: TPressMVPObjectSelection;
   I: Integer;
 begin
+  inherited;
   VSelection := Model.Selection;
   if (VSelection.Count > 0) and
    PressDialog.ConfirmRemove(VSelection.Count) then
@@ -737,6 +741,7 @@ procedure TPressMVPSelectAllCommand.InternalExecute;
 var
   I: Integer;
 begin
+  inherited;
   with Model do
     for I := 0 to Pred(Count) do
       Selection.Add(Objects[I]);
@@ -758,6 +763,7 @@ procedure TPressMVPSelectNoneCommand.InternalExecute;
 var
   VObject: TPressObject;
 begin
+  inherited;
   VObject := Model.Selection.Focus;
   Model.Selection.Clear;
   Model.Selection.Focus := VObject;
@@ -777,6 +783,7 @@ end;
 
 procedure TPressMVPSelectCurrentCommand.InternalExecute;
 begin
+  inherited;
   with Model.Selection do
     StrongSelection := not StrongSelection;
 end;
@@ -797,6 +804,7 @@ procedure TPressMVPSelectInvertCommand.InternalExecute;
 var
   I: Integer;
 begin
+  inherited;
   with Model do
     for I := 0 to Pred(Count) do
       if Selection.HasStrongSelection(Objects[I]) then
@@ -809,6 +817,7 @@ end;
 
 procedure TPressMVPSortCommand.InternalExecute;
 begin
+  inherited;
   Model.Reindex(FColumnNumber);
 end;
 
@@ -856,6 +865,7 @@ end;
 
 procedure TPressMVPRefreshObjectCommand.InternalExecute;
 begin
+  inherited;
   Model.Subject.Refresh;
 end;
 
@@ -883,6 +893,7 @@ end;
 
 procedure TPressMVPSaveObjectCommand.InternalExecute;
 begin
+  inherited;
   Model.UpdateData;
   if Model.CanSaveObject then
   begin
@@ -939,6 +950,7 @@ end;
 
 procedure TPressMVPCancelObjectCommand.InternalExecute;
 begin
+  inherited;
   Model.UpdateData;
   if Model.IsChanged then
   begin
@@ -970,6 +982,7 @@ end;
 
 procedure TPressMVPCloseObjectCommand.InternalExecute;
 begin
+  inherited;
   CloseForm;
 end;
 
@@ -1000,6 +1013,7 @@ end;
 
 procedure TPressMVPExecuteQueryCommand.InternalExecute;
 begin
+  inherited;
   Model.UpdateData;
   Model.Execute;
 end;
@@ -1008,6 +1022,7 @@ end;
 
 procedure TPressMVPCloseApplicationCommand.InternalExecute;
 begin
+  inherited;
   PressApp.Finalize;
 end;
 

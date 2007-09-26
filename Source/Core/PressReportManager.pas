@@ -84,6 +84,7 @@ end;
 
 procedure TPressExecuteReportCommand.InternalExecute;
 begin
+  inherited;
   if Assigned(FReportItem) then
     FReportItem.Execute;
 end;
@@ -116,6 +117,7 @@ procedure TPressManageReportsCommand.InternalExecute;
 var
   VIndex: Integer;
 begin
+  inherited;
   if not Assigned(FReportGroup) then
     Exit;
   VIndex := PressDefaultMVPFactory.Forms.IndexOfObjectClass(
