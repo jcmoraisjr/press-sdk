@@ -36,7 +36,7 @@ type
     procedure InternalLogEvent(Sender: TObject; const AMsg: string; const AParams: array of TObject); virtual;
   public
     constructor Create(AOwner: TObject);
-    procedure Notify;
+    procedure Notify(AReleaseEvent: Boolean = True);
     procedure QueueNotification;
     procedure Release;
     property Owner: TObject read FOwner;
@@ -282,14 +282,15 @@ begin
   {$ENDIF}
 end;
 
-procedure TPressEvent.Notify;
+procedure TPressEvent.Notify(AReleaseEvent: Boolean);
 begin
   try
     {$IFDEF PressLogEvents}DoLogEvent(Self, 'Notifying Event', [FOwner]);{$ENDIF}
     PressNotifiers.NotifyEvent(Self);
     {$IFDEF PressLogEvents}DoLogEvent(Self, 'Event Notified', [FOwner]);{$ENDIF}
   finally
-    Free;
+    if AReleaseEvent then
+      Free;
   end;
 end;
 
