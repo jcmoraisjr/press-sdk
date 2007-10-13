@@ -23,6 +23,7 @@ uses
   Contnrs,
   Forms,
   PressClasses,
+  PressNotifier,
   PressSubject,
   PressMVP,
   PressMVPModel,
@@ -81,11 +82,13 @@ type
   private
     FInteractors: TClassList;
     FModels: TClassList;
+    FNotifier: TPressNotifier;
     FPresenters: TClassList;
     FViews: TClassList;
     FForms: TPressMVPRegisteredFormList;
     function ChooseConcreteClass(ACandidateClass1, ACandidateClass2: TClass): TClass;
     function ExistSubClasses(AClasses: TClassList; AClass: TClass): Boolean;
+    procedure Notify(AEvent: TPressEvent);
     procedure RegisterXCLForm(APresenterClass: TPressMVPFormPresenterClass; AFormClass: TFormClass);
     procedure RemoveSuperClasses(AClasses: TClassList; AClass: TClass);
   public
@@ -283,10 +286,13 @@ begin
   FModels := TClassList.Create;
   FPresenters := TClassList.Create;
   FViews := TClassList.Create;
+  FNotifier := TPressNotifier.Create(Notify);
+  FNotifier.AddNotificationItem(nil, [TPressMVPModelFindFormEvent]);
 end;
 
 destructor TPressMVPFactory.Destroy;
 begin
+  FNotifier.Free;
   FInteractors.Free;
   FModels.Free;
   FPresenters.Free;
@@ -399,6 +405,19 @@ begin
     raise EPressMVPError.CreateFmt(SUnsupportedControl,
      [AControl.ClassName, AControl.Name]);
   Result := VCandidateClass.Create(AControl, AOwnsControl);
+end;
+
+procedure TPressMVPFactory.Notify(AEvent: TPressEvent);
+var
+  VEvent: TPressMVPModelFindFormEvent;
+begin
+  if AEvent is TPressMVPModelFindFormEvent then
+  begin
+    VEvent := TPressMVPModelFindFormEvent(AEvent);
+    if not VEvent.HasForm then
+      VEvent.HasForm :=
+       Forms.IndexOfObjectClass(VEvent.ObjectClass, fpNew, False) >= 0;
+  end;
 end;
 
 procedure TPressMVPFactory.RegisterBO(

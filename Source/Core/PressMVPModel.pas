@@ -31,6 +31,16 @@ uses
 type
   { MVP-Model events }
 
+  TPressMVPModelFindFormEvent = class(TPressMVPModelEvent)
+  private
+    FHasForm: Boolean;
+    FObjectClass: TPressObjectClass;
+  public
+    constructor Create(AOwner: TObject; AObjectClass: TPressObjectClass);
+    property HasForm: Boolean read FHasForm write FHasForm;
+    property ObjectClass: TPressObjectClass read FObjectClass;
+  end;
+
   TPressMVPModelCreateFormEvent = class(TPressMVPModelEvent)
   end;
 
@@ -483,6 +493,15 @@ uses
   PressDialogs,
   PressMetadata,
   PressMVPCommand;
+
+{ TPressMVPModelFindFormEvent }
+
+constructor TPressMVPModelFindFormEvent.Create(AOwner: TObject;
+  AObjectClass: TPressObjectClass);
+begin
+  inherited Create(AOwner);
+  FObjectClass := AObjectClass;
+end;
 
 { TPressMVPObjectModelCanSaveEvent }
 
@@ -1654,8 +1673,22 @@ begin
 end;
 
 procedure TPressMVPItemsModel.InternalCreateAddCommands;
+var
+  VEvent: TPressMVPModelFindFormEvent;
 begin
-  AddCommand(TPressMVPAddItemsCommand);
+  if HasSubject and Assigned(Subject.Metadata) and
+   Assigned(Subject.Metadata.ObjectClass) then
+  begin
+    VEvent := TPressMVPModelFindFormEvent.Create(
+     Self, Subject.Metadata.ObjectClass);
+    try
+      VEvent.Notify(False);
+      if VEvent.HasForm then
+        AddCommand(TPressMVPAddItemsCommand);
+    finally
+      VEvent.Free;
+    end;
+  end;
 end;
 
 procedure TPressMVPItemsModel.InternalCreateEditCommands;
