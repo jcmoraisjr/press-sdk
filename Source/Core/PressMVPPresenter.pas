@@ -920,13 +920,15 @@ begin
   VRegForms := PressDefaultMVPFactory.Forms;
   VIndex := VRegForms.IndexOfPresenterClass(Self);
   if VIndex >= 0 then
-  begin
-    VFormClass := VRegForms[VIndex].FormClass;
-    VObjectClass := VRegForms[VIndex].ObjectClass;
-    VModelClass := VRegForms[VIndex].ModelClass;
-    VViewClass := VRegForms[VIndex].ViewClass;
-  end else
-    raise EPressError.CreateFmt(SClassNotFound, [ClassName]);
+    VFormClass := VRegForms[VIndex].FormClass
+  else
+    VFormClass := nil;
+  if not Assigned(VFormClass) then
+    raise EPressMVPError.CreateFmt(SUnassignedPresenterForm, [ClassName]);
+
+  VObjectClass := VRegForms[VIndex].ObjectClass;
+  VModelClass := VRegForms[VIndex].ModelClass;
+  VViewClass := VRegForms[VIndex].ViewClass;
   VObjectIsMissing := not Assigned(AObject);
   if VObjectIsMissing then
   begin

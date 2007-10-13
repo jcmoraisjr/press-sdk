@@ -80,6 +80,7 @@ resourcestring
   SUnassignedModel_ptbr = 'Model não está associado';
   SUnassignedPersistenceConnector_ptbr = 'Conector de persistência não foi associado';
   SUnassignedPersistenceService_ptbr = 'Serviço de persistência não foi associado ou não é do PressObjects';
+  SUnassignedPresenterForm_ptbr = 'A classe ''%s'' não possui form';
   SUnassignedPresenterParent_ptbr = 'A classe ''%s'' não possui parent';
   SUnassignedServiceType_ptbr = 'Nenhum serviço ''%s'' foi associado ou registrado';
   SUnassignedSubject_ptbr = 'Subject não foi associado';
@@ -194,6 +195,7 @@ begin
     SUnassignedModel := SUnassignedModel_ptbr;
     SUnassignedPersistenceConnector := SUnassignedPersistenceConnector_ptbr;
     SUnassignedPersistenceService := SUnassignedPersistenceService_ptbr;
+    SUnassignedPresenterForm := SUnassignedPresenterForm_ptbr;
     SUnassignedPresenterParent := SUnassignedPresenterParent_ptbr;
     SUnassignedServiceType := SUnassignedServiceType_ptbr;
     SUnassignedSubject := SUnassignedSubject_ptbr;

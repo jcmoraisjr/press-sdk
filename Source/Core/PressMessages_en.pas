@@ -80,6 +80,7 @@ resourcestring
   SUnassignedModel_en = 'Unassigned Model';
   SUnassignedPersistenceConnector_en = 'Unassigned persistence connector';
   SUnassignedPersistenceService_en = 'Unassigned or non-PressObjects persistence service';
+  SUnassignedPresenterForm_en = 'Class ''%s'' does not have form';
   SUnassignedPresenterParent_en = 'Class ''%s'' does not have a parent';
   SUnassignedServiceType_en = 'No service ''%s'' is assigned or registered';
   SUnassignedSubject_en = 'Unassigned Subject';
@@ -194,6 +195,7 @@ begin
     SUnassignedModel := SUnassignedModel_en;
     SUnassignedPersistenceConnector := SUnassignedPersistenceConnector_en;
     SUnassignedPersistenceService := SUnassignedPersistenceService_en;
+    SUnassignedPresenterForm := SUnassignedPresenterForm_en;
     SUnassignedPresenterParent := SUnassignedPresenterParent_en;
     SUnassignedServiceType := SUnassignedServiceType_en;
     SUnassignedSubject := SUnassignedSubject_en;
