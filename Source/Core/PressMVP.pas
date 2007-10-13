@@ -232,6 +232,7 @@ type
     destructor Destroy; override;
     function Add(ACommand: TPressMVPCommand): Integer;
     function FindCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
+    procedure Insert(AIndex: Integer; ACommand: TPressMVPCommand);
     property Count: Integer read GetCount;
     property Item[AIndex: Integer]: TPressMVPCommand read GetItem; default;
   end;
@@ -376,6 +377,8 @@ type
     class function CreateFromSubject(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
     function FindCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     function HasCommands: Boolean;
+    procedure InsertCommand(AIndex: Integer; ACommandClass: TPressMVPCommandClass);
+    procedure InsertCommands(AIndex: Integer; ACommandClasses: array of TPressMVPCommandClass);
     function RegisterCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     class procedure RegisterModel;
     procedure UpdateData;
@@ -976,6 +979,11 @@ begin
   Result := FItems;
 end;
 
+procedure TPressMVPCommands.Insert(AIndex: Integer; ACommand: TPressMVPCommand);
+begin
+  Items.Insert(AIndex, ACommand);
+end;
+
 { TPressMVPCommandMenu }
 
 procedure TPressMVPCommandMenu.AssignCommands(ACommands: TPressMVPCommands);
@@ -1245,20 +1253,9 @@ end;
 
 function TPressMVPModel.AddCommand(
   ACommandClass: TPressMVPCommandClass): Integer;
-var
-  VCommand: TPressMVPCommand;
 begin
-  if Assigned(ACommandClass) then
-  begin
-    VCommand := ACommandClass.Create(Self);
-    try
-      Result := Commands.Add(VCommand);
-    except
-      VCommand.Free;
-      raise;
-    end;
-  end else
-    Result := Commands.Add(nil);
+  Result := Commands.Count;
+  InsertCommand(Result, ACommandClass);
 end;
 
 function TPressMVPModel.AddCommandInstance(
@@ -1269,11 +1266,8 @@ end;
 
 procedure TPressMVPModel.AddCommands(
   ACommandClasses: array of TPressMVPCommandClass);
-var
-  I: Integer;
 begin
-  for I := Low(ACommandClasses) to High(ACommandClasses) do
-    AddCommand(ACommandClasses[I]);
+  InsertCommands(Commands.Count, ACommandClasses);
 end;
 
 procedure TPressMVPModel.Changed(AChangeType: TPressMVPChangeType);
@@ -1379,6 +1373,24 @@ end;
 
 procedure TPressMVPModel.InitCommands;
 begin
+end;
+
+procedure TPressMVPModel.InsertCommand(
+  AIndex: Integer; ACommandClass: TPressMVPCommandClass);
+begin
+  if Assigned(ACommandClass) then
+    Commands.Insert(AIndex, ACommandClass.Create(Self))
+  else
+    Commands.Insert(AIndex, nil);
+end;
+
+procedure TPressMVPModel.InsertCommands(
+  AIndex: Integer; ACommandClasses: array of TPressMVPCommandClass);
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(Length(ACommandClasses)) do
+    InsertCommand(AIndex + I, ACommandClasses[I]);
 end;
 
 function TPressMVPModel.InternalAccessID: Integer;
