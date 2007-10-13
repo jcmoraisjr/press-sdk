@@ -108,6 +108,7 @@ var
   SUnassignedItemObjectClass,
   SUnassignedMainForm,
   SUnassignedModel,
+  SUnassignedPresenterParent,
   SUnassignedSubject,
   SUnexpectedMVPClassParam,
   SUnsupportedComponent,

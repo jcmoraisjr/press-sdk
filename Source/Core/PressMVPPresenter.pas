@@ -105,7 +105,7 @@ type
     procedure UpdateCommandMenu;
   protected
     procedure AfterInitInteractors; virtual;
-    procedure BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString); virtual;
+    function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; virtual;
     procedure InitPresenter; virtual;
     function InternalCreateCommandMenu: TPressMVPCommandMenu; virtual;
     property CommandMenu: TPressMVPCommandMenu read FCommandMenu write SetCommandMenu;
@@ -215,7 +215,7 @@ type
     function GetView: TPressMVPFormView;
   protected
     function AttributeByName(const AAttributeName: ShortString): TPressAttribute;
-    procedure BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString); override;
+    function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; override;
     function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; AViewClass: TPressMVPViewClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
     procedure InitPresenter; override;
     function InternalCreateSubModel(ASubject: TPressSubject): TPressMVPModel; virtual;
@@ -441,17 +441,18 @@ begin
   end;
 end;
 
-procedure TPressMVPPresenter.BindCommand(
-  ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString);
+function TPressMVPPresenter.BindCommand(ACommandClass: TPressMVPCommandClass;
+  const AComponentName: ShortString): TPressMVPCommand;
 var
   VComponent: TComponent;
 begin
   if not Assigned(FParent) then
-    Exit;
+    raise EPressMVPError.CreateFmt(SUnassignedPresenterParent, [ClassName]);
   VComponent := FParent.View.ComponentByName(AComponentName);
   if not Assigned(ACommandClass) then
     ACommandClass := TPressMVPNullCommand;
-  Model.RegisterCommand(ACommandClass).AddComponent(VComponent);
+  Result := Model.RegisterCommand(ACommandClass);
+  Result.AddComponent(VComponent);
 end;
 
 constructor TPressMVPPresenter.Create(
@@ -755,15 +756,17 @@ begin
      [Model.Subject.ClassName, AAttributeName]);
 end;
 
-procedure TPressMVPFormPresenter.BindCommand(
-  ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString);
+function TPressMVPFormPresenter.BindCommand(
+  ACommandClass: TPressMVPCommandClass;
+  const AComponentName: ShortString): TPressMVPCommand;
 var
   VComponent: TComponent;
 begin
   VComponent := View.ComponentByName(AComponentName);
   if not Assigned(ACommandClass) then
     ACommandClass := TPressMVPNullCommand;
-  Model.RegisterCommand(ACommandClass).AddComponent(VComponent);
+  Result := Model.RegisterCommand(ACommandClass);
+  Result.AddComponent(VComponent);
 end;
 
 function TPressMVPFormPresenter.CreatePresenterIterator: TPressMVPPresenterIterator;

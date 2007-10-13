@@ -80,6 +80,7 @@ resourcestring
   SUnassignedModel_en = 'Unassigned Model';
   SUnassignedPersistenceConnector_en = 'Unassigned persistence connector';
   SUnassignedPersistenceService_en = 'Unassigned or non-PressObjects persistence service';
+  SUnassignedPresenterParent_en = 'Class ''%s'' does not have a parent';
   SUnassignedServiceType_en = 'No service ''%s'' is assigned or registered';
   SUnassignedSubject_en = 'Unassigned Subject';
   SUnexpectedEof_en = 'Unexpected end of file';
@@ -193,6 +194,7 @@ begin
     SUnassignedModel := SUnassignedModel_en;
     SUnassignedPersistenceConnector := SUnassignedPersistenceConnector_en;
     SUnassignedPersistenceService := SUnassignedPersistenceService_en;
+    SUnassignedPresenterParent := SUnassignedPresenterParent_en;
     SUnassignedServiceType := SUnassignedServiceType_en;
     SUnassignedSubject := SUnassignedSubject_en;
     SUnexpectedEof := SUnexpectedEof_en;
