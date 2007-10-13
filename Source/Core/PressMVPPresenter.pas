@@ -230,6 +230,7 @@ type
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
     function CreatePresenterIterator: TPressMVPPresenterIterator;
     procedure Refresh;
+    class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]);
     class procedure RegisterFormPresenter(AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil; AViewClass: TPressMVPCustomFormViewClass = nil);
     class function Run(AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
     class function Run(AParent: TPressMVPFormPresenter; AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
@@ -883,6 +884,13 @@ begin
     VPresenter.UpdateCommandMenu;
     VPresenter.View.Update;
   end;
+end;
+
+class procedure TPressMVPFormPresenter.RegisterBO(
+  AObjectClass: TPressObjectClass;
+  AFormPresenterTypes: TPressMVPFormPresenterTypes);
+begin
+  PressDefaultMVPFactory.RegisterBO(Self, AObjectClass, AFormPresenterTypes);
 end;
 
 class procedure TPressMVPFormPresenter.RegisterFormPresenter(
