@@ -86,6 +86,7 @@ type
   private
     FCommandMenu: TPressMVPCommandMenu;
     FInteractors: TPressMVPInteractorList;
+    FIsInitializing: Boolean;
     FModel: TPressMVPModel;
     FParent: TPressMVPFormPresenter;
     FView: TPressMVPView;
@@ -101,6 +102,7 @@ type
     procedure SetCommandMenu(Value: TPressMVPCommandMenu);
     procedure SetModel(Value: TPressMVPModel);
     procedure SetView(Value: TPressMVPView);
+    procedure UpdateCommandMenu;
   protected
     procedure AfterInitInteractors; virtual;
     procedure BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString); virtual;
@@ -367,9 +369,8 @@ begin
   begin
     if Assigned(FView) then
       FCommandMenu.AssignMenu(FView.Control);
-    if Assigned(FModel) then
-      FCommandMenu.AssignCommands(
-       TPressMVPPresenterModelFriend(FModel).Commands);
+    if not FIsInitializing then
+      UpdateCommandMenu;
   end;
 end;
 
@@ -382,9 +383,8 @@ begin
       TPressMVPPresenterViewFriend(FView).SetModel(FModel);
       FModel.Changed(ctDisplay);
     end;
-    if Assigned(FCommandMenu) then
-      FCommandMenu.AssignCommands(
-       TPressMVPPresenterModelFriend(FModel).Commands);
+    if not FIsInitializing then
+      UpdateCommandMenu;
   end;
 end;
 
@@ -458,6 +458,7 @@ constructor TPressMVPPresenter.Create(
   AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; AView: TPressMVPView);
 begin
   CheckClass(Apply(AModel, AView));
+  FIsInitializing := True;
   inherited Create;
   FParent := AParent;
   if Assigned(FParent) then
@@ -468,6 +469,7 @@ begin
     CommandMenu := InternalCreateCommandMenu;
   DoInitInteractors;
   DoInitPresenter;
+  FIsInitializing := False;
 end;
 
 class function TPressMVPPresenter.CreateFromControllers(
@@ -557,6 +559,12 @@ begin
     FView := Value;
     AfterChangeView;
   end;
+end;
+
+procedure TPressMVPPresenter.UpdateCommandMenu;
+begin
+  if Assigned(FModel) and Assigned(FCommandMenu) then
+    FCommandMenu.AssignCommands(TPressMVPPresenterModelFriend(FModel).Commands);
 end;
 
 { TPressMVPPresenterList }
@@ -861,14 +869,16 @@ begin
 end;
 
 procedure TPressMVPFormPresenter.Refresh;
+var
+  VPresenter: TPressMVPPresenter;
+  I: Integer;
 begin
-  with SubPresenters.CreateIterator do
-  try
-    BeforeFirstItem;
-    while NextItem do
-      CurrentItem.View.Update;
-  finally
-    Free;
+  UpdateCommandMenu;
+  for I := 0 to Pred(SubPresenters.Count) do
+  begin
+    VPresenter := SubPresenters[I];
+    VPresenter.UpdateCommandMenu;
+    VPresenter.View.Update;
   end;
 end;
 
