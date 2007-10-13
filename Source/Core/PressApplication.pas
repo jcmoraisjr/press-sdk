@@ -58,6 +58,7 @@ type
 
   TPressService = class(TPressManagedObject)
   private
+    FAppOwns: Boolean;
     FRegistry: TPressRegistry;
     FRunning: Boolean;
     function GetIsDefault: Boolean;
@@ -75,6 +76,7 @@ type
     function Release: Integer; override;
     class function ServiceName: string; virtual;
     class procedure UnregisterService;
+    property AppOwns: Boolean read FAppOwns write FAppOwns;
     property IsDefault: Boolean read GetIsDefault write SetIsDefault;
     property Registry: TPressRegistry read FRegistry;
     property Running: Boolean read FRunning;
@@ -299,6 +301,7 @@ end;
 constructor TPressService.Create;
 begin
   inherited Create;
+  FAppOwns := True;
   FRegistry := PressApp.Registry[InternalServiceType];
   Registry.InsertService(Self);
 end;
@@ -342,7 +345,8 @@ end;
 
 function TPressService.Release: Integer;
 begin
-  if Assigned(_PressApp) and _PressApp.Running and (RefCount = 2) then
+  if not AppOwns and Assigned(_PressApp) and _PressApp.Running and
+   (RefCount = 2) then
     inherited Release;
   if Running and (RefCount = 1) then
   begin
@@ -994,6 +998,7 @@ begin
   inherited Create(AOwner);
   FService := InternalCreateService;
   FService.AddRef;
+  FService.AppOwns := False;
 end;
 
 destructor TPressServiceComponent.Destroy;
