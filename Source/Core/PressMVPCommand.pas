@@ -583,9 +583,8 @@ var
 begin
   inherited;
   VObject := Model.ObjectClass.Create;
-  Model.Subject.Value := VObject;
-  VObject.Release;
-  TPressMVPModelCreateIncludeFormEvent.Create(Model).Notify;
+  TPressMVPModelCreateIncludeFormEvent.Create(Model, VObject).Notify;
+  VObject.Free;
 end;
 
 { TPressMVPItemsCommand }

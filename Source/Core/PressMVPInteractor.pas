@@ -1170,8 +1170,24 @@ begin
 end;
 
 procedure TPressMVPCreateIncludeFormInteractor.Notify(AEvent: TPressEvent);
+var
+  VObject: TPressObject;
+  VAttribute: TPressAttribute;
+  VModel: TPressMVPStructureModel;
 begin
   inherited;
+  if AEvent is TPressMVPModelCreateIncludeFormEvent then
+  begin
+    VObject := TPressMVPModelCreateIncludeFormEvent(AEvent).NewObject;
+    if Assigned(VObject) then
+    begin
+      VModel := Model;
+      VAttribute := VObject.FindAttribute(VModel.DisplayNames);
+      if VAttribute is TPressString then
+        VAttribute.AsString := (Owner.View as TPressMVPAttributeView).AsString;
+      VModel.Subject.AssignObject(VObject);
+    end;
+  end;
   ExecuteFormPresenter(fpNew);
 end;
 

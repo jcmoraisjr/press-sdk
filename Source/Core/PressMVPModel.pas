@@ -45,6 +45,11 @@ type
   end;
 
   TPressMVPModelCreateIncludeFormEvent = class(TPressMVPModelCreateFormEvent)
+  private
+    FNewObject: TPressObject;
+  public
+    constructor Create(AOwner: TObject; ANewObject: TPressObject = nil);
+    property NewObject: TPressObject read FNewObject;
   end;
 
   TPressMVPModelCreatePresentFormEvent = class(TPressMVPModelCreateFormEvent)
@@ -503,6 +508,15 @@ constructor TPressMVPModelFindFormEvent.Create(AOwner: TObject;
 begin
   inherited Create(AOwner);
   FObjectClass := AObjectClass;
+end;
+
+{ TPressMVPModelCreateIncludeFormEvent }
+
+constructor TPressMVPModelCreateIncludeFormEvent.Create(AOwner: TObject;
+  ANewObject: TPressObject);
+begin
+  inherited Create(AOwner);
+  FNewObject := ANewObject;
 end;
 
 { TPressMVPObjectModelCanSaveEvent }
