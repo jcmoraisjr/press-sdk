@@ -250,9 +250,11 @@ type
   private
     FColumnData: TPressMVPColumnData;
     FStore: Boolean;
+    FDisplayNames: string;
     function GetColumnData: TPressMVPColumnData;
     function GetSelection: TPressMVPObjectSelection;
     function GetSubject: TPressStructure;
+    procedure SetDisplayNames(const Value: string);
   protected
     procedure AssignColumnData(const AColumnData: string);
     procedure InternalAssignDisplayNames(const ADisplayNames: string); virtual; abstract;
@@ -260,8 +262,8 @@ type
   public
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
     destructor Destroy; override;
-    procedure AssignDisplayNames(const ADisplayNames: string);
     property ColumnData: TPressMVPColumnData read GetColumnData;
+    property DisplayNames: string read FDisplayNames write SetDisplayNames;
     property Selection: TPressMVPObjectSelection read GetSelection;
     property Store: Boolean read FStore write FStore;
     property Subject: TPressStructure read GetSubject;
@@ -1033,14 +1035,6 @@ begin
   until VDelimiterPos > Length(AColumnData);
 end;
 
-procedure TPressMVPStructureModel.AssignDisplayNames(
-  const ADisplayNames: string);
-begin
-  if Assigned(FColumnData) and (FColumnData.ColumnCount > 0) then
-    raise EPressMVPError.Create(SDisplayNamesAlreadyAssigned);
-  InternalAssignDisplayNames(ADisplayNames);
-end;
-
 constructor TPressMVPStructureModel.Create(AParent: TPressMVPModel;
   ASubject: TPressSubject);
 begin
@@ -1074,6 +1068,14 @@ end;
 function TPressMVPStructureModel.InternalCreateSelection: TPressMVPSelection;
 begin
   Result := TPressMVPObjectSelection.Create;
+end;
+
+procedure TPressMVPStructureModel.SetDisplayNames(const Value: string);
+begin
+  if Assigned(FColumnData) and (FColumnData.ColumnCount > 0) then
+    raise EPressMVPError.Create(SDisplayNamesAlreadyAssigned);
+  InternalAssignDisplayNames(Value);
+  FDisplayNames := Value;
 end;
 
 { TPressMVPReferenceModel }

@@ -794,7 +794,7 @@ begin
   else
     VModel := InternalCreateSubModel(VAttribute);
   if VModel is TPressMVPStructureModel then
-    TPressMVPStructureModel(VModel).AssignDisplayNames(ADisplayNames)
+    TPressMVPStructureModel(VModel).DisplayNames := ADisplayNames
   else if ADisplayNames <> '' then
   begin
     VAttribute := VModel.Subject as TPressAttribute;
