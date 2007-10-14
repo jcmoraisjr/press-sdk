@@ -286,7 +286,7 @@ begin
   FModels := TClassList.Create;
   FPresenters := TClassList.Create;
   FViews := TClassList.Create;
-  FNotifier := TPressNotifier.Create(Notify);
+  FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   FNotifier.AddNotificationItem(nil, [TPressMVPModelFindFormEvent]);
 end;
 
