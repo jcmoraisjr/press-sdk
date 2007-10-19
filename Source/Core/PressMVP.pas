@@ -129,7 +129,7 @@ type
     FNotifier: TPressNotifier;
     FShortCut: TShortCut;
     FVisible: Boolean;
-    function CurrentUser: TPressUser;
+    function CurrentUser: TPressCustomUser;
     function GetComponentList: TPressMVPCommandComponentList;
     procedure Notify(AEvent: TPressEvent);
     procedure VerifyAccess;
@@ -336,7 +336,7 @@ type
   private
     FAccessChangeObjectID: Integer;
     FAccessNewObjectID: Integer;
-    FAccessUser: TPressUser;
+    FAccessUser: TPressCustomUser;
     FCommands: TPressMVPCommands;
     FNotifier: TPressNotifier;
     FOwnedCommands: TPressMVPCommandList;
@@ -353,7 +353,7 @@ type
     procedure SetAccessChangeObjectID(Value: Integer);
     procedure SetAccessID(Value: Integer);
     procedure SetAccessNewObjectID(Value: Integer);
-    procedure SetAccessUser(Value: TPressUser);
+    procedure SetAccessUser(Value: TPressCustomUser);
   protected
     procedure InitCommands; virtual;
     function InternalAccessID: Integer; virtual;
@@ -385,7 +385,7 @@ type
     property AccessChangeObjectID: Integer read FAccessChangeObjectID write SetAccessChangeObjectID;
     property AccessID: Integer write SetAccessID;
     property AccessNewObjectID: Integer read FAccessNewObjectID write SetAccessNewObjectID;
-    property AccessUser: TPressUser read FAccessUser write SetAccessUser;
+    property AccessUser: TPressCustomUser read FAccessUser write SetAccessUser;
     property HasParent: Boolean read GetHasParent;
     property HasSubject: Boolean read GetHasSubject;
     property Parent: TPressMVPModel read FParent;
@@ -671,7 +671,7 @@ begin
   InitNotifier;
 end;
 
-function TPressMVPCommand.CurrentUser: TPressUser;
+function TPressMVPCommand.CurrentUser: TPressCustomUser;
 begin
   if PressUserData.HasUser then
     Result := PressUserData.CurrentUser
@@ -1403,7 +1403,7 @@ end;
 
 function TPressMVPModel.InternalAccessMode: TPressAccessMode;
 var
-  VUser: TPressUser;
+  VUser: TPressCustomUser;
   VAccessID: Integer;
 begin
   VUser := AccessUser;
@@ -1483,7 +1483,7 @@ begin
   end;
 end;
 
-procedure TPressMVPModel.SetAccessUser(Value: TPressUser);
+procedure TPressMVPModel.SetAccessUser(Value: TPressCustomUser);
 begin
   if FAccessUser <> Value then
   begin

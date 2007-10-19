@@ -38,7 +38,7 @@ type
 
   TPressAccessMode = (amInvisible, amVisible, amWritable);
 
-  TPressUser = class(TPressObject)
+  TPressCustomUser = class(TPressObject)
   protected
     procedure AfterLogon; virtual;
     procedure BeforeLogoff; virtual;
@@ -47,26 +47,26 @@ type
     function AccessMode(AAccessObjectID: Integer): TPressAccessMode;
   end;
 
-  TPressUserData = class(TPressService)
+  TPressCustomUserData = class(TPressService)
   private
-    FCurrentUser: TPressUser;
-    function GetCurrentUser: TPressUser;
+    FCurrentUser: TPressCustomUser;
+    function GetCurrentUser: TPressCustomUser;
     function GetHasUser: Boolean;
   protected
     procedure DoneService; override;
     procedure Finit; override;
-    function InternalQueryUser(const AUserID, APassword: string): TPressUser; virtual;
+    function InternalQueryUser(const AUserID, APassword: string): TPressCustomUser; virtual;
     class function InternalServiceType: TPressServiceType; override;
   public
     procedure Logoff;
     function Logon(const AUserID: string = ''; const APassword: string = ''): Boolean;
-    function QueryUser(const AUserID, APassword: string): TPressUser;
-    property CurrentUser: TPressUser read GetCurrentUser;
+    function QueryUser(const AUserID, APassword: string): TPressCustomUser;
+    property CurrentUser: TPressCustomUser read GetCurrentUser;
     property HasUser: Boolean read GetHasUser;
-    property User: TPressUser read FCurrentUser;
+    property User: TPressCustomUser read FCurrentUser;
   end;
 
-function PressUserData: TPressUserData;
+function PressUserData: TPressCustomUserData;
 
 implementation
 
@@ -75,14 +75,14 @@ uses
   PressClasses,
   PressConsts;
 
-function PressUserData: TPressUserData;
+function PressUserData: TPressCustomUserData;
 begin
-  Result := PressApp.DefaultService(TPressUserData) as TPressUserData;
+  Result := PressApp.DefaultService(TPressCustomUserData) as TPressCustomUserData;
 end;
 
-{ TPressUser }
+{ TPressCustomUser }
 
-function TPressUser.AccessMode(AAccessObjectID: Integer): TPressAccessMode;
+function TPressCustomUser.AccessMode(AAccessObjectID: Integer): TPressAccessMode;
 begin
   if AAccessObjectID >= 0 then
     Result := InternalAccessMode(AAccessObjectID)
@@ -90,58 +90,58 @@ begin
     Result := amWritable;
 end;
 
-procedure TPressUser.AfterLogon;
+procedure TPressCustomUser.AfterLogon;
 begin
 end;
 
-procedure TPressUser.BeforeLogoff;
+procedure TPressCustomUser.BeforeLogoff;
 begin
 end;
 
-function TPressUser.InternalAccessMode(
+function TPressCustomUser.InternalAccessMode(
   AAccessObjectID: Integer): TPressAccessMode;
 begin
   Result := amWritable;
 end;
 
-{ TPressUserData }
+{ TPressCustomUserData }
 
-procedure TPressUserData.DoneService;
+procedure TPressCustomUserData.DoneService;
 begin
   inherited;
   Logoff;
 end;
 
-procedure TPressUserData.Finit;
+procedure TPressCustomUserData.Finit;
 begin
   FCurrentUser.Free;
   inherited;
 end;
 
-function TPressUserData.GetCurrentUser: TPressUser;
+function TPressCustomUserData.GetCurrentUser: TPressCustomUser;
 begin
   if not Assigned(FCurrentUser) then
     raise EPressError.Create(SNoLoggedUser);
   Result := FCurrentUser;
 end;
 
-function TPressUserData.GetHasUser: Boolean;
+function TPressCustomUserData.GetHasUser: Boolean;
 begin
   Result := Assigned(FCurrentUser);
 end;
 
-function TPressUserData.InternalQueryUser(
-  const AUserID, APassword: string): TPressUser;
+function TPressCustomUserData.InternalQueryUser(
+  const AUserID, APassword: string): TPressCustomUser;
 begin
-  Result := TPressUser.Create;
+  Result := TPressCustomUser.Create;
 end;
 
-class function TPressUserData.InternalServiceType: TPressServiceType;
+class function TPressCustomUserData.InternalServiceType: TPressServiceType;
 begin
   Result := CPressUserDataService;
 end;
 
-procedure TPressUserData.Logoff;
+procedure TPressCustomUserData.Logoff;
 begin
   if Assigned(FCurrentUser) then
   begin
@@ -151,9 +151,9 @@ begin
   end;
 end;
 
-function TPressUserData.Logon(const AUserID, APassword: string): Boolean;
+function TPressCustomUserData.Logon(const AUserID, APassword: string): Boolean;
 var
-  VNewUser: TPressUser;
+  VNewUser: TPressCustomUser;
 begin
   VNewUser := InternalQueryUser(AUserID, APassword);
   Result := Assigned(VNewUser);
@@ -170,8 +170,8 @@ begin
     end;
 end;
 
-function TPressUserData.QueryUser(const AUserID,
-  APassword: string): TPressUser;
+function TPressCustomUserData.QueryUser(const AUserID,
+  APassword: string): TPressCustomUser;
 begin
   Result := InternalQueryUser(AUserID, APassword);
 end;
@@ -179,10 +179,10 @@ end;
 initialization
   PressApp.Registry[CPressUserDataService].ServiceTypeName :=
    SPressUserServiceName;
-  TPressUser.RegisterClass;
+  TPressCustomUser.RegisterClass;
 
 finalization
-  TPressUser.UnregisterClass;
-  TPressUserData.UnregisterService;
+  TPressCustomUser.UnregisterClass;
+  TPressCustomUserData.UnregisterService;
 
 end.
