@@ -232,6 +232,8 @@ type
     procedure Refresh;
     class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]);
     class procedure RegisterFormPresenter(AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil; AViewClass: TPressMVPCustomFormViewClass = nil);
+    class procedure RegisterLCLForm(AFormClass: TFormClass);
+    class procedure RegisterVCLForm(AFormClass: TFormClass);
     class function Run(AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
     class function Run(AParent: TPressMVPFormPresenter; AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
     property AutoDestroy: Boolean read FAutoDestroy;
@@ -901,6 +903,16 @@ class procedure TPressMVPFormPresenter.RegisterFormPresenter(
 begin
   PressDefaultMVPFactory.RegisterForm(Self, AObjectClass, AFormClass,
    AFormPresenterTypes, AModelClass, AViewClass);
+end;
+
+class procedure TPressMVPFormPresenter.RegisterLCLForm(AFormClass: TFormClass);
+begin
+  PressDefaultMVPFactory.RegisterXCLForm(Self, AFormClass);
+end;
+
+class procedure TPressMVPFormPresenter.RegisterVCLForm(AFormClass: TFormClass);
+begin
+  PressDefaultMVPFactory.RegisterXCLForm(Self, AFormClass);
 end;
 
 class function TPressMVPFormPresenter.Run(
