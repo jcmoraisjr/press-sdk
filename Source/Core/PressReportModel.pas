@@ -25,7 +25,7 @@ uses
   PressReport;
 
 type
-  TPressDefaultReportGroup = class(TPressCustomReportGroup)
+  TPressReportGroup = class(TPressCustomReportGroup)
   private
     FObjectClassName: TPressString;
     FReports: TPressParts;
@@ -37,7 +37,7 @@ type
     class function ObjectClassAttributeName: string; override;
   end;
 
-  TPressDefaultReportItem = class(TPressCustomReportItem)
+  TPressReportItem = class(TPressCustomReportItem)
   private
     FCaption: TPressString;
     FVisible: TPressBoolean;
@@ -51,7 +51,7 @@ type
     procedure SetReportData(AStream: TStream); override;
   end;
 
-  TPressDefaultReportData = class(TPressCustomReportData)
+  TPressReportData = class(TPressCustomReportData)
   protected
     function InternalReportGroupClass: TPressReportGroupClass; override;
   end;
@@ -62,9 +62,9 @@ uses
   SysUtils,
   PressConsts;
 
-{ TPressDefaultReportGroup }
+{ TPressReportGroup }
 
-function TPressDefaultReportGroup.InternalAttributeAddress(
+function TPressReportGroup.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
   if SameText(AAttributeName, ObjectClassAttributeName) then
@@ -75,41 +75,41 @@ begin
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
 
-function TPressDefaultReportGroup.InternalCreateReportItemIterator: TPressItemsIterator;
+function TPressReportGroup.InternalCreateReportItemIterator: TPressItemsIterator;
 begin
   Result := FReports.CreateIterator;
 end;
 
-class function TPressDefaultReportGroup.InternalMetadataStr: string;
+class function TPressReportGroup.InternalMetadataStr: string;
 begin
-  Result := 'TPressDefaultReportGroup PersistentName="TRepGrp" ('+
+  Result := 'TPressReportGroup PersistentName="TRepGrp" ('+
    'ObjectClassName: String(32);' +
-   'Reports: Parts(TPressDefaultReportItem))';
+   'Reports: Parts(TPressReportItem))';
 end;
 
-class function TPressDefaultReportGroup.ObjectClassAttributeName: string;
+class function TPressReportGroup.ObjectClassAttributeName: string;
 begin
   Result := 'ObjectClassName';
 end;
 
-{ TPressDefaultReportItem }
+{ TPressReportItem }
 
-function TPressDefaultReportItem.GetReportCaption: string;
+function TPressReportItem.GetReportCaption: string;
 begin
   Result := FCaption.Value;
 end;
 
-procedure TPressDefaultReportItem.GetReportData(AStream: TStream);
+procedure TPressReportItem.GetReportData(AStream: TStream);
 begin
   FReportMetadata.SaveToStream(AStream);
 end;
 
-function TPressDefaultReportItem.GetReportVisible: Boolean;
+function TPressReportItem.GetReportVisible: Boolean;
 begin
   Result := FVisible.Value;
 end;
 
-function TPressDefaultReportItem.InternalAttributeAddress(
+function TPressReportItem.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
   if SameText(AAttributeName, 'Caption') then
@@ -122,34 +122,34 @@ begin
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
 
-class function TPressDefaultReportItem.InternalMetadataStr: string;
+class function TPressReportItem.InternalMetadataStr: string;
 begin
-  Result := 'TPressDefaultReportItem PersistentName="TRepItem" (' +
+  Result := 'TPressReportItem PersistentName="TRepItem" (' +
    'Caption: String(40);' +
    'Visible: Boolean DefaultValue=True;' +
    'ReportMetadata: Binary)';
 end;
 
-procedure TPressDefaultReportItem.SetReportData(AStream: TStream);
+procedure TPressReportItem.SetReportData(AStream: TStream);
 begin
   FReportMetadata.LoadFromStream(AStream);
 end;
 
-{ TPressDefaultReportData }
+{ TPressReportData }
 
-function TPressDefaultReportData.InternalReportGroupClass: TPressReportGroupClass;
+function TPressReportData.InternalReportGroupClass: TPressReportGroupClass;
 begin
-  Result := TPressDefaultReportGroup;
+  Result := TPressReportGroup;
 end;
 
 initialization
-  TPressDefaultReportGroup.RegisterClass;
-  TPressDefaultReportItem.RegisterClass;
-  TPressDefaultReportData.RegisterService;
+  TPressReportGroup.RegisterClass;
+  TPressReportItem.RegisterClass;
+  TPressReportData.RegisterService;
 
 finalization
-  TPressDefaultReportGroup.UnregisterClass;
-  TPressDefaultReportItem.UnregisterClass;
-  TPressDefaultReportData.UnregisterService;
+  TPressReportGroup.UnregisterClass;
+  TPressReportItem.UnregisterClass;
+  TPressReportData.UnregisterService;
 
 end.
