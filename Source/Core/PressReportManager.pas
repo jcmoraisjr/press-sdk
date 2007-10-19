@@ -28,39 +28,39 @@ uses
 type
   TPressExecuteReportCommand = class(TPressMVPObjectCommand)
   private
-    FReportItem: TPressReportItem;
-    procedure SetReportItem(Value: TPressReportItem);
+    FReportItem: TPressCustomReportItem;
+    procedure SetReportItem(Value: TPressCustomReportItem);
   protected
     procedure InternalExecute; override;
     function InternalIsEnabled: Boolean; override;
   public
     destructor Destroy; override;
-    property ReportItem: TPressReportItem read FReportItem write SetReportItem;
+    property ReportItem: TPressCustomReportItem read FReportItem write SetReportItem;
   end;
 
   TPressManageReportsCommand = class(TPressMVPObjectCommand)
   private
-    FReportGroup: TPressReportGroup;
-    procedure SetReportGroup(Value: TPressReportGroup);
+    FReportGroup: TPressCustomReportGroup;
+    procedure SetReportGroup(Value: TPressCustomReportGroup);
   protected
     procedure InternalExecute; override;
   public
     destructor Destroy; override;
-    property ReportGroup: TPressReportGroup read FReportGroup write SetReportGroup;
+    property ReportGroup: TPressCustomReportGroup read FReportGroup write SetReportGroup;
   end;
 
   TPressReportManager = class(TObject)
   private
     FModel: TPressMVPObjectModel;
-    FReportGroup: TPressReportGroup;
+    FReportGroup: TPressCustomReportGroup;
   protected
     procedure AddReportGroup; virtual;
     procedure AddReportItem(AItem: TPressObject; APosition: Integer); virtual;
-    function GetReportGroup: TPressReportGroup; virtual;
+    function GetReportGroup: TPressCustomReportGroup; virtual;
   public
     constructor Create(AModel: TPressMVPObjectModel);
     destructor Destroy; override;
-    property ReportGroup: TPressReportGroup read GetReportGroup;
+    property ReportGroup: TPressCustomReportGroup read GetReportGroup;
     property Model: TPressMVPObjectModel read FModel;
   end;
 
@@ -97,7 +97,7 @@ begin
   Result := not (VSubject is TPressQuery) or (TPressQuery(VSubject).Count > 0);
 end;
 
-procedure TPressExecuteReportCommand.SetReportItem(Value: TPressReportItem);
+procedure TPressExecuteReportCommand.SetReportItem(Value: TPressCustomReportItem);
 begin
   FReportItem.Free;
   FReportItem := Value;
@@ -121,12 +121,12 @@ begin
   if not Assigned(FReportGroup) then
     Exit;
   VIndex := PressDefaultMVPFactory.Forms.IndexOfObjectClass(
-   TPressReportGroup, fpExisting, True);
+   TPressCustomReportGroup, fpExisting, True);
   if VIndex >= 0 then
     PressDefaultMVPFactory.Forms[VIndex].PresenterClass.Run(FReportGroup);
 end;
 
-procedure TPressManageReportsCommand.SetReportGroup(Value: TPressReportGroup);
+procedure TPressManageReportsCommand.SetReportGroup(Value: TPressCustomReportGroup);
 begin
   FReportGroup.Free;
   FReportGroup := Value;
@@ -149,11 +149,11 @@ end;
 procedure TPressReportManager.AddReportItem(
   AItem: TPressObject; APosition: Integer);
 var
-  VItem: TPressReportItem;
+  VItem: TPressCustomReportItem;
   VReportCommand: TPressExecuteReportCommand;
   VShortCut: TShortCut;
 begin
-  VItem := AItem as TPressReportItem;
+  VItem := AItem as TPressCustomReportItem;
   if VItem.ReportVisible then
   begin
     if APosition = 0 then
@@ -199,7 +199,7 @@ begin
   inherited;
 end;
 
-function TPressReportManager.GetReportGroup: TPressReportGroup;
+function TPressReportManager.GetReportGroup: TPressCustomReportGroup;
 var
   VObject: TPressObject;
 begin
@@ -208,7 +208,7 @@ begin
     { TODO : Cache report group objects; include refresh option }
     VObject := Model.Subject;
     FReportGroup :=
-     (PressApp.DefaultService(CPressReportDataService) as TPressReportData).
+     (PressApp.DefaultService(CPressReportDataService) as TPressCustomReportData).
       FindReportGroup(VObject.DataAccess, VObject.ClassName);
     FReportGroup.BusinessObj := VObject;
   end;

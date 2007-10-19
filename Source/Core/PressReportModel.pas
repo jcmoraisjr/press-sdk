@@ -25,7 +25,7 @@ uses
   PressReport;
 
 type
-  TPressDefaultReportGroup = class(TPressReportGroup)
+  TPressDefaultReportGroup = class(TPressCustomReportGroup)
   private
     FObjectClassName: TPressString;
     FReports: TPressParts;
@@ -37,7 +37,7 @@ type
     class function ObjectClassAttributeName: string; override;
   end;
 
-  TPressDefaultReportItem = class(TPressReportItem)
+  TPressDefaultReportItem = class(TPressCustomReportItem)
   private
     FCaption: TPressString;
     FVisible: TPressBoolean;
@@ -51,7 +51,7 @@ type
     procedure SetReportData(AStream: TStream); override;
   end;
 
-  TPressDefaultReportData = class(TPressReportData)
+  TPressDefaultReportData = class(TPressCustomReportData)
   protected
     function InternalReportGroupClass: TPressReportGroupClass; override;
   end;

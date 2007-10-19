@@ -149,9 +149,9 @@ type
     constructor Create(ADataSet: TPressReportDataSet; const AItemsName: string; AParent: TPressReportDataSource);
   end;
 
-  TPressReportGroupClass = class of TPressReportGroup;
+  TPressReportGroupClass = class of TPressCustomReportGroup;
 
-  TPressReportGroup = class(TPressObject)
+  TPressCustomReportGroup = class(TPressObject)
   private
     FBusinessObj: TObject;
   protected
@@ -162,7 +162,7 @@ type
     property BusinessObj: TObject read FBusinessObj write FBusinessObj;
   end;
 
-  TPressReportItem = class(TPressObject)
+  TPressCustomReportItem = class(TPressObject)
   private
     FDataSources: TPressReportDataSourceList;
     FReport: TPressReport;
@@ -194,12 +194,12 @@ type
     property ReportVisible: Boolean read GetReportVisible;
   end;
 
-  TPressReportData = class(TPressService)
+  TPressCustomReportData = class(TPressService)
   protected
     function InternalReportGroupClass: TPressReportGroupClass; virtual; abstract;
     class function InternalServiceType: TPressServiceType; override;
   public
-    function FindReportGroup(ADataAccess: IPressDAO; const AObjectClassName: string): TPressReportGroup;
+    function FindReportGroup(ADataAccess: IPressDAO; const AObjectClassName: string): TPressCustomReportGroup;
   end;
 
 implementation
@@ -449,47 +449,47 @@ end;
 
 { TPressReportGroup }
 
-function TPressReportGroup.CreateReportItemIterator: TPressItemsIterator;
+function TPressCustomReportGroup.CreateReportItemIterator: TPressItemsIterator;
 begin
   Result := InternalCreateReportItemIterator;
 end;
 
 { TPressReportItem }
 
-procedure TPressReportItem.Design;
+procedure TPressCustomReportItem.Design;
 begin
   Report.Design;
   SaveReport;
 end;
 
-procedure TPressReportItem.Execute;
+procedure TPressCustomReportItem.Execute;
 begin
   Report.Execute;
 end;
 
-procedure TPressReportItem.Finit;
+procedure TPressCustomReportItem.Finit;
 begin
   FReport.Free;
   FDataSources.Free;
   inherited;
 end;
 
-function TPressReportItem.GetBusinessObj: TObject;
+function TPressCustomReportItem.GetBusinessObj: TObject;
 begin
-  if Owner is TPressReportGroup then
-    Result := TPressReportGroup(Owner).BusinessObj
+  if Owner is TPressCustomReportGroup then
+    Result := TPressCustomReportGroup(Owner).BusinessObj
   else
     Result := nil;
 end;
 
-function TPressReportItem.GetDataSources: TPressReportDataSourceList;
+function TPressCustomReportItem.GetDataSources: TPressReportDataSourceList;
 begin
   if not Assigned(FDataSources) then
     FDataSources := TPressReportDataSourceList.Create(True);
   Result := FDataSources;
 end;
 
-function TPressReportItem.GetReport: TPressReport;
+function TPressCustomReportItem.GetReport: TPressReport;
 begin
   if not Assigned(FReport) then
   begin
@@ -504,21 +504,21 @@ begin
   Result := FReport;
 end;
 
-function TPressReportItem.GetReportCaption: string;
+function TPressCustomReportItem.GetReportCaption: string;
 begin
   Result := ClassName;
 end;
 
-procedure TPressReportItem.GetReportData(AStream: TStream);
+procedure TPressCustomReportItem.GetReportData(AStream: TStream);
 begin
 end;
 
-function TPressReportItem.GetReportVisible: Boolean;
+function TPressCustomReportItem.GetReportVisible: Boolean;
 begin
   Result := True;
 end;
 
-procedure TPressReportItem.LoadFields;
+procedure TPressCustomReportItem.LoadFields;
 begin
   with DataSources.CreateIterator do
   try
@@ -531,7 +531,7 @@ begin
   end;
 end;
 
-procedure TPressReportItem.LoadFromFile(const AFileName: string);
+procedure TPressCustomReportItem.LoadFromFile(const AFileName: string);
 var
   VStream: TFileStream;
 begin
@@ -543,13 +543,13 @@ begin
   end;
 end;
 
-procedure TPressReportItem.LoadFromStream(AStream: TStream);
+procedure TPressCustomReportItem.LoadFromStream(AStream: TStream);
 begin
   Report.LoadFromStream(AStream);
   SaveReport;
 end;
 
-procedure TPressReportItem.LoadMetadatas;
+procedure TPressCustomReportItem.LoadMetadatas;
 
   function CreateDataSet(const ADataSetName: string): TPressReportDataSet;
   begin
@@ -647,7 +647,7 @@ begin
   { TODO : else if BO has RTTI then read published fields }
 end;
 
-procedure TPressReportItem.LoadReport;
+procedure TPressCustomReportItem.LoadReport;
 var
   VStream: TStream;
 begin
@@ -660,7 +660,7 @@ begin
   end;
 end;
 
-procedure TPressReportItem.ReportNeedValue(
+procedure TPressCustomReportItem.ReportNeedValue(
   const ADataSetName, AFieldName: string; var AValue: Variant;
   AForceData: Boolean);
 type
@@ -701,7 +701,7 @@ begin
     AValue := SPressReportErrorMsg;
 end;
 
-procedure TPressReportItem.SaveReport;
+procedure TPressCustomReportItem.SaveReport;
 var
   VStream: TStream;
 begin
@@ -714,7 +714,7 @@ begin
   end;
 end;
 
-procedure TPressReportItem.SaveToFile(const AFileName: string);
+procedure TPressCustomReportItem.SaveToFile(const AFileName: string);
 var
   VStream: TFileStream;
 begin
@@ -726,19 +726,19 @@ begin
   end;
 end;
 
-procedure TPressReportItem.SaveToStream(AStream: TStream);
+procedure TPressCustomReportItem.SaveToStream(AStream: TStream);
 begin
   GetReportData(AStream);
 end;
 
-procedure TPressReportItem.SetReportData(AStream: TStream);
+procedure TPressCustomReportItem.SetReportData(AStream: TStream);
 begin
 end;
 
 { TPressReportData }
 
-function TPressReportData.FindReportGroup(
-  ADataAccess: IPressDAO; const AObjectClassName: string): TPressReportGroup;
+function TPressCustomReportData.FindReportGroup(
+  ADataAccess: IPressDAO; const AObjectClassName: string): TPressCustomReportGroup;
 var
   VReportClass: TPressReportGroupClass;
   VList: TPressProxyList;
@@ -753,7 +753,7 @@ begin
     try
       if VList.Count > 0 then
       begin
-        Result := VList[0].Instance as TPressReportGroup;
+        Result := VList[0].Instance as TPressCustomReportGroup;
         Result.AddRef;
       end else
       begin
@@ -772,17 +772,17 @@ begin
   end;
 end;
 
-class function TPressReportData.InternalServiceType: TPressServiceType;
+class function TPressCustomReportData.InternalServiceType: TPressServiceType;
 begin
   Result := CPressReportDataService;
 end;
 
 initialization
-  TPressReportGroup.RegisterClass;
-  TPressReportItem.RegisterClass;
+  TPressCustomReportGroup.RegisterClass;
+  TPressCustomReportItem.RegisterClass;
 
 finalization
-  TPressReportGroup.UnregisterClass;
-  TPressReportItem.UnregisterClass;
+  TPressCustomReportGroup.UnregisterClass;
+  TPressCustomReportItem.UnregisterClass;
 
 end.
