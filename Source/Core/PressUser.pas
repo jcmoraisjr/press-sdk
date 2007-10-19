@@ -19,6 +19,7 @@ unit PressUser;
 interface
 
 uses
+  PressClasses,
   PressApplication,
   PressNotifier,
   PressSubject;
@@ -27,6 +28,8 @@ const
   CPressUserDataService = CPressUserServicesBase + $0001;
 
 type
+  EPressUserError = class(EPressError);
+
   TPressUserEvent = class(TPressEvent)
   end;
 
@@ -37,6 +40,8 @@ type
   end;
 
   TPressAccessMode = (amInvisible, amVisible, amWritable);
+
+  TPressUserClass = class of TPressCustomUser;
 
   TPressCustomUser = class(TPressObject)
   protected
@@ -50,8 +55,11 @@ type
   TPressCustomUserData = class(TPressService)
   private
     FCurrentUser: TPressCustomUser;
+    FDataAccess: IPressDAO;
     function GetCurrentUser: TPressCustomUser;
+    function GetDataAccess: IPressDAO;
     function GetHasUser: Boolean;
+    procedure SetDataAccess(AValue: IPressDAO);
   protected
     procedure DoneService; override;
     procedure Finit; override;
@@ -62,6 +70,7 @@ type
     function Logon(const AUserID: string = ''; const APassword: string = ''): Boolean;
     function QueryUser(const AUserID, APassword: string): TPressCustomUser;
     property CurrentUser: TPressCustomUser read GetCurrentUser;
+    property DataAccess: IPressDAO read GetDataAccess write SetDataAccess;
     property HasUser: Boolean read GetHasUser;
     property User: TPressCustomUser read FCurrentUser;
   end;
@@ -72,7 +81,6 @@ implementation
 
 uses
   SysUtils,
-  PressClasses,
   PressConsts;
 
 function PressUserData: TPressCustomUserData;
@@ -123,6 +131,13 @@ begin
   if not Assigned(FCurrentUser) then
     raise EPressError.Create(SNoLoggedUser);
   Result := FCurrentUser;
+end;
+
+function TPressCustomUserData.GetDataAccess: IPressDAO;
+begin
+  if not Assigned(FDataAccess) then
+    FDataAccess := PressDefaultDAO;
+  Result := FDataAccess;
 end;
 
 function TPressCustomUserData.GetHasUser: Boolean;
@@ -176,9 +191,13 @@ begin
   Result := InternalQueryUser(AUserID, APassword);
 end;
 
+procedure TPressCustomUserData.SetDataAccess(AValue: IPressDAO);
+begin
+  FDataAccess := AValue;
+end;
+
 initialization
-  PressApp.Registry[CPressUserDataService].ServiceTypeName :=
-   SPressUserServiceName;
+  PressApp.Registry[CPressUserDataService].ServiceTypeName := SPressUserServiceName;
   TPressCustomUser.RegisterClass;
 
 finalization
