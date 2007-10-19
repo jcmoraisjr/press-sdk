@@ -330,6 +330,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    function SameValue(AValue: Integer): Boolean;
     property PubValue: Integer read GetPubValue write SetPubValue;
     property Value: Integer read GetValue write SetValue;
   end;
@@ -2017,6 +2018,11 @@ end;
 function TPressEnum.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkEnumeration];
+end;
+
+function TPressEnum.SameValue(AValue: Integer): Boolean;
+begin
+  Result := not IsEmpty and (FValue = AValue);
 end;
 
 procedure TPressEnum.SetAsBoolean(AValue: Boolean);
