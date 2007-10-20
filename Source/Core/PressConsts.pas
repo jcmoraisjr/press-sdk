@@ -48,6 +48,7 @@ const
   SPressPersistentIdParamString = 'PressPersistId';
   SPressCalcString = 'Calc';
   SPressQueryItemsString = 'QueryItems';
+  SPressUserAdminId = 'admin';
   SPressReportNativeValueSuffix = 'Value';
   SPressReportDisplayTextSuffix = 'DisplayText';
   SPressDAOServiceName = 'DAO';
@@ -58,11 +59,13 @@ const
 
 var
   { TODO : Implement messages ID }
-  // Error messages from core classes
+  // Error messages from core and adjacent classes
   SCannotReleaseInstance,
   SEnumItemNotFound,
+  SInvalidLogon,
   SMessageAlreadyAssigned,
   SNoLoggedUser,
+  SPasswordsDontMatch,
   SPropertyIsReadOnly,
   SPropertyNotFound,
   SStringLengthOutOfBounds,

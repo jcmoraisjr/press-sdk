@@ -50,6 +50,7 @@ type
     function InternalAccessMode(AResourceId: Integer): TPressAccessMode; virtual;
   public
     function AccessMode(AResourceId: Integer): TPressAccessMode;
+    class function Hash(const APassword: string): string; virtual;
   end;
 
   TPressCustomUserData = class(TPressService)
@@ -104,6 +105,11 @@ end;
 
 procedure TPressCustomUser.BeforeLogoff;
 begin
+end;
+
+class function TPressCustomUser.Hash(const APassword: string): string;
+begin
+  Result := APassword;
 end;
 
 function TPressCustomUser.InternalAccessMode(AResourceId: Integer): TPressAccessMode;
