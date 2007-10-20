@@ -1139,6 +1139,7 @@ class procedure TPressMVPMainFormPresenter.Run;
 begin
   if not Assigned(_PressMVPMainPresenter) then
     Initialize;
+  _PressMVPMainPresenter.Refresh;
   PressApp.Run;
 end;
 
