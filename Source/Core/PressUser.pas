@@ -47,9 +47,9 @@ type
   protected
     procedure AfterLogon; virtual;
     procedure BeforeLogoff; virtual;
-    function InternalAccessMode(AAccessObjectID: Integer): TPressAccessMode; virtual;
+    function InternalAccessMode(AResourceId: Integer): TPressAccessMode; virtual;
   public
-    function AccessMode(AAccessObjectID: Integer): TPressAccessMode;
+    function AccessMode(AResourceId: Integer): TPressAccessMode;
   end;
 
   TPressCustomUserData = class(TPressService)
@@ -63,12 +63,12 @@ type
   protected
     procedure DoneService; override;
     procedure Finit; override;
-    function InternalQueryUser(const AUserID, APassword: string): TPressCustomUser; virtual;
+    function InternalQueryUser(const AUserId, APassword: string): TPressCustomUser; virtual;
     class function InternalServiceType: TPressServiceType; override;
   public
     procedure Logoff;
-    function Logon(const AUserID: string = ''; const APassword: string = ''): Boolean;
-    function QueryUser(const AUserID, APassword: string): TPressCustomUser;
+    function Logon(const AUserId: string = ''; const APassword: string = ''): Boolean;
+    function QueryUser(const AUserId, APassword: string): TPressCustomUser;
     property CurrentUser: TPressCustomUser read GetCurrentUser;
     property DataAccess: IPressDAO read GetDataAccess write SetDataAccess;
     property HasUser: Boolean read GetHasUser;
@@ -90,10 +90,10 @@ end;
 
 { TPressCustomUser }
 
-function TPressCustomUser.AccessMode(AAccessObjectID: Integer): TPressAccessMode;
+function TPressCustomUser.AccessMode(AResourceId: Integer): TPressAccessMode;
 begin
-  if AAccessObjectID >= 0 then
-    Result := InternalAccessMode(AAccessObjectID)
+  if AResourceId >= 0 then
+    Result := InternalAccessMode(AResourceId)
   else
     Result := amWritable;
 end;
@@ -106,8 +106,7 @@ procedure TPressCustomUser.BeforeLogoff;
 begin
 end;
 
-function TPressCustomUser.InternalAccessMode(
-  AAccessObjectID: Integer): TPressAccessMode;
+function TPressCustomUser.InternalAccessMode(AResourceId: Integer): TPressAccessMode;
 begin
   Result := amWritable;
 end;
@@ -146,7 +145,7 @@ begin
 end;
 
 function TPressCustomUserData.InternalQueryUser(
-  const AUserID, APassword: string): TPressCustomUser;
+  const AUserId, APassword: string): TPressCustomUser;
 begin
   Result := TPressCustomUser.Create;
 end;
@@ -166,11 +165,11 @@ begin
   end;
 end;
 
-function TPressCustomUserData.Logon(const AUserID, APassword: string): Boolean;
+function TPressCustomUserData.Logon(const AUserId, APassword: string): Boolean;
 var
   VNewUser: TPressCustomUser;
 begin
-  VNewUser := InternalQueryUser(AUserID, APassword);
+  VNewUser := InternalQueryUser(AUserId, APassword);
   Result := Assigned(VNewUser);
   if Result then
     try
@@ -185,10 +184,10 @@ begin
     end;
 end;
 
-function TPressCustomUserData.QueryUser(const AUserID,
+function TPressCustomUserData.QueryUser(const AUserId,
   APassword: string): TPressCustomUser;
 begin
-  Result := InternalQueryUser(AUserID, APassword);
+  Result := InternalQueryUser(AUserId, APassword);
 end;
 
 procedure TPressCustomUserData.SetDataAccess(AValue: IPressDAO);

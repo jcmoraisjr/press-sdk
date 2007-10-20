@@ -182,16 +182,16 @@ type
 
   TPressMVPCommandRegistry = class(TObject)
   private
-    FAccessID: Integer;
     FAlwaysEnabled: Boolean;
     FCommandClass: TPressMVPCommandClass;
     FEnabledIfNoUser: Boolean;
+    FResourceId: Integer;
   public
     constructor Create(ACommandClass: TPressMVPCommandClass);
-    property AccessID: Integer read FAccessID write FAccessID;
     property AlwaysEnabled: Boolean read FAlwaysEnabled write FAlwaysEnabled;
     property CommandClass: TPressMVPCommandClass read FCommandClass;
     property EnabledIfNoUser: Boolean read FEnabledIfNoUser write FEnabledIfNoUser;
+    property ResourceId: Integer read FResourceId write FResourceId;
   end;
 
   TPressMVPCommandRegistryIterator = class;
@@ -334,15 +334,15 @@ type
 
   TPressMVPModel = class(TPressMVPObject)
   private
-    FAccessChangeObjectID: Integer;
-    FAccessNewObjectID: Integer;
-    FAccessUser: TPressCustomUser;
     FCommands: TPressMVPCommands;
     FNotifier: TPressNotifier;
     FOwnedCommands: TPressMVPCommandList;
     FParent: TPressMVPModel;
+    FResourceIdNewObjects: Integer;
+    FResourceIdObjectChanging: Integer;
     FSelection: TPressMVPSelection;
     FSubject: TPressSubject;
+    FUser: TPressCustomUser;
     function GetCommands: TPressMVPCommands;
     function GetHasParent: Boolean;
     function GetHasSubject: Boolean;
@@ -350,16 +350,16 @@ type
     function GetOwnedCommands: TPressMVPCommandList;
     function GetSelection: TPressMVPSelection;
     function GetSubject: TPressSubject;
-    procedure SetAccessChangeObjectID(Value: Integer);
-    procedure SetAccessID(Value: Integer);
-    procedure SetAccessNewObjectID(Value: Integer);
-    procedure SetAccessUser(Value: TPressCustomUser);
+    procedure SetResourceId(Value: Integer);
+    procedure SetResourceIdNewObjects(Value: Integer);
+    procedure SetResourceIdObjectChanging(Value: Integer);
+    procedure SetUser(Value: TPressCustomUser);
   protected
     procedure InitCommands; virtual;
-    function InternalAccessID: Integer; virtual;
     function InternalAccessMode: TPressAccessMode; virtual;
     function InternalCreateSelection: TPressMVPSelection; virtual;
     function InternalIsIncluding: Boolean; virtual;
+    function InternalResourceId: Integer; virtual;
     procedure Notify(AEvent: TPressEvent); virtual;
     property Commands: TPressMVPCommands read GetCommands;
     property Notifier: TPressNotifier read GetNotifier;
@@ -382,15 +382,15 @@ type
     function RegisterCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     class procedure RegisterModel;
     procedure UpdateData;
-    property AccessChangeObjectID: Integer read FAccessChangeObjectID write SetAccessChangeObjectID;
-    property AccessID: Integer write SetAccessID;
-    property AccessNewObjectID: Integer read FAccessNewObjectID write SetAccessNewObjectID;
-    property AccessUser: TPressCustomUser read FAccessUser write SetAccessUser;
     property HasParent: Boolean read GetHasParent;
     property HasSubject: Boolean read GetHasSubject;
     property Parent: TPressMVPModel read FParent;
+    property ResourceId: Integer write SetResourceId;
+    property ResourceIdNewObjects: Integer read FResourceIdNewObjects write SetResourceIdNewObjects;
+    property ResourceIdObjectChanging: Integer read FResourceIdObjectChanging write SetResourceIdObjectChanging;
     property Selection: TPressMVPSelection read GetSelection;
     property Subject: TPressSubject read GetSubject;
+    property User: TPressCustomUser read FUser write SetUser;
   end;
 
 implementation
@@ -772,8 +772,8 @@ begin
   if PressUserData.HasUser then
   begin
     if Assigned(VCommandReg) and not VCommandReg.AlwaysEnabled and
-     (VCommandReg.AccessID <> -1) then
-      VAccessMode := CurrentUser.AccessMode(VCommandReg.AccessID)
+     (VCommandReg.ResourceId <> -1) then
+      VAccessMode := CurrentUser.AccessMode(VCommandReg.ResourceId)
     else
       VAccessMode := amWritable;
   end else if Assigned(VCommandReg) and
@@ -855,7 +855,7 @@ constructor TPressMVPCommandRegistry.Create(
 begin
   inherited Create;
   FCommandClass := ACommandClass;
-  FAccessID := -1;
+  FResourceId := -1;
 end;
 
 { TPressMVPCommandRegistryList }
@@ -1283,8 +1283,8 @@ begin
   inherited Create;
   FParent := AParent;
   FSubject := ASubject;
-  FAccessChangeObjectID := -1;
-  FAccessNewObjectID := -1;
+  FResourceIdObjectChanging := -1;
+  FResourceIdNewObjects := -1;
   if HasSubject then
   begin
     FSubject.AddRef;
@@ -1303,7 +1303,7 @@ destructor TPressMVPModel.Destroy;
 begin
   FNotifier.Free;
   FCommands.Free;
-  FAccessUser.Free;
+  FUser.Free;
   FSubject.Free;
   FSelection.Free;
   FOwnedCommands.Free;
@@ -1393,31 +1393,23 @@ begin
     InsertCommand(AIndex + I, ACommandClasses[I]);
 end;
 
-function TPressMVPModel.InternalAccessID: Integer;
-begin
-  if InternalIsIncluding then
-    Result := FAccessNewObjectID
-  else
-    Result := FAccessChangeObjectID;
-end;
-
 function TPressMVPModel.InternalAccessMode: TPressAccessMode;
 var
   VUser: TPressCustomUser;
-  VAccessID: Integer;
+  VResourceId: Integer;
 begin
-  VUser := AccessUser;
-  VAccessID := InternalAccessID;
-  if HasParent and (not Assigned(VUser) or (VAccessID = -1)) then
+  VUser := User;
+  VResourceId := InternalResourceId;
+  if HasParent and (not Assigned(VUser) or (VResourceId = -1)) then
   begin
     if not Assigned(VUser) then
-      VUser := Parent.AccessUser;
-    if VAccessID = -1 then
-      VAccessID := Parent.InternalAccessID;
+      VUser := Parent.User;
+    if VResourceId = -1 then
+      VResourceId := Parent.InternalResourceId;
   end;
   if Assigned(VUser) then
-    Result := VUser.AccessMode(VAccessID)
-  else if VAccessID = -1 then
+    Result := VUser.AccessMode(VResourceId)
+  else if VResourceId = -1 then
     Result := amWritable
   else
     Result := amInvisible;
@@ -1434,6 +1426,14 @@ begin
     Result := Parent.InternalIsIncluding
   else
     Result := True;
+end;
+
+function TPressMVPModel.InternalResourceId: Integer;
+begin
+  if InternalIsIncluding then
+    Result := FResourceIdNewObjects
+  else
+    Result := FResourceIdObjectChanging;
 end;
 
 procedure TPressMVPModel.Notify(AEvent: TPressEvent);
@@ -1458,38 +1458,38 @@ begin
   PressDefaultMVPFactory.RegisterModel(Self);
 end;
 
-procedure TPressMVPModel.SetAccessChangeObjectID(Value: Integer);
-begin
-  if FAccessChangeObjectID <> Value then
-  begin
-    FAccessChangeObjectID := Value;
-    Changed(ctDisplay);
-  end;
-end;
-
-procedure TPressMVPModel.SetAccessID(Value: Integer);
+procedure TPressMVPModel.SetResourceId(Value: Integer);
 begin
   { TODO : Improve notification }
-  AccessNewObjectID := Value;
-  AccessChangeObjectID := Value;
+  ResourceIdNewObjects := Value;
+  ResourceIdObjectChanging := Value;
 end;
 
-procedure TPressMVPModel.SetAccessNewObjectID(Value: Integer);
+procedure TPressMVPModel.SetResourceIdNewObjects(Value: Integer);
 begin
-  if FAccessNewObjectID <> Value then
+  if FResourceIdNewObjects <> Value then
   begin
-    FAccessNewObjectID := Value;
+    FResourceIdNewObjects := Value;
     Changed(ctDisplay);
   end;
 end;
 
-procedure TPressMVPModel.SetAccessUser(Value: TPressCustomUser);
+procedure TPressMVPModel.SetResourceIdObjectChanging(Value: Integer);
 begin
-  if FAccessUser <> Value then
+  if FResourceIdObjectChanging <> Value then
   begin
-    FAccessUser.Free;
-    FAccessUser := Value;
-    FAccessUser.AddRef;
+    FResourceIdObjectChanging := Value;
+    Changed(ctDisplay);
+  end;
+end;
+
+procedure TPressMVPModel.SetUser(Value: TPressCustomUser);
+begin
+  if FUser <> Value then
+  begin
+    FUser.Free;
+    FUser := Value;
+    FUser.AddRef;
     Changed(ctDisplay);
   end;
 end;

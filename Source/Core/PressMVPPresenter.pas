@@ -972,7 +972,7 @@ begin
     VModel := TPressMVPModel.CreateFromSubject(
      VParentModel, AObject) as TPressMVPObjectModel;
   VModel.IsIncluding := AIncluding;
-  VModel.AccessUser := PressUserData.User;
+  VModel.User := PressUserData.User;
   if VObjectIsMissing then
     AObject.Release;
 
