@@ -161,7 +161,7 @@ var
   VAttribute: TPressAttribute;
   I: Integer;
 begin
-  Result := AClass.Create(Self);
+  Result := CreateObject(AClass, nil);
   try
     for I := 0 to Pred(ADataSet.FieldCount) do
     begin
@@ -329,7 +329,7 @@ begin
    VMetadata.ObjectClassName).Retrieve(AId, False);
   if Assigned(VInstantObject) then
   begin
-    Result := AClass.Create(Self, AMetadata);
+    Result := CreateObject(AClass, AMetadata);
     try
       PersistentObject[Result] := VInstantObject;
       ReadInstantObject(VInstantObject, Result);
@@ -463,6 +463,13 @@ end;
 procedure TPressInstantObjectsPersistence.ReadInstantObject(
   AInstantObject: TInstantObject; APressObject: TPressObject);
 
+  procedure ReadInstantPart(AInstantPart: TInstantPart; APressPart: TPressPart);
+  begin
+    if APressPart.Proxy.IsEmpty then
+      APressPart.Value := CreateObject(APressPart.ObjectClass, nil);
+    ReadInstantObject(AInstantPart.Value, APressPart.Value);
+  end;
+
   procedure ReadInstantReference(AInstantReference: TInstantReference;
     APressReference: TPressReference);
   var
@@ -592,7 +599,7 @@ begin
         attDate, attTime, attDateTime:
           VPressAttr.AsDateTime := VInstantAttr.AsDateTime;
         attPart:
-          ReadInstantObject(TInstantPart(VInstantAttr).Value, TPressPart(VPressAttr).Value);
+          ReadInstantPart(TInstantPart(VInstantAttr), TPressPart(VPressAttr));
         attReference:
           ReadInstantReference(TInstantReference(VInstantAttr), TPressReference(VPressAttr));
         attParts:

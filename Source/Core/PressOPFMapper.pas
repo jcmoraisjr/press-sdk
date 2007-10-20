@@ -724,7 +724,7 @@ var
   VId: string;
   I: Integer;
 begin
-  Result := AClass.Create(Persistence, AMetadata);
+  Result := Persistence.CreateObject(AClass, AMetadata);
   try
     Result.DisableChanges;
     if AId <> '' then

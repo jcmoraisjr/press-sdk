@@ -79,6 +79,7 @@ type
     property Cache: TPressDAOCache read FCache;
   public
     constructor Create; override;
+    function CreateObject(AClass: TPressObjectClass; AMetadata: TPressObjectMetadata): TPressObject;
     procedure AssignObject(AObject: TPressObject);
     procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
     procedure Commit;
@@ -210,6 +211,19 @@ begin
   FCache := InternalCacheClass.Create;
   FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   FNotifier.AddNotificationItem(Self, [TPressDAOCommit]);
+end;
+
+function TPressDAO.CreateObject(AClass: TPressObjectClass;
+  AMetadata: TPressObjectMetadata): TPressObject;
+begin
+  Result := TPressObject(AClass.NewInstance);
+  try
+    // lacks inherited Create
+    TPressObjectFriend(Result).InitInstance(Self, AMetadata);
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
 end;
 
 procedure TPressDAO.Dispose(AClass: TPressObjectClass; const AId: string);
