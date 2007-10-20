@@ -675,6 +675,7 @@ type
     procedure UnchangeMementos;
     property Mementos: TPressObjectMementoList read GetMementos;
   protected
+    procedure AfterCreate; virtual;
     procedure AfterCreateAttributes; virtual;
     procedure AfterDispose; virtual;
     procedure AfterRetrieve; virtual;
@@ -686,6 +687,7 @@ type
     procedure Finit; override;
     function GetOwner: TPersistent; override;
     procedure Init; virtual;
+    procedure InitInstance(ADataAccess: IPressDAO; AMetadata: TPressObjectMetadata);
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; virtual;
     procedure InternalCalcAttribute(AAttribute: TPressAttribute); virtual;
     procedure InternalChanged(AChangedWhenDisabled: Boolean); override;
@@ -2732,6 +2734,10 @@ end;
 
 { TPressObject }
 
+procedure TPressObject.AfterCreate;
+begin
+end;
+
 procedure TPressObject.AfterCreateAttributes;
 begin
 end;
@@ -2874,9 +2880,8 @@ constructor TPressObject.Create(
   ADataAccess: IPressDAO; AMetadata: TPressObjectMetadata);
 begin
   inherited Create;
-  FDataAccess := ADataAccess;
-  FMetadata := AMetadata;
-  Init;
+  InitInstance(ADataAccess, AMetadata);
+  AfterCreate;
 end;
 
 function TPressObject.CreateAttributeIterator: TPressAttributeIterator;
@@ -3085,12 +3090,20 @@ end;
 
 procedure TPressObject.Init;
 begin
+end;
+
+procedure TPressObject.InitInstance(
+  ADataAccess: IPressDAO; AMetadata: TPressObjectMetadata);
+begin
+  FDataAccess := ADataAccess;
+  FMetadata := AMetadata;
   FAttributes := TPressAttributeList.Create(True);
   DisableChanges;
   try
     CreateAttributes;
     if Assigned(FDataAccess) then
       FDataAccess.AssignObject(Self);
+    Init;
   finally
     EnableChanges;
   end;
@@ -3231,9 +3244,7 @@ begin
     Self := VInstance;
   end else
   begin
-    FDataAccess := ADataAccess;
-    FMetadata := AMetadata;
-    Init;
+    InitInstance(ADataAccess, AMetadata);
     DisableChanges;
     try
       FId.AsString := AId;
