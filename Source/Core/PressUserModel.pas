@@ -78,6 +78,7 @@ type
     procedure PopulateResources;
     procedure SetAccessMode(AResourceId: Integer; AValue: TPressAccessMode);
   protected
+    procedure AfterCreate; override;
     procedure AfterRetrieve; override;
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
@@ -305,6 +306,12 @@ begin
 end;
 
 { TPressUserGroup }
+
+procedure TPressUserGroup.AfterCreate;
+begin
+  inherited;
+  PopulateResources;
+end;
 
 procedure TPressUserGroup.AfterRetrieve;
 begin
