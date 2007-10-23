@@ -3699,31 +3699,28 @@ begin
 end;
 
 procedure TPressItems.AssignProxyList(AProxyList: TPressProxyList);
+var
+  I: Integer;
 begin
-  Clear;
-  FProxyList.Free;
-  FProxyList := AProxyList;
-  if Assigned(FProxyList) then
-  begin
-    FProxyList.OnChangeList := {$IFDEF FPC}@{$ENDIF}ChangedList;
-    DisableChanges;
-    try
-      with FProxyList.CreateIterator do
-      try
-        BeforeFirstItem;
-        while NextItem do
-        begin
-          ValidateProxy(CurrentItem);
-          BindProxy(CurrentItem);
-        end;
-      finally
-        Free;
+  DisableChanges;
+  try
+    Clear;
+    FProxyList.Free;
+    FProxyList := AProxyList;
+    if Assigned(FProxyList) then
+    begin
+      FProxyList.OnChangeList := {$IFDEF FPC}@{$ENDIF}ChangedList;
+      for I := 0 to Pred(FProxyList.Count) do
+      begin
+        ValidateProxy(FProxyList[I]);
+        BindProxy(FProxyList[I]);
       end;
-    finally
-      EnableChanges;
+      Changed;
     end;
-    NotifyRebuild;
+  finally
+    EnableChanges;
   end;
+  NotifyRebuild;
 end;
 
 procedure TPressItems.ChangedInstance(
