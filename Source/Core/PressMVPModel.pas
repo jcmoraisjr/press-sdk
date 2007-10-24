@@ -1330,12 +1330,6 @@ function TPressMVPObjectItem.GetAttributes: TPressAttributeList;
     VSubject: TPressItems;
     I: Integer;
   begin
-    if FOwner.Model.HasSubject then
-      VSubject := FOwner.Model.Subject
-    else
-      VSubject := nil;
-    if VSubject is TPressReferences then
-      Notifier.AddNotificationItem(VSubject, [TPressReferenceChangedEvent]);
     VColumnData := FOwner.ColumnData;
     for I := 0 to Pred(VColumnData.ColumnCount) do
     begin
@@ -1343,6 +1337,12 @@ function TPressMVPObjectItem.GetAttributes: TPressAttributeList;
       FAttributes.Add(VAttribute);
       if Assigned(VAttribute) then
         VAttribute.AddRef;
+    end;
+    if FOwner.Model.HasSubject then
+    begin
+      VSubject := FOwner.Model.Subject;
+      if VSubject is TPressReferences then
+        Notifier.AddNotificationItem(VSubject, [TPressReferenceChangedEvent]);
     end;
   end;
 
