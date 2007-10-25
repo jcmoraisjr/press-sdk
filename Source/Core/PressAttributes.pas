@@ -1173,7 +1173,10 @@ end;
 procedure TPressString.Assign(Source: TPersistent);
 begin
   if Source is TPressString then
-    PubValue := TPressString(Source).PubValue
+    if not TPressString(Source).IsNull then
+      PubValue := TPressString(Source).PubValue
+    else
+      Clear
   else
     inherited;
 end;
@@ -1444,7 +1447,10 @@ end;
 procedure TPressInteger.Assign(Source: TPersistent);
 begin
   if Source is TPressInteger then
-    PubValue := TPressInteger(Source).PubValue
+    if not TPressInteger(Source).IsNull then
+      PubValue := TPressInteger(Source).PubValue
+    else
+      Clear
   else
     inherited;
 end;
@@ -1598,7 +1604,10 @@ end;
 procedure TPressFloat.Assign(Source: TPersistent);
 begin
   if Source is TPressFloat then
-    PubValue := TPressFloat(Source).PubValue
+    if not TPressFloat(Source).IsNull then
+      PubValue := TPressFloat(Source).PubValue
+    else
+      Clear
   else
     inherited;
 end;
@@ -1752,7 +1761,10 @@ end;
 procedure TPressCurrency.Assign(Source: TPersistent);
 begin
   if Source is TPressCurrency then
-    PubValue := TPressCurrency(Source).PubValue
+    if not TPressCurrency(Source).IsNull then
+      PubValue := TPressCurrency(Source).PubValue
+    else
+      Clear
   else
     inherited;
 end;
@@ -1926,10 +1938,10 @@ end;
 procedure TPressEnum.Assign(Source: TPersistent);
 begin
   if Source is TPressEnum then
-    if TPressEnum(Source).IsNull then
-      Clear
-    else
+    if not TPressEnum(Source).IsNull then
       PubValue := TPressEnum(Source).PubValue
+    else
+      Clear
   else
     inherited;
 end;
@@ -2113,7 +2125,10 @@ end;
 procedure TPressBoolean.Assign(Source: TPersistent);
 begin
   if Source is TPressBoolean then
-    PubValue := TPressBoolean(Source).PubValue
+    if not TPressBoolean(Source).IsNull then
+      PubValue := TPressBoolean(Source).PubValue
+    else
+      Clear
   else
     inherited;
 end;
@@ -2274,7 +2289,10 @@ end;
 procedure TPressDate.Assign(Source: TPersistent);
 begin
   if Source is TPressDate then
-    PubValue := TPressDate(Source).PubValue
+    if not TPressDate(Source).IsNull then
+      PubValue := TPressDate(Source).PubValue
+    else
+      Clear
   else
     inherited;
 end;
@@ -2449,7 +2467,10 @@ end;
 procedure TPressTime.Assign(Source: TPersistent);
 begin
   if Source is TPressTime then
-    PubValue := TPressTime(Source).PubValue
+    if not TPressTime(Source).IsNull then
+      PubValue := TPressTime(Source).PubValue
+    else
+      Clear
   else
     inherited;
 end;
@@ -2613,7 +2634,10 @@ end;
 procedure TPressDateTime.Assign(Source: TPersistent);
 begin
   if Source is TPressDateTime then
-    PubValue := TPressDateTime(Source).PubValue
+    if not TPressDateTime(Source).IsNull then
+      PubValue := TPressDateTime(Source).PubValue
+    else
+      Clear
   else
     inherited;
 end;
@@ -3098,7 +3122,8 @@ begin
     Changing;
     Stream.LoadFromStream(AStream);
     ValueAssigned;
-  end;
+  end else
+    Clear;
 end;
 
 procedure TPressBlob.SaveToStream(AStream: TStream);
