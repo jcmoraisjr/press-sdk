@@ -209,6 +209,7 @@ type
     FViewDblClickEvent: TNotifyEvent;
     FViewMouseDownEvent: TMouseEvent;
     FViewMouseUpEvent: TMouseEvent;
+    function AccessError(const ADataType: string): EPressMVPError;
     function GetModel: TPressMVPModel;
     function GetReadOnly: Boolean;
     procedure SetAccessMode(Value: TPressAccessMode);
@@ -220,6 +221,7 @@ type
     procedure ViewMouseUpEvent(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer); virtual;
   protected
     procedure Changed;
+    function GetText: string; virtual;
     procedure InitView; virtual;
     procedure InternalAccessModeUpdated; virtual;
     procedure InternalReset; virtual;
@@ -228,6 +230,7 @@ type
     procedure Notify(AEvent: TPressEvent);
     procedure ReleaseControl; virtual;
     procedure SetModel(Value: TPressMVPModel);
+    procedure SetText(const Value: string); virtual;
     procedure Unchanged;
     property Model: TPressMVPModel read GetModel;
   public
@@ -243,17 +246,18 @@ type
     property IsChanged: Boolean read FIsChanged;
     property OwnsControl: Boolean read FOwnsControl write FOwnsControl;
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
+    property Text: string read GetText write SetText;
   end;
 
   TPressMVPAttributeView = class(TPressMVPView)
   private
-    function AccessError(const ADataType: string): EPressMVPError;
     function GetModel: TPressMVPAttributeModel;
   protected
     function GetAsBoolean: Boolean; virtual;
     function GetAsDateTime: TDateTime; virtual;
     function GetAsInteger: Integer; virtual;
     function GetAsString: string; virtual;
+    function GetText: string; override;
     function GetIsClear: Boolean; virtual;
     procedure InternalClear; virtual;
     procedure SetSize(Value: Integer); virtual;
@@ -309,6 +313,7 @@ type
     procedure InternalUpdate; override;
     procedure ReleaseControl; override;
     procedure SetSize(Value: Integer); override;
+    procedure SetText(const Value: string); override;
   public
     class function Apply(AControl: TControl): Boolean; override;
     property Control: TCustomEdit read GetControl;
@@ -505,6 +510,7 @@ type
   protected
     function GetAsString: string; override;
     procedure InternalUpdate; override;
+    procedure SetText(const Value: string); override;
   end;
 
   TPressMVPLabelView = class(TPressMVPCaptionView)
@@ -542,8 +548,10 @@ type
   protected
     procedure ViewCloseEvent(Sender: TObject; var Action: TCloseAction); virtual;
   protected
+    function GetText: string; override;
     procedure InitView; override;
     procedure ReleaseControl; override;
+    procedure SetText(const Value: string); override;
   public
     class function Apply(AControl: TControl): Boolean; override;
     procedure Close;
@@ -723,6 +731,13 @@ end;
 
 { TPressMVPView }
 
+function TPressMVPView.AccessError(
+  const ADataType: string): EPressMVPError;
+begin
+  Result := EPressMVPError.CreateFmt(SViewAccessError,
+   [ClassName, Control.Name, ADataType]);
+end;
+
 procedure TPressMVPView.Changed;
 begin
   FIsChanged := True;
@@ -762,6 +777,11 @@ end;
 function TPressMVPView.GetReadOnly: Boolean;
 begin
   Result := AccessMode <> amWritable;
+end;
+
+function TPressMVPView.GetText: string;
+begin
+  raise AccessError('Text');
 end;
 
 procedure TPressMVPView.InitView;
@@ -855,6 +875,11 @@ begin
     AccessMode := amWritable;
 end;
 
+procedure TPressMVPView.SetText(const Value: string);
+begin
+  raise AccessError('Text');
+end;
+
 procedure TPressMVPView.Unchanged;
 begin
   FIsChanged := False;
@@ -905,13 +930,6 @@ end;
 
 { TPressMVPAttributeView }
 
-function TPressMVPAttributeView.AccessError(
-  const ADataType: string): EPressMVPError;
-begin
-  Result := EPressMVPError.CreateFmt(SViewAccessError,
-   [ClassName, Control.Name, ADataType]);
-end;
-
 procedure TPressMVPAttributeView.Clear;
 begin
   InternalClear;
@@ -952,6 +970,11 @@ end;
 function TPressMVPAttributeView.GetModel: TPressMVPAttributeModel;
 begin
   Result := inherited Model as TPressMVPAttributeModel;
+end;
+
+function TPressMVPAttributeView.GetText: string;
+begin
+  Result := AsString;
 end;
 
 procedure TPressMVPAttributeView.InternalClear;
@@ -1151,6 +1174,11 @@ end;
 procedure TPressMVPEditView.SetSize(Value: Integer);
 begin
   TPressMVPViewCustomEditFriend(Control).MaxLength := Value;
+end;
+
+procedure TPressMVPEditView.SetText(const Value: string);
+begin
+  TPressMVPViewCustomEditFriend(Control).Text := Value;
 end;
 
 procedure TPressMVPEditView.ViewChangeEvent(Sender: TObject);
@@ -1823,6 +1851,11 @@ begin
     TPressMVPViewControlFriend(Control).Caption := Model.AsString;
 end;
 
+procedure TPressMVPCaptionView.SetText(const Value: string);
+begin
+  TPressMVPViewControlFriend(Control).Caption := Value;
+end;
+
 { TPressMVPLabelView }
 
 class function TPressMVPLabelView.Apply(AControl: TControl): Boolean;
@@ -1898,6 +1931,11 @@ begin
   Result := inherited Control as TCustomForm;
 end;
 
+function TPressMVPFormView.GetText: string;
+begin
+  Result := Control.Caption;
+end;
+
 procedure TPressMVPFormView.InitView;
 begin
   inherited;
@@ -1915,6 +1953,11 @@ begin
     OnClose := FViewCloseEvent;
   end;
   inherited;
+end;
+
+procedure TPressMVPFormView.SetText(const Value: string);
+begin
+  Control.Caption := Value;
 end;
 
 procedure TPressMVPFormView.ViewCloseEvent(Sender: TObject; var Action: TCloseAction);
