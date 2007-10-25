@@ -145,6 +145,11 @@ type
     property CurrentItem: TPressMVPPresenter read GetCurrentItem;
   end;
 
+  TPressMVPNullPresenter = class(TPressMVPPresenter)
+  public
+    class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
+  end;
+
   TPressMVPValuePresenter = class(TPressMVPPresenter)
   private
     function GetModel: TPressMVPValueModel;
@@ -615,6 +620,14 @@ begin
   Result := inherited CurrentItem as TPressMVPPresenter;
 end;
 
+{ TPressMVPNullPresenter }
+
+class function TPressMVPNullPresenter.Apply(AModel: TPressMVPModel;
+  AView: TPressMVPView): Boolean;
+begin
+  Result := AModel is TPressMVPNullModel;
+end;
+
 { TPressMVPValuePresenter }
 
 class function TPressMVPValuePresenter.Apply(AModel: TPressMVPModel;
@@ -789,7 +802,10 @@ var
   VModel: TPressMVPModel;
   VView: TPressMVPView;
 begin
-  VAttribute := AttributeByName(AAttributeName);
+  if AAttributeName <> '' then
+    VAttribute := AttributeByName(AAttributeName)
+  else
+    VAttribute := nil;
   VControl := View.ControlByName(AControlName);
   if Assigned(AModelClass) then
     VModel := AModelClass.Create(Model, VAttribute)
@@ -1145,6 +1161,7 @@ end;
 
 procedure RegisterPresenters;
 begin
+  TPressMVPNullPresenter.RegisterPresenter;
   TPressMVPValuePresenter.RegisterPresenter;
   TPressMVPEnumPresenter.RegisterPresenter;
   TPressMVPReferencePresenter.RegisterPresenter;

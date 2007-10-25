@@ -85,6 +85,11 @@ type
     property Subject: TPressAttribute read GetSubject;
   end;
 
+  TPressMVPNullModel = class(TPressMVPAttributeModel)
+  public
+    class function Apply(ASubject: TPressSubject): Boolean; override;
+  end;
+
   { Base Value Models }
 
   TPressMVPValueModel = class(TPressMVPAttributeModel)
@@ -556,6 +561,13 @@ end;
 function TPressMVPAttributeModel.GetSubject: TPressAttribute;
 begin
   Result := inherited Subject as TPressAttribute;
+end;
+
+{ TPressMVPNullModel }
+
+class function TPressMVPNullModel.Apply(ASubject: TPressSubject): Boolean;
+begin
+  Result := not Assigned(ASubject);
 end;
 
 { TPressMVPValueModel }
@@ -2073,6 +2085,7 @@ begin
 end;
 
 initialization
+  TPressMVPNullModel.RegisterModel;
   TPressMVPValueModel.RegisterModel;
   TPressMVPEnumModel.RegisterModel;
   TPressMVPDateModel.RegisterModel;

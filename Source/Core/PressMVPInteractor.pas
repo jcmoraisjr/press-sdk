@@ -1259,6 +1259,8 @@ begin
 end;
 
 procedure TPressMVPNotifySubModelsInteractor.Notify(AEvent: TPressEvent);
+var
+  VModel: TPressMVPModel;
 begin
   inherited;
   if AEvent is TPressMVPModelChangedEvent then
@@ -1267,8 +1269,11 @@ begin
     try
       BeforeFirstItem;
       while NextItem do
-        CurrentItem.Model.Changed(
-         TPressMVPModelChangedEvent(AEvent).ChangeType);
+      begin
+        VModel := CurrentItem.Model;
+        if VModel.HasSubject then
+          VModel.Changed(TPressMVPModelChangedEvent(AEvent).ChangeType);
+      end;
     finally
       Free;
     end;

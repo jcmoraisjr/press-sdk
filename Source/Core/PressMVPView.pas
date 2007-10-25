@@ -802,13 +802,13 @@ end;
 
 procedure TPressMVPView.InternalAccessModeUpdated;
 begin
-  InternalUpdate;
+  Update;
 end;
 
 procedure TPressMVPView.InternalReset;
 begin
   AccessMode := Model.AccessMode;
-  InternalUpdate;
+  Update;
 end;
 
 procedure TPressMVPView.InternalUpdate;
@@ -887,7 +887,8 @@ end;
 
 procedure TPressMVPView.Update;
 begin
-  InternalUpdate;
+  if Model.HasSubject then
+    InternalUpdate;
 end;
 
 procedure TPressMVPView.ViewClickEvent(Sender: TObject);

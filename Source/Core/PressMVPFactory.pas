@@ -344,23 +344,26 @@ function TPressMVPFactory.MVPModelFactory(
   AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
 var
   VModelClass, VCandidateClass: TPressMVPModelClass;
+  VClassName: string;
   I: Integer;
 begin
-  if Assigned(ASubject) then
+  VCandidateClass := nil;
+  for I := 0 to Pred(FModels.Count) do
   begin
-    VCandidateClass := nil;
-    for I := 0 to Pred(FModels.Count) do
-    begin
-      VModelClass := TPressMVPModelClass(FModels[I]);
-      if VModelClass.Apply(ASubject) then
-        VCandidateClass := TPressMVPModelClass(
-         ChooseConcreteClass(VCandidateClass, VModelClass));
-    end;
-    if not Assigned(VCandidateClass) then
-      raise EPressMVPError.CreateFmt(SUnsupportedObject,
-       [TPressMVPModel.ClassName, ASubject.ClassName]);
-  end else
-    raise EPressMVPError.Create(SUnassignedSubject);
+    VModelClass := TPressMVPModelClass(FModels[I]);
+    if VModelClass.Apply(ASubject) then
+      VCandidateClass := TPressMVPModelClass(
+       ChooseConcreteClass(VCandidateClass, VModelClass));
+  end;
+  if not Assigned(VCandidateClass) then
+  begin
+    if Assigned(ASubject) then
+      VClassName := ASubject.ClassName
+    else
+      VClassName := SPressNilString;
+    raise EPressMVPError.CreateFmt(SUnsupportedObject,
+     [TPressMVPModel.ClassName, VClassName]);
+  end;
   Result := VCandidateClass.Create(AParent, ASubject);
 end;
 
