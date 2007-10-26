@@ -19,14 +19,20 @@ unit PressMVPView;
 interface
 
 uses
+{$IFDEF BORLAND_CG}
+  Windows,
+{$ENDIF}
   Classes,
   Graphics,
   Controls,
   StdCtrls,
+  ComCtrls,
   ExtCtrls,
   Grids,
+{$IFDEF FPC}
+  Calendar,
+{$ENDIF}
   Forms,
-  PressCompatibility,
   PressNotifier,
   PressSubject,
   PressUser,
@@ -34,6 +40,16 @@ uses
   PressMVPModel;
 
 type
+{$IFDEF BORLAND_CG}
+  TCustomDrawGrid = Grids.TDrawGrid;
+  TCustomCalendar = ComCtrls.TCommonCalendar;
+{$ENDIF}
+
+{$IFDEF FPC}
+  TDrawCellEvent = TOnDrawCell;
+  TSelectCellEvent = TOnSelectCellEvent;
+{$ENDIF}
+
   { TPressMVPViewEvent }
 
   TPressMVPView = class;

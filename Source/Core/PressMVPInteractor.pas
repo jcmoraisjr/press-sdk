@@ -19,14 +19,14 @@ unit PressMVPInteractor;
 interface
 
 uses
+{$IFDEF BORLAND_CG}
+  Windows,
+{$ENDIF}
   Classes,
   Controls,
   Graphics,
   StdCtrls,
   Grids,
-{$IFDEF BORLAND_CG}
-  PressCompatibility,
-{$ENDIF}
   PressNotifier,
   PressSubject,
   PressAttributes,

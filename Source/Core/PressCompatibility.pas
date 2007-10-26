@@ -21,28 +21,12 @@ unit PressCompatibility;
 interface
 
 uses
-  Classes,
-  {$IFDEF D6Up}Variants,{$ENDIF}
-  {$IFDEF FPC}Calendar{$ELSE}ComCtrls{$ENDIF}, Grids
-  {$IFDEF BORLAND_CG}, Windows{$ENDIF};
+  Classes;
 
+{$IFDEF D5Down}
 type
-  {$IFDEF D5Down}
   IInterface = IUnknown;
-  {$ENDIF}
-
-  {$IFDEF BORLAND_CG}
-  TRect = Windows.TRect;
-  TCustomDrawGrid = TDrawGrid;
-  {$ENDIF}
-
-  {$IFDEF FPC}
-  TDrawCellEvent = TOnDrawCell;
-  TSelectCellEvent = TOnSelectCellEvent;
-  {$ENDIF}
-
-  TCustomCalendar =
-   {$IFDEF FPC}Calendar.TCustomCalendar{$ELSE}ComCtrls.TCommonCalendar{$ENDIF};
+{$ENDIF}
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
 procedure GenerateGUID(out AGUID: TGUID);
@@ -57,13 +41,22 @@ implementation
 uses
   SysUtils,
   TypInfo,
+{$IFDEF BORLAND_CG}
+  Windows,
+  ActiveX,
+  ComObj,
+  {$IFDEF D6Up}
+    MaskUtils,
+  {$ELSE}
+    Mask,
+  {$ENDIF}
+{$ENDIF}
   PressClasses,
-  PressConsts,
-  {$IFDEF FPC}MaskEdit{$ELSE}ActiveX, ComObj,
-  {$IFDEF D6Up}MaskUtils{$ELSE}Mask{$ENDIF}{$ENDIF};
+  PressConsts;
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
 begin
+  { TODO : MaskEdit for plain/laz/mse FPC }
   Result :=
    {$IFDEF FPC}Value{$ELSE}{$IFDEF D6Up}MaskUtils{$ELSE}Mask{$ENDIF}
    .FormatMaskText(EditMask, Value){$ENDIF};
