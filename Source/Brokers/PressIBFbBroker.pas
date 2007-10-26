@@ -20,7 +20,6 @@ interface
 
 uses
   PressOPFClasses,
-  PressOPFMapper,
   PressOPFSQLBuilder;
 
 type
