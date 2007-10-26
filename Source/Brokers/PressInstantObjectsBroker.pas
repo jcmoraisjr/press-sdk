@@ -442,8 +442,8 @@ const
    ftCurrency,   // attCurrency
    ftSmallint,   // attEnum
    ftBoolean,    // attBoolean
-   ftDate,       // attDate
-   ftTime,       // attTime
+   ftDateTime,   // attDate
+   ftDateTime,   // attTime
    ftDateTime,   // attDateTime
    ftUnknown,    // attVariant
    ftMemo,       // attMemo
