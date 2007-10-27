@@ -495,8 +495,8 @@ begin
   begin
     FReport :=
      PressApp.CreateDefaultService(CPressReportService) as TPressReport;
-    FReport.OnNeedValue := ReportNeedValue;
-    FReport.OnNeedUpdateFields := LoadFields;
+    FReport.OnNeedValue := {$IFDEF FPC}@{$ENDIF}ReportNeedValue;
+    FReport.OnNeedUpdateFields := {$IFDEF FPC}@{$ENDIF}LoadFields;
     LoadReport;
     LoadMetadatas;
     LoadFields;

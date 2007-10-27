@@ -67,7 +67,11 @@ type
 implementation
 
 uses
+{$IFDEF BORLAND_CG}
   Windows,
+{$ELSE}
+  LCLType,
+{$ENDIF}
   Menus,
   PressApplication,
   PressConsts,

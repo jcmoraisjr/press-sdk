@@ -1,5 +1,5 @@
 (*
-  PressObjects, FastReport Broker
+  PressObjects, FastReport/FreeReport/LazReport Broker
   Copyright (C) 2006 Laserpress Ltda.
 
   http://www.pressobjects.org
@@ -19,7 +19,13 @@ unit PressFastReportBroker;
 interface
 
 uses
-  Classes, FR_Class, FR_DSet, FR_Desgn, PressReport;
+  Classes,
+{$IFDEF BORLAND_CG}
+  FR_Class, FR_DSet, FR_Desgn,
+{$ELSE}
+  lr_class, lr_dset, lr_desgn,
+{$ENDIF}
+  PressReport;
 
 type
   TPressFRReport = class(TPressReport)
@@ -53,7 +59,9 @@ type
 implementation
 
 uses
-  SysUtils, Forms, PressConsts;
+  SysUtils,
+  Forms,
+  PressConsts;
 
 { TPressFRReport }
 
@@ -62,7 +70,7 @@ begin
   inherited Create;
   FOwner := TForm.Create(nil);
   FReport := TfrReport.Create(FOwner);
-  FReport.OnGetValue := ReportGetValue;
+  FReport.OnGetValue := {$IFDEF FPC}@{$ENDIF}ReportGetValue;
 end;
 
 procedure TPressFRReport.Finit;
@@ -153,7 +161,7 @@ begin
   FDataSet := TfrDataSet.Create(AOwner);
   FDataSet.Name := StringReplace(
    AName, SPressAttributeSeparator, SPressIdentifierSeparator, [rfReplaceAll]);
-  FDataSet.OnCheckEOF := ReportCheckEof;
+  FDataSet.OnCheckEOF := {$IFDEF FPC}@{$ENDIF}ReportCheckEof;
 end;
 
 destructor TPressFRReportDataSet.Destroy;
