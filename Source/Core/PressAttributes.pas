@@ -20,6 +20,7 @@ interface
 
 uses
   Classes,
+  Contnrs,
   TypInfo,
   Graphics,
   PressClasses,
@@ -53,7 +54,7 @@ type
     FProxy: TPressProxy;
     FProxyClone: TPressProxy;
     FState: TPressItemState;
-    FSubjectMemento: TPressObjectMemento;
+    FSubjectSavePoint: TPressSavePoint;
   protected
     procedure Init; override;
     procedure ItemAdded;
@@ -64,7 +65,6 @@ type
     property OldIndex: Integer read FOldIndex;
     property Proxy: TPressProxy read FProxy;
     property State: TPressItemState read FState;
-    property SubjectMemento: TPressObjectMemento read FSubjectMemento;
   public
     constructor Create(AOwner: TPressStructure; AProxy: TPressProxy);
     destructor Destroy; override;
@@ -113,31 +113,6 @@ type
   public
     constructor Create(AOwner: TPressItems);
     destructor Destroy; override;
-  end;
-
-  TPressItemsMementoIterator = class;
-
-  TPressItemsMementoList = class(TPressList)
-  private
-    function GetItems(AIndex: Integer): TPressItemsMemento;
-    procedure SetItems(AIndex: Integer; Value: TPressItemsMemento);
-  protected
-    function InternalCreateIterator: TPressCustomIterator; override;
-  public
-    function Add(AObject: TPressItemsMemento): Integer;
-    function CreateIterator: TPressItemsMementoIterator;
-    function Extract(AObject: TPressItemsMemento): TPressItemsMemento;
-    function IndexOf(AObject: TPressItemsMemento): Integer;
-    procedure Insert(Index: Integer; AObject: TPressItemsMemento);
-    function Remove(AObject: TPressItemsMemento): Integer;
-    property Items[AIndex: Integer]: TPressItemsMemento read GetItems write SetItems; default;
-  end;
-
-  TPressItemsMementoIterator = class(TPressIterator)
-  private
-    function GetCurrentItem: TPressItemsMemento;
-  public
-    property CurrentItem: TPressItemsMemento read GetCurrentItem;
   end;
 
   { Value attributes declarations }
@@ -647,15 +622,15 @@ type
   private
     { TODO : Implement added/removed proxies functionality }
     FAddedProxies: TPressProxyList;
-    FMementos: TPressItemsMementoList;
+    FMementos: TObjectList;
     FProxyList: TPressProxyList;
     FRemovedProxies: TPressProxyList;
     function GetAddedProxies: TPressProxyList;
-    function GetMementos: TPressItemsMementoList;
     function GetObjects(AIndex: Integer): TPressObject;
     function GetProxies(AIndex: Integer): TPressProxy;
     function GetProxyList: TPressProxyList;
     function GetRemovedProxies: TPressProxyList;
+    procedure ReleaseMemento(AMemento: TPressItemsMemento);
     procedure SetObjects(AIndex: Integer; AValue: TPressObject);
   protected
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
@@ -670,9 +645,8 @@ type
     function InternalCreateMemento: TPressAttributeMemento; override;
     procedure InternalUnassignObject(AObject: TPressObject); override;
     procedure InternalUnchanged; override;
-    procedure NotifyMementos(AProxy: TPressProxy; AItemState: TPressItemState; AOldIndex: Integer = -1);
+    procedure NotifyMemento(AProxy: TPressProxy; AItemState: TPressItemState; AOldIndex: Integer = -1);
     procedure NotifyRebuild;
-    property Mementos: TPressItemsMementoList read GetMementos;
     property ProxyList: TPressProxyList read GetProxyList;
     (*
     function InternalCreateIterator: TPressItemsIterator; override;
@@ -751,7 +725,6 @@ implementation
 
 uses
   SysUtils,
-  Contnrs,
   {$IFNDEF D5Down}Variants,{$ENDIF}
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressConsts;
@@ -830,7 +803,6 @@ destructor TPressItemMemento.Destroy;
 begin
   FProxy.Free;
   FProxyClone.Free;
-  FSubjectMemento.Free;
   inherited;
 end;
 
@@ -866,9 +838,8 @@ begin
     inherited;
     FProxyClone.Free;
     FProxyClone := FProxy.Clone;
-    FreeAndNil(FSubjectMemento);
     if FProxy.HasInstance and (FProxy.ProxyType = ptOwned) then
-      FSubjectMemento := FProxy.Instance.CreateMemento;
+      FSubjectSavePoint := FProxy.Instance.Memento.SavePoint;
     FState := isModified;
   end;
 end;
@@ -893,8 +864,8 @@ procedure TPressItemMemento.Restore;
     {$IFDEF PressLogSubjectMemento}PressLogMsg(Self, 'Restoring modified ' + Owner.Signature);{$ENDIF}
     if Assigned(FProxyClone) then
       FProxy.Assign(FProxyClone);
-    if Assigned(FSubjectMemento) then
-      FSubjectMemento.Restore;
+    if FProxy.HasInstance and (FProxy.ProxyType = ptOwned) then
+      FProxy.Instance.Memento.Restore(FSubjectSavePoint);
   end;
 
   procedure RestoreDeleted;
@@ -1021,7 +992,7 @@ end;
 
 destructor TPressItemsMemento.Destroy;
 begin
-  Owner.Mementos.Extract(Self);
+  Owner.ReleaseMemento(Self);  // friend class
   FItems.Free;
   inherited;
 end;
@@ -1075,66 +1046,6 @@ begin
   end;
   RestoreChanged;
   Owner.NotifyRebuild;  // friend class
-end;
-
-{ TPressItemsMementoList }
-
-function TPressItemsMementoList.Add(AObject: TPressItemsMemento): Integer;
-begin
-  Result := inherited Add(AObject);
-end;
-
-function TPressItemsMementoList.CreateIterator: TPressItemsMementoIterator;
-begin
-  Result := TPressItemsMementoIterator.Create(Self);
-end;
-
-function TPressItemsMementoList.Extract(
-  AObject: TPressItemsMemento): TPressItemsMemento;
-begin
-  Result := inherited Extract(AObject) as TPressItemsMemento;
-end;
-
-function TPressItemsMementoList.GetItems(
-  AIndex: Integer): TPressItemsMemento;
-begin
-  Result := inherited Items[AIndex] as TPressItemsMemento;
-end;
-
-function TPressItemsMementoList.IndexOf(
-  AObject: TPressItemsMemento): Integer;
-begin
-  Result := inherited IndexOf(AObject);
-end;
-
-procedure TPressItemsMementoList.Insert(
-  Index: Integer; AObject: TPressItemsMemento);
-begin
-  inherited Insert(Index, AObject);
-end;
-
-function TPressItemsMementoList.InternalCreateIterator: TPressCustomIterator;
-begin
-  Result := CreateIterator;
-end;
-
-function TPressItemsMementoList.Remove(
-  AObject: TPressItemsMemento): Integer;
-begin
-  Result := inherited Remove(AObject);
-end;
-
-procedure TPressItemsMementoList.SetItems(
-  AIndex: Integer; Value: TPressItemsMemento);
-begin
-  inherited Items[AIndex] := Value;
-end;
-
-{ TPressItemsMementoIterator }
-
-function TPressItemsMementoIterator.GetCurrentItem: TPressItemsMemento;
-begin
-  Result := inherited CurrentItem as TPressItemsMemento;
 end;
 
 { TPressValue }
@@ -3810,7 +3721,7 @@ procedure TPressItems.ChangedList(
           end;
           BindProxy(Item);
           AddedProxy;
-          NotifyMementos(Item, isAdded);
+          NotifyMemento(Item, isAdded);
         end;
       else {lnExtracted, lnDeleted}
         begin
@@ -3820,7 +3731,7 @@ procedure TPressItems.ChangedList(
           VIndex := -1;
           RemovedProxy;
           { TODO : OldIndex? }
-          NotifyMementos(Item, isDeleted, -1);
+          NotifyMemento(Item, isDeleted, -1);
         end;
     end;
     TPressItemsChangedEvent.Create(Self, Item, VIndex, VEventType).Notify;
@@ -3918,13 +3829,6 @@ begin
   Result := Count = 0;
 end;
 
-function TPressItems.GetMementos: TPressItemsMementoList;
-begin
-  if not Assigned(FMementos) then
-    FMementos := TPressItemsMementoList.Create(False);
-  Result := FMementos;
-end;
-
 function TPressItems.GetObjects(AIndex: Integer): TPressObject;
 begin
   Result := ProxyList[AIndex].Instance;
@@ -3979,12 +3883,9 @@ end;
 function TPressItems.InternalCreateMemento: TPressAttributeMemento;
 begin
   Result := TPressItemsMemento.Create(Self);
-  try
-    Mementos.Add(TPressItemsMemento(Result));
-  except
-    Result.Free;
-    raise;
-  end;
+  if not Assigned(FMementos) then
+    FMementos := TObjectList.Create(False);
+  FMementos.Add(Result);
 end;
 
 procedure TPressItems.InternalUnassignObject(AObject: TPressObject);
@@ -3998,18 +3899,11 @@ begin
   ClearObjectCache;
 end;
 
-procedure TPressItems.NotifyMementos(
+procedure TPressItems.NotifyMemento(
   AProxy: TPressProxy; AItemState: TPressItemState; AOldIndex: Integer);
 begin
   if Assigned(FMementos) then
-    with FMementos.CreateIterator do
-    try
-      BeforeFirstItem;
-      while NextItem do
-        CurrentItem.Notify(AProxy, AItemState, AOldIndex);
-    finally
-      Free;
-    end;
+    TPressItemsMemento(FMementos.Last).Notify(AProxy, AItemState, AOldIndex);
 end;
 
 procedure TPressItems.NotifyRebuild;
@@ -4017,6 +3911,12 @@ begin
   if ChangesDisabled then
     Exit;
   TPressItemsChangedEvent.Create(Self, nil, -1, ietRebuild).Notify;
+end;
+
+procedure TPressItems.ReleaseMemento(AMemento: TPressItemsMemento);
+begin
+  if Assigned(FMementos) then
+    FMementos.Extract(AMemento);
 end;
 
 function TPressItems.Remove(AObject: TPressObject): Integer;
@@ -4068,7 +3968,7 @@ begin
     raise EPressError.CreateFmt(SInstanceAlreadyOwned,
      [Instance.ClassName, Instance.Id]);
   if not ChangesDisabled and (ChangeType = pctAssigning) then
-    NotifyMementos(Sender, isModified);
+    NotifyMemento(Sender, isModified);
 end;
 
 procedure TPressParts.BeforeChangeItem(AItem: TPressObject);
@@ -4081,7 +3981,7 @@ begin
   Changing;
   VIndex := ProxyList.IndexOfInstance(AItem);
   if VIndex >= 0 then
-    NotifyMementos(ProxyList[VIndex], isModified);
+    NotifyMemento(ProxyList[VIndex], isModified);
 end;
 
 procedure TPressParts.BeforeRetrieveInstance(Sender: TPressProxy);

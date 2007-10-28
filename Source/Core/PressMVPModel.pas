@@ -450,7 +450,7 @@ type
   private
     FHookedSubject: TPressStructure;
     FIsIncluding: Boolean;
-    FObjectMemento: TPressObjectMemento;
+    FSavePoint: TPressSavePoint;
     FStore: Boolean;
     procedure AfterChangeHookedSubject;
     procedure BeforeChangeHookedSubject;
@@ -1952,19 +1952,21 @@ begin
   inherited Create(AParent, ASubject);
   FStore := True;
   if Assigned(ASubject) then
-    FObjectMemento := (ASubject as TPressObject).CreateMemento;
+    FSavePoint := (ASubject as TPressObject).Memento.SavePoint;
 end;
 
 destructor TPressMVPObjectModel.Destroy;
 begin
   FHookedSubject.Free;
-  FObjectMemento.Free;
   inherited;
 end;
 
 function TPressMVPObjectModel.GetIsChanged: Boolean;
 begin
-  Result := Assigned(FObjectMemento) and FObjectMemento.SubjectChanged;
+  if HasSubject then
+    Result := Subject.Memento.ChangedSince(FSavePoint)
+  else
+    Result := False;
 end;
 
 function TPressMVPObjectModel.GetSelection: TPressMVPModelSelection;
@@ -2020,8 +2022,8 @@ end;
 
 procedure TPressMVPObjectModel.RevertChanges;
 begin
-  if Assigned(FObjectMemento) then
-    FObjectMemento.Restore;
+  if HasSubject then
+    Subject.Memento.Restore(FSavePoint);
 end;
 
 procedure TPressMVPObjectModel.SetHookedSubject(Value: TPressStructure);
