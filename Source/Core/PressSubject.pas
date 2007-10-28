@@ -2747,8 +2747,6 @@ end;
 
 procedure TPressSubject.Unchanged;
 begin
-  if ChangesDisabled then
-    Exit;
   FIsChanged := False;
   InternalUnchanged;
 end;
