@@ -32,8 +32,6 @@ function FormatMaskText(const EditMask: string; const Value: string): string;
 procedure GenerateGUID(out AGUID: TGUID);
 function SetPropertyValue(AObject: TPersistent; const APathName, AValue: string; AError: Boolean = False): Boolean;
 procedure OutputDebugString(const AStr: string);
-function IncLock(var AValue: Integer): Integer;
-function DecLock(var AValue: Integer): Integer;
 function UnquotedStr(const AStr: string): string;
 
 implementation
@@ -152,26 +150,6 @@ begin
   {$IFDEF FPC}
   {$ELSE}
   Windows.OutputDebugString(PChar(AStr));
-  {$ENDIF}
-end;
-
-function IncLock(var AValue: Integer): Integer;
-begin
-  {$IFDEF FPC}
-  Inc(AValue);  // IncLocked(AValue);
-  Result := AValue;
-  {$ELSE}
-  Result := InterlockedIncrement(AValue);
-  {$ENDIF}
-end;
-
-function DecLock(var AValue: Integer): Integer;
-begin
-  {$IFDEF FPC}
-  Dec(AValue);  // DecLocked(AValue);
-  Result := AValue;
-  {$ELSE}
-  Result := InterlockedDecrement(AValue);
   {$ENDIF}
 end;
 

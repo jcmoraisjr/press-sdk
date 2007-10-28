@@ -287,7 +287,11 @@ type
 implementation
 
 uses
-  Math, PressConsts;
+{$IFDEF BORLAND_CG}
+  Windows,
+{$ENDIF}
+  Math,
+  PressConsts;
 
 { EPressParseError }
 
@@ -311,7 +315,7 @@ end;
 
 function TPressManagedObject.AddRef: Integer;
 begin
-  Result := IncLock(FRefCount);
+  Result := InterLockedIncrement(FRefCount);
 end;
 
 procedure TPressManagedObject.AfterConstruction;
@@ -387,7 +391,7 @@ end;
 
 function TPressManagedObject.Release: Integer;
 begin
-  Result := DecLock(FRefCount);
+  Result := InterLockedDecrement(FRefCount);
   if FRefCount < 0 then
     raise EPressError.CreateFmt(SCannotReleaseInstance, [ClassName]);
 end;
@@ -425,7 +429,7 @@ procedure TPressHolder.AfterConstruction;
 begin
   inherited;
 {$IFNDEF PressReleaseManagedObjects}
-  DecLock(FRefCount);  // friend class
+  InterLockedDecrement(FRefCount);  // friend class
 {$ENDIF PressReleaseManagedObjects}
 end;
 
