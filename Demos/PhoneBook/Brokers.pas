@@ -28,6 +28,7 @@ implementation
 interface
 
 uses
+  PressMessages_en,
   PressSubject, PressPersistence,
 {$IFDEF UseReport}
   PressFastReportBroker,
