@@ -19,7 +19,7 @@ unit PressMessages_ptbr;
 interface
 
 uses
-  PressDialogs;
+  PressApplication;
 
 type
   TPressMessages_ptbr = class(TPressMessages)

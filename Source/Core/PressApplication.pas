@@ -37,6 +37,8 @@ const
 
   CPressUserDefinedServicesBase = $8000;
 
+  CPressMessagesService = CPressDialogServicesBase + $0001;
+
 type
   TPressApplicationEvent = class(TPressEvent)
   end;
@@ -270,6 +272,11 @@ type
     property Service: TPressService read FService;
   published
     property IsDefault: Boolean read GetIsDefault write SetIsDefault;
+  end;
+
+  TPressMessages = class(TPressService)
+  protected
+    class function InternalServiceType: TPressServiceType; override;
   end;
 
 function PressApp: TPressApplication;
@@ -601,7 +608,10 @@ begin
     if ServiceClasses.Count > 0 then
       FDefaultServiceClass := ServiceClasses.Last
     else
-      raise EPressError.CreateFmt(SUnassignedServiceType, [ServiceTypeName]);
+      { TODO : Using literal; const might not have being initialized
+        for mandatory services. }
+      raise EPressError.CreateFmt(
+       'No service ''%s'' assigned or registered', [ServiceTypeName]);
   Result := FDefaultServiceClass;
 end;
 
@@ -1022,8 +1032,17 @@ begin
   Service.IsDefault := AValue;
 end;
 
+{ TPressMessages }
+
+class function TPressMessages.InternalServiceType: TPressServiceType;
+begin
+  Result := CPressMessagesService;
+end;
+
 initialization
   _PressApp := TPressApplication.Create;
+  PressApp.Registry[CPressMessagesService].ServiceTypeName := SPressMessagesServiceName;
+  PressApp.Registry[CPressMessagesService].Mandatory := True;
 
 finalization
   FreeAndNil(_PressApp);

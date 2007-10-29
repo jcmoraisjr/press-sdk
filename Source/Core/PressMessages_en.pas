@@ -19,7 +19,7 @@ unit PressMessages_en;
 interface
 
 uses
-  PressDialogs;
+  PressApplication;
 
 type
   TPressMessages_en = class(TPressMessages)
