@@ -4731,7 +4731,6 @@ initialization
   TPressVariant.RegisterAttribute;
   TPressMemo.RegisterAttribute;
   TPressBinary.RegisterAttribute;
-  TPressPicture.RegisterAttribute;
   TPressPart.RegisterAttribute;
   TPressReference.RegisterAttribute;
   TPressParts.RegisterAttribute;
@@ -4753,7 +4752,6 @@ finalization
   TPressVariant.UnregisterAttribute;
   TPressMemo.UnregisterAttribute;
   TPressBinary.UnregisterAttribute;
-  TPressPicture.UnregisterAttribute;
   TPressPart.UnregisterAttribute;
   TPressReference.UnregisterAttribute;
   TPressParts.UnregisterAttribute;

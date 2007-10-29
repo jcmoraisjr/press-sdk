@@ -504,6 +504,7 @@ uses
   PressConsts,
   PressDialogs,
   PressMetadata,
+  PressPicture,
   PressMVPCommand;
 
 { TPressMVPModelFindFormEvent }
