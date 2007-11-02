@@ -296,6 +296,7 @@ type
     FViewKeyDownEvent: TKeyEvent;
     FViewKeyPressEvent: TKeyPressEvent;
     FViewKeyUpEvent: TKeyEvent;
+    function GetControl: TWinControl;
   private
     procedure UpdateRelatedLabel;
   protected
@@ -309,8 +310,10 @@ type
     procedure InternalAccessModeUpdated; override;
     procedure ReleaseControl; override;
   public
+    function Focused: Boolean;
     procedure SelectNext; virtual;
     procedure SetFocus;
+    property Control: TWinControl read GetControl;
   end;
 
   TPressMVPEditView = class(TPressMVPWinView)
@@ -1005,6 +1008,16 @@ end;
 
 { TPressMVPWinView }
 
+function TPressMVPWinView.Focused: Boolean;
+begin
+  Result := Control.Focused;
+end;
+
+function TPressMVPWinView.GetControl: TWinControl;
+begin
+  Result := inherited Control as TWinControl;
+end;
+
 procedure TPressMVPWinView.InitView;
 begin
   inherited;
@@ -1058,7 +1071,7 @@ end;
 
 procedure TPressMVPWinView.SetFocus;
 begin
-  (Control as TWinControl).SetFocus;
+  Control.SetFocus;
 end;
 
 procedure TPressMVPWinView.UpdateRelatedLabel;
