@@ -1263,7 +1263,8 @@ var
   VModel: TPressMVPModel;
 begin
   inherited;
-  if AEvent is TPressMVPModelChangedEvent then
+  if (AEvent is TPressMVPModelChangedEvent) and
+   (TPressMVPModelChangedEvent(AEvent).ChangeType = ctDisplay) then
   begin
     with (Owner as TPressMVPFormPresenter).CreatePresenterIterator do
     try
@@ -1272,7 +1273,7 @@ begin
       begin
         VModel := CurrentItem.Model;
         if VModel.HasSubject then
-          VModel.Changed(TPressMVPModelChangedEvent(AEvent).ChangeType);
+          VModel.Changed(ctDisplay);
       end;
     finally
       Free;
