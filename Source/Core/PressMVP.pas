@@ -104,6 +104,8 @@ type
   TPressMVPCommandChangedEvent = class(TPressEvent)
   end;
 
+  TPressMVPCommandUpdatingMethod = (umFieldValue, umInternalMethod);
+
   TPressMVPModel = class;
   TPressMVPCommandRegistry = class;
 
@@ -114,6 +116,7 @@ type
     FCaption: string;
     FComponentList: TPressMVPCommandComponentList;
     FEnabled: Boolean;
+    FEnabledUpdatingMethod: TPressMVPCommandUpdatingMethod;
     FExecutable: Boolean;
     FModel: TPressMVPModel;
     FNotifier: TPressNotifier;
@@ -122,6 +125,7 @@ type
     function CurrentUser: TPressCustomUser;
     function GetComponentList: TPressMVPCommandComponentList;
     procedure Notify(AEvent: TPressEvent);
+    procedure SetEnabled(Value: Boolean);
     procedure VerifyAccess;
     function VerifyEnabled: Boolean;
   protected
@@ -141,7 +145,8 @@ type
     procedure Execute;
     class function RegisterCommand: TPressMVPCommandRegistry;
     property Caption: string read GetCaption;
-    property Enabled: Boolean read FEnabled;
+    property Enabled: Boolean read FEnabled write SetEnabled;
+    property EnabledUpdatingMethod: TPressMVPCommandUpdatingMethod read FEnabledUpdatingMethod write FEnabledUpdatingMethod;
     property Model: TPressMVPModel read FModel;
     property ShortCut: TShortCut read GetShortCut;
     property Visible: Boolean read FVisible;
@@ -630,6 +635,7 @@ begin
   FCaption := ACaption;
   FShortCut := AShortCut;
   VerifyAccess;
+  FEnabledUpdatingMethod := umInternalMethod;
   FEnabled := VerifyEnabled;
   FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   InitNotifier;
@@ -717,6 +723,16 @@ begin
   end;
 end;
 
+procedure TPressMVPCommand.SetEnabled(Value: Boolean);
+begin
+  if (FEnabled <> Value) or (FEnabledUpdatingMethod <> umFieldValue) then
+  begin
+    FEnabled := Value;
+    FEnabledUpdatingMethod := umFieldValue;
+    Changed;
+  end;
+end;
+
 procedure TPressMVPCommand.VerifyAccess;
 var
   VAccessMode: TPressAccessMode;
@@ -747,7 +763,9 @@ end;
 
 function TPressMVPCommand.VerifyEnabled: Boolean;
 begin
-  Result := FVisible and FExecutable and InternalIsEnabled;
+  Result := FVisible and FExecutable and
+   (((FEnabledUpdatingMethod = umInternalMethod) and InternalIsEnabled) or
+    ((FEnabledUpdatingMethod = umFieldValue) and FEnabled));
 end;
 
 { TPressMVPCommandList }
