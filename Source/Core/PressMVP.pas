@@ -36,12 +36,12 @@ type
   TPressMVPCommandComponent = class(TObject)
   private
     FCommand: TPressMVPCommand;
+    FNotifier: TPressNotifier;
     FOnClickEvent: TNotifyEvent;
   protected
     procedure BindComponent; virtual; abstract;
     procedure ComponentClick(Sender: TObject);
-    function GetEnabled: Boolean; virtual; abstract;
-    function GetVisible: Boolean; virtual; abstract;
+    procedure Notify(AEvent: TPressEvent);
     procedure ReleaseComponent; virtual; abstract;
     procedure SetEnabled(Value: Boolean); virtual; abstract;
     procedure SetVisible(Value: Boolean); virtual; abstract;
@@ -50,8 +50,6 @@ type
     constructor Create(ACommand: TPressMVPCommand);
     destructor Destroy; override;
     property Command: TPressMVPCommand read FCommand;
-    property Enabled: Boolean read GetEnabled write SetEnabled;
-    property Visible: Boolean read GetVisible write SetVisible;
   end;
 
   TPressMVPCommandMenuItem = class(TPressMVPCommandComponent)
@@ -59,8 +57,6 @@ type
     FMenuItem: TMenuItem;
   protected
     procedure BindComponent; override;
-    function GetEnabled: Boolean; override;
-    function GetVisible: Boolean; override;
     procedure ReleaseComponent; override;
     procedure SetEnabled(Value: Boolean); override;
     procedure SetVisible(Value: Boolean); override;
@@ -73,8 +69,6 @@ type
     FControl: TControl;
   protected
     procedure BindComponent; override;
-    function GetEnabled: Boolean; override;
-    function GetVisible: Boolean; override;
     procedure ReleaseComponent; override;
     procedure SetEnabled(Value: Boolean); override;
     procedure SetVisible(Value: Boolean); override;
@@ -87,9 +81,7 @@ type
   TPressMVPCommandComponentList = class(TPressList)
   private
     function GetItems(AIndex: Integer): TPressMVPCommandComponent;
-    procedure SetEnabled(Value: Boolean);
     procedure SetItems(AIndex: Integer; Value: TPressMVPCommandComponent);
-    procedure SetVisible(Value: Boolean);
   protected
     function InternalCreateIterator: TPressCustomIterator; override;
   public
@@ -99,9 +91,7 @@ type
     function IndexOf(AObject: TPressMVPCommandComponent): Integer;
     procedure Insert(Index: Integer; AObject: TPressMVPCommandComponent);
     function Remove(AObject: TPressMVPCommandComponent): Integer;
-    property Enabled: Boolean write SetEnabled;
     property Items[AIndex: Integer]: TPressMVPCommandComponent read GetItems write SetItems; default;
-    property Visible: Boolean write SetVisible;
   end;
 
   TPressMVPCommandComponentIterator = class(TPressIterator)
@@ -135,6 +125,7 @@ type
     procedure VerifyAccess;
     function VerifyEnabled: Boolean;
   protected
+    procedure Changed;
     function GetCaption: string; virtual;
     function GetShortCut: TShortCut; virtual;
     procedure InitNotifier; virtual;
@@ -431,12 +422,24 @@ begin
   inherited Create;
   { TODO : Assertion }
   FCommand := ACommand;
+  FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
+  FNotifier.AddNotificationItem(FCommand, [TPressMVPCommandChangedEvent]);
 end;
 
 destructor TPressMVPCommandComponent.Destroy;
 begin
+  FNotifier.Free;
   ReleaseComponent;
   inherited;
+end;
+
+procedure TPressMVPCommandComponent.Notify(AEvent: TPressEvent);
+begin
+  if Assigned(FCommand) then
+  begin
+    SetEnabled(FCommand.Enabled);
+    SetVisible(FCommand.Visible);
+  end;
 end;
 
 { TPressMVPCommandMenuItem }
@@ -458,16 +461,6 @@ begin
   inherited Create(ACommand);
   FMenuItem := AMenuItem;
   BindComponent;
-end;
-
-function TPressMVPCommandMenuItem.GetEnabled: Boolean;
-begin
-  Result := Assigned(FMenuItem) and FMenuItem.Enabled;
-end;
-
-function TPressMVPCommandMenuItem.GetVisible: Boolean;
-begin
-  Result := Assigned(FMenuItem) and FMenuItem.Visible;
 end;
 
 procedure TPressMVPCommandMenuItem.ReleaseComponent;
@@ -512,16 +505,6 @@ begin
   inherited Create(ACommand);
   FControl := AControl;
   BindComponent;
-end;
-
-function TPressMVPCommandControl.GetEnabled: Boolean;
-begin
-  Result := Assigned(FControl) and FControl.Enabled;
-end;
-
-function TPressMVPCommandControl.GetVisible: Boolean;
-begin
-  Result := Assigned(FControl) and FControl.Visible;
 end;
 
 procedure TPressMVPCommandControl.ReleaseComponent;
@@ -594,34 +577,10 @@ begin
   Result := inherited Remove(AObject);
 end;
 
-procedure TPressMVPCommandComponentList.SetEnabled(Value: Boolean);
-begin
-  with CreateIterator do
-  try
-    BeforeFirstItem;
-    while NextItem do
-      CurrentItem.Enabled := Value;
-  finally
-    Free;
-  end;
-end;
-
 procedure TPressMVPCommandComponentList.SetItems(
   AIndex: Integer; Value: TPressMVPCommandComponent);
 begin
   inherited Items[AIndex] := Value;
-end;
-
-procedure TPressMVPCommandComponentList.SetVisible(Value: Boolean);
-begin
-  with CreateIterator do
-  try
-    BeforeFirstItem;
-    while NextItem do
-      CurrentItem.Visible := Value;
-  finally
-    Free;
-  end;
 end;
 
 { TPressMVPCommandComponentIterator }
@@ -651,6 +610,11 @@ end;
 class function TPressMVPCommand.Apply(AModel: TPressMVPModel): Boolean;
 begin
   Result := True;
+end;
+
+procedure TPressMVPCommand.Changed;
+begin
+  TPressMVPCommandChangedEvent.Create(Self).Notify;
 end;
 
 constructor TPressMVPCommand.Create(
@@ -731,19 +695,15 @@ end;
 
 procedure TPressMVPCommand.Notify(AEvent: TPressEvent);
 var
-  VOldVisible: Boolean;
+  VOldEnabled, VOldVisible: Boolean;
 begin
+  VOldEnabled := FEnabled;
   VOldVisible := FVisible;
   if AEvent is TPressUserEvent then
     VerifyAccess;
-  if FEnabled <> VerifyEnabled then
-  begin
-    FEnabled := not FEnabled;
-    ComponentList.Enabled := FEnabled;
-    TPressMVPCommandChangedEvent.Create(Self).Notify;
-  end;
-  if FVisible <> VOldVisible then
-    ComponentList.Visible := FVisible;
+  FEnabled := VerifyEnabled;
+  if (FEnabled <> VOldEnabled) or (FVisible <> VOldVisible) then
+    Changed;
 end;
 
 class function TPressMVPCommand.RegisterCommand: TPressMVPCommandRegistry;
