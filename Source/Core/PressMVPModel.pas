@@ -1770,6 +1770,11 @@ begin
     AddCommandInstance(CreateSortCommand(I));
 end;
 
+function TPressMVPItemsModel.ItemNumber(ARow: Integer): Integer;
+begin
+  Result := ObjectList[ARow].ItemNumber;
+end;
+
 procedure TPressMVPItemsModel.ItemsChanged(
   AEvent: TPressItemsChangedEvent);
 
@@ -1837,11 +1842,6 @@ begin
       RebuildObjectList;
   end;
   Changed(ctSubject);
-end;
-
-function TPressMVPItemsModel.ItemNumber(ARow: Integer): Integer;
-begin
-  Result := ObjectList[ARow].ItemNumber;
 end;
 
 procedure TPressMVPItemsModel.Notify(AEvent: TPressEvent);
