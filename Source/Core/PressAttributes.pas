@@ -734,12 +734,10 @@ constructor TPressItemMemento.Create(
 begin
   inherited Create(AOwner);
   FProxy := AProxy;
-  FProxy.AddRef;
 end;
 
 destructor TPressItemMemento.Destroy;
 begin
-  FProxy.Free;
   FProxyClone.Free;
   inherited;
 end;
