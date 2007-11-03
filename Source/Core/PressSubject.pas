@@ -668,6 +668,7 @@ type
     function GetIsUpdated: Boolean;
     function GetIsValid: Boolean;
     function GetMap: TPressClassMap;
+    function GetMemento: TPressObjectMemento;
     function GetMetadata: TPressObjectMetadata;
     function GetObjectOwner: TPressObject;
     function GetPersistentName: string;
@@ -734,7 +735,7 @@ type
     property IsUpdated: Boolean read GetIsUpdated;
     property IsValid: Boolean read GetIsValid;
     property Map: TPressClassMap read GetMap;
-    property Memento: TPressObjectMemento read FMemento;
+    property Memento: TPressObjectMemento read GetMemento;
     property Metadata: TPressObjectMetadata read GetMetadata;
     property Owner: TPressObject read GetObjectOwner;
     property OwnerAttribute: TPressStructure read FOwnerAttribute;
@@ -3064,6 +3065,13 @@ begin
   Result := FMap;
 end;
 
+function TPressObject.GetMemento: TPressObjectMemento;
+begin
+  if not Assigned(FMemento) then
+    FMemento := TPressObjectMemento.Create(Self);
+  Result := FMemento;
+end;
+
 function TPressObject.GetMetadata: TPressObjectMetadata;
 begin
   if not Assigned(FMetadata) then
@@ -3098,7 +3106,6 @@ procedure TPressObject.InitInstance(
 begin
   FDataAccess := ADataAccess;
   FMetadata := AMetadata;
-  FMemento := TPressObjectMemento.Create(Self);
   FAttributes := TPressAttributeList.Create(True);
   DisableChanges;
   try
