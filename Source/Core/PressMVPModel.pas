@@ -34,10 +34,12 @@ type
   TPressMVPModelFindFormEvent = class(TPressMVPModelEvent)
   private
     FHasForm: Boolean;
+    FNewObjectForm: Boolean;
     FObjectClass: TPressObjectClass;
   public
-    constructor Create(AOwner: TObject; AObjectClass: TPressObjectClass);
+    constructor Create(AOwner: TObject; ANewObjectForm: Boolean; AObjectClass: TPressObjectClass);
     property HasForm: Boolean read FHasForm write FHasForm;
+    property NewObjectForm: Boolean read FNewObjectForm;
     property ObjectClass: TPressObjectClass read FObjectClass;
   end;
 
@@ -267,6 +269,7 @@ type
     procedure SetDisplayNames(const Value: string);
   protected
     procedure AssignColumnData(const AColumnData: string);
+    function HasForm(ANewObjectForm: Boolean; AObjectClass: TPressObjectClass = nil): Boolean;
     procedure InternalAssignDisplayNames(const ADisplayNames: string); virtual; abstract;
     function InternalCreateSelection: TPressMVPSelection; override;
   public
@@ -510,9 +513,10 @@ uses
 { TPressMVPModelFindFormEvent }
 
 constructor TPressMVPModelFindFormEvent.Create(AOwner: TObject;
-  AObjectClass: TPressObjectClass);
+  ANewObjectForm: Boolean; AObjectClass: TPressObjectClass);
 begin
   inherited Create(AOwner);
+  FNewObjectForm := ANewObjectForm;
   FObjectClass := AObjectClass;
 end;
 
@@ -1092,6 +1096,26 @@ begin
   Result := inherited Subject as TPressStructure;
 end;
 
+function TPressMVPStructureModel.HasForm(ANewObjectForm: Boolean;
+  AObjectClass: TPressObjectClass): Boolean;
+var
+  VEvent: TPressMVPModelFindFormEvent;
+begin
+  if not Assigned(AObjectClass) and HasSubject and Assigned(Subject.Metadata) then
+    AObjectClass := Subject.Metadata.ObjectClass;
+  if Assigned(AObjectClass) then
+  begin
+    VEvent := TPressMVPModelFindFormEvent.Create(Self, ANewObjectForm, AObjectClass);
+    try
+      VEvent.Notify(False);
+      Result := VEvent.HasForm;
+    finally
+      VEvent.Free;
+    end;
+  end else
+    Result := False;
+end;
+
 function TPressMVPStructureModel.InternalCreateSelection: TPressMVPSelection;
 begin
   Result := TPressMVPObjectSelection.Create;
@@ -1189,7 +1213,9 @@ end;
 procedure TPressMVPReferenceModel.InitCommands;
 begin
   inherited;
-  AddCommands([TPressMVPIncludeObjectCommand, TPressMVPEditItemCommand]);
+  if HasForm(True) then
+    AddCommand(TPressMVPIncludeObjectCommand);
+  AddCommand(TPressMVPEditItemCommand);
 end;
 
 procedure TPressMVPReferenceModel.InternalAssignDisplayNames(
@@ -1702,22 +1728,9 @@ begin
 end;
 
 procedure TPressMVPItemsModel.InternalCreateAddCommands;
-var
-  VEvent: TPressMVPModelFindFormEvent;
 begin
-  if HasSubject and Assigned(Subject.Metadata) and
-   Assigned(Subject.Metadata.ObjectClass) then
-  begin
-    VEvent := TPressMVPModelFindFormEvent.Create(
-     Self, Subject.Metadata.ObjectClass);
-    try
-      VEvent.Notify(False);
-      if VEvent.HasForm then
-        AddCommand(TPressMVPAddItemsCommand);
-    finally
-      VEvent.Free;
-    end;
-  end;
+  if HasForm(True) then
+    AddCommand(TPressMVPAddItemsCommand);
 end;
 
 procedure TPressMVPItemsModel.InternalCreateEditCommands;

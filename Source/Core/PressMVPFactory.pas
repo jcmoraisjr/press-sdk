@@ -409,6 +409,9 @@ begin
 end;
 
 procedure TPressMVPFactory.Notify(AEvent: TPressEvent);
+const
+  CFormType: array[Boolean] of TPressMVPFormPresenterType = (
+   fpExisting, fpNew);
 var
   VEvent: TPressMVPModelFindFormEvent;
 begin
@@ -416,8 +419,8 @@ begin
   begin
     VEvent := TPressMVPModelFindFormEvent(AEvent);
     if not VEvent.HasForm then
-      VEvent.HasForm :=
-       Forms.IndexOfObjectClass(VEvent.ObjectClass, fpNew, False) >= 0;
+      VEvent.HasForm := Forms.IndexOfObjectClass(
+       VEvent.ObjectClass, CFormType[VEvent.NewObjectForm], False) >= 0;
   end;
 end;
 
