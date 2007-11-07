@@ -79,6 +79,7 @@ type
   end;
 
   TPressMVPFormPresenter = class;
+  TPressMVPFormPresenterClass = class of TPressMVPFormPresenter;
 
   TPressMVPPresenterClass = class of TPressMVPPresenter;
 
@@ -106,6 +107,7 @@ type
   protected
     procedure AfterInitInteractors; virtual;
     function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; virtual;
+    function BindPresenter(APresenterClass: TPressMVPFormPresenterClass; const AComponentName: ShortString): TPressMVPCommand; virtual;
     procedure InitPresenter; virtual;
     function InternalCreateCommandMenu: TPressMVPCommandMenu; virtual;
     property CommandMenu: TPressMVPCommandMenu read FCommandMenu write SetCommandMenu;
@@ -148,6 +150,16 @@ type
   TPressMVPNullPresenter = class(TPressMVPPresenter)
   public
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
+  end;
+
+  TPressMVPRunPresenterCommand = class(TPressMVPCommand)
+  private
+    FPresenterClass: TPressMVPFormPresenterClass;
+  protected
+    procedure InternalExecute; override;
+    function InternalIsEnabled: Boolean; override;
+  public
+    constructor Create(AModel: TPressMVPModel; APresenterClass: TPressMVPFormPresenterClass); reintroduce;
   end;
 
   TPressMVPValuePresenter = class(TPressMVPPresenter)
@@ -209,8 +221,6 @@ type
   TPressMVPFormPresenterType = (fpNew, fpExisting, fpQuery);
   TPressMVPFormPresenterTypes = set of TPressMVPFormPresenterType;
 
-  TPressMVPFormPresenterClass = class of TPressMVPFormPresenter;
-
   TPressMVPFormPresenter = class(TPressMVPPresenter)
   private
     FAutoDestroy: Boolean;
@@ -221,6 +231,7 @@ type
   protected
     function AttributeByName(const AAttributeName: ShortString): TPressAttribute;
     function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; override;
+    function BindPresenter(APresenterClass: TPressMVPFormPresenterClass; const AComponentName: ShortString): TPressMVPCommand; override;
     function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; AViewClass: TPressMVPViewClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
     procedure InitPresenter; override;
     function InternalCreateSubModel(ASubject: TPressSubject): TPressMVPModel; virtual;
@@ -463,6 +474,20 @@ begin
   Result.AddComponent(VComponent);
 end;
 
+function TPressMVPPresenter.BindPresenter(
+  APresenterClass: TPressMVPFormPresenterClass;
+  const AComponentName: ShortString): TPressMVPCommand;
+var
+  VComponent: TComponent;
+begin
+  if not Assigned(FParent) then
+    raise EPressMVPError.CreateFmt(SUnassignedPresenterParent, [ClassName]);
+  VComponent := FParent.View.ComponentByName(AComponentName);
+  Result := TPressMVPRunPresenterCommand.Create(Model, APresenterClass);
+  Model.AddCommandInstance(Result);
+  Result.AddComponent(VComponent);
+end;
+
 constructor TPressMVPPresenter.Create(
   AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; AView: TPressMVPView);
 begin
@@ -628,6 +653,27 @@ begin
   Result := AModel is TPressMVPNullModel;
 end;
 
+{ TPressMVPRunPresenterCommand }
+
+constructor TPressMVPRunPresenterCommand.Create(AModel: TPressMVPModel;
+  APresenterClass: TPressMVPFormPresenterClass);
+begin
+  inherited Create(AModel);
+  FPresenterClass := APresenterClass;
+end;
+
+procedure TPressMVPRunPresenterCommand.InternalExecute;
+begin
+  inherited;
+  if Assigned(FPresenterClass) then
+    FPresenterClass.Run;
+end;
+
+function TPressMVPRunPresenterCommand.InternalIsEnabled: Boolean;
+begin
+  Result := Assigned(FPresenterClass);
+end;
+
 { TPressMVPValuePresenter }
 
 class function TPressMVPValuePresenter.Apply(AModel: TPressMVPModel;
@@ -782,6 +828,18 @@ begin
   if not Assigned(ACommandClass) then
     ACommandClass := TPressMVPNullCommand;
   Result := Model.RegisterCommand(ACommandClass);
+  Result.AddComponent(VComponent);
+end;
+
+function TPressMVPFormPresenter.BindPresenter(
+  APresenterClass: TPressMVPFormPresenterClass;
+  const AComponentName: ShortString): TPressMVPCommand;
+var
+  VComponent: TComponent;
+begin
+  VComponent := View.ComponentByName(AComponentName);
+  Result := TPressMVPRunPresenterCommand.Create(Model, APresenterClass);
+  Model.AddCommandInstance(Result);
   Result.AddComponent(VComponent);
 end;
 
