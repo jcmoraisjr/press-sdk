@@ -4363,7 +4363,10 @@ end;
 procedure TPressAttribute.Notify(AEvent: TPressEvent);
 begin
   if AEvent is TPressAttributeChangedEvent and IsCalcAttribute then
+  begin
     FCalcUpdated := False;
+    Changed(False);
+  end;
 end;
 
 procedure TPressAttribute.NotifyChange;
