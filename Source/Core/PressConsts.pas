@@ -63,7 +63,6 @@ var
   SCannotReleaseInstance,
   SEnumItemNotFound,
   SInvalidLogon,
-  SMessageAlreadyAssigned,
   SNoLoggedUser,
   SPasswordsDontMatch,
   SPropertyIsReadOnly,
