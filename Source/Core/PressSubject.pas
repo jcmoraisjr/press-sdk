@@ -3755,7 +3755,8 @@ begin
     VInstance := FDataAccess.Retrieve(ObjectClassType, FRefID);
     { TODO : Implement IsBroken support }
     if not Assigned(VInstance) then
-      raise EPressError.CreateFmt(SInstanceNotFound, [FRefClass, FRefID]);
+      raise EPressError.CreateFmt(
+       SInstanceNotFound, [FRefClass.ClassName, FRefID]);
     if Assigned(FBeforeChangeInstance) then
       FBeforeChangeInstance(Self, VInstance, pctDereferencing);
     if ProxyType <> ptWeakReference then
