@@ -1,3 +1,10 @@
+SimpleOPF
+=========
+
+Configure the Project/<IDE>/SimpleOPF.cf file before start the application.
+
+
+
 PHONEBOOK
 =========
 
