@@ -1,0 +1,18 @@
+{ This is an automatically generated lazarus resource file }
+
+LazarusResources.Add('TCityEditForm','FORMDATA',[
+  'TPF0'#241#13'TCityEditForm'#12'CityEditForm'#6'Height'#3#153#0#5'Width'#3#234
+  +#0#18'HorzScrollBar.Page'#3#233#0#18'VertScrollBar.Page'#3#152#0#7'Caption'#6
+  +#4'City'#12'ClientHeight'#3#153#0#11'ClientWidth'#3#234#0#0#241#6'TPanel'#11
+  +'ClientPanel'#6'Height'#2'p'#5'Width'#3#234#0#12'ClientHeight'#2'p'#11'Clien'
+  +'tWidth'#3#234#0#0#242#2#0#6'TLabel'#9'NameLabel'#4'Left'#2#24#6'Height'#2#14
+  +#3'Top'#2#8#5'Width'#2' '#7'Caption'#6#5'Name:'#12'FocusControl'#7#8'NameEdi'
+  +'t'#11'ParentColor'#8#0#0#242#2#1#6'TLabel'#10'StateLabel'#4'Left'#2#24#6'He'
+  +'ight'#2#14#3'Top'#2'8'#5'Width'#2#31#7'Caption'#6#6'State:'#12'FocusControl'
+  +#7#9'StateEdit'#11'ParentColor'#8#0#0#241#6'TPanel'#9'LinePanel'#3'Top'#2'n'
+  +#5'Width'#3#234#0#0#0#5'TEdit'#8'NameEdit'#4'Left'#2#24#6'Height'#2#21#3'Top'
+  +#2#24#5'Width'#3#185#0#8'TabOrder'#2#1#0#0#5'TEdit'#9'StateEdit'#4'Left'#2#24
+  +#6'Height'#2#21#3'Top'#2'H'#5'Width'#2'A'#8'TabOrder'#2#2#0#0#0#241#6'TPanel'
+  +#11'BottomPanel'#3'Top'#2'p'#5'Width'#3#234#0#11'ClientWidth'#3#234#0#0#241#7
+  +'TButton'#8'OkButton'#0#0#241#7'TButton'#12'CancelButton'#0#0#0#0
+]);

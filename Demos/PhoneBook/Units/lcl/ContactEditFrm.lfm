@@ -1,0 +1,122 @@
+inherited ContactEditForm: TContactEditForm
+  Left = 241
+  Height = 223
+  Top = 175
+  Width = 448
+  HorzScrollBar.Page = 447
+  VertScrollBar.Page = 222
+  ActiveControl = NameEdit
+  Caption = 'ContactEditForm'
+  ClientHeight = 223
+  ClientWidth = 448
+  inherited ClientPanel: TPanel
+    Height = 182
+    Width = 448
+    ClientHeight = 182
+    ClientWidth = 448
+    object NameLabel: TLabel[0]
+      Left = 16
+      Height = 14
+      Top = 8
+      Width = 32
+      Caption = 'Name:'
+      FocusControl = NameEdit
+      ParentColor = False
+    end
+    object StreetLabel: TLabel[1]
+      Left = 16
+      Height = 14
+      Top = 48
+      Width = 35
+      Caption = 'Street:'
+      FocusControl = StreetEdit
+      ParentColor = False
+    end
+    object ZipLabel: TLabel[2]
+      Left = 16
+      Height = 14
+      Top = 88
+      Width = 19
+      Caption = 'Zip:'
+      FocusControl = ZipEdit
+      ParentColor = False
+    end
+    object CityLabel: TLabel[3]
+      Left = 88
+      Height = 14
+      Top = 88
+      Width = 24
+      Caption = 'City:'
+      FocusControl = CityComboBox
+      ParentColor = False
+    end
+    inherited LinePanel: TPanel
+      Top = 180
+      Width = 448
+    end
+    object NameEdit: TEdit
+      Left = 16
+      Height = 21
+      Top = 24
+      Width = 217
+      TabOrder = 1
+    end
+    object StreetEdit: TEdit
+      Left = 16
+      Height = 21
+      Top = 64
+      Width = 217
+      TabOrder = 2
+    end
+    object ZipEdit: TEdit
+      Left = 16
+      Height = 21
+      Top = 104
+      Width = 65
+      TabOrder = 3
+    end
+    object CityComboBox: TComboBox
+      Left = 88
+      Height = 21
+      Top = 104
+      Width = 145
+      AutoCompleteText = [cbactEndOfLineComplete, cbactSearchAscending]
+      ItemHeight = 13
+      TabOrder = 4
+    end
+    object PhonesGroupBox: TGroupBox
+      Left = 248
+      Height = 145
+      Top = 16
+      Width = 185
+      Caption = 'Phones'
+      ClientHeight = 127
+      ClientWidth = 181
+      TabOrder = 5
+      object PhonesStringGrid: TStringGrid
+        Left = 14
+        Height = 105
+        Top = 8
+        Width = 153
+        ColCount = 5
+        DefaultColWidth = 32
+        DefaultRowHeight = 16
+        FixedColor = clBtnFace
+        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goSmoothScroll]
+        RowCount = 5
+        ScrollBars = ssAutoBoth
+        TabOrder = 0
+        TabStop = True
+      end
+    end
+  end
+  inherited BottomPanel: TPanel
+    Top = 182
+    Width = 448
+    ClientWidth = 448
+    inherited OkButton: TButton
+    end
+    inherited CancelButton: TButton
+    end
+  end
+end

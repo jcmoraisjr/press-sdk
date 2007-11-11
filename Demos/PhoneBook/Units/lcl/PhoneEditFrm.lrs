@@ -1,0 +1,21 @@
+{ This is an automatically generated lazarus resource file }
+
+LazarusResources.Add('TPhoneEditForm','FORMDATA',[
+  'TPF0'#241#14'TPhoneEditForm'#13'PhoneEditForm'#4'Left'#3#7#1#6'Height'#3#159
+  +#0#3'Top'#3#164#0#5'Width'#3#174#0#18'HorzScrollBar.Page'#3#173#0#18'VertScr'
+  +'ollBar.Page'#3#158#0#7'Caption'#6#5'Phone'#12'ClientHeight'#3#159#0#11'Clie'
+  +'ntWidth'#3#174#0#0#241#6'TPanel'#11'ClientPanel'#6'Height'#2'v'#5'Width'#3
+  +#174#0#12'ClientHeight'#2'v'#11'ClientWidth'#3#174#0#0#242#2#0#6'TLabel'#11
+  +'NumberLabel'#4'Left'#2#16#6'Height'#2#14#3'Top'#2'8'#5'Width'#2'*'#7'Captio'
+  +'n'#6#7'Number:'#12'FocusControl'#7#10'NumberEdit'#11'ParentColor'#8#0#0#242
+  +#2#1#6'TLabel'#14'PhoneTypeLabel'#4'Left'#2#16#6'Height'#2#14#3'Top'#2#8#5'W'
+  +'idth'#2';'#7'Caption'#6#10'PhoneType:'#12'FocusControl'#7#17'PhoneTypeCombo'
+  +'Box'#11'ParentColor'#8#0#0#241#6'TPanel'#9'LinePanel'#3'Top'#2't'#5'Width'#3
+  +#174#0#0#0#5'TEdit'#10'NumberEdit'#4'Left'#2#16#6'Height'#2#21#3'Top'#2'H'#5
+  +'Width'#3#145#0#8'TabOrder'#2#2#0#0#9'TComboBox'#17'PhoneTypeComboBox'#4'Lef'
+  +'t'#2#16#6'Height'#2#21#3'Top'#2#24#5'Width'#3#145#0#16'AutoCompleteText'#11
+  +#22'cbactEndOfLineComplete'#20'cbactSearchAscending'#0#10'ItemHeight'#2#13#8
+  +'TabOrder'#2#1#0#0#0#241#6'TPanel'#11'BottomPanel'#3'Top'#2'v'#5'Width'#3#174
+  +#0#11'ClientWidth'#3#174#0#0#241#7'TButton'#8'OkButton'#0#0#241#7'TButton'#12
+  +'CancelButton'#0#0#0#0
+]);

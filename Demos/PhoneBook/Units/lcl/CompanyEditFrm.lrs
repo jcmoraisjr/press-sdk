@@ -1,0 +1,19 @@
+{ This is an automatically generated lazarus resource file }
+
+LazarusResources.Add('TCompanyEditForm','FORMDATA',[
+  'TPF0'#241#16'TCompanyEditForm'#15'CompanyEditForm'#7'Caption'#6#7'Company'#0
+  +#241#6'TPanel'#11'ClientPanel'#0#241#6'TLabel'#9'NameLabel'#0#0#241#6'TLabel'
+  +#11'StreetLabel'#3'Top'#2'X'#0#0#241#6'TLabel'#8'ZipLabel'#3'Top'#3#128#0#0#0
+  +#241#6'TLabel'#9'CityLabel'#3'Top'#3#128#0#0#0#242#2#4#6'TLabel'#12'ContactL'
+  +'abel'#4'Left'#2#16#6'Height'#2#13#3'Top'#2'0'#5'Width'#2'('#7'Caption'#6#8
+  +'Contact:'#12'FocusControl'#7#15'ContactComboBox'#11'ParentColor'#8#0#0#241#6
+  +'TPanel'#9'LinePanel'#0#0#241#5'TEdit'#8'NameEdit'#0#0#241#5'TEdit'#10'Stree'
+  +'tEdit'#3'Top'#2'h'#8'TabOrder'#2#3#0#0#241#5'TEdit'#7'ZipEdit'#3'Top'#3#144
+  +#0#8'TabOrder'#2#4#0#0#241#9'TComboBox'#12'CityComboBox'#3'Top'#3#144#0#8'Ta'
+  +'bOrder'#2#5#0#0#241#9'TGroupBox'#14'PhonesGroupBox'#8'TabOrder'#2#6#0#241#11
+  +'TStringGrid'#16'PhonesStringGrid'#0#0#0#9'TComboBox'#15'ContactComboBox'#4
+  +'Left'#2#16#6'Height'#2#21#3'Top'#2'@'#5'Width'#3#217#0#16'AutoCompleteText'
+  +#11#22'cbactEndOfLineComplete'#20'cbactSearchAscending'#0#10'ItemHeight'#2#13
+  +#8'TabOrder'#2#2#0#0#0#241#6'TPanel'#11'BottomPanel'#0#241#7'TButton'#8'OkBu'
+  +'tton'#0#0#241#7'TButton'#12'CancelButton'#0#0#0#0
+]);

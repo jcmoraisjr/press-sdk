@@ -1,0 +1,36 @@
+{ This is an automatically generated lazarus resource file }
+
+LazarusResources.Add('TContactEditForm','FORMDATA',[
+  'TPF0'#241#16'TContactEditForm'#15'ContactEditForm'#4'Left'#3#241#0#6'Height'
+  +#3#223#0#3'Top'#3#175#0#5'Width'#3#192#1#18'HorzScrollBar.Page'#3#191#1#18'V'
+  +'ertScrollBar.Page'#3#222#0#13'ActiveControl'#7#8'NameEdit'#7'Caption'#6#15
+  +'ContactEditForm'#12'ClientHeight'#3#223#0#11'ClientWidth'#3#192#1#0#241#6'T'
+  +'Panel'#11'ClientPanel'#6'Height'#3#182#0#5'Width'#3#192#1#12'ClientHeight'#3
+  +#182#0#11'ClientWidth'#3#192#1#0#242#2#0#6'TLabel'#9'NameLabel'#4'Left'#2#16
+  +#6'Height'#2#14#3'Top'#2#8#5'Width'#2' '#7'Caption'#6#5'Name:'#12'FocusContr'
+  +'ol'#7#8'NameEdit'#11'ParentColor'#8#0#0#242#2#1#6'TLabel'#11'StreetLabel'#4
+  +'Left'#2#16#6'Height'#2#14#3'Top'#2'0'#5'Width'#2'#'#7'Caption'#6#7'Street:'
+  +#12'FocusControl'#7#10'StreetEdit'#11'ParentColor'#8#0#0#242#2#2#6'TLabel'#8
+  +'ZipLabel'#4'Left'#2#16#6'Height'#2#14#3'Top'#2'X'#5'Width'#2#19#7'Caption'#6
+  +#4'Zip:'#12'FocusControl'#7#7'ZipEdit'#11'ParentColor'#8#0#0#242#2#3#6'TLabe'
+  +'l'#9'CityLabel'#4'Left'#2'X'#6'Height'#2#14#3'Top'#2'X'#5'Width'#2#24#7'Cap'
+  +'tion'#6#5'City:'#12'FocusControl'#7#12'CityComboBox'#11'ParentColor'#8#0#0
+  +#241#6'TPanel'#9'LinePanel'#3'Top'#3#180#0#5'Width'#3#192#1#0#0#5'TEdit'#8'N'
+  +'ameEdit'#4'Left'#2#16#6'Height'#2#21#3'Top'#2#24#5'Width'#3#217#0#8'TabOrde'
+  +'r'#2#1#0#0#5'TEdit'#10'StreetEdit'#4'Left'#2#16#6'Height'#2#21#3'Top'#2'@'#5
+  +'Width'#3#217#0#8'TabOrder'#2#2#0#0#5'TEdit'#7'ZipEdit'#4'Left'#2#16#6'Heigh'
+  +'t'#2#21#3'Top'#2'h'#5'Width'#2'A'#8'TabOrder'#2#3#0#0#9'TComboBox'#12'CityC'
+  +'omboBox'#4'Left'#2'X'#6'Height'#2#21#3'Top'#2'h'#5'Width'#3#145#0#16'AutoCo'
+  +'mpleteText'#11#22'cbactEndOfLineComplete'#20'cbactSearchAscending'#0#10'Ite'
+  +'mHeight'#2#13#8'TabOrder'#2#4#0#0#9'TGroupBox'#14'PhonesGroupBox'#4'Left'#3
+  +#248#0#6'Height'#3#145#0#3'Top'#2#16#5'Width'#3#185#0#7'Caption'#6#6'Phones'
+  +#12'ClientHeight'#2''#11'ClientWidth'#3#181#0#8'TabOrder'#2#5#0#11'TStringG'
+  +'rid'#16'PhonesStringGrid'#4'Left'#2#14#6'Height'#2'i'#3'Top'#2#8#5'Width'#3
+  +#153#0#8'ColCount'#2#5#15'DefaultColWidth'#2' '#16'DefaultRowHeight'#2#16#10
+  +'FixedColor'#7#9'clBtnFace'#7'Options'#11#15'goFixedVertLine'#15'goFixedHorz'
+  +'Line'#10'goVertLine'#10'goHorzLine'#13'goRangeSelect'#14'goSmoothScroll'#0#8
+  +'RowCount'#2#5#10'ScrollBars'#7#10'ssAutoBoth'#8'TabOrder'#2#0#7'TabStop'#9#0
+  +#0#0#0#241#6'TPanel'#11'BottomPanel'#3'Top'#3#182#0#5'Width'#3#192#1#11'Clie'
+  +'ntWidth'#3#192#1#0#241#7'TButton'#8'OkButton'#0#0#241#7'TButton'#12'CancelB'
+  +'utton'#0#0#0#0
+]);

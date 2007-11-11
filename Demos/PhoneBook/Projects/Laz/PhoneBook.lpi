@@ -1,0 +1,235 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <ProjectOptions>
+    <PathDelim Value="\"/>
+    <Version Value="6"/>
+    <General>
+      <Flags>
+        <SaveClosedFiles Value="False"/>
+        <SaveOnlyProjectUnits Value="True"/>
+        <AlwaysBuild Value="False"/>
+      </Flags>
+      <MainUnit Value="0"/>
+      <IconPath Value="./"/>
+      <TargetFileExt Value=".exe"/>
+      <ActiveEditorIndexAtStart Value="0"/>
+    </General>
+    <VersionInfo>
+      <ProjectVersion Value=""/>
+    </VersionInfo>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IgnoreBinaries Value="False"/>
+      <IncludeFileFilter Value="*.(pas|pp|inc|lfm|lpr|lrs|lpi|lpk|sh|xml)"/>
+      <ExcludeFileFilter Value="*.(bak|ppu|ppw|o|so);*~;backup"/>
+    </PublishOptions>
+    <RunParams>
+      <local>
+        <FormatVersion Value="1"/>
+        <LaunchingApplication PathPlusParams="/usr/X11R6/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
+      </local>
+    </RunParams>
+    <RequiredPackages Count="1">
+      <Item1>
+        <PackageName Value="LCL"/>
+      </Item1>
+    </RequiredPackages>
+    <Units Count="17">
+      <Unit0>
+        <Filename Value="PhoneBook.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="PhoneBook"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="23"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="..\..\Units\lcl\MainFrm.pas"/>
+        <ComponentName Value="MainForm"/>
+        <IsPartOfProject Value="True"/>
+        <ResourceFilename Value="..\..\Units\lcl\MainFrm.lrs"/>
+        <UnitName Value="MainFrm"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <EditorIndex Value="0"/>
+        <UsageCount Value="23"/>
+        <Loaded Value="True"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="..\..\Units\lcl\CustomEditFrm.pas"/>
+        <ComponentName Value="CustomEditForm"/>
+        <HasResources Value="True"/>
+        <IsPartOfProject Value="True"/>
+        <ResourceFilename Value="..\..\Units\lcl\CustomEditFrm.lrs"/>
+        <UnitName Value="CustomEditFrm"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="23"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="..\..\Units\lcl\ContactEditFrm.pas"/>
+        <ComponentName Value="ContactEditForm"/>
+        <HasResources Value="True"/>
+        <IsPartOfProject Value="True"/>
+        <ResourceFilename Value="..\..\Units\lcl\ContactEditFrm.lrs"/>
+        <UnitName Value="ContactEditFrm"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="23"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="..\..\Units\lcl\CompanyEditFrm.pas"/>
+        <ComponentName Value="CompanyEditForm"/>
+        <HasResources Value="True"/>
+        <IsPartOfProject Value="True"/>
+        <ResourceFilename Value="..\..\Units\lcl\CompanyEditFrm.lrs"/>
+        <UnitName Value="CompanyEditFrm"/>
+        <CursorPos X="68" Y="8"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="23"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="..\..\Units\lcl\PersonEditFrm.pas"/>
+        <ComponentName Value="PersonEditForm"/>
+        <HasResources Value="True"/>
+        <IsPartOfProject Value="True"/>
+        <ResourceFilename Value="..\..\Units\lcl\PersonEditFrm.lrs"/>
+        <UnitName Value="PersonEditFrm"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="23"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="..\..\Units\lcl\CityEditFrm.pas"/>
+        <ComponentName Value="CityEditForm"/>
+        <HasResources Value="True"/>
+        <IsPartOfProject Value="True"/>
+        <ResourceFilename Value="..\..\Units\lcl\CityEditFrm.lrs"/>
+        <UnitName Value="CityEditFrm"/>
+        <CursorPos X="1" Y="3"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="23"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="..\..\Units\lcl\PhoneEditFrm.pas"/>
+        <ComponentName Value="PhoneEditForm"/>
+        <HasResources Value="True"/>
+        <IsPartOfProject Value="True"/>
+        <ResourceFilename Value="..\..\Units\lcl\PhoneEditFrm.lrs"/>
+        <UnitName Value="PhoneEditFrm"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="23"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="..\..\Units\lcl\ReportItemEditFrm.pas"/>
+        <ComponentName Value="ReportItemEditForm"/>
+        <HasResources Value="True"/>
+        <IsPartOfProject Value="True"/>
+        <ResourceFilename Value="..\..\Units\lcl\ReportItemEditFrm.lrs"/>
+        <UnitName Value="ReportItemEditFrm"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="23"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="..\..\Units\lcl\ReportGroupEditFrm.pas"/>
+        <ComponentName Value="ReportGroupEditForm"/>
+        <HasResources Value="True"/>
+        <IsPartOfProject Value="True"/>
+        <ResourceFilename Value="..\..\Units\lcl\ReportGroupEditFrm.lrs"/>
+        <UnitName Value="ReportGroupEditFrm"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="23"/>
+      </Unit9>
+      <Unit10>
+        <Filename Value="..\..\Units\ReportMVP.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ReportMVP"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="22"/>
+      </Unit10>
+      <Unit11>
+        <Filename Value="..\..\Units\Brokers.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Brokers"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="22"/>
+      </Unit11>
+      <Unit12>
+        <Filename Value="..\..\Units\ContactBO.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ContactBO"/>
+        <CursorPos X="1" Y="15"/>
+        <TopLine Value="7"/>
+        <UsageCount Value="22"/>
+      </Unit12>
+      <Unit13>
+        <Filename Value="..\..\Units\ContactMVP.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ContactMVP"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="22"/>
+      </Unit13>
+      <Unit14>
+        <Filename Value="..\..\Units\CustomMVP.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="CustomMVP"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="22"/>
+      </Unit14>
+      <Unit15>
+        <Filename Value="..\..\Units\MainMVP.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="MainMVP"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="22"/>
+      </Unit15>
+      <Unit16>
+        <Filename Value="..\..\Units\Populate.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Populate"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="22"/>
+      </Unit16>
+    </Units>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="5"/>
+    <PathDelim Value="\"/>
+    <SearchPaths>
+      <IncludeFiles Value="..\..\..\..\Source\Core\"/>
+      <OtherUnitFiles Value="..\..\..\..\Source\Core\;..\..\..\..\Source\Brokers\;..\..\Units\;..\..\Units\lcl\"/>
+    </SearchPaths>
+    <CodeGeneration>
+      <Generate Value="Faster"/>
+    </CodeGeneration>
+    <Linking>
+      <Options>
+        <Win32>
+          <GraphicApplication Value="True"/>
+        </Win32>
+      </Options>
+    </Linking>
+    <Other>
+      <CompilerPath Value="$(CompPath)"/>
+    </Other>
+  </CompilerOptions>
+  <Debugging>
+    <Exceptions Count="2">
+      <Item1>
+        <Name Value="ECodetoolError"/>
+      </Item1>
+      <Item2>
+        <Name Value="EFOpenError"/>
+      </Item2>
+    </Exceptions>
+  </Debugging>
+</CONFIG>

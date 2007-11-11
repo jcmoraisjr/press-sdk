@@ -1,0 +1,62 @@
+inherited ReportItemEditForm: TReportItemEditForm
+  Height = 152
+  Width = 273
+  HorzScrollBar.Page = 272
+  VertScrollBar.Page = 151
+  Caption = 'ReportItemEditForm'
+  ClientHeight = 152
+  ClientWidth = 273
+  inherited ClientPanel: TPanel
+    Height = 111
+    Width = 273
+    ClientHeight = 111
+    ClientWidth = 273
+    object CaptionLabel: TLabel[0]
+      Left = 24
+      Height = 14
+      Top = 16
+      Width = 42
+      Caption = 'Caption:'
+      FocusControl = CaptionEdit
+      ParentColor = False
+    end
+    object DesignButton: TSpeedButton[1]
+      Left = 152
+      Height = 25
+      Top = 64
+      Width = 97
+      Caption = 'Design'
+      Color = clBtnFace
+      NumGlyphs = 0
+    end
+    inherited LinePanel: TPanel
+      Top = 109
+      Width = 273
+      TabOrder = 2
+    end
+    object CaptionEdit: TEdit
+      Left = 24
+      Height = 21
+      Top = 32
+      Width = 225
+      TabOrder = 0
+    end
+    object VisibleCheckBox: TCheckBox
+      Left = 24
+      Height = 13
+      Top = 68
+      Width = 50
+      Caption = 'Visible'
+      TabOrder = 1
+    end
+  end
+  inherited BottomPanel: TPanel
+    Top = 111
+    Width = 273
+    ClientWidth = 273
+    inherited OkButton: TButton
+    end
+    inherited CancelButton: TButton
+    end
+  end
+end

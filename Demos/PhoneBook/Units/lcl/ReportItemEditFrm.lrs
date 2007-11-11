@@ -1,0 +1,20 @@
+{ This is an automatically generated lazarus resource file }
+
+LazarusResources.Add('TReportItemEditForm','FORMDATA',[
+  'TPF0'#241#19'TReportItemEditForm'#18'ReportItemEditForm'#6'Height'#3#152#0#5
+  +'Width'#3#17#1#18'HorzScrollBar.Page'#3#16#1#18'VertScrollBar.Page'#3#151#0#7
+  +'Caption'#6#18'ReportItemEditForm'#12'ClientHeight'#3#152#0#11'ClientWidth'#3
+  +#17#1#0#241#6'TPanel'#11'ClientPanel'#6'Height'#2'o'#5'Width'#3#17#1#12'Clie'
+  +'ntHeight'#2'o'#11'ClientWidth'#3#17#1#0#242#2#0#6'TLabel'#12'CaptionLabel'#4
+  +'Left'#2#24#6'Height'#2#14#3'Top'#2#16#5'Width'#2'*'#7'Caption'#6#8'Caption:'
+  +#12'FocusControl'#7#11'CaptionEdit'#11'ParentColor'#8#0#0#242#2#1#12'TSpeedB'
+  +'utton'#12'DesignButton'#4'Left'#3#152#0#6'Height'#2#25#3'Top'#2'@'#5'Width'
+  +#2'a'#7'Caption'#6#6'Design'#5'Color'#7#9'clBtnFace'#9'NumGlyphs'#2#0#0#0#241
+  +#6'TPanel'#9'LinePanel'#3'Top'#2'm'#5'Width'#3#17#1#8'TabOrder'#2#2#0#0#5'TE'
+  +'dit'#11'CaptionEdit'#4'Left'#2#24#6'Height'#2#21#3'Top'#2' '#5'Width'#3#225
+  +#0#8'TabOrder'#2#0#0#0#9'TCheckBox'#15'VisibleCheckBox'#4'Left'#2#24#6'Heigh'
+  +'t'#2#13#3'Top'#2'D'#5'Width'#2'2'#7'Caption'#6#7'Visible'#8'TabOrder'#2#1#0
+  +#0#0#241#6'TPanel'#11'BottomPanel'#3'Top'#2'o'#5'Width'#3#17#1#11'ClientWidt'
+  +'h'#3#17#1#0#241#7'TButton'#8'OkButton'#0#0#241#7'TButton'#12'CancelButton'#0
+  +#0#0#0
+]);
