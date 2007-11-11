@@ -47,7 +47,11 @@ procedure TCustomEditModel.InitCommands;
 begin
   inherited;
 {$IFDEF UseReport}
-  FReportManager := TPressReportManager.Create(Self);
+  try
+    FReportManager := TPressReportManager.Create(Self);
+  except
+    // no problem, database metadata doesn't have report classes
+  end;
 {$ENDIF}
 end;
 
