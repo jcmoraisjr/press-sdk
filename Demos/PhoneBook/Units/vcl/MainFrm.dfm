@@ -1,9 +1,9 @@
 object MainForm: TMainForm
   Left = 265
   Top = 133
+  Width = 376
+  Height = 333
   Caption = 'PhoneBook'
-  ClientHeight = 287
-  ClientWidth = 368
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -81,7 +81,6 @@ object MainForm: TMainForm
     BevelOuter = bvNone
     BorderWidth = 8
     TabOrder = 1
-    ExplicitHeight = 195
     object ItemsStringGrid: TStringGrid
       Left = 8
       Top = 8
@@ -91,7 +90,6 @@ object MainForm: TMainForm
       DefaultColWidth = 32
       DefaultRowHeight = 16
       TabOrder = 0
-      ExplicitHeight = 179
     end
   end
   object MainMenu: TMainMenu
