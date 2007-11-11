@@ -104,7 +104,10 @@ type
 implementation
 
 uses
-  {$IFDEF PressLog}SysUtils, PressLog,{$ENDIF}
+  SysUtils,
+{$IFDEF PressLog}
+  PressLog,
+{$ENDIF}
   PressConsts;
 
 type

@@ -590,7 +590,6 @@ implementation
 uses
   SysUtils,
   PressConsts,
-  PressAttributes,
   PressPicture,
   PressMVPFactory;
 

@@ -22,8 +22,10 @@ interface
 uses
   SysUtils,
   Classes,
-  SyncObjs,
-  PressCompatibility;
+{$IFDEF D5Down}
+  PressCompatibility,
+{$ENDIF}
+  SyncObjs;
 
 type
   EPressError = class(Exception);

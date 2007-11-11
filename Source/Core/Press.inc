@@ -2,7 +2,7 @@
 {.$DEFINE PressRelease}
 
 // Use LOG
-{$DEFINE PressLog}
+{.$DEFINE PressLog}
   {.$DEFINE PressLogIdle}
   {.$DEFINE PressLogMemory}
   {.$DEFINE PressLogEvents}

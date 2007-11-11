@@ -20,7 +20,6 @@ interface
 
 uses
   Classes,
-  Contnrs,
   PressApplication,
   PressClasses,
   PressSubject,
