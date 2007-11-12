@@ -22,6 +22,6 @@ uses
 
 initialization
   {$i PhoneEditFrm.lrs}
-  TPhoneEditPresenter.RegisterVCLForm(TPhoneEditForm);
+  TPhoneEditPresenter.RegisterLCLForm(TPhoneEditForm);
 
 end.

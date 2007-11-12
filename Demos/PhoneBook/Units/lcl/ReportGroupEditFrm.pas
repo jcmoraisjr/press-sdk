@@ -20,6 +20,6 @@ uses
 
 initialization
   {$i ReportGroupEditFrm.lrs}
-  TReportGroupEditPresenter.RegisterVCLForm(TReportGroupEditForm);
+  TReportGroupEditPresenter.RegisterLCLForm(TReportGroupEditForm);
 
 end.

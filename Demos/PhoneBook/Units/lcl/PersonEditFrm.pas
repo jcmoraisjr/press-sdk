@@ -20,6 +20,6 @@ uses
 
 initialization
   {$i PersonEditFrm.lrs}
-  TPersonEditPresenter.RegisterVCLForm(TPersonEditForm);
+  TPersonEditPresenter.RegisterLCLForm(TPersonEditForm);
 
 end.

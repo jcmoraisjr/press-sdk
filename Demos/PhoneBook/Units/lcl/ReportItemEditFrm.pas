@@ -22,6 +22,6 @@ uses
 
 initialization
   {$i ReportItemEditFrm.lrs}
-  TReportItemEditPresenter.RegisterVCLForm(TReportItemEditForm);
+  TReportItemEditPresenter.RegisterLCLForm(TReportItemEditForm);
 
 end.

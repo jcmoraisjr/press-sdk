@@ -22,6 +22,6 @@ uses
 
 initialization
   {$i CityEditFrm.lrs}
-  TCityEditPresenter.RegisterVCLForm(TCityEditForm);
+  TCityEditPresenter.RegisterLCLForm(TCityEditForm);
 
 end.
