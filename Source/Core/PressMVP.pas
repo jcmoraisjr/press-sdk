@@ -130,6 +130,7 @@ type
     function VerifyEnabled: Boolean;
   protected
     procedure Changed;
+    procedure CheckEnabledState(AUserChanged: Boolean = False);
     function GetCaption: string; virtual;
     function GetShortCut: TShortCut; virtual;
     procedure InitNotifier; virtual;
@@ -622,6 +623,19 @@ begin
   TPressMVPCommandChangedEvent.Create(Self).Notify;
 end;
 
+procedure TPressMVPCommand.CheckEnabledState(AUserChanged: Boolean);
+var
+  VOldEnabled, VOldVisible: Boolean;
+begin
+  VOldEnabled := FEnabled;
+  VOldVisible := FVisible;
+  if AUserChanged then
+    VerifyAccess;
+  FEnabled := VerifyEnabled;
+  if (FEnabled <> VOldEnabled) or (FVisible <> VOldVisible) then
+    Changed;
+end;
+
 constructor TPressMVPCommand.Create(
   AModel: TPressMVPModel; const ACaption: string; AShortCut: TShortCut);
 begin
@@ -700,16 +714,8 @@ begin
 end;
 
 procedure TPressMVPCommand.Notify(AEvent: TPressEvent);
-var
-  VOldEnabled, VOldVisible: Boolean;
 begin
-  VOldEnabled := FEnabled;
-  VOldVisible := FVisible;
-  if AEvent is TPressUserEvent then
-    VerifyAccess;
-  FEnabled := VerifyEnabled;
-  if (FEnabled <> VOldEnabled) or (FVisible <> VOldVisible) then
-    Changed;
+  CheckEnabledState(AEvent is TPressUserEvent);
 end;
 
 class function TPressMVPCommand.RegisterCommand: TPressMVPCommandRegistry;
