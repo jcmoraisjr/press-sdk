@@ -29,12 +29,14 @@ type
   private
     FObjectClassName: TPressString;
     FReports: TPressParts;
+    function GetObjectClassName: string;
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     function InternalCreateReportItemIterator: TPressItemsIterator; override;
     class function InternalMetadataStr: string; override;
   public
     class function ObjectClassAttributeName: string; override;
+    property ObjectClassName: string read GetObjectClassName;
   end;
 
   TPressReportItem = class(TPressCustomReportItem)
@@ -63,6 +65,11 @@ uses
   PressConsts;
 
 { TPressReportGroup }
+
+function TPressReportGroup.GetObjectClassName: string;
+begin
+  Result := FObjectClassName.Value;
+end;
 
 function TPressReportGroup.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
