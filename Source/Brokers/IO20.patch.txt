@@ -1,0 +1,153 @@
+Index: InstantPersistence.pas
+===================================================================
+--- InstantPersistence.pas      (revision 709)
++++ InstantPersistence.pas      (working copy)
+@@ -1064,7 +1064,6 @@
+     function GetObjectReferences(Index: Integer): TInstantObjectReference;
+     procedure SetObjectReferences(Index: Integer; Value: TInstantObjectReference);
+     property ObjectReferenceList: TObjectList read GetObjectReferenceList;
+-    property ObjectReferences[Index: Integer]: TInstantObjectReference read GetObjectReferences write SetObjectReferences;
+   protected
+     class function AttributeType: TInstantAttributeType; override;
+     function GetAllowOwned: Boolean; override;
+@@ -1085,6 +1084,7 @@
+     procedure SetAllowOwned(Value: Boolean); virtual;
+     procedure ValidateObject(AObject: TInstantObject); override;
+     procedure WriteObject(Writer: TInstantWriter); override;
++    property ObjectReferences[Index: Integer]: TInstantObjectReference read GetObjectReferences write SetObjectReferences;
+   public
+     destructor Destroy; override;
+     procedure Assign(Source: TPersistent); override;
+@@ -2706,11 +2706,15 @@
+   Types,
+ {$ENDIF}
+   TypInfo,
+-{$IFDEF D6+}
++{$IFDEF FPC}
++  MaskEdit,
++{$ELSE}{$IFDEF D6+}
+   MaskUtils,
+-  Variants,
+ {$ELSE}
+   Mask,
++{$ENDIF}{$ENDIF}
++{$IFDEF D6+}
++  Variants,
+ {$ENDIF}
+   InstantUtils, InstantRtti, InstantDesignHook, InstantCode;
+
+@@ -2732,6 +2736,8 @@
+
+ { Local Routines }
+
++{.$DEFINE IO_STATEMENT_LOGGING}
++
+ {$IFDEF IO_STATEMENT_LOGGING}
+ procedure InstantLogStatement(const Caption, AStatement: string; AParams: TParams = nil);
+ var
+@@ -7694,11 +7700,7 @@
+   end;
+ end;
+
+-{$IFDEF FPC}
+-class function TInstantObject.ClassType: TInstantObjectClass;
+-{$ELSE}
+-function TInstantObject.ClassType: TInstantObjectClass;
+-{$ENDIF}
++{$IFDEF FPC}class{$ENDIF} function TInstantObject.ClassType: TInstantObjectClass;
+ begin
+   Result := TInstantObjectClass(inherited ClassType);
+ end;
+@@ -13389,10 +13391,9 @@
+ begin
+   FieldStr := Format('%s, %s, %s', [EmbraceField(InstantChildClassFieldName),
+     EmbraceField(InstantChildIdFieldName), EmbraceField(InstantSequenceNoFieldName)]);
+-  WhereStr := Format('%s = :%s AND %s = :%s AND %s = :%s',
++  WhereStr := Format('%s = :%s AND %s = :%s',
+     [EmbraceField(InstantParentClassFieldName), InstantParentClassFieldName,
+-    EmbraceField(InstantParentIdFieldName), InstantParentIdFieldName,
+-    EmbraceField(InstantChildClassFieldName), InstantChildClassFieldName]);
++    EmbraceField(InstantParentIdFieldName), InstantParentIdFieldName]);
+   Result := Format('SELECT %s FROM %s WHERE %s ORDER BY %s',
+     [FieldStr, EmbraceTable('%s'), WhereStr, EmbraceField(InstantSequenceNoFieldName)]);
+ end;
+@@ -13449,6 +13450,9 @@
+ var
+   CachedStatement: TInstantStatement;
+ begin
++  {$IFDEF IO_STATEMENT_LOGGING}
++  InstantLogStatement('Before: ', AStatement, AParams);
++  {$ENDIF}
+   Result := nil;
+   if FStatementCacheCapacity <> 0 then
+   begin
+@@ -13814,8 +13818,7 @@
+   Param: TParam;
+ begin
+   Param := AddParam(Params, ParamName, ftString);
+-  if Value <> '' then
+-    Param.AsString := Value;
++  Param.AsString := Value;
+ end;
+
+ procedure TInstantSQLResolver.AddIdParam(Params: TParams;
+@@ -13851,9 +13854,6 @@
+ var
+   TransError: Exception;
+ begin
+-  {$IFDEF IO_STATEMENT_LOGGING}
+-  InstantLogStatement('Before: ', AStatement, AParams);
+-  {$ENDIF}
+   try
+     Result := Broker.Execute(AStatement, AParams);
+     Info.Success := Result >= 1;
+@@ -14032,14 +14032,14 @@
+             SelectStatement := Format(SelectExternalSQL, [AttributeMetadata.ExternalStorageName]);
+             AddIdParam(SelectParams, InstantParentIdFieldName, AObject.Id);
+             AddStringParam(SelectParams, InstantParentClassFieldName, AObject.ClassName);
+-            AddStringParam(SelectParams, InstantChildClassFieldName, AttributeMetadata.ObjectClassName);
+             DataSet := Broker.AcquireDataSet(SelectStatement, SelectParams);
+             try
+               DataSet.Open;
+               try
+                 while not DataSet.Eof do
+                 begin
+-                  PartObject := AttributeMetadata.ObjectClass.Retrieve(
++                  PartObject :=
++                    InstantFindClass(DataSet.Fields[0].AsString).Retrieve(
+                     DataSet.Fields[1].AsString, False, False, AObject.Connector);
+                   try
+                     if Assigned(PartObject) then
+@@ -14307,14 +14307,14 @@
+               SelectStatement := Format(SelectExternalSQL, [AttributeMetadata.ExternalStorageName]);
+               AddIdParam(SelectParams, InstantParentIdFieldName, AObject.Id);
+               AddStringParam(SelectParams, InstantParentClassFieldName, AObject.ClassName);
+-              AddStringParam(SelectParams, InstantChildClassFieldName, AttributeMetadata.ObjectClassName);
+               DataSet := Broker.AcquireDataSet(SelectStatement, SelectParams);
+               try
+                 DataSet.Open;
+                 try
+                   while not DataSet.Eof do
+                   begin
+-                    PartObject := AttributeMetadata.ObjectClass.Retrieve(
++                    PartObject :=
++                      InstantFindClass(DataSet.Fields[0].AsString).Retrieve(
+                       DataSet.Fields[1].AsString, False, False, AObject.Connector);
+                     try
+                       if Assigned(PartObject) and
+@@ -14581,7 +14581,6 @@
+           Statement := Format(SelectExternalSQL, [AttributeMetadata.ExternalStorageName]);
+           AddIdParam(Params, InstantParentIdFieldName, AObjectId);
+           AddStringParam(Params, InstantParentClassFieldName, AObject.ClassName);
+-          AddStringParam(Params, InstantChildClassFieldName, AttributeMetadata.ObjectClassName);
+           DataSet := Broker.AcquireDataSet(Statement, Params);
+           try
+             DataSet.Open;
+@@ -14648,7 +14647,6 @@
+           Statement:=Format(SelectExternalSQL, [AttributeMetadata.ExternalStorageName]);
+           AddIdParam(Params, InstantParentIdFieldName, AObjectId);
+           AddStringParam(Params, InstantParentClassFieldName, AObject.ClassName);
+-          AddStringParam(Params, InstantChildClassFieldName, AttributeMetadata.ObjectClassName);
+           DataSet := Broker.AcquireDataSet(Statement, Params);
+           try
+             DataSet.Open;
