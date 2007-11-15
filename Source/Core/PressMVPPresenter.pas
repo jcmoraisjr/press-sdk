@@ -660,6 +660,7 @@ constructor TPressMVPRunPresenterCommand.Create(AModel: TPressMVPModel;
 begin
   inherited Create(AModel);
   FPresenterClass := APresenterClass;
+  CheckEnabledState;
 end;
 
 procedure TPressMVPRunPresenterCommand.InternalExecute;
@@ -1217,8 +1218,7 @@ begin
   PressApp.Run;
 end;
 
-procedure RegisterPresenters;
-begin
+initialization
   TPressMVPNullPresenter.RegisterPresenter;
   TPressMVPValuePresenter.RegisterPresenter;
   TPressMVPEnumPresenter.RegisterPresenter;
@@ -1226,10 +1226,8 @@ begin
   TPressMVPItemsPresenter.RegisterPresenter;
   TPressMVPFormPresenter.RegisterPresenter;
   TPressMVPQueryPresenter.RegisterPresenter;
-end;
-
-initialization
-  RegisterPresenters;
+  { TODO : Improve }
+  TPressMVPRunPresenterCommand.RegisterCommand.AlwaysEnabled := True;
 
 finalization
   FreeAndNil(_PressMVPMainPresenter);
