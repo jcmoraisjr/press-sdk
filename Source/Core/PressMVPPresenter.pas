@@ -486,6 +486,7 @@ begin
   Result := TPressMVPRunPresenterCommand.Create(Model, APresenterClass);
   Model.AddCommandInstance(Result);
   Result.AddComponent(VComponent);
+  Result.EnabledIfNoUser := True;
 end;
 
 constructor TPressMVPPresenter.Create(
@@ -660,7 +661,6 @@ constructor TPressMVPRunPresenterCommand.Create(AModel: TPressMVPModel;
 begin
   inherited Create(AModel);
   FPresenterClass := APresenterClass;
-  CheckEnabledState;
 end;
 
 procedure TPressMVPRunPresenterCommand.InternalExecute;
@@ -842,6 +842,7 @@ begin
   Result := TPressMVPRunPresenterCommand.Create(Model, APresenterClass);
   Model.AddCommandInstance(Result);
   Result.AddComponent(VComponent);
+  Result.EnabledIfNoUser := True;
 end;
 
 function TPressMVPFormPresenter.CreatePresenterIterator: TPressMVPPresenterIterator;
@@ -1226,8 +1227,6 @@ initialization
   TPressMVPItemsPresenter.RegisterPresenter;
   TPressMVPFormPresenter.RegisterPresenter;
   TPressMVPQueryPresenter.RegisterPresenter;
-  { TODO : Improve }
-  TPressMVPRunPresenterCommand.RegisterCommand.AlwaysEnabled := True;
 
 finalization
   FreeAndNil(_PressMVPMainPresenter);
