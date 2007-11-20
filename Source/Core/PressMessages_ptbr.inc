@@ -6,6 +6,7 @@
   SPasswordsDontMatch_rst = 'As senhas não são iguais';
   SPropertyIsReadOnly_rst = 'A propriedade ''%s.%s'' é somente leitura';
   SPropertyNotFound_rst = 'A propriedade ''%s.%s'' não foi encontrada';
+  SServiceNotFound_rst = 'Serviço ''%s'' não encontrado';
   SStringLengthOutOfBounds_rst = 'String muito grande';
   STokenExpected_rst = '''%s'' esperado, mas ''%s'' foi encontrado';
   STokenLengthOutOfBounds_rst = 'Token muito grande';

@@ -6,6 +6,7 @@
   SPasswordsDontMatch := SPasswordsDontMatch_rst;
   SPropertyIsReadOnly := SPropertyIsReadOnly_rst;
   SPropertyNotFound := SPropertyNotFound_rst;
+  SServiceNotFound := SServiceNotFound_rst;
   SStringLengthOutOfBounds := SStringLengthOutOfBounds_rst;
   STokenExpected := STokenExpected_rst;
   STokenLengthOutOfBounds := STokenLengthOutOfBounds_rst;

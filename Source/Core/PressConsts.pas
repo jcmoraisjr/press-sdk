@@ -67,6 +67,7 @@ var
   SPasswordsDontMatch,
   SPropertyIsReadOnly,
   SPropertyNotFound,
+  SServiceNotFound,
   SStringLengthOutOfBounds,
   STokenExpected,
   STokenLengthOutOfBounds,

@@ -6,6 +6,7 @@
   SPasswordsDontMatch_rst = 'Passwords don''t match';
   SPropertyIsReadOnly_rst = 'The property ''%s.%s'' is read only';
   SPropertyNotFound_rst = 'Property ''%s.%s'' not found';
+  SServiceNotFound_rst = 'Service ''%s'' not found';
   SStringLengthOutOfBounds_rst = 'String length out of bounds';
   STokenExpected_rst = '''%s'' was expected, but ''%s'' was found';
   STokenLengthOutOfBounds_rst = 'Token length out of bounds';

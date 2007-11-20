@@ -722,7 +722,9 @@ var
 begin
   VIndex := IndexOfServiceTypeName(ASection.SectionName);
   if VIndex >= 0 then
-    Items[VIndex].AddConfigSection(ASection);
+    Items[VIndex].AddConfigSection(ASection)
+  else
+    raise EPressError.CreateFmt(SServiceNotFound, [ASection.SectionName]);
 end;
 
 function TPressRegistryList.CreateIterator: TPressRegistryIterator;
