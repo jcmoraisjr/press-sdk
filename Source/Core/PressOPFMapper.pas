@@ -162,6 +162,7 @@ type
   private
     FDepth: Integer;
     FSourceProxyList: TPressProxyList;
+    procedure AfterRetrieveEvent;
   protected
     procedure CreateProxies(AStartingAt, AItemCount: Integer);
     function InternalCreateMap(AClass: TPressObjectClass): TPressOPFCustomBulkMap; override;
@@ -1434,6 +1435,23 @@ end;
 
 { TPressOPFBulkRetrieve }
 
+type
+  TPressObjectFriend = class(TPressObject);
+procedure TPressOPFBulkRetrieve.AfterRetrieveEvent;
+var
+  VInstance: TPressObject;
+  I: Integer;
+begin
+  { TODO : Implement AfterRetrieve event in the DAO class }
+  if Assigned(FProxyList) then  // friend class
+    for I := 0 to Pred(FProxyList.Count) do
+    begin
+      VInstance := FProxyList[I].Instance;
+      if Assigned(VInstance) then
+        TPressObjectFriend(VInstance).AfterRetrieve;
+    end;
+end;
+
 constructor TPressOPFBulkRetrieve.Create(
   AObjectMapper: TPressOPFObjectMapper;
   ASourceProxyList: TPressProxyList; ADepth: Integer);
@@ -1470,6 +1488,7 @@ begin
   CreateProxies(AStartingAt, AItemCount);
   CreateMaps;
   RetrieveMaps;
+  AfterRetrieveEvent;
   UpdateProxies;
 end;
 
