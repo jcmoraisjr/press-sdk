@@ -122,15 +122,22 @@ type
     FNotifier: TPressNotifier;
     FShortCut: TShortCut;
     FVisible: Boolean;
+    FEnabledIfNoUser: Boolean;
+    FAlwaysEnabled: Boolean;
+    FResourceId: Integer;
+    procedure CheckEnabledState(AAccessChanged: Boolean);
     function CurrentUser: TPressCustomUser;
     function GetComponentList: TPressMVPCommandComponentList;
+    procedure InitRegistryFields;
     procedure Notify(AEvent: TPressEvent);
+    procedure SetAlwaysEnabled(Value: Boolean);
     procedure SetEnabled(Value: Boolean);
+    procedure SetEnabledIfNoUser(Value: Boolean);
+    procedure SetResourceId(Value: Integer);
     procedure VerifyAccess;
     function VerifyEnabled: Boolean;
   protected
     procedure Changed;
-    procedure CheckEnabledState(AUserChanged: Boolean = False);
     function GetCaption: string; virtual;
     function GetShortCut: TShortCut; virtual;
     procedure InitNotifier; virtual;
@@ -151,6 +158,11 @@ type
     property Model: TPressMVPModel read FModel;
     property ShortCut: TShortCut read GetShortCut;
     property Visible: Boolean read FVisible;
+  public
+    // from command registry
+    property AlwaysEnabled: Boolean read FAlwaysEnabled write SetAlwaysEnabled;
+    property EnabledIfNoUser: Boolean read FEnabledIfNoUser write SetEnabledIfNoUser;
+    property ResourceId: Integer read FResourceId write SetResourceId;
   end;
 
   TPressMVPCommandIterator = class;
@@ -623,13 +635,13 @@ begin
   TPressMVPCommandChangedEvent.Create(Self).Notify;
 end;
 
-procedure TPressMVPCommand.CheckEnabledState(AUserChanged: Boolean);
+procedure TPressMVPCommand.CheckEnabledState(AAccessChanged: Boolean);
 var
   VOldEnabled, VOldVisible: Boolean;
 begin
   VOldEnabled := FEnabled;
   VOldVisible := FVisible;
-  if AUserChanged then
+  if AAccessChanged then
     VerifyAccess;
   FEnabled := VerifyEnabled;
   if (FEnabled <> VOldEnabled) or (FVisible <> VOldVisible) then
@@ -648,6 +660,7 @@ begin
   FModel := AModel;
   FCaption := ACaption;
   FShortCut := AShortCut;
+  InitRegistryFields;
   VerifyAccess;
   FEnabledUpdatingMethod := umInternalMethod;
   FEnabled := VerifyEnabled;
@@ -704,6 +717,26 @@ begin
   Notifier.AddNotificationItem(nil, [TPressUserEvent]);
 end;
 
+procedure TPressMVPCommand.InitRegistryFields;
+var
+  VCommandReg: TPressMVPCommandRegistry;
+  VIndex: Integer;
+begin
+  VIndex := PressCommandRegistryList.IndexOfCommand(TPressMVPCommandClass(ClassType));
+  if VIndex <> -1 then
+  begin
+    VCommandReg := PressCommandRegistryList[VIndex];
+    FAlwaysEnabled := VCommandReg.AlwaysEnabled;
+    FEnabledIfNoUser := VCommandReg.EnabledIfNoUser;
+    FResourceId := VCommandReg.ResourceId;
+  end else
+  begin
+    FAlwaysEnabled := False;
+    FEnabledIfNoUser := False;
+    FResourceId := -1;
+  end;
+end;
+
 procedure TPressMVPCommand.InternalExecute;
 begin
 end;
@@ -729,6 +762,15 @@ begin
   end;
 end;
 
+procedure TPressMVPCommand.SetAlwaysEnabled(Value: Boolean);
+begin
+  if FAlwaysEnabled <> Value then
+  begin
+    FAlwaysEnabled := Value;
+    CheckEnabledState(True);
+  end;
+end;
+
 procedure TPressMVPCommand.SetEnabled(Value: Boolean);
 begin
   if (FEnabled <> Value) or (FEnabledUpdatingMethod <> umFieldValue) then
@@ -739,27 +781,35 @@ begin
   end;
 end;
 
+procedure TPressMVPCommand.SetEnabledIfNoUser(Value: Boolean);
+begin
+  if FEnabledIfNoUser <> Value then
+  begin
+    FEnabledIfNoUser := Value;
+    CheckEnabledState(True);
+  end;
+end;
+
+procedure TPressMVPCommand.SetResourceId(Value: Integer);
+begin
+  if FResourceId <> Value then
+  begin
+    FResourceId := Value;
+    CheckEnabledState(True);
+  end;
+end;
+
 procedure TPressMVPCommand.VerifyAccess;
 var
   VAccessMode: TPressAccessMode;
-  VCommandReg: TPressMVPCommandRegistry;
-  VIndex: Integer;
 begin
-  VIndex :=
-   PressCommandRegistryList.IndexOfCommand(TPressMVPCommandClass(ClassType));
-  if VIndex <> -1 then
-    VCommandReg := PressCommandRegistryList[VIndex]
-  else
-    VCommandReg := nil;
   if PressUserData.HasUser then
   begin
-    if Assigned(VCommandReg) and not VCommandReg.AlwaysEnabled and
-     (VCommandReg.ResourceId <> -1) then
-      VAccessMode := CurrentUser.AccessMode(VCommandReg.ResourceId)
+    if not AlwaysEnabled and (ResourceId <> -1) then
+      VAccessMode := CurrentUser.AccessMode(ResourceId)
     else
       VAccessMode := amWritable;
-  end else if Assigned(VCommandReg) and
-   (VCommandReg.AlwaysEnabled or VCommandReg.EnabledIfNoUser) then
+  end else if AlwaysEnabled or EnabledIfNoUser then
     VAccessMode := amWritable
   else
     VAccessMode := amVisible;
