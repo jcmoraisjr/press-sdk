@@ -1507,9 +1507,9 @@ procedure TPressOPFBulkRetrieve.UpdateProxies;
 var
   I: Integer;
 begin
-  if Assigned(FProxyList) then
+  if Assigned(FProxyList) then  // friend class
     for I := 0 to Pred(FProxyList.Count) do
-      (FProxyList[I] as TPressOPFBulkProxy).UpdateProxy;
+      FProxyList[I].UpdateProxy;
 end;
 
 { TPressOPFBulkRetrieveComplementary }
