@@ -5,14 +5,13 @@
     <Version Value="6"/>
     <General>
       <Flags>
-        <SaveClosedFiles Value="False"/>
         <SaveOnlyProjectUnits Value="True"/>
         <AlwaysBuild Value="False"/>
       </Flags>
+      <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
       <IconPath Value="./"/>
       <TargetFileExt Value=".exe"/>
-      <ActiveEditorIndexAtStart Value="0"/>
     </General>
     <VersionInfo>
       <ProjectVersion Value=""/>
@@ -39,9 +38,6 @@
         <Filename Value="PhoneBook.lpr"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="PhoneBook"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="23"/>
       </Unit0>
       <Unit1>
         <Filename Value="..\..\Units\lcl\MainFrm.pas"/>
@@ -49,11 +45,6 @@
         <IsPartOfProject Value="True"/>
         <ResourceFilename Value="..\..\Units\lcl\MainFrm.lrs"/>
         <UnitName Value="MainFrm"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <EditorIndex Value="0"/>
-        <UsageCount Value="23"/>
-        <Loaded Value="True"/>
       </Unit1>
       <Unit2>
         <Filename Value="..\..\Units\lcl\CustomEditFrm.pas"/>
@@ -62,9 +53,6 @@
         <IsPartOfProject Value="True"/>
         <ResourceFilename Value="..\..\Units\lcl\CustomEditFrm.lrs"/>
         <UnitName Value="CustomEditFrm"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="23"/>
       </Unit2>
       <Unit3>
         <Filename Value="..\..\Units\lcl\ContactEditFrm.pas"/>
@@ -73,9 +61,6 @@
         <IsPartOfProject Value="True"/>
         <ResourceFilename Value="..\..\Units\lcl\ContactEditFrm.lrs"/>
         <UnitName Value="ContactEditFrm"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="23"/>
       </Unit3>
       <Unit4>
         <Filename Value="..\..\Units\lcl\CompanyEditFrm.pas"/>
@@ -84,9 +69,6 @@
         <IsPartOfProject Value="True"/>
         <ResourceFilename Value="..\..\Units\lcl\CompanyEditFrm.lrs"/>
         <UnitName Value="CompanyEditFrm"/>
-        <CursorPos X="68" Y="8"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="23"/>
       </Unit4>
       <Unit5>
         <Filename Value="..\..\Units\lcl\PersonEditFrm.pas"/>
@@ -95,9 +77,6 @@
         <IsPartOfProject Value="True"/>
         <ResourceFilename Value="..\..\Units\lcl\PersonEditFrm.lrs"/>
         <UnitName Value="PersonEditFrm"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="23"/>
       </Unit5>
       <Unit6>
         <Filename Value="..\..\Units\lcl\CityEditFrm.pas"/>
@@ -106,9 +85,6 @@
         <IsPartOfProject Value="True"/>
         <ResourceFilename Value="..\..\Units\lcl\CityEditFrm.lrs"/>
         <UnitName Value="CityEditFrm"/>
-        <CursorPos X="1" Y="3"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="23"/>
       </Unit6>
       <Unit7>
         <Filename Value="..\..\Units\lcl\PhoneEditFrm.pas"/>
@@ -117,9 +93,6 @@
         <IsPartOfProject Value="True"/>
         <ResourceFilename Value="..\..\Units\lcl\PhoneEditFrm.lrs"/>
         <UnitName Value="PhoneEditFrm"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="23"/>
       </Unit7>
       <Unit8>
         <Filename Value="..\..\Units\lcl\ReportItemEditFrm.pas"/>
@@ -128,9 +101,6 @@
         <IsPartOfProject Value="True"/>
         <ResourceFilename Value="..\..\Units\lcl\ReportItemEditFrm.lrs"/>
         <UnitName Value="ReportItemEditFrm"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="23"/>
       </Unit8>
       <Unit9>
         <Filename Value="..\..\Units\lcl\ReportGroupEditFrm.pas"/>
@@ -139,65 +109,41 @@
         <IsPartOfProject Value="True"/>
         <ResourceFilename Value="..\..\Units\lcl\ReportGroupEditFrm.lrs"/>
         <UnitName Value="ReportGroupEditFrm"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="23"/>
       </Unit9>
       <Unit10>
         <Filename Value="..\..\Units\ReportMVP.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="ReportMVP"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="22"/>
       </Unit10>
       <Unit11>
         <Filename Value="..\..\Units\Brokers.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Brokers"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="22"/>
       </Unit11>
       <Unit12>
         <Filename Value="..\..\Units\ContactBO.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="ContactBO"/>
-        <CursorPos X="1" Y="15"/>
-        <TopLine Value="7"/>
-        <UsageCount Value="22"/>
       </Unit12>
       <Unit13>
         <Filename Value="..\..\Units\ContactMVP.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="ContactMVP"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="22"/>
       </Unit13>
       <Unit14>
         <Filename Value="..\..\Units\CustomMVP.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="CustomMVP"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="22"/>
       </Unit14>
       <Unit15>
         <Filename Value="..\..\Units\MainMVP.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="MainMVP"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="22"/>
       </Unit15>
       <Unit16>
         <Filename Value="..\..\Units\Populate.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Populate"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="22"/>
       </Unit16>
     </Units>
   </ProjectOptions>
@@ -222,14 +168,4 @@
       <CompilerPath Value="$(CompPath)"/>
     </Other>
   </CompilerOptions>
-  <Debugging>
-    <Exceptions Count="2">
-      <Item1>
-        <Name Value="ECodetoolError"/>
-      </Item1>
-      <Item2>
-        <Name Value="EFOpenError"/>
-      </Item2>
-    </Exceptions>
-  </Debugging>
 </CONFIG>

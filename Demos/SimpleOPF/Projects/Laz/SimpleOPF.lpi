@@ -5,14 +5,13 @@
     <Version Value="6"/>
     <General>
       <Flags>
-        <SaveClosedFiles Value="False"/>
         <SaveOnlyProjectUnits Value="True"/>
         <AlwaysBuild Value="False"/>
       </Flags>
+      <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
       <IconPath Value="./"/>
       <TargetFileExt Value=".exe"/>
-      <ActiveEditorIndexAtStart Value="0"/>
     </General>
     <VersionInfo>
       <ProjectVersion Value=""/>
@@ -39,9 +38,6 @@
         <Filename Value="SimpleOPF.lpr"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="SimpleOPF"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="20"/>
       </Unit0>
       <Unit1>
         <Filename Value="..\..\Units\MainFrm.pas"/>
@@ -49,19 +45,11 @@
         <IsPartOfProject Value="True"/>
         <ResourceFilename Value="..\..\Units\MainFrm.lrs"/>
         <UnitName Value="MainFrm"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <EditorIndex Value="0"/>
-        <UsageCount Value="20"/>
-        <Loaded Value="True"/>
       </Unit1>
       <Unit2>
         <Filename Value="..\..\Units\PersonBO.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="PersonBO"/>
-        <CursorPos X="1" Y="1"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="20"/>
       </Unit2>
     </Units>
   </ProjectOptions>
@@ -86,14 +74,4 @@
       <CompilerPath Value="$(CompPath)"/>
     </Other>
   </CompilerOptions>
-  <Debugging>
-    <Exceptions Count="2">
-      <Item1>
-        <Name Value="ECodetoolError"/>
-      </Item1>
-      <Item2>
-        <Name Value="EFOpenError"/>
-      </Item2>
-    </Exceptions>
-  </Debugging>
 </CONFIG>
