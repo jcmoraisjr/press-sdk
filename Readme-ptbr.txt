@@ -69,25 +69,15 @@ formulários, instanciá-los e apresentá-los sem que seja necessária qualquer outr
 intervenção do programador.
 
 
-INSTALAÇÃO
-==========
-
-Vide
-($Press)/Docs/Install-ptbr.txt
-
-
 PRIMEIROS PASSOS
 ================
 
-Para uma visão geral:
-($Press)/Docs/Overview-ptbr.txt
-
-Para construir uma nova aplicação:
-($Press)/Docs/CreatingApplication-ptbr.txt
-
-Consulte o aplicativo demonstração:
+Consulte os aplicativos demonstração:
 ($Press)/Demos/Readme.txt
 ($Press)/Demos/
+
+Visite o wiki do PressObjects:
+http://wiki.pressobjects.org
 
 
 SUPORTE, BUGS, CONTATO

@@ -66,25 +66,15 @@ the visual control will be able to find form classes and instantiate and show
 them, without the need for any further programmer intervention.
 
 
-INSTALLATION
-============
-
-See the file
-($Press)/Docs/Install.txt
-
-
 FIRST STEPS
 ===========
 
-For a general vision:
-($Press)/Docs/Overview.txt
-
-To construct a new application:
-($Press)/Docs/CreatingApplication.txt
-
-Study the demonstration application:
+Study the demonstration applications:
 ($Press)/Demos/Readme.txt
 ($Press)/Demos/
+
+Visit the PressObjects wiki:
+http://wiki.pressobjects.org
 
 
 SUPPORT, BUGS, CONTACT
