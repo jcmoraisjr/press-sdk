@@ -130,6 +130,7 @@ var
   SDatabaseIdentifierTooLong,
   SFieldNotFound,
   SObjectChangedError,
+  STargetClassIsNotPersistent,
   SUnassignedPersistenceService,
   SUnsupportedConnector,
   SUnsupportedFieldType: string;

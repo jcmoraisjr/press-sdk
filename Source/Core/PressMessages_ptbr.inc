@@ -69,6 +69,7 @@
   SDatabaseIdentifierTooLong_rst = 'Estes identificadores são muito grandes' + #10 + 'e causarão erro no banco de dados:';
   SFieldNotFound_rst = 'Campo ''%s'' não foi encontrado';
   SObjectChangedError_rst = 'O objeto %s(''%s'') foi alterado em outra sessão';
+  STargetClassIsNotPersistent_rst = '%s(%s) aponta para ''%s'' que não é persistente';
   SUnassignedPersistenceService_rst = 'Serviço de persistência não foi associado ou não é do PressObjects';
   SUnsupportedConnector_rst = 'O conector ''%s'' não é suportado';
   SUnsupportedFieldType_rst = 'O tipo de campo ''%s'' não é suportado';

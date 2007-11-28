@@ -61,7 +61,6 @@
   SUnsupportedObject := SUnsupportedObject_rst;
   SViewAccessError := SViewAccessError_rst;
 
-
   // Error messages from the OPF framework
   SCannotChangeOPFBroker := SCannotChangeOPFBroker_rst;
   SCannotStoreOrphanObject := SCannotStoreOrphanObject_rst;
@@ -70,6 +69,7 @@
   SDatabaseIdentifierTooLong := SDatabaseIdentifierTooLong_rst;
   SFieldNotFound := SFieldNotFound_rst;
   SObjectChangedError := SObjectChangedError_rst;
+  STargetClassIsNotPersistent := STargetClassIsNotPersistent_rst;
   SUnassignedPersistenceService := SUnassignedPersistenceService_rst;
   SUnsupportedConnector := SUnsupportedConnector_rst;
   SUnsupportedFieldType := SUnsupportedFieldType_rst;

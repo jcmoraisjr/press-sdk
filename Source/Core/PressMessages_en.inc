@@ -69,6 +69,7 @@
   SDatabaseIdentifierTooLong_rst = 'The identifier is too long' + #10 + 'and will cause an error in the database:';
   SFieldNotFound_rst = 'Field ''%s'' not found';
   SObjectChangedError_rst = 'The object %s(''%s'') was modified in another session';
+  STargetClassIsNotPersistent_rst = '%s(%s) references ''%s'' which is not persistent';
   SUnassignedPersistenceService_rst = 'Unassigned or non-PressObjects persistence service';
   SUnsupportedConnector_rst = 'Unsupported connector ''%s''';
   SUnsupportedFieldType_rst = 'Unsupported field type ''%s''';

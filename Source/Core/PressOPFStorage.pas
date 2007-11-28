@@ -764,13 +764,21 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
     begin
       if AAttributeMetadata.AttributeClass.InheritsFrom(TPressValue) then
         AddFieldMetadata
-      else if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItem) then
-        AddItemMetadata
-      else if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItems) then
-        if AAttributeMetadata.IsEmbeddedLink then
-          AddOwnedPartsMetadata
-        else
-          AddItemsMetadata;
+      else if AAttributeMetadata.AttributeClass.InheritsFrom(TPressStructure) then
+      begin
+        if not AAttributeMetadata.ObjectClassMetadata.IsPersistent then
+          raise EPressOPFError.CreateFmt(STargetClassIsNotPersistent, [
+           AAttributeMetadata.Owner.ObjectClassName,
+           AAttributeMetadata.Name,
+           AAttributeMetadata.ObjectClass.ClassName]);
+        if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItem) then
+          AddItemMetadata
+        else if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItems) then
+          if AAttributeMetadata.IsEmbeddedLink then
+            AddOwnedPartsMetadata
+          else
+            AddItemsMetadata;
+      end;
     end;
 
     function AddFieldMetadata(const AFieldName, AShortFieldName: string;
