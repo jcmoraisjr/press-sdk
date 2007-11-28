@@ -62,7 +62,7 @@ end;
 
 function TPressIBFbDDLBuilder.InternalMaxIdentLength: Integer;
 begin
-  Result := 32;
+  Result := 31;
 end;
 
 end.
