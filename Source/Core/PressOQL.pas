@@ -684,7 +684,8 @@ end;
 
 class function TPressOQLLiteral.IsLiteral(const AStr: string): Boolean;
 begin
-  Result := (AStr <> '') and (AStr[1] in ['0'..'9', '''', '"']);
+  Result := (AStr <> '') and
+   ((AStr[1] in ['0'..'9', '''', '"']) or SameText(AStr, 'null'));
 end;
 
 { TPressOQLParam }
