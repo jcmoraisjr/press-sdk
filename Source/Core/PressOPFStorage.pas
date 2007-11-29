@@ -630,6 +630,12 @@ begin
   FHasClassIdStorage := TPressInstanceClass.ClassMetadata.IsPersistent;
 end;
 
+function TableMetadataListCompare(Item1, Item2: Pointer): Integer;
+begin
+  Result := AnsiCompareStr(
+   TPressOPFTableMetadata(Item1).Name, TPressOPFTableMetadata(Item2).Name);
+end;
+
 function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
 
   procedure AddObjectMetadata(
@@ -861,6 +867,7 @@ begin
     finally
       Free;
     end;
+    Result.Sort(TableMetadataListCompare);
   except
     Result.Free;
     raise;
