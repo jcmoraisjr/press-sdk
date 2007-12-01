@@ -123,6 +123,7 @@ var
   SViewAccessError: string;
 
   // Error messages from the OPF framework
+  SAttributeReferencesOwnedClass,
   SCannotChangeOPFBroker,
   SCannotStoreOrphanObject,
   SCannotUseAggregateFunctionHere,

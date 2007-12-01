@@ -62,6 +62,7 @@
   SViewAccessError_rst = 'Cannot access the view %s(''%s'') as ''%s''';
 
   // Error messages from the OPF framework
+  SAttributeReferencesOwnedClass_rst = '%s(%s) references ''%s'' which is owned by ''%s''';
   SCannotChangeOPFBroker_rst = 'Cannot change the data broker';
   SCannotStoreOrphanObject_rst = 'Cannot store orphan object';
   SCannotUseAggregateFunctionHere_rst = 'Cannot use aggregate function here';

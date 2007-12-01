@@ -767,6 +767,8 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
 
     {procedure AddAttributeMetadata(AAttributeMetadata: TPressAttributeMetadata;
       ATableMetadata: TPressOPFTableMetadata);}
+    var
+      VTargetOwner: TPressObjectMetadata;
     begin
       if AAttributeMetadata.AttributeClass.InheritsFrom(TPressValue) then
         AddFieldMetadata
@@ -777,6 +779,14 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
            AAttributeMetadata.Owner.ObjectClassName,
            AAttributeMetadata.Name,
            AAttributeMetadata.ObjectClass.ClassName]);
+        VTargetOwner := AAttributeMetadata.ObjectClassMetadata.OwnerMetadata;
+        if Assigned(VTargetOwner) and
+         (VTargetOwner <> AAttributeMetadata.Owner) then
+          raise EPressOPFError.CreateFmt(SAttributeReferencesOwnedClass, [
+           AAttributeMetadata.Owner.ObjectClassName,
+           AAttributeMetadata.Name,
+           AAttributeMetadata.ObjectClass.ClassName,
+           VTargetOwner.ObjectClassName]);
         if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItem) then
           AddItemMetadata
         else if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItems) then

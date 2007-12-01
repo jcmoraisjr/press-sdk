@@ -62,6 +62,7 @@
   SViewAccessError := SViewAccessError_rst;
 
   // Error messages from the OPF framework
+  SAttributeReferencesOwnedClass := SAttributeReferencesOwnedClass_rst;
   SCannotChangeOPFBroker := SCannotChangeOPFBroker_rst;
   SCannotStoreOrphanObject := SCannotStoreOrphanObject_rst;
   SCannotUseAggregateFunctionHere := SCannotUseAggregateFunctionHere_rst;

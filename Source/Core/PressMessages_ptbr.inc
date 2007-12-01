@@ -62,6 +62,7 @@
   SViewAccessError_rst = 'Não é possível acessar a view %s(''%s'') como ''%s''';
 
   // Error messages from the OPF framework
+  SAttributeReferencesOwnedClass_rst = '%s(%s) faz referência a ''%s'' que pertence a ''%s''';
   SCannotChangeOPFBroker_rst = 'Não é possível alterar o Broker de acesso a dados';
   SCannotStoreOrphanObject_rst = 'Não é possível gravar objetos órfãos';
   SCannotUseAggregateFunctionHere_rst = 'Não é possível utilizar função de agregação aqui';
