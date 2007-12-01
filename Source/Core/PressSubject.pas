@@ -464,13 +464,13 @@ type
     FDefaultKeyType: TPressAttributeClass;
     FEnumMetadatas: TPressEnumMetadataList;
     FMetadatas: TPressObjectMetadataList;
-    FMetadatasFetched: Boolean;
+    FMetadatasUpdated: Boolean;
     {$IFNDEF PressRelease}
     FNotifier: TPressNotifier;
     procedure Notify(AEvent: TPressEvent);
     {$ENDIF}
-    procedure ClearAllMetadatas;
-    procedure FetchAllMetadatas;
+    procedure ClearMetadatas;
+    procedure CreateAllMetadatas;
     function GetClassIdType: TPressAttributeClass;
     procedure SetClassIdStorageName(const Value: string);
     procedure SetClassIdType(Value: TPressAttributeClass);
@@ -2281,7 +2281,7 @@ end;
 procedure TPressModel.AddClass(AClass: TPressObjectClass);
 begin
   FClasses.Add(AClass);
-  FMetadatasFetched := False;
+  FMetadatasUpdated := False;
   TPressModelBusinessClassChangedEvent.Create(Self).Notify;
 end;
 
@@ -2301,7 +2301,7 @@ begin
     raise EPressError.CreateFmt(SClassNotFound, [AClassName]);
 end;
 
-procedure TPressModel.ClearAllMetadatas;
+procedure TPressModel.ClearMetadatas;
 
   function FindRootMetadata: TPressObjectMetadata;
   var
@@ -2318,7 +2318,7 @@ procedure TPressModel.ClearAllMetadatas;
 
 begin
   Metadatas.Remove(FindRootMetadata);
-  FMetadatasFetched := False;
+  FMetadatasUpdated := False;
   TPressModelBusinessClassChangedEvent.Create(Self).Notify;
 end;
 
@@ -2336,9 +2336,26 @@ begin
   {$ENDIF}
 end;
 
+procedure TPressModel.CreateAllMetadatas;
+var
+  I: Integer;
+begin
+  if not FMetadatasUpdated then
+  begin
+    FMetadatasUpdated := True;
+    try
+      for I := 0 to Pred(FClasses.Count) do
+        TPressObjectClass(FClasses[I]).ClassMap;
+    except
+      FMetadatasUpdated := False;
+      raise;
+    end;
+  end;
+end;
+
 function TPressModel.CreateMetadataIterator: TPressObjectMetadataIterator;
 begin
-  FetchAllMetadatas;
+  CreateAllMetadatas;
   Result := Metadatas.CreateIterator;
 end;
 
@@ -2360,23 +2377,6 @@ begin
   Result := FindEnumMetadata(AEnumName);
   if not Assigned(Result) then
     raise EPressError.CreateFmt(SEnumMetadataNotFound, [AEnumName]);
-end;
-
-procedure TPressModel.FetchAllMetadatas;
-var
-  I: Integer;
-begin
-  if not FMetadatasFetched then
-  begin
-    FMetadatasFetched := True;
-    try
-      for I := 0 to Pred(FClasses.Count) do
-        TPressObjectClass(FClasses[I]).ClassMap;
-    except
-      FMetadatasFetched := False;
-      raise;
-    end;
-  end;
 end;
 
 function TPressModel.FindAttribute(
@@ -2424,7 +2424,7 @@ function TPressModel.FindMetadata(
 var
   I: Integer;
 begin
-  FetchAllMetadatas;
+  CreateAllMetadatas;
   for I := 0 to Pred(Metadatas.Count) do
   begin
     Result := Metadatas[I];
@@ -2495,7 +2495,7 @@ end;
 {$IFNDEF PressRelease}
 procedure TPressModel.Notify(AEvent: TPressEvent);
 begin
-  FetchAllMetadatas;
+  CreateAllMetadatas;
 end;
 {$ENDIF}
 
@@ -2581,7 +2581,7 @@ end;
 procedure TPressModel.SetClassIdStorageName(const Value: string);
 begin
   FClassIdStorageName := Value;
-  ClearAllMetadatas;
+  ClearMetadatas;
 end;
 
 procedure TPressModel.SetClassIdType(Value: TPressAttributeClass);
@@ -2589,7 +2589,7 @@ begin
   if not Assigned(Value) then
     raise EPressError.CreateFmt(SUnsupportedAttributeType, [SPressNilString]);
   FClassIdType := Value;
-  ClearAllMetadatas;
+  ClearMetadatas;
 end;
 
 procedure TPressModel.SetDefaultKeyType(Value: TPressAttributeClass);
@@ -2597,7 +2597,7 @@ begin
   if not Assigned(Value) then
     raise EPressError.CreateFmt(SUnsupportedAttributeType, [SPressNilString]);
   FDefaultKeyType := Value;
-  ClearAllMetadatas;
+  ClearMetadatas;
 end;
 
 procedure TPressModel.UnregisterMetadata(AMetadata: TPressObjectMetadata);
