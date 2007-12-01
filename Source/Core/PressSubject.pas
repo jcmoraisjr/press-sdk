@@ -461,6 +461,7 @@ type
     FClasses: TClassList;
     FClassIdStorageName: string;
     FClassIdType: TPressAttributeClass;
+    FCreatingMetadatas: Boolean;
     FDefaultKeyType: TPressAttributeClass;
     FEnumMetadatas: TPressEnumMetadataList;
     FMetadatas: TPressObjectMetadataList;
@@ -2340,16 +2341,18 @@ procedure TPressModel.CreateAllMetadatas;
 var
   I: Integer;
 begin
+  if FCreatingMetadatas then
+    raise EPressError.Create(SCannotRecursivelyCreateMetadatas);
   if not FMetadatasUpdated then
   begin
-    FMetadatasUpdated := True;
+    FCreatingMetadatas := True;
     try
       for I := 0 to Pred(FClasses.Count) do
         TPressObjectClass(FClasses[I]).ClassMap;
-    except
-      FMetadatasUpdated := False;
-      raise;
+    finally
+      FCreatingMetadatas := False;
     end;
+    FMetadatasUpdated := True;
   end;
 end;
 
@@ -2422,9 +2425,9 @@ end;
 function TPressModel.FindMetadata(
   const AClassName: string): TPressObjectMetadata;
 var
+  VClass: TPressObjectClass;
   I: Integer;
 begin
-  CreateAllMetadatas;
   for I := 0 to Pred(Metadatas.Count) do
   begin
     Result := Metadatas[I];
@@ -2432,6 +2435,12 @@ begin
       Exit;
   end;
   Result := nil;
+  if FCreatingMetadatas then
+  begin
+    VClass := FindClass(AClassName);
+    if Assigned(VClass) then
+      Result := RegisterMetadata(VClass.ClassMetadataStr);
+  end;
 end;
 
 function TPressModel.GetClassIdType: TPressAttributeClass;

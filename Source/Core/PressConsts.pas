@@ -82,6 +82,7 @@ var
   SAttributeIsNotValue,
   SAttributeNotFound,
   SAttributeTypeNotFound,
+  SCannotRecursivelyCreateMetadatas,
   SClassNotFound,
   SEnumMetadataNotFound,
   SEnumOutOfBounds,

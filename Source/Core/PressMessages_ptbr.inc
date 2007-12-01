@@ -21,6 +21,7 @@
   SAttributeIsNotValue_rst = 'O atributo %s(''%s'') não é Value';
   SAttributeNotFound_rst = 'O atributo %s(''%s'') não foi encontrado';
   SAttributeTypeNotFound_rst = 'O atributo ''%s'' não foi encontrado';
+  SCannotRecursivelyCreateMetadatas_rst = 'Não é possível criar metadatas recursivamente';
   SClassNotFound_rst = 'Classe ''%s'' não encontrada';
   SEnumMetadataNotFound_rst = 'Enumeration metadata ''%s'' não encontrado';
   SEnumOutOfBounds_rst = 'Enumeration ''%s'' fora do limite (%d)';
