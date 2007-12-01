@@ -1477,7 +1477,8 @@ end;
 
 function TPressAttributeMetadata.IsEmbeddedLink: Boolean;
 begin
-  Result := Assigned(Owner) and (Owner = ObjectClassMetadata.OwnerMetadata);
+  Result := Assigned(FOwner) and Assigned(FObjectClassMetadata) and
+   (FOwner = FObjectClassMetadata.OwnerMetadata);
 end;
 
 procedure TPressAttributeMetadata.SetAttributeClass(
