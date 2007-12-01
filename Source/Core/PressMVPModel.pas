@@ -506,7 +506,6 @@ uses
   Menus,
   PressConsts,
   PressDialogs,
-  PressMetadata,
   PressPicture,
   PressMVPCommand;
 
@@ -1186,7 +1185,7 @@ const
    '%s(%s) Any Order=%s (Name: String DataName=%2:s MatchType=mtContains)';
 begin
   if not Assigned(FMetadata) then
-    FMetadata := TPressMetaParser.ParseMetadata(Format(
+    FMetadata := PressModel.RegisterMetadata(Format(
      CQueryMetadata, [TPressMVPReferenceQuery.ClassName,
      Subject.ObjectClass.ClassName,
      FReferencedAttribute])) as TPressQueryMetadata;

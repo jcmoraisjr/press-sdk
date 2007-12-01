@@ -2524,8 +2524,27 @@ end;
 
 function TPressModel.RegisterMetadata(
   const AMetadataStr: string): TPressObjectMetadata;
+var
+  VParser: TPressMetaParser;
+  VReader: TPressMetaParserReader;
 begin
-  Result := TPressMetaParser.ParseMetadata(AMetadataStr, Self);
+  VReader := TPressMetaParserReader.Create(AMetadataStr, Self);
+  VParser := TPressMetaParser.Create(nil);
+  Result := nil;
+  try
+    try
+      VParser.Read(VReader);
+      Result := VParser.Metadata;
+    except
+      on E: Exception do
+        raise EPressError.CreateFmt(SMetadataParseError, [
+         VReader.TokenPos.Line, VReader.TokenPos.Column,
+         E.Message, AMetadataStr]);
+    end;
+  finally
+    VParser.Free;
+    VReader.Free;
+  end;
 end;
 
 procedure TPressModel.RemoveAttribute(

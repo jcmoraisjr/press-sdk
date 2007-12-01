@@ -28,7 +28,8 @@ type
   private
     FModel: TPressModel;
   public
-    property Model: TPressModel read FModel write FModel;
+    constructor Create(const AString: string; AModel: TPressModel);
+    property Model: TPressModel read FModel;
   end;
 
   TPressMetaParserObject = class;
@@ -43,7 +44,6 @@ type
     procedure InternalRead(Reader: TPressParserReader); override;
   public
     property Metadata: TPressObjectMetadata read GetMetadata;
-    class function ParseMetadata(const AMetadataStr: string; AModel: TPressModel = nil): TPressObjectMetadata;
   end;
 
   TPressMetaParserStreamable = class(TPressParserObject)
@@ -158,6 +158,15 @@ begin
     Result := PressModel;
 end;
 
+{ TPressMetaParserReader }
+
+constructor TPressMetaParserReader.Create(
+  const AString: string; AModel: TPressModel);
+begin
+  inherited Create(AString);
+  FModel := AModel;
+end;
+
 { TPressMetaParser }
 
 function TPressMetaParser.GetMetadata: TPressObjectMetadata;
@@ -179,37 +188,6 @@ begin
   if not Reader.Eof then
     Reader.ReadMatch(';');
   Reader.ReadMatchEof;
-end;
-
-class function TPressMetaParser.ParseMetadata(
-  const AMetadataStr: string; AModel: TPressModel): TPressObjectMetadata;
-var
-  VParser: TPressMetaParser;
-  VReader: TPressMetaParserReader;
-begin
-  VReader := TPressMetaParserReader.Create(AMetadataStr);
-  VReader.Model := AModel;
-  VParser := TPressMetaParser.Create(nil);
-  Result := nil;
-  try
-    try
-      if Assigned(AModel) then
-        Result := AModel.FindMetadata(VReader.ReadNextToken);
-      if not Assigned(Result) then
-      begin
-        VParser.Read(VReader);
-        Result := VParser.Metadata;
-      end;
-    except
-      on E: Exception do
-        raise EPressError.CreateFmt(SMetadataParseError, [
-         VReader.TokenPos.Line, VReader.TokenPos.Column,
-         E.Message, AMetadataStr]);
-    end;
-  finally
-    VParser.Free;
-    VReader.Free;
-  end;
 end;
 
 { TPressMetaParserStreamable }
