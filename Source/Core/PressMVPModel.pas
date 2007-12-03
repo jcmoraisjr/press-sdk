@@ -488,6 +488,7 @@ type
   private
     function GetSubject: TPressQuery;
   protected
+    procedure AfterExecute; virtual;
     procedure InitCommands; override;
   public
     class function Apply(ASubject: TPressSubject): Boolean; override;
@@ -2060,6 +2061,20 @@ end;
 
 { TPressMVPQueryModel }
 
+procedure TPressMVPQueryModel.AfterExecute;
+begin
+  { TODO : BeginUpdate / EndUpdate }
+  if HookedSubject is TPressReferences then
+    with TPressReferences(HookedSubject).CreateProxyIterator do
+    try
+      BeforeFirstItem;
+      while NextItem do
+        Subject.RemoveReference(CurrentItem);
+    finally
+      Free;
+    end;
+end;
+
 class function TPressMVPQueryModel.Apply(ASubject: TPressSubject): Boolean;
 begin
   Result := ASubject is TPressQuery;
@@ -2073,16 +2088,7 @@ end;
 procedure TPressMVPQueryModel.Execute;
 begin
   Subject.Execute;
-  { TODO : BeginUpdate / EndUpdate }
-  if HookedSubject is TPressReferences then
-    with TPressReferences(HookedSubject).CreateProxyIterator do
-    try
-      BeforeFirstItem;
-      while NextItem do
-        Subject.RemoveReference(CurrentItem);
-    finally
-      Free;
-    end;
+  AfterExecute;
 end;
 
 function TPressMVPQueryModel.GetSubject: TPressQuery;
