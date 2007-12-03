@@ -809,6 +809,7 @@ type
     function Count: Integer;
     class function ClassMetadata: TPressQueryMetadata;
     function CreateIterator: TPressQueryIterator;
+    procedure Delete(AIndex: Integer);
     procedure Execute;
     class function ObjectMetadataClass: TPressObjectMetadataClass; override;
     function Remove(AObject: TPressObject): Integer;
@@ -3458,6 +3459,11 @@ end;
 function TPressQuery.CreateIterator: TPressQueryIterator;
 begin
   Result := TPressReferences(FQueryItems).CreateIterator;
+end;
+
+procedure TPressQuery.Delete(AIndex: Integer);
+begin
+  TPressReferences(FQueryItems).Delete(AIndex);
 end;
 
 procedure TPressQuery.Execute;
