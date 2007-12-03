@@ -342,6 +342,7 @@ implementation
 uses
   SysUtils,
   PressConsts,
+  PressUser,
   PressMVPFactory,
   PressMVPCommand;
 
@@ -974,12 +975,15 @@ begin
   end else if ARow = -1 then
     with VModel.ColumnData[ACol] do
     begin
-      VText := HeaderCaption;
+      if Owner.View.AccessMode <> amInvisible then
+        VText := HeaderCaption
+      else
+        VText := '';
       VAlignment := HeaderAlignment;
     end
   else
   begin
-    if ARow < VModel.Count then
+    if (Owner.View.AccessMode <> amInvisible) and (ARow < VModel.Count) then
       VText := VModel.DisplayText(ACol, ARow)
     else
       VText := '';
