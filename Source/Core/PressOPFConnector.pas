@@ -465,7 +465,7 @@ end;
 
 function TPressOPFConnector.InternalDBMSName: string;
 begin
-  raise UnsupportedFeatureError('DBMS class');
+  raise UnsupportedFeatureError('DBMS name');
 end;
 
 procedure TPressOPFConnector.InternalRollback;
