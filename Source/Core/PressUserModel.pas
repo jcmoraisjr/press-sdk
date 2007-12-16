@@ -623,7 +623,10 @@ begin
   begin
     Result := VUserClass.Create;
     if Result is TPressUser then
+    begin
       TPressUser(Result).UserId := AUserId;
+      TPressUser(Result).UserName := AUserId;
+    end;
   end;
 end;
 
