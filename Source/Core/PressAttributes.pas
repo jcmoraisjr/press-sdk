@@ -3427,7 +3427,7 @@ procedure TPressItems.Assign(Source: TPersistent);
 begin
   if Source is TPressItems then
   begin
-    DisableChanges;
+    BeginUpdate;
     try
       if Assigned(FProxyList) then
         FProxyList.Clear;
@@ -3440,9 +3440,8 @@ begin
         Free;
       end;
     finally
-      EnableChanges;
+      EndUpdate;
     end;
-    NotifyRebuild;
   end else
     inherited;
 end;
@@ -3564,6 +3563,7 @@ procedure TPressItems.ChangedList(
   end;
 
 begin
+  { TODO : Implement Updating state }
   if ChangesDisabled then
     UpdateInstance
   else
@@ -3578,15 +3578,13 @@ procedure TPressItems.Clear;
 begin
   if Assigned(FProxyList) then
   begin
-    DisableChanges;
+    BeginUpdate;
     try
       FProxyList.Clear;
     finally
-      EnableChanges;
+      EndUpdate;
     end;
-    TPressItemsChangedEvent.Create(Self, nil, -1, ietClear).Notify;
   end;
-  ClearObjectCache;
 end;
 
 procedure TPressItems.ClearObjectCache;
