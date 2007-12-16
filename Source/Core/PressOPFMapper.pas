@@ -461,18 +461,18 @@ begin
   if VMaps.Count > 0 then
   begin
     VObject := AttributeMapper[VMaps.Last].RetrieveBaseMaps(AId, AMetadata);
-    if Assigned(VObject) then
-    begin
-      try
+    try
+      if Assigned(VObject) and
+       (VObject.ClassType <> AClass) and (VObject is AClass) then
+      begin
         VObject.DisableChanges;
-        if (VObject.ClassType <> AClass) and (VObject is AClass) then
-          AttributeMapper[StorageModel.Maps[VObject.ClassType].Last].
-           RetrieveComplementaryMaps(VObject, AClass);
+        AttributeMapper[StorageModel.Maps[VObject.ClassType].Last].
+         RetrieveComplementaryMaps(VObject, AClass);
         VObject.EnableChanges;
-      except
-        VObject.Free;
-        raise;
       end;
+    except
+      VObject.Free;
+      raise;
     end;
     Result := VObject;
   end else
