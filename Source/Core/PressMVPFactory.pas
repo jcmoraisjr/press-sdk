@@ -115,19 +115,13 @@ uses
   PressConsts;
 
 var
-  // fpc work around
-  _MVPFactory: {$IFDEF BORLAND_CG}IPressHolder{$ELSE}TPressHolder{$ENDIF}; //TPressMVPFactory;
+  _MVPFactory: TPressMVPFactory;
 
 function PressDefaultMVPFactory: TPressMVPFactory;
 begin
   if not Assigned(_MVPFactory) then
-  begin
-    _MVPFactory := TPressHolder.Create(TPressMVPFactory.Create);
-{$IFDEF FPC}
-    _MVPFactory.AddRef;
-{$ENDIF}
-  end;
-  Result := TPressMVPFactory(_MVPFactory.Instance);
+    _MVPFactory := TPressMVPFactory.Create;
+  Result := _MVPFactory;
 end;
 
 { TPressMVPRegisteredForm }
@@ -492,11 +486,9 @@ begin
       AClasses.Delete(I);
 end;
 
-{$IFDEF FPC}
 initialization
 
 finalization
   _MVPFactory.Free;
-{$ENDIF}
 
 end.

@@ -416,14 +416,13 @@ type
   TPressMVPControlFriend = class(TControl);
 
 var
-  _CommandRegistryList: IPressHolder; //TPressMVPCommandRegistryList;
+  _CommandRegistryList: TPressMVPCommandRegistryList;
 
 function PressCommandRegistryList: TPressMVPCommandRegistryList;
 begin
   if not Assigned(_CommandRegistryList) then
-    _CommandRegistryList :=
-     TPressHolder.Create(TPressMVPCommandRegistryList.Create(True));
-  Result := TPressMVPCommandRegistryList(_CommandRegistryList.Instance);
+    _CommandRegistryList := TPressMVPCommandRegistryList.Create(True);
+  Result := _CommandRegistryList;
 end;
 
 { TPressMVPCommandComponent }
@@ -1532,5 +1531,10 @@ procedure TPressMVPModel.UpdateData;
 begin
   TPressMVPModelUpdateDataEvent.Create(Self).Notify;
 end;
+
+initialization
+
+finalization
+  _CommandRegistryList.Free;
 
 end.
