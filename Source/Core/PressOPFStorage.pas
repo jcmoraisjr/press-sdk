@@ -877,7 +877,7 @@ begin
     finally
       Free;
     end;
-    Result.Sort(TableMetadataListCompare);
+    Result.Sort({$IFDEF FPC}@{$ENDIF}TableMetadataListCompare);
   except
     Result.Free;
     raise;
