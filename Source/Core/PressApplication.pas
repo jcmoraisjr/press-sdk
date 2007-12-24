@@ -229,7 +229,6 @@ type
     procedure ApplicationIdle(Sender: TObject; var Done: Boolean);
     procedure CheckRegistries;
     procedure DoneApplication;
-    function GetConfigFileName: string;
     function GetRegistry(AServiceType: TPressServiceType): TPressRegistry;
     procedure Init(AIsStatic: Boolean);
     procedure ReadConfigFile;
@@ -251,7 +250,7 @@ type
     procedure RegisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass; AIsDefault: Boolean);
     procedure Run;
     procedure UnregisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass);
-    property ConfigFileName: string read GetConfigFileName write SetConfigFileName;
+    property ConfigFileName: string read FConfigFileName write SetConfigFileName;
     property Registry[AServiceType: TPressServiceType]: TPressRegistry read GetRegistry;
     property Running: Boolean read FRunning;
   end;
@@ -840,6 +839,9 @@ constructor TPressApplication.Create;
 begin
   inherited Create;
   FRegistries := TPressRegistryList.Create(True);
+  FConfigFileName := ChangeFileExt(ParamStr(0), SPressConfigFileExt);
+  if not FileExists(FConfigFileName) then
+    FConfigFileName := '';
 end;
 
 function TPressApplication.CreateDefaultService(
@@ -916,13 +918,6 @@ begin
   Application.MainForm.Close;
 end;
 
-function TPressApplication.GetConfigFileName: string;
-begin
-  if FConfigFileName = '' then
-    FConfigFileName := ChangeFileExt(ParamStr(0), SPressConfigFileExt);
-  Result := FConfigFileName;
-end;
-
 function TPressApplication.GetRegistry(
   AServiceType: TPressServiceType): TPressRegistry;
 begin
@@ -959,13 +954,12 @@ var
   VConfigReader: TPressConfigReader;
   I: Integer;
 begin
-  if Assigned(FConfigFile) then
-    Exit;
-  FConfigFile := TPressConfigFile.Create(nil);
-  if FileExists(ConfigFileName) then
+  if not Assigned(FConfigFile) and (FConfigFileName <> '') and
+   FileExists(FConfigFileName) then
   begin
+    FConfigFile := TPressConfigFile.Create(nil);
     VConfigReader := TPressConfigReader.Create(TFileStream.Create(
-     ConfigFileName, fmOpenRead or fmShareDenyWrite), True);
+     FConfigFileName, fmOpenRead or fmShareDenyWrite), True);
     try
       FConfigFile.Read(VConfigReader);
     finally
@@ -994,7 +988,12 @@ end;
 
 procedure TPressApplication.SetConfigFileName(const Value: string);
 begin
-  FConfigFileName := Value;
+  if FConfigFileName <> Value then
+  begin
+    FConfigFileName := Value;
+    FreeAndNil(FConfigFile);
+    ReadConfigFile;
+  end;
 end;
 
 procedure TPressApplication.UnregisterService(
