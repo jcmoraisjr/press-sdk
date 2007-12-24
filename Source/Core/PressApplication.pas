@@ -175,6 +175,7 @@ type
     procedure InsertService(AService: TPressService);
     procedure RegisterService(AServiceClass: TPressServiceClass; AIsDefault: Boolean);
     procedure ReleaseServices(AServiceClass: TPressServiceClass);
+    procedure RemoveConfigSection(ASection: TPressConfigSection);
     procedure UnregisterService(AServiceClass: TPressServiceClass);
     property ConfigSections[AIndex: Integer]: TPressConfigSection read GetConfigSections;
     property DefaultService: TPressService read GetDefaultService write SetDefaultService;
@@ -207,6 +208,7 @@ type
     procedure Insert(Index: Integer; AObject: TPressRegistry);
     function Last: TPressRegistry;
     function Remove(AObject: TPressRegistry): Integer;
+    procedure RemoveConfigSection(ASection: TPressConfigSection);
     property Items[AIndex: Integer]: TPressRegistry read GetItems write SetItems; default;
     property Registries[AServiceType: TPressServiceType]: TPressRegistry read GetRegistries;
   end;
@@ -228,10 +230,10 @@ type
     FRunning: Boolean;
     procedure ApplicationIdle(Sender: TObject; var Done: Boolean);
     procedure CheckRegistries;
+    procedure DestroyConfigFile;
     procedure DoneApplication;
     function GetRegistry(AServiceType: TPressServiceType): TPressRegistry;
     procedure Init(AIsStatic: Boolean);
-    procedure ReadConfigFile;
     procedure SetConfigFileName(const Value: string);
   protected
     property Registries: TPressRegistryList read FRegistries;
@@ -247,6 +249,7 @@ type
     procedure Finalize;
     procedure InitApplication;
     procedure InitPackage;
+    procedure ReadConfigFile;
     procedure RegisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass; AIsDefault: Boolean);
     procedure Run;
     procedure UnregisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass);
@@ -668,6 +671,12 @@ begin
       Services.Delete(I);
 end;
 
+procedure TPressRegistry.RemoveConfigSection(ASection: TPressConfigSection);
+begin
+  if ASection.SubSectionName <> '' then
+    FConfigSections.Remove(ASection);
+end;
+
 procedure TPressRegistry.SetDefaultService(Value: TPressService);
 var
   VOldDefaultService: TPressService;
@@ -800,6 +809,15 @@ begin
   Result := inherited Remove(AObject);
 end;
 
+procedure TPressRegistryList.RemoveConfigSection(ASection: TPressConfigSection);
+var
+  VIndex: Integer;
+begin
+  VIndex := IndexOfServiceTypeName(ASection.SectionName);
+  if VIndex >= 0 then
+    Items[VIndex].RemoveConfigSection(ASection)
+end;
+
 procedure TPressRegistryList.SetItems(AIndex: Integer; Value: TPressRegistry);
 begin
   inherited Items[AIndex] := Value;
@@ -890,6 +908,18 @@ begin
   inherited;
 end;
 
+procedure TPressApplication.DestroyConfigFile;
+var
+  I: Integer;
+begin
+  if Assigned(FConfigFile) then
+  begin
+    for I := 0 to Pred(FConfigFile.SectionCount) do
+      Registries.RemoveConfigSection(FConfigFile.Sections[I]);
+    FreeAndNil(FConfigFile);
+  end;
+end;
+
 procedure TPressApplication.DoneApplication;
 
   procedure DoneAllServices;
@@ -902,6 +932,7 @@ procedure TPressApplication.DoneApplication;
 
 begin
   PressProcessEventQueue;
+  DestroyConfigFile;
   FRunning := False;
   TPressApplicationDoneEvent.Create(Self).Notify;
   DoneAllServices;
@@ -934,8 +965,6 @@ begin
   FOnIdle := Application.OnIdle;
   Application.OnIdle := {$IFDEF FPC}@{$ENDIF}ApplicationIdle;
   TPressApplicationInitEvent.Create(Self).Notify;
-  if AIsStatic then
-    ReadConfigFile;
   TPressApplicationRunningEvent.Create(Self).QueueNotification;
 end;
 
@@ -954,8 +983,9 @@ var
   VConfigReader: TPressConfigReader;
   I: Integer;
 begin
-  if not Assigned(FConfigFile) and (FConfigFileName <> '') and
-   FileExists(FConfigFileName) then
+  if Assigned(FConfigFile) then
+    DestroyConfigFile;
+  if (FConfigFileName <> '') and FileExists(FConfigFileName) then
   begin
     FConfigFile := TPressConfigFile.Create(nil);
     VConfigReader := TPressConfigReader.Create(TFileStream.Create(
@@ -991,7 +1021,6 @@ begin
   if FConfigFileName <> Value then
   begin
     FConfigFileName := Value;
-    FreeAndNil(FConfigFile);
     ReadConfigFile;
   end;
 end;
