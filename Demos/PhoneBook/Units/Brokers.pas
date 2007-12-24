@@ -62,6 +62,7 @@ implementation
 uses
   SysUtils,
   Clipbrd,
+  PressApplication,
   PressDialogs;
 
 { TPhoneBookPersistence }
@@ -87,6 +88,7 @@ end;
 initialization
   TPhoneBookPersistence.RegisterService(True);
   TPhoneBookGenerator.RegisterService(True);
+  PressApp.ReadConfigFile;
 
 {$ENDIF}
 {$IFDEF DontUsePersistence}
