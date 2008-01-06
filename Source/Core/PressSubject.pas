@@ -25,6 +25,7 @@ uses
   TypInfo,
   Contnrs,
   PressCompatibility,
+  PressConsts,
   PressClasses,
   PressApplication,
   PressNotifier;
@@ -248,6 +249,7 @@ type
     FIdMetadata: TPressAttributeMetadata;
     FIsPersistent: Boolean;
     FKeyName: string;
+    FKeySize: Integer;
     FKeyType: string;
     FMap: TPressClassMap;
     FModel: TPressModel;
@@ -292,6 +294,7 @@ type
   published
     property ClassIdName: string read FClassIdName write FClassIdName stored StoreClassIdName;
     property KeyName: string read FKeyName write FKeyName stored StoreKeyName;
+    property KeySize: Integer read FKeySize write FKeySize default SPressDefaultStringIdSize;
     property KeyType: string read FKeyType write FKeyType stored StoreKeyType;
     property IsPersistent: Boolean read FIsPersistent write SetIsPersistent default False;
     property OwnerClass: string read GetOwnerClass write SetOwnerClass;
@@ -1144,7 +1147,6 @@ function PressDefaultDAO: IPressDAO;
 implementation
 
 uses
-  PressConsts,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressAttributes,
   PressMetadata;
@@ -1769,6 +1771,7 @@ begin
   if Assigned(FParent) then
     IsPersistent := FParent.IsPersistent;
   FKeyName := SPressIdString;
+  FKeySize := SPressDefaultStringIdSize;
   FKeyType := FModel.DefaultKeyType.AttributeName;
   FModel.Metadatas.Add(Self);
 end;
@@ -1801,7 +1804,7 @@ begin
     FIdMetadata := InternalAttributeMetadataClass.Create(nil);
     FIdMetadata.Name := KeyName;
     FIdMetadata.AttributeName := KeyType;
-    FIdMetadata.Size := 32;
+    FIdMetadata.Size := KeySize;
   end;
   Result := FIdMetadata;
 end;

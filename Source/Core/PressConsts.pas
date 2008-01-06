@@ -32,6 +32,7 @@ const
   SPressNilString = 'nil';
   SPressIdString = 'Id';
   SPressClassIdString = 'ClassId';
+  SPressDefaultStringIdSize = 32;
   SPressLinkIdString = 'Id';
   SPressParentString = 'Parent';
   SPressChildString = 'Child';
