@@ -118,13 +118,16 @@ type
 
   TPressValue = class(TPressAttribute)
   protected
+    function GetOldAttribute: TPressValue;
     function GetSignature: string; override;
     function InternalCreateMemento: TPressAttributeMemento; override;
+    property OldAttribute: TPressValue read GetOldAttribute;
   end;
 
   TPressString = class(TPressValue)
   private
     FValue: string;
+    function GetOldValue: string;
     function GetPubValue: string;
     procedure SetPubValue(const AValue: string);
   protected
@@ -153,6 +156,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    property OldValue: string read GetOldValue;
     property PubValue: string read GetPubValue write SetPubValue;
     property Value: string read GetValue write SetValue;
   end;
@@ -178,6 +182,7 @@ type
   private
     FDiff: Integer;
     FValue: Integer;
+    function GetOldValue: Integer;
     function GetPubValue: Integer;
     procedure SetPubValue(AValue: Integer);
   protected
@@ -202,6 +207,7 @@ type
     procedure Decrement(AValue: Integer = 1); virtual;
     procedure Increment(AValue: Integer = 1); virtual;
     property Diff: Integer read FDiff;
+    property OldValue: Integer read GetOldValue;
     property PubValue: Integer read GetPubValue write SetPubValue;
     property Value: Integer read GetValue write SetValue;
   end;
@@ -210,6 +216,7 @@ type
   private
     FDiff: Double;
     FValue: Double;
+    function GetOldValue: Double;
     function GetPubValue: Double;
     procedure SetPubValue(AValue: Double);
   protected
@@ -234,6 +241,7 @@ type
     procedure Decrement(AValue: Double = 1); virtual;
     procedure Increment(AValue: Double = 1); virtual;
     property Diff: Double read FDiff;
+    property OldValue: Double read GetOldValue;
     property PubValue: Double read GetPubValue write SetPubValue;
     property Value: Double read GetValue write SetValue;
   end;
@@ -242,6 +250,7 @@ type
   private
     FDiff: Currency;
     FValue: Currency;
+    function GetOldValue: Currency;
     function GetPubValue: Currency;
     procedure SetPubValue(AValue: Currency);
   protected
@@ -269,6 +278,7 @@ type
     procedure Decrement(AValue: Currency = 1); virtual;
     procedure Increment(AValue: Currency = 1); virtual;
     property Diff: Currency read FDiff;
+    property OldValue: Currency read GetOldValue;
     property PubValue: Currency read GetPubValue write SetPubValue;
     property Value: Currency read GetValue write SetValue;
   end;
@@ -276,6 +286,7 @@ type
   TPressEnum = class(TPressValue)
   private
     FValue: Integer;
+    function GetOldValue: Integer;
     function GetPubValue: Integer;
     procedure SetPubValue(AValue: Integer);
   protected
@@ -305,6 +316,7 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     function SameValue(AValue: Integer): Boolean;
+    property OldValue: Integer read GetOldValue;
     property PubValue: Integer read GetPubValue write SetPubValue;
     property Value: Integer read GetValue write SetValue;
   end;
@@ -313,6 +325,7 @@ type
   private
     FValue: Boolean;
     FValues: array[Boolean] of string;
+    function GetOldValue: Boolean;
     function GetPubValue: Boolean;
     procedure SetPubValue(AValue: Boolean);
   protected
@@ -336,6 +349,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    property OldValue: Boolean read GetOldValue;
     property PubValue: Boolean read GetPubValue write SetPubValue;
     property Value: Boolean read GetValue write SetValue;
   end;
@@ -343,6 +357,7 @@ type
   TPressDate = class(TPressValue)
   private
     FValue: TDate;
+    function GetOldValue: TDate;
     function GetPubValue: TDate;
     procedure SetPubValue(AValue: TDate);
   protected
@@ -368,6 +383,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    property OldValue: TDate read GetOldValue;
     property PubValue: TDate read GetPubValue write SetPubValue;
     property Value: TDate read GetValue write SetValue;
   end;
@@ -375,6 +391,7 @@ type
   TPressTime = class(TPressValue)
   private
     FValue: TTime;
+    function GetOldValue: TTime;
     function GetPubValue: TTime;
     procedure SetPubValue(AValue: TTime);
   protected
@@ -400,6 +417,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    property OldValue: TTime read GetOldValue;
     property PubValue: TTime read GetPubValue write SetPubValue;
     property Value: TTime read GetValue write SetValue;
   end;
@@ -407,6 +425,7 @@ type
   TPressDateTime = class(TPressValue)
   private
     FValue: TDateTime;
+    function GetOldValue: TDateTime;
     function GetPubValue: TDateTime;
     procedure SetPubValue(AValue: TDateTime);
   protected
@@ -432,6 +451,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    property OldValue: TDateTime read GetOldValue;
     property PubValue: TDateTime read GetPubValue write SetPubValue;
     property Value: TDateTime read GetValue write SetValue;
   end;
@@ -439,6 +459,7 @@ type
   TPressVariant = class(TPressValue)
   private
     FValue: Variant;
+    function GetOldValue: Variant;
     function GetPubValue: Variant;
     procedure SetPubValue(AValue: Variant);
   protected
@@ -466,6 +487,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    property OldValue: Variant read GetOldValue;
     property PubValue: Variant read GetPubValue write SetPubValue;
     property Value: Variant read GetValue write SetValue;
   end;
@@ -473,6 +495,7 @@ type
   TPressBlob = class(TPressValue)
   private
     FStream: TMemoryStream;
+    function GetOldValue: string;
     function GetPubValue: string;
     function GetSize: Integer;
     function GetStream: TMemoryStream;
@@ -494,6 +517,7 @@ type
     procedure LoadFromStream(AStream: TStream);
     procedure SaveToStream(AStream: TStream);
     function WriteBuffer(const ABuffer; ACount: Integer): Boolean;
+    property OldValue: string read GetOldValue;
     property PubValue: string read GetPubValue write SetPubValue;
     property Size: Integer read GetSize;
     property Value: string read GetValue write SetValue;
@@ -986,6 +1010,17 @@ end;
 
 { TPressValue }
 
+function TPressValue.GetOldAttribute: TPressValue;
+var
+  VMemento: TPressValueMemento;
+begin
+  VMemento := inherited FindUnchangedMemento as TPressValueMemento;
+  if Assigned(VMemento) then
+    Result := VMemento.AttributeClone
+  else
+    Result := Self;
+end;
+
 function TPressValue.GetSignature: string;
 
   function FormatOwnerName: string;
@@ -1124,6 +1159,11 @@ end;
 function TPressString.GetIsEmpty: Boolean;
 begin
   Result := PubValue = '';
+end;
+
+function TPressString.GetOldValue: string;
+begin
+  Result := (OldAttribute as TPressString).Value;
 end;
 
 function TPressString.GetPubValue: string;
@@ -1350,6 +1390,11 @@ begin
   Result := FDiff <> 0;
 end;
 
+function TPressInteger.GetOldValue: Integer;
+begin
+  Result := (OldAttribute as TPressInteger).Value;
+end;
+
 function TPressInteger.GetPubValue: Integer;
 begin
   if UsePublishedGetter then
@@ -1505,6 +1550,11 @@ end;
 function TPressFloat.GetIsRelativelyChanged: Boolean;
 begin
   Result := FDiff <> 0;
+end;
+
+function TPressFloat.GetOldValue: Double;
+begin
+  Result := (OldAttribute as TPressFloat).Value;
 end;
 
 function TPressFloat.GetPubValue: Double;
@@ -1679,6 +1729,11 @@ begin
   Result := FDiff <> 0;
 end;
 
+function TPressCurrency.GetOldValue: Currency;
+begin
+  Result := (OldAttribute as TPressCurrency).Value;
+end;
+
 function TPressCurrency.GetPubValue: Currency;
 begin
   if UsePublishedGetter then
@@ -1851,6 +1906,11 @@ begin
   Result := IsNull;
 end;
 
+function TPressEnum.GetOldValue: Integer;
+begin
+  Result := (OldAttribute as TPressEnum).Value;
+end;
+
 function TPressEnum.GetPubValue: Integer;
 begin
   if UsePublishedGetter then
@@ -2021,6 +2081,11 @@ end;
 function TPressBoolean.GetDisplayText: string;
 begin
   Result := AsString;
+end;
+
+function TPressBoolean.GetOldValue: Boolean;
+begin
+  Result := (OldAttribute as TPressBoolean).Value;
 end;
 
 function TPressBoolean.GetPubValue: Boolean;
@@ -2203,6 +2268,11 @@ begin
     Result := DateToStr(VValue);
 end;
 
+function TPressDate.GetOldValue: TDate;
+begin
+  Result := (OldAttribute as TPressDate).Value;
+end;
+
 function TPressDate.GetPubValue: TDate;
 begin
   if UsePublishedGetter then
@@ -2373,6 +2443,11 @@ begin
     Result := FormatDateTime(EditMask, PubValue)
   else
     Result := AsString;
+end;
+
+function TPressTime.GetOldValue: TTime;
+begin
+  Result := (OldAttribute as TPressTime).Value;
 end;
 
 function TPressTime.GetPubValue: TTime;
@@ -2550,6 +2625,11 @@ begin
     Result := TimeToStr(VValue)
   else
     Result := DateTimeToStr(VValue);
+end;
+
+function TPressDateTime.GetOldValue: TDateTime;
+begin
+  Result := (OldAttribute as TPressDateTime).Value;
 end;
 
 function TPressDateTime.GetPubValue: TDateTime;
@@ -2791,6 +2871,11 @@ begin
   Result := PubValue;
 end;
 
+function TPressVariant.GetOldValue: Variant;
+begin
+  Result := (OldAttribute as TPressVariant).Value;
+end;
+
 function TPressVariant.GetPubValue: Variant;
 begin
   if UsePublishedGetter then
@@ -2913,6 +2998,11 @@ end;
 function TPressBlob.GetAsVariant: Variant;
 begin
   Result := PubValue;
+end;
+
+function TPressBlob.GetOldValue: string;
+begin
+  Result := (OldAttribute as TPressBlob).Value;
 end;
 
 function TPressBlob.GetPubValue: string;
