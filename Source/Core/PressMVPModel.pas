@@ -437,9 +437,13 @@ type
 
   TPressMVPReferencesModel = class(TPressMVPItemsModel)
   protected
+    function InternalCanEditObject: Boolean; virtual;
     procedure InternalCreateAddCommands; override;
+    procedure InternalCreateEditCommands; override;
+    function IsQueryReferences: Boolean;
   public
     class function Apply(ASubject: TPressSubject): Boolean; override;
+    function CanEditObject: Boolean;
   end;
 
   { Object Model }
@@ -1920,13 +1924,34 @@ begin
   Result := ASubject is TPressReferences;
 end;
 
+function TPressMVPReferencesModel.CanEditObject: Boolean;
+begin
+  Result := InternalCanEditObject;
+end;
+
+function TPressMVPReferencesModel.InternalCanEditObject: Boolean;
+begin
+  Result := IsQueryReferences;
+end;
+
 procedure TPressMVPReferencesModel.InternalCreateAddCommands;
 begin
-  if HasSubject and (Subject.Owner is TPressQuery) and
-   (Subject.Name = SPressQueryItemsString) then
+  if IsQueryReferences then
     inherited
-   else
+  else
     AddCommand(TPressMVPAddReferencesCommand)
+end;
+
+procedure TPressMVPReferencesModel.InternalCreateEditCommands;
+begin
+  if CanEditObject then
+    inherited;
+end;
+
+function TPressMVPReferencesModel.IsQueryReferences: Boolean;
+begin
+  Result := HasSubject and (Subject.Owner is TPressQuery) and
+   (Subject.Name = SPressQueryItemsString);
 end;
 
 { TPressMVPObjectModel }

@@ -717,7 +717,9 @@ end;
 procedure TPressMVPDblClickSelectableInteractor.Notify(AEvent: TPressEvent);
 begin
   inherited;
-  FCommand.Execute;
+  if not (Owner.Model is TPressMVPReferencesModel) or
+   TPressMVPReferencesModel(Owner.Model).CanEditObject then  
+    FCommand.Execute;
 end;
 
 { TPressMVPEditableInteractor }
