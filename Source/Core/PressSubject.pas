@@ -357,45 +357,23 @@ type
 
   TPressSavePoint = type Integer;
 
-  TPressSavedPoint = class(TObject)
-  private
-    FSavePoint: TPressSavePoint;
-    FIsChanged: Boolean;
-  public
-    constructor Create(ASavePoint: TPressSavePoint; AIsChanged: Boolean);
-    property SavePoint: TPressSavePoint read FSavePoint;
-    property IsChanged: Boolean read FIsChanged;
-  end;
-
-  TPressSavedPointList = class(TPressList)
-  private
-    function GetItems(AIndex: Integer): TPressSavedPoint;
-    procedure SetItems(AIndex: Integer; AValue: TPressSavedPoint);
-  public
-    function IndexOfNearestSavePoint(ASavePoint: TPressSavePoint): Integer;
-    function IsChanged(ASavePoint: TPressSavePoint): Boolean;
-    function Last: TPressSavedPoint;
-    function LastSavePoint: TPressSavePoint;
-    procedure RegisterSavePoint(ASavePoint: TPressSavePoint; AIsChanged: Boolean);
-    procedure Shrink(ASavePoint: TPressSavePoint);
-    property Items[AIndex: Integer]: TPressSavedPoint read GetItems write SetItems; default;
-  end;
-
+  TPressAttributeMemento = class;
   TPressAttributeMementoList = class;
 
   TPressObjectMemento = class(TObject)
   private
     FAttributes: TPressAttributeMementoList;
+    FLastSavedPoint: TPressSavePoint;
     FOwner: TPressObject;
-    FSavedPoints: TPressSavedPointList;
+    FUnchangedPoint: TPressSavePoint;
     function GetAttributes: TPressAttributeMementoList;
     function GetSubjectChanged: Boolean;
   protected
+    function FindUnchangedAttributeMemento(AAttribute: TPressAttribute): TPressAttributeMemento;
     procedure Notify(AAttribute: TPressAttribute);
     procedure Unchange;
     property Attributes: TPressAttributeMementoList read GetAttributes;
     property Owner: TPressObject read FOwner;
-    property SavedPoints: TPressSavedPointList read FSavedPoints;
   public
     constructor Create(AOwner: TPressObject);
     destructor Destroy; override;
@@ -415,10 +393,10 @@ type
     procedure Restore; virtual; abstract;
     procedure RestoreChanged;
     property IsChanged: Boolean read FIsChanged;
-    property Owner: TPressAttribute read FOwner;
   public
     constructor Create(AOwner: TPressAttribute);
     destructor Destroy; override;
+    property Owner: TPressAttribute read FOwner;
   end;
 
   TPressAttributeMementoIterator = class;
@@ -434,7 +412,7 @@ type
     function CreateIterator: TPressAttributeMementoIterator;
     function Extract(AObject: TPressAttributeMemento): TPressAttributeMemento;
     function IndexOf(AObject: TPressAttributeMemento): Integer;
-    function IndexOfOwner(AOwner: TPressAttribute): Integer;
+    function IndexOfOwner(AOwner: TPressAttribute; AStartAtPoint: TPressSavePoint = 0): Integer;
     procedure Insert(Index: Integer; AObject: TPressAttributeMemento);
     function Remove(AObject: TPressAttributeMemento): Integer;
     property Items[AIndex: Integer]: TPressAttributeMemento read GetItems write SetItems; default;
@@ -993,6 +971,7 @@ type
     function InvalidValueError(AValue: Variant; E: EVariantError): EPressError;
     { TODO : Review the need of As<Type> methods }
     procedure BindCalcNotification(AInstance: TPressObject);
+    function FindUnchangedMemento: TPressAttributeMemento;
     procedure Finit; override;
     function GetAsBoolean: Boolean; virtual;
     function GetAsCurrency: Currency; virtual;
@@ -2014,70 +1993,6 @@ begin
     ItemObjectClass := Model.ClassByName(Value);
 end;
 
-{ TPressSavedPoint }
-
-constructor TPressSavedPoint.Create(
-  ASavePoint: TPressSavePoint; AIsChanged: Boolean);
-begin
-  inherited Create;
-  FSavePoint := ASavePoint;
-  FIsChanged := AIsChanged;
-end;
-
-{ TPressSavedPointList }
-
-function TPressSavedPointList.GetItems(AIndex: Integer): TPressSavedPoint;
-begin
-  Result := inherited Items[AIndex] as TPressSavedPoint;
-end;
-
-function TPressSavedPointList.IndexOfNearestSavePoint(
-  ASavePoint: TPressSavePoint): Integer;
-begin
-  for Result := Pred(Count) downto 0 do
-    if Items[Result].SavePoint <= ASavePoint then
-      Exit;
-  Result := -1;
-end;
-
-function TPressSavedPointList.IsChanged(ASavePoint: TPressSavePoint): Boolean;
-var
-  VIndex: Integer;
-begin
-  VIndex := IndexOfNearestSavePoint(ASavePoint);
-  Result := (VIndex >= 0) and Items[VIndex].IsChanged;
-end;
-
-function TPressSavedPointList.Last: TPressSavedPoint;
-begin
-  Result := inherited Last as TPressSavedPoint;
-end;
-
-function TPressSavedPointList.LastSavePoint: TPressSavePoint;
-begin
-  if Count > 0 then
-    Result := Last.SavePoint
-  else
-    Result := 0;
-end;
-
-procedure TPressSavedPointList.RegisterSavePoint(
-  ASavePoint: TPressSavePoint; AIsChanged: Boolean);
-begin
-  Add(TPressSavedPoint.Create(ASavePoint, AIsChanged));
-end;
-
-procedure TPressSavedPointList.SetItems(
-  AIndex: Integer; AValue: TPressSavedPoint);
-begin
-  inherited Items[AIndex] := AValue;
-end;
-
-procedure TPressSavedPointList.Shrink(ASavePoint: TPressSavePoint);
-begin
-  Count := IndexOfNearestSavePoint(ASavePoint - 1) + 1;
-end;
-
 { TPressObjectMemento }
 
 function TPressObjectMemento.ChangedSince(ASavePoint: TPressSavePoint): Boolean;
@@ -2088,17 +2003,31 @@ end;
 constructor TPressObjectMemento.Create(AOwner: TPressObject);
 begin
   inherited Create;
-  {$IFDEF PressLogSubjectMemento}PressLogMsg(Self, 'Creating ' + AOwner.Signature, []);{$ENDIF}
-  FSavedPoints := TPressSavedPointList.Create(True);
+{$IFDEF PressLogSubjectMemento}
+  PressLogMsg(Self, 'Creating ' + AOwner.Signature, []);
+{$ENDIF}
   FOwner := AOwner;
 end;
 
 destructor TPressObjectMemento.Destroy;
 begin
-  {$IFDEF PressLogSubjectMemento}PressLogMsg(Self, 'Destroying ' + Owner.Signature, []);{$ENDIF}
-  FSavedPoints.Free;
+{$IFDEF PressLogSubjectMemento}
+  PressLogMsg(Self, 'Destroying ' + Owner.Signature, []);
+{$ENDIF}
   FAttributes.Free;
   inherited;
+end;
+
+function TPressObjectMemento.FindUnchangedAttributeMemento(
+  AAttribute: TPressAttribute): TPressAttributeMemento;
+var
+  VIndex: Integer;
+begin
+  VIndex := Attributes.IndexOfOwner(AAttribute, FUnchangedPoint);
+  if VIndex >= 0 then
+    Result := Attributes[VIndex]
+  else
+    Result := nil;
 end;
 
 function TPressObjectMemento.GetAttributes: TPressAttributeMementoList;
@@ -2120,7 +2049,7 @@ begin
 {$IFDEF PressLogSubjectMemento}
   PressLogMsg(Self, Format('Notifying %s (%s)', [Owner.Signature, AAttribute.Signature]), []);
 {$ENDIF}
-  if Attributes.IndexOfOwner(AAttribute) < SavedPoints.LastSavePoint then
+  if Attributes.IndexOfOwner(AAttribute) < FLastSavedPoint then
   begin
     VMemento := AAttribute.CreateMemento;  // friend class
     try
@@ -2151,10 +2080,10 @@ begin
     finally
       Owner.EnableChanges;
     end;
-    if not SavedPoints.IsChanged(ASavedPoint) then
-      Owner.Unchanged;
     FAttributes.Count := ASavedPoint;
-    SavedPoints.Shrink(ASavedPoint);
+    FLastSavedPoint := ASavedPoint;
+    if FLastSavedPoint = FUnchangedPoint then
+      Owner.Unchanged;
   end;
 end;
 
@@ -2164,13 +2093,15 @@ begin
     Result := FAttributes.Count
   else
     Result := 0;
-  SavedPoints.RegisterSavePoint(Result, Owner.IsChanged);
+  FLastSavedPoint := Result;
 end;
 
 procedure TPressObjectMemento.Unchange;
 begin
   if Assigned(FAttributes) then
-    FAttributes.Clear;
+    FUnchangedPoint := FAttributes.Count
+  else
+    FUnchangedPoint := 0;
 end;
 
 { TPressAttributeMemento }
@@ -2237,9 +2168,9 @@ begin
 end;
 
 function TPressAttributeMementoList.IndexOfOwner(
-  AOwner: TPressAttribute): Integer;
+  AOwner: TPressAttribute; AStartAtPoint: TPressSavePoint): Integer;
 begin
-  for Result := 0 to Pred(Count) do
+  for Result := Pred(Count) downto AStartAtPoint do
     if Items[Result].FOwner = AOwner then
       Exit;
   Result := -1;
@@ -3223,6 +3154,11 @@ end;
 procedure TPressObject.InternalUnchanged;
 begin
   inherited;
+  if Assigned(FMemento) then
+  begin
+    FMemento.SavePoint;
+    FMemento.Unchange;
+  end;
   UnchangeAttributes;
   NotifyUnchange;
 end;
@@ -3243,7 +3179,7 @@ end;
 procedure TPressObject.NotifyMemento(AAttribute: TPressAttribute);
 begin
   if Assigned(FMemento) then
-    FMemento.Notify(AAttribute);
+    FMemento.Notify(AAttribute);  // friend class
 end;
 
 procedure TPressObject.NotifyUnchange;
@@ -4204,6 +4140,14 @@ end;
 function TPressAttribute.CreateMemento: TPressAttributeMemento;
 begin
   Result := InternalCreateMemento;
+end;
+
+function TPressAttribute.FindUnchangedMemento: TPressAttributeMemento;
+begin
+  if Assigned(Owner) then
+    Result := Owner.Memento.FindUnchangedAttributeMemento(Self)  // friend class
+  else
+    Result := nil;
 end;
 
 procedure TPressAttribute.Finit;
