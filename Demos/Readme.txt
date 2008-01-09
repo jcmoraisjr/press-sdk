@@ -29,7 +29,7 @@ Using PressObjects persistence
 2. Change the unit Units/Brokers.pas to choose which connection broker(s)
    the application will use. Currently PressObjects has brokers for IBX,
    UIB, ZeosDBO, DOA and SQLdb;
-3. Change the Projects/<IDE>/PhoneBook.cf file to provide:
+3. Change the Projects/<IDE>/PhoneBook.conf file to provide:
    a) the default service name (IBX, UIB, Zeos, DOA or SQLdb) for the
       OPFBroker registry,
       and

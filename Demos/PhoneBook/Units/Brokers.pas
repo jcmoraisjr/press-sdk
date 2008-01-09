@@ -86,9 +86,9 @@ begin
 end;
 
 initialization
+  PressApp.ConfigFileName := 'PhoneBook.conf';
   TPhoneBookPersistence.RegisterService(True);
   TPhoneBookGenerator.RegisterService(True);
-  PressApp.ReadConfigFile;
 
 {$ENDIF}
 {$IFDEF DontUsePersistence}
