@@ -37,6 +37,7 @@ type
     function CreateDBParams(AParams: TPressParamList): TParams;
     function CreateInstantObject(AObject: TPressObject): TInstantObject;
     function CreatePressObject(AClass: TPressObjectClass; ADataSet: TDataSet): TPressObject;
+    function GetConnector: TInstantConnector;
     procedure InstantGenerateOID(Sender: TObject; const AObject: TInstantObject; var Id: string);
     procedure InstantLog(const AString: string);
     function PressParamToDBParam(AParamType: TPressAttributeBaseType): TFieldType;
@@ -60,7 +61,7 @@ type
     procedure InternalRollback; override;
     procedure InternalStartTransaction; override;
     procedure InternalStore(AObject: TPressObject); override;
-    property Connector: TInstantConnector read FConnector;
+    property Connector: TInstantConnector read GetConnector;
   end;
 
 implementation
@@ -180,6 +181,13 @@ begin
   FConnectionManager.Free;
   FConnector.Free;
   inherited;
+end;
+
+function TPressInstantObjectsPersistence.GetConnector: TInstantConnector;
+begin
+  if not Assigned(FConnector) then
+    raise EPressError.Create(SUnassignedPersistenceConnector);
+  Result := FConnector;
 end;
 
 procedure TPressInstantObjectsPersistence.InitService;
