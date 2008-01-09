@@ -249,7 +249,7 @@ type
     procedure Finalize;
     procedure InitApplication;
     procedure InitPackage;
-    procedure ReadConfigFile;
+    procedure ReadConfigFile(const AFileName: string = '');
     procedure RegisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass; AIsDefault: Boolean);
     procedure Run;
     procedure UnregisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass);
@@ -965,6 +965,8 @@ begin
   FOnIdle := Application.OnIdle;
   Application.OnIdle := {$IFDEF FPC}@{$ENDIF}ApplicationIdle;
   TPressApplicationInitEvent.Create(Self).Notify;
+  if AIsStatic and not Assigned(FConfigFile) then
+    ReadConfigFile;
   TPressApplicationRunningEvent.Create(Self).QueueNotification;
 end;
 
@@ -978,14 +980,16 @@ begin
   Init(False);
 end;
 
-procedure TPressApplication.ReadConfigFile;
+procedure TPressApplication.ReadConfigFile(const AFileName: string);
 var
   VConfigReader: TPressConfigReader;
   I: Integer;
 begin
+  if AFileName <> '' then
+    FConfigFileName := AFileName;
   if Assigned(FConfigFile) then
     DestroyConfigFile;
-  if (FConfigFileName <> '') and FileExists(FConfigFileName) then
+  if Running and (FConfigFileName <> '') and FileExists(FConfigFileName) then
   begin
     FConfigFile := TPressConfigFile.Create(nil);
     VConfigReader := TPressConfigReader.Create(TFileStream.Create(
@@ -1019,10 +1023,9 @@ end;
 procedure TPressApplication.SetConfigFileName(const Value: string);
 begin
   if FConfigFileName <> Value then
-  begin
-    FConfigFileName := Value;
+    ReadConfigFile(Value)
+  else if not Assigned(FConfigFile) then
     ReadConfigFile;
-  end;
 end;
 
 procedure TPressApplication.UnregisterService(
