@@ -128,6 +128,9 @@
     {$ELSE}
       {$DEFINE D5Up}
       {$DEFINE D6Up}
+      {$WARN UNSAFE_TYPE OFF}
+      {$WARN UNSAFE_CODE OFF}
+      {$WARN UNSAFE_CAST OFF}
       {$IF COMPILERVERSION >= 18.0}
         {$DEFINE D2006Up}
       {$IFEND}
