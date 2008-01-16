@@ -198,6 +198,9 @@ function PressStorageModel: TPressOPFStorageModel;
 implementation
 
 uses
+{$IFDEF D2006UP}
+  Windows,
+{$ENDIF}
   SysUtils,
   PressConsts,
   PressAttributes,
