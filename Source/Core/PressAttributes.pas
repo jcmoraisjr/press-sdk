@@ -3687,6 +3687,7 @@ end;
 
 function TPressItems.Count: Integer;
 begin
+  VerifyCalcAttribute;
   if Assigned(FProxyList) then
     Result := FProxyList.Count
   else
@@ -3695,11 +3696,13 @@ end;
 
 function TPressItems.CreateIterator: TPressItemsIterator;
 begin
+  VerifyCalcAttribute;
   Result := InternalCreateIterator;
 end;
 
 function TPressItems.CreateProxyIterator: TPressProxyIterator;
 begin
+  VerifyCalcAttribute;
   Result := TPressProxyIterator.Create(ProxyList);
 end;
 
@@ -3732,11 +3735,13 @@ end;
 
 function TPressItems.GetObjects(AIndex: Integer): TPressObject;
 begin
+  VerifyCalcAttribute;
   Result := ProxyList[AIndex].Instance;
 end;
 
 function TPressItems.GetProxies(AIndex: Integer): TPressProxy;
 begin
+  VerifyCalcAttribute;
   Result := ProxyList[AIndex];
 end;
 
@@ -3756,6 +3761,7 @@ end;
 
 function TPressItems.IndexOf(AObject: TPressObject): Integer;
 begin
+  VerifyCalcAttribute;
   Result := ProxyList.IndexOfInstance(AObject);
 end;
 
