@@ -19,7 +19,7 @@ unit PressMVPView;
 interface
 
 uses
-{$IFDEF BORLAND_CG}
+{$IFDEF MSWINDOWS}
   Windows,
 {$ENDIF}
   Classes,
@@ -589,6 +589,7 @@ implementation
 
 uses
   SysUtils,
+  Math,
   PressConsts,
   PressPicture,
   PressMVPFactory;
@@ -1967,12 +1968,23 @@ begin
 end;
 
 procedure TPressMVPFormView.InitView;
+var
+  VRect: TRect;
 begin
   inherited;
   with TPressMVPViewCustomFormFriend(Control) do
   begin
     FViewCloseEvent := OnClose;
     OnClose := {$IFDEF FPC}@{$ENDIF}ViewCloseEvent;
+{$IFDEF MSWINDOWS}
+    { TODO : Improve, create a routine at Compatibility/Utils unit }
+    if not SystemParametersInfo(SPI_GETWORKAREA, 0, @VRect, 0) then
+{$ENDIF}
+      VRect := Rect(0, 0, Screen.Width, Screen.Height);
+    if Top + Height > VRect.Bottom then
+      Top := Max(VRect.Top, VRect.Bottom - Height);
+    if Left + Width > VRect.Right then
+      Left := Max(VRect.Left, VRect.Right - Width);
   end;
 end;
 
