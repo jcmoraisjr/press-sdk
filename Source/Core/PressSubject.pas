@@ -518,8 +518,10 @@ type
   protected
     function InternalCreateIterator: TPressCustomIterator; override;
   public
-    function Add(AObject: TPressParam): Integer;
+    function Add(AObject: TPressParam): Integer; overload;
+    function Add(const AParamName: string; AParamType: TPressAttributeBaseType; AValue: Variant): Integer; overload;
     function CreateIterator: TPressParamIterator;
+    function IndexOfParamName(const AName: string): Integer;
     procedure Insert(AIndex: Integer; AObject: TPressParam);
     property Items[AIndex: Integer]: TPressParam read GetItems write SetItems; default;
   end;
@@ -2566,6 +2568,21 @@ begin
   Result := inherited Add(AObject);
 end;
 
+function TPressParamList.Add(const AParamName: string;
+  AParamType: TPressAttributeBaseType; AValue: Variant): Integer;
+var
+  VParam: TPressParam;
+begin
+  VParam := TPressParam.Create(AParamName, AParamType);
+  try
+    VParam.Value := AValue;
+    Result := inherited Add(VParam);
+  except
+    VParam.Free;
+    raise;
+  end;
+end;
+
 function TPressParamList.CreateIterator: TPressParamIterator;
 begin
   Result := TPressParamIterator.Create(Self);
@@ -2574,6 +2591,14 @@ end;
 function TPressParamList.GetItems(AIndex: Integer): TPressParam;
 begin
   Result := inherited Items[AIndex] as TPressParam;
+end;
+
+function TPressParamList.IndexOfParamName(const AName: string): Integer;
+begin
+  for Result := 0 to Pred(Count) do
+    if SameText(Items[Result].Name, AName) then
+      Exit;
+  Result := -1;
 end;
 
 procedure TPressParamList.Insert(AIndex: Integer; AObject: TPressParam);
