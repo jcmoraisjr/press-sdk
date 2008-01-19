@@ -40,6 +40,7 @@ type
     procedure SetUserId(const Value: string);
     procedure SetUserName(const Value: string);
   protected
+    procedure AfterCreate; override;
     function InternalAccessMode(AResourceId: Integer): TPressAccessMode; override;
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
@@ -184,6 +185,12 @@ uses
   SysUtils, PressConsts;
 
 { TPressUser }
+
+procedure TPressUser.AfterCreate;
+begin
+  inherited;
+  FPasswordHash.Value := PressUserData.Hash('');
+end;
 
 function TPressUser.GetPasswordExpired: Boolean;
 begin
