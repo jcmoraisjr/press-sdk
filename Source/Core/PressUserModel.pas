@@ -36,20 +36,19 @@ type
     function GetUserId: string;
     function GetUserName: string;
     procedure SetPasswordExpired(Value: Boolean);
+    procedure SetPasswordHash(const Value: string);
     procedure SetUserId(const Value: string);
     procedure SetUserName(const Value: string);
-    procedure SetPlainPassword(const Value: string);
   protected
     function InternalAccessMode(AResourceId: Integer): TPressAccessMode; override;
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
   public
-    property PlainPassword: string write SetPlainPassword;
     property UserGroups: TPressUserGroupReferences read FUserGroups;
   published
     property UserName: string read GetUserName write SetUserName;
     property UserId: string read GetUserId write SetUserId;
-    property PasswordHash: string read GetPasswordHash;
+    property PasswordHash: string read GetPasswordHash write SetPasswordHash;
     property PasswordExpired: Boolean read GetPasswordExpired write SetPasswordExpired;
   end;
 
@@ -262,9 +261,9 @@ begin
   FPasswordExpired.Value := Value;
 end;
 
-procedure TPressUser.SetPlainPassword(const Value: string);
+procedure TPressUser.SetPasswordHash(const Value: string);
 begin
-  FPasswordHash.Value := Hash(Value);
+  FPasswordHash.Value := Value;
 end;
 
 procedure TPressUser.SetUserId(const Value: string);
@@ -583,7 +582,7 @@ begin
   begin
     if FPassword1.Value = FPassword2.Value then
     begin
-      FUser.PlainPassword := FPassword1.Value;
+      FUser.PasswordHash := PressUserData.Hash(FPassword1.Value);
       if UpdatePasswordExpired then
         FUser.PasswordExpired := False;
       if StoreUser then
@@ -608,7 +607,7 @@ begin
   VList := DataAccess.OQLQuery(Format(
    'select * from %s where %s = "%s" and %s = "%s"',
    [VUserClass.ClassName, 'UserId', AUserId,
-   'PasswordHash', VUserClass.Hash(APassword)]));
+   'PasswordHash', Hash(APassword)]));
   try
     if VList.Count = 1 then
     begin

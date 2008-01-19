@@ -50,7 +50,6 @@ type
     function InternalAccessMode(AResourceId: Integer): TPressAccessMode; virtual;
   public
     function AccessMode(AResourceId: Integer): TPressAccessMode;
-    class function Hash(const APassword: string): string; virtual;
   end;
 
   TPressCustomUserData = class(TPressService)
@@ -64,10 +63,12 @@ type
   protected
     procedure DoneService; override;
     procedure Finit; override;
+    function InternalHash(const AEntry: string): string; virtual;
     function InternalQueryUser(const AUserId, APassword: string): TPressCustomUser; virtual;
     class function InternalServiceType: TPressServiceType; override;
   public
     procedure Logoff;
+    function Hash(const AEntry: string): string;
     function Logon(const AUserId: string = ''; const APassword: string = ''): Boolean;
     function QueryUser(const AUserId, APassword: string): TPressCustomUser;
     property CurrentUser: TPressCustomUser read GetCurrentUser;
@@ -107,11 +108,6 @@ procedure TPressCustomUser.BeforeLogoff;
 begin
 end;
 
-class function TPressCustomUser.Hash(const APassword: string): string;
-begin
-  Result := APassword;
-end;
-
 function TPressCustomUser.InternalAccessMode(AResourceId: Integer): TPressAccessMode;
 begin
   Result := amWritable;
@@ -148,6 +144,17 @@ end;
 function TPressCustomUserData.GetHasUser: Boolean;
 begin
   Result := Assigned(FCurrentUser);
+end;
+
+function TPressCustomUserData.Hash(const AEntry: string): string;
+begin
+  Result := InternalHash(AEntry);
+end;
+
+function TPressCustomUserData.InternalHash(const AEntry: string): string;
+begin
+  { TODO : Implement Hash and Cypher service }
+  raise EPressError.Create('Hash was not implemented');
 end;
 
 function TPressCustomUserData.InternalQueryUser(
