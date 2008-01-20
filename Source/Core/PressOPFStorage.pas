@@ -283,9 +283,22 @@ end;
 procedure TPressOPFStorageMapList.BuildStorageMaps;
 
   procedure BuildMaps(AClass: TPressObjectClass);
+
+    function IsOverriding(AMetadata: TPressAttributeMetadata): Boolean;
+    var
+      I: Integer;
+    begin
+      Result := True;
+      for I := 0 to Pred(Count) do
+        if Items[I].IndexOfName(AMetadata.Name) >= 0 then
+          Exit;
+      Result := False;
+    end;
+
   var
     VStorageMap: TPressOPFStorageMap;
     VMetadatas: TPressAttributeMetadataList;
+    VMetadata: TPressAttributeMetadata;
     VObjectMetadata: TPressObjectMetadata;
     I: Integer;
   begin
@@ -304,8 +317,11 @@ procedure TPressOPFStorageMapList.BuildStorageMaps;
       Add(VStorageMap);
       VStorageMap.Add(VObjectMetadata.IdMetadata);
       for I := 0 to Pred(VMetadatas.Count) do
-        if VMetadatas[I].IsPersistent then
-          VStorageMap.Add(VMetadatas[I]);
+      begin
+        VMetadata := VMetadatas[I];
+        if VMetadata.IsPersistent and not IsOverriding(VMetadata) then
+          VStorageMap.Add(VMetadata);
+      end;
     end;
   end;
 
