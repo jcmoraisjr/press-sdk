@@ -74,7 +74,8 @@ var
   STokenLengthOutOfBounds,
   SUnassignedServiceType,
   SUnexpectedEof,
-  SUnsupportedFeature: string;
+  SUnsupportedFeature,
+  SUnsupportedVariantType: string;
 
   // Error messages from the Data Type (Subject) framework
   SAttributeAccessError,

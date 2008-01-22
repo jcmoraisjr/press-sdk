@@ -13,6 +13,7 @@
   SUnassignedServiceType_rst = 'Nenhum serviço ''%s'' foi associado ou registrado';
   SUnexpectedEof_rst = 'Final de arquivo inesperado';
   SUnsupportedFeature_rst = 'Feature ''%s'' não é suportada';
+  SUnsupportedVariantType_rst = 'Tipo variant não suportado';
 
   // Error messages from the Data Type (Subject) framework
   SAttributeAccessError_rst = 'Não é possível acessar o atributo %s(''%s'') como ''%s''';

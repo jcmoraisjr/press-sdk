@@ -29,6 +29,7 @@ type
 {$ENDIF}
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
+function VarFormat(const AFormat: string; const AArg: Variant): string;
 procedure GenerateGUID(out AGUID: TGUID);
 function SetPropertyValue(AObject: TPersistent; const APathName, AValue: string; AError: Boolean = False): Boolean;
 procedure OutputDebugString(const AStr: string);
@@ -58,6 +59,28 @@ begin
   Result :=
    {$IFDEF FPC}Value{$ELSE}{$IFDEF D6Up}MaskUtils{$ELSE}Mask{$ENDIF}
    .FormatMaskText(EditMask, Value){$ENDIF};
+end;
+
+function VarFormat(const AFormat: string; const AArg: Variant): string;
+begin
+  case TVarData(AArg).VType of
+    varSmallint: Result := Format(AFormat, [TVarData(AArg).VSmallint]);
+    varInteger:  Result := Format(AFormat, [TVarData(AArg).VInteger]);
+    varSingle:   Result := Format(AFormat, [TVarData(AArg).VSingle]);
+    varDouble:   Result := Format(AFormat, [TVarData(AArg).VDouble]);
+    varCurrency: Result := Format(AFormat, [TVarData(AArg).VCurrency]);
+    varDate:     Result := Format(AFormat, [TVarData(AArg).VDate]);
+    varBoolean:  Result := Format(AFormat, [TVarData(AArg).VBoolean]);
+    varByte:     Result := Format(AFormat, [TVarData(AArg).VByte]);
+    varString:   Result := Format(AFormat, [string(TVarData(AArg).VString)]);
+{$ifndef d5down}
+    varShortInt: Result := Format(AFormat, [TVarData(AArg).VShortInt]);
+    varWord:     Result := Format(AFormat, [TVarData(AArg).VWord]);
+    varLongWord: Result := Format(AFormat, [TVarData(AArg).VLongWord]);
+    varInt64:    Result := Format(AFormat, [TVarData(AArg).VInt64]);
+{$endif}
+    else raise EPressError.Create(SUnsupportedVariantType);
+  end;
 end;
 
 {$IFDEF FPC}

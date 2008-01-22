@@ -13,6 +13,7 @@
   SUnassignedServiceType := SUnassignedServiceType_rst;
   SUnexpectedEof := SUnexpectedEof_rst;
   SUnsupportedFeature := SUnsupportedFeature_rst;
+  SUnsupportedVariantType := SUnsupportedVariantType_rst;
 
   // Error messages from the Data Type (Subject) framework
   SAttributeAccessError := SAttributeAccessError_rst;
