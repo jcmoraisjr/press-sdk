@@ -29,7 +29,7 @@ type
 {$ENDIF}
 
 function FormatMaskText(const EditMask: string; const Value: string): string;
-function VarFormat(const AFormat: string; const AArg: Variant): string;
+function VarFormat(const AFormat: string; const AArgs: array of Variant): string;
 procedure GenerateGUID(out AGUID: TGUID);
 function SetPropertyValue(AObject: TPersistent; const APathName, AValue: string; AError: Boolean = False): Boolean;
 procedure OutputDebugString(const AStr: string);
@@ -61,26 +61,75 @@ begin
    .FormatMaskText(EditMask, Value){$ENDIF};
 end;
 
-function VarFormat(const AFormat: string; const AArg: Variant): string;
+function VarFormat(const AFormat: string; const AArgs: array of Variant): string;
+var
+  VConsts: array of TVarRec;
+  VExtended: Extended;
+  I: Integer;
 begin
-  case TVarData(AArg).VType of
-    varSmallint: Result := Format(AFormat, [TVarData(AArg).VSmallint]);
-    varInteger:  Result := Format(AFormat, [TVarData(AArg).VInteger]);
-    varSingle:   Result := Format(AFormat, [TVarData(AArg).VSingle]);
-    varDouble:   Result := Format(AFormat, [TVarData(AArg).VDouble]);
-    varCurrency: Result := Format(AFormat, [TVarData(AArg).VCurrency]);
-    varDate:     Result := Format(AFormat, [TVarData(AArg).VDate]);
-    varBoolean:  Result := Format(AFormat, [TVarData(AArg).VBoolean]);
-    varByte:     Result := Format(AFormat, [TVarData(AArg).VByte]);
-    varString:   Result := Format(AFormat, [string(TVarData(AArg).VString)]);
+  SetLength(VConsts, Length(AArgs));
+  for I := 0 to Pred(Length(AArgs)) do
+    case TVarData(AArgs[I]).VType of
+      varSmallint: begin
+        VConsts[I].VType := vtInteger;
+        VConsts[I].VInteger := TVarData(AArgs[I]).VSmallint;
+      end;
+      varInteger: begin
+        VConsts[I].VType := vtInteger;
+        VConsts[I].VInteger := TVarData(AArgs[I]).VInteger;
+      end;
+      varSingle: begin
+        VExtended := TVarData(AArgs[I]).VSingle;
+        VConsts[I].VType := vtExtended;
+        VConsts[I].VExtended := @VExtended;
+      end;
+      varDouble: begin
+        VExtended := TVarData(AArgs[I]).VDouble;
+        VConsts[I].VType := vtExtended;
+        VConsts[I].VExtended := @VExtended;
+      end;
+      varCurrency: begin
+        VConsts[I].VType := vtCurrency;
+        VConsts[I].VCurrency := @TVarData(AArgs[I]).VCurrency;
+      end;
+      varDate: begin
+        VExtended := TVarData(AArgs[I]).VDate;
+        VConsts[I].VType := vtExtended;
+        VConsts[I].VExtended := @VExtended;
+      end;
+      varBoolean: begin
+        VConsts[I].VType := vtBoolean;
+        VConsts[I].VBoolean := TVarData(AArgs[I]).VBoolean;
+      end;
+      varByte: begin
+        VConsts[I].VType := vtInteger;
+        VConsts[I].VInteger := TVarData(AArgs[I]).VByte;
+      end;
+      varString: begin
+        VConsts[I].VType := vtAnsiString;
+        VConsts[I].VAnsiString := TVarData(AArgs[I]).VString;
+      end;
 {$ifndef d5down}
-    varShortInt: Result := Format(AFormat, [TVarData(AArg).VShortInt]);
-    varWord:     Result := Format(AFormat, [TVarData(AArg).VWord]);
-    varLongWord: Result := Format(AFormat, [TVarData(AArg).VLongWord]);
-    varInt64:    Result := Format(AFormat, [TVarData(AArg).VInt64]);
+      varShortInt: begin
+        VConsts[I].VType := vtShortInt;
+        VConsts[I].VShortInt := TVarData(AArgs[I]).VShortInt;
+      end;
+      varWord: begin
+        VConsts[I].VType := vtWord;
+        VConsts[I].VWord := TVarData(AArgs[I]).VWord;
+      end;
+      varLongWord: begin
+        VConsts[I].VType := vtLongWord;
+        VConsts[I].VLongWord := TVarData(AArgs[I]).VLongWord;
+      end;
+      varInt64: begin
+        VConsts[I].VType := vtInt64;
+        VConsts[I].VInt64 := TVarData(AArgs[I]).VInt64;
+      end;
 {$endif}
-    else raise EPressError.Create(SUnsupportedVariantType);
-  end;
+      else raise EPressError.Create(SUnsupportedVariantType);
+    end;
+  Result := Format(AFormat, VConsts);
 end;
 
 {$IFDEF FPC}
