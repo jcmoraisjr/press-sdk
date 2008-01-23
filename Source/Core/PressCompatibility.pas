@@ -21,6 +21,9 @@ unit PressCompatibility;
 interface
 
 uses
+{$ifndef d5down}
+  Variants,
+{$endif}
   Classes;
 
 {$IFDEF D5Down}
@@ -65,6 +68,9 @@ function VarFormat(const AFormat: string; const AArgs: array of Variant): string
 var
   VConsts: array of TVarRec;
   VExtended: Extended;
+{$ifdef fpc}
+  VInt64: Int64;
+{$endif}
   I: Integer;
 begin
   SetLength(VConsts, Length(AArgs));
@@ -111,20 +117,27 @@ begin
       end;
 {$ifndef d5down}
       varShortInt: begin
-        VConsts[I].VType := vtShortInt;
-        VConsts[I].VShortInt := TVarData(AArgs[I]).VShortInt;
+        VConsts[I].VType := vtInteger;
+        VConsts[I].VInteger := TVarData(AArgs[I]).VShortInt;
       end;
       varWord: begin
-        VConsts[I].VType := vtWord;
-        VConsts[I].VWord := TVarData(AArgs[I]).VWord;
+        VConsts[I].VType := vtInteger;
+        VConsts[I].VInteger := TVarData(AArgs[I]).VWord;
       end;
       varLongWord: begin
-        VConsts[I].VType := vtLongWord;
-        VConsts[I].VLongWord := TVarData(AArgs[I]).VLongWord;
+        VConsts[I].VType := vtInteger;
+        VConsts[I].VInteger := TVarData(AArgs[I]).VLongWord;
       end;
       varInt64: begin
         VConsts[I].VType := vtInt64;
-        VConsts[I].VInt64 := TVarData(AArgs[I]).VInt64;
+        VConsts[I].VInt64 := @TVarData(AArgs[I]).VInt64;
+      end;
+{$endif}
+{$ifdef fpc}
+      varQWord: begin
+        VInt64 := TVarData(AArgs[I]).VQWord;
+        VConsts[I].VType := vtInt64;
+        VConsts[I].VInt64 := @VInt64;
       end;
 {$endif}
       else raise EPressError.Create(SUnsupportedVariantType);
