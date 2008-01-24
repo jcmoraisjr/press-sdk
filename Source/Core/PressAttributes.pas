@@ -639,6 +639,7 @@ type
     procedure InternalChanged(AChangedWhenDisabled: Boolean); override;
     function InternalCreateIterator: TPressItemsIterator; virtual;
     function InternalCreateMemento: TPressAttributeMemento; override;
+    function InternalFormatList(const AFormat, AConn: string; AParams: array of string): string; virtual;
     procedure InternalUnassignObject(AObject: TPressObject); override;
     procedure InternalUnchanged; override;
     procedure NotifyMemento(AProxy: TPressProxy; AItemState: TPressItemState; AOldIndex: Integer = -1);
@@ -659,6 +660,7 @@ type
     function CreateIterator: TPressItemsIterator;
     function CreateProxyIterator: TPressProxyIterator;
     procedure Delete(AIndex: Integer);
+    function FormatList(const AFormat, AConn: string; AParams: array of string): string;
     function IndexOf(AObject: TPressObject): Integer;
     procedure Insert(AIndex: Integer; AObject: TPressObject);
     function Remove(AObject: TPressObject): Integer;
@@ -721,6 +723,7 @@ uses
   SysUtils,
   {$IFNDEF D5Down}Variants,{$ENDIF}
   {$IFDEF PressLog}PressLog,{$ENDIF}
+  PressCompatibility,
   PressConsts;
 
 type
@@ -3721,6 +3724,12 @@ begin
   inherited;
 end;
 
+function TPressItems.FormatList(
+  const AFormat, AConn: string; AParams: array of string): string;
+begin
+  Result := InternalFormatList(AFormat, AConn, AParams);
+end;
+
 function TPressItems.GetAddedProxies: TPressProxyList;
 begin
   if not Assigned(FAddedProxies) then
@@ -3793,6 +3802,34 @@ begin
   if not Assigned(FMementos) then
     FMementos := TObjectList.Create(False);
   FMementos.Add(Result);
+end;
+
+function TPressItems.InternalFormatList(
+  const AFormat, AConn: string; AParams: array of string): string;
+
+  procedure ConcatObject(var ABuffer: string; AObject: TPressObject);
+  var
+    VVars: array of Variant;
+    VStr: string;
+    I: Integer;
+  begin
+    SetLength(VVars, Length(AParams));
+    for I := 0 to Pred(Length(AParams)) do
+      VVars[I] := AObject.Expression(AParams[I]);
+    VStr := VarFormat(AFormat, VVars);
+    if VStr <> '' then
+      if ABuffer <> '' then
+        ABuffer := ABuffer + AConn + VStr
+      else
+        ABuffer := VStr;
+  end;
+
+var
+  I: Integer;
+begin
+  Result := '';
+  for I := 0 to Pred(Count) do
+    ConcatObject(Result, Objects[I]);
 end;
 
 procedure TPressItems.InternalUnassignObject(AObject: TPressObject);

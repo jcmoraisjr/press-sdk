@@ -2,6 +2,7 @@
   SCannotReleaseInstance_rst = 'Cannot release instance ''%s''';
   SEnumItemNotFound_rst = 'Enumeration ''%s'' not found';
   SInvalidLogon_rst = 'Invalid username or password';
+  SMethodNotFound_rst = 'Method ''%s'' not found';
   SNoLoggedUser_rst = 'No user logged in';
   SPasswordsDontMatch_rst = 'Passwords don''t match';
   SPropertyIsReadOnly_rst = 'The property ''%s.%s'' is read only';

@@ -21,6 +21,7 @@ interface
 const
   SPressMaxItemCount = 100;
   SPressBrackets = '()';
+  SPressSquareBrackets = '[]';
   SPressAttributePrefix = '_';
   SPressAttributeSeparator = '.';
   SPressIdentifierSeparator = '_';
@@ -64,6 +65,7 @@ var
   SCannotReleaseInstance,
   SEnumItemNotFound,
   SInvalidLogon,
+  SMethodNotFound,
   SNoLoggedUser,
   SPasswordsDontMatch,
   SPropertyIsReadOnly,
