@@ -603,8 +603,11 @@ procedure TPressCustomReportItem.LoadMetadatas;
            (AMetadata.Name = SPressQueryItemsString) then
             VDataSetName := AMetadata.ObjectClassName
           else
+          begin
             VDataSetName :=
              ADataSetPath + SPressAttributeSeparator + AMetadata.Name;
+            ACurrentDataSource.CreateField(AAttributePath + AMetadata.Name);
+          end;
           VDataSource :=
            CreateDataSource(VDataSetName, AMetadata.Name, ACurrentDataSource);
           LoadPressMetadata(
@@ -662,41 +665,13 @@ end;
 procedure TPressCustomReportItem.ReportNeedValue(
   const ADataSetName, AFieldName: string; var AValue: Variant;
   AForceData: Boolean);
-type
-  TSuffixType = (stNative, stFormated);
 var
-  VAttribute: TPressAttribute;
-  VIndex, VPos: Integer;
-  VFieldName, VSuffix: string;
-  VSuffixType: TSuffixType;
+  VIndex: Integer;
 begin
   VIndex := DataSources.IndexOfDataSetName(ADataSetName);
   if VIndex <> -1 then
-  begin
-    VPos := LastDelimiter('.', AFieldName);
-    VSuffix := Copy(AFieldName, VPos + 1, Length(AFieldName) - VPos);
-    if SameText(VSuffix, SPressReportNativeValueSuffix) then
-      VSuffixType := stNative
-    else if SameText(VSuffix, SPressReportDisplayTextSuffix) then
-      VSuffixType := stFormated
-    else
-    begin
-      VSuffix := '';
-      VSuffixType := stNative;
-      VPos := Length(AFieldName) + 1;
-    end;
-    VFieldName := Copy(AFieldName, 1, VPos - 1);
-    VAttribute :=
-     DataSources[VIndex].CurrentItem.FindPathAttribute(VFieldName, False);
-    if Assigned(VAttribute) then
-    begin
-      case VSuffixType of
-        stNative: AValue := VAttribute.AsVariant;
-        stFormated: AValue := VAttribute.DisplayText;
-      end;
-    end else
-      AValue := '';
-  end else if AForceData then
+    AValue := DataSources[VIndex].CurrentItem.Expression(AFieldName)
+  else if AForceData then
     AValue := SPressReportErrorMsg;
 end;
 
