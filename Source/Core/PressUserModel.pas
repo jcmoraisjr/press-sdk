@@ -146,10 +146,14 @@ type
   private
     FUserId: TPressString;
     FPassword: TPressString;
+    function GetPassword: string;
+    function GetUserId: string;
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
     procedure InternalStore(AStoreMethod: TPressObjectOperation); override;
+    property UserId: string read GetUserId;
+    property Password: string read GetPassword;
   end;
 
   TPressChangePassword = class(TPressObject)
@@ -528,6 +532,16 @@ begin
 end;
 
 { TPressLogon }
+
+function TPressLogon.GetPassword: string;
+begin
+  Result := FPassword.Value;
+end;
+
+function TPressLogon.GetUserId: string;
+begin
+  Result := FUserId.Value;
+end;
 
 function TPressLogon.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
