@@ -246,7 +246,7 @@ type
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
     function CreatePresenterIterator: TPressMVPPresenterIterator;
     procedure Refresh;
-    class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]);
+    class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil; AViewClass: TPressMVPCustomFormViewClass = nil);
     class procedure RegisterFormPresenter(AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil; AViewClass: TPressMVPCustomFormViewClass = nil);
     class procedure RegisterLCLForm(AFormClass: TFormClass);
     class procedure RegisterVCLForm(AFormClass: TFormClass);
@@ -966,9 +966,12 @@ end;
 
 class procedure TPressMVPFormPresenter.RegisterBO(
   AObjectClass: TPressObjectClass;
-  AFormPresenterTypes: TPressMVPFormPresenterTypes);
+  AFormPresenterTypes: TPressMVPFormPresenterTypes;
+  AModelClass: TPressMVPObjectModelClass;
+  AViewClass: TPressMVPCustomFormViewClass);
 begin
-  PressDefaultMVPFactory.RegisterBO(Self, AObjectClass, AFormPresenterTypes);
+  PressDefaultMVPFactory.RegisterBO(Self, AObjectClass, AFormPresenterTypes,
+   AModelClass, AViewClass);
 end;
 
 class procedure TPressMVPFormPresenter.RegisterFormPresenter(
