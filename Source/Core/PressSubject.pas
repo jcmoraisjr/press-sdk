@@ -682,6 +682,7 @@ type
     procedure InternalDispose(ADisposeMethod: TPressObjectOperation); virtual;
     function InternalIsValid: Boolean; virtual;
     procedure InternalLock; override;
+    function InternalReadMethod(AAttr: TPressAttribute; const AMethodName: string; AParams: TPressStringArray): Variant; virtual;
     procedure InternalRefresh(ARefreshMethod: TPressObjectOperation); virtual;
     procedure InternalStore(AStoreMethod: TPressObjectOperation); virtual;
     procedure InternalUnchanged; override;
@@ -3005,7 +3006,7 @@ function TPressObject.Expression(const AExpression: string): Variant;
     else if SameText(Token, 'FormatList') and (AAttr is TPressItems) then
       Result := ReadFormatList(TPressItems(AAttr))
     else
-      raise EPressError.CreateFmt(SMethodNotFound, [Token]);
+      Result := InternalReadMethod(AAttr, Token, ReadParams(0)); 
   end;
 
   function ReadObject(
@@ -3312,6 +3313,12 @@ end;
 class function TPressObject.InternalMetadataStr: string;
 begin
   Result := '';
+end;
+
+function TPressObject.InternalReadMethod(AAttr: TPressAttribute;
+  const AMethodName: string; AParams: TPressStringArray): Variant;
+begin
+  raise EPressError.CreateFmt(SMethodNotFound, [AMethodName]);
 end;
 
 procedure TPressObject.InternalRefresh(ARefreshMethod: TPressObjectOperation);
