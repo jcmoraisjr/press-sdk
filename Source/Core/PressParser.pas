@@ -290,7 +290,7 @@ end;
 
 function TPressParserReader.IsNumericChar(Ch: Char; First: Boolean): Boolean;
 begin
-  Result := (Ch in ['0'..'9', '.']) or (First and (Ch in ['-']));
+  Result := (Ch in ['0'..'9']) or (not First and (Ch in ['.']));
 end;
 
 function TPressParserReader.IsStringDelimiter(Ch: Char): Boolean;
@@ -321,20 +321,13 @@ end;
 function TPressParserReader.ReadInteger: Integer;
 var
   Token: string;
+  VErr: Integer;
 begin
-  Token := ReadToken;
-  if Token = '' then
-    ErrorExpected(SPressIntegerValueMsg, '');
-  try
-    Result := StrtoInt(Token);
-  except
-    on E: EConvertError do
-    begin
-      Result := 0;
-      ErrorExpected(SPressIntegerValueMsg, Token);
-    end else
-      raise;
-  end;
+  CheckEof(SPressIntegerValueMsg);
+  Token := ReadNumber;
+  Val(Token, Result, VErr);
+  if VErr <> 0 then
+    ErrorExpected(SPressIntegerValueMsg, Token);
 end;
 
 function TPressParserReader.ReadNext(const ATokens: array of string;
@@ -378,10 +371,19 @@ begin
 end;
 
 function TPressParserReader.ReadNumber: string;
+
+  function IsSignedNumber(const AStr: string): Boolean;
+  begin
+    Result := (AStr <> '') and (AStr[1] in ['+', '-']) and
+     not Eof and IsNumericChar(NextChar, True);
+  end;
+
 begin
   CheckEof(SPressNumberValueMsg);
   Result := ReadToken;
-  if not IsNumericChar(Result[1], True) then
+  if IsSignedNumber(Result) then
+    Result := Result + InternalReadNumber;
+  if (Result = '') or not (Result[1] in ['0'..'9', '+', '-']) then
     ErrorExpected(SPressNumberValueMsg, Result);
 end;
 
