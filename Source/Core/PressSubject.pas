@@ -1,6 +1,6 @@
 (*
   PressObjects, Subject Classes
-  Copyright (C) 2006-2007 Laserpress Ltda.
+  Copyright (C) 2006-2008 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -1132,10 +1132,35 @@ implementation
 uses
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressParser,
+  PressExpression,
   PressAttributes,
   PressMetadata;
 
 type
+  TPressSubjectExpression = class(TPressExpression)
+  private
+    FInstance: TPressObject;
+  protected
+    function InternalParse(Reader: TPressParserReader): TPressExpressionItem; override;
+  public
+    constructor Create(AInstance: TPressObject); reintroduce;
+    property Instance: TPressObject read FInstance;
+  end;
+
+  TPressSubjectExpressionItem = class(TPressExpressionItem)
+  private
+    FValue: TPressExpressionValue;
+  private
+    function ReadItem(Reader: TPressExpressionReader; AItem: TPressItem): Variant;
+    function ReadItems(Reader: TPressExpressionReader; AItems: TPressItems): Variant;
+    function ReadMethod(Reader: TPressExpressionReader; AAttr: TPressAttribute): Variant;
+    function ReadObject(Reader: TPressExpressionReader; AObject: TPressObject): Variant;
+    function ReadParams(Reader: TPressExpressionReader; AMin: Integer; AMax: Integer = -1): TPressStringArray;
+    function ReadValue(Reader: TPressExpressionReader; AValue: TPressValue): Variant;
+  protected
+    procedure InternalReadElement(Reader: TPressParserReader); override;
+  end;
+
   TPressQueryItems = class(TPressReferences)
   protected
     procedure InternalUnassignObject(AObject: TPressObject); override;
@@ -2943,148 +2968,20 @@ begin
 end;
 
 function TPressObject.Expression(const AExpression: string): Variant;
-
-  function ReadMethod(
-    Reader: TPressParserReader; AAttr: TPressAttribute): Variant;
-
-    function ReadParams(AMin: Integer; AMax: Integer = -1): TPressStringArray;
-    var
-      VParams: TStringList;
-      I: Integer;
-    begin
-      if (AMin > 0) or (Reader.ReadNextToken = SPressBrackets[1]) then
-      begin
-        VParams := TStringList.Create;
-        try
-          Reader.ReadMatch(SPressBrackets[1]);
-          while (VParams.Count <> AMax) and ((VParams.Count < AMin) or
-           (Reader.ReadNextToken <> SPressBrackets[2])) do
-          begin
-            if VParams.Count > 0 then
-              Reader.ReadMatch(',');
-            VParams.Add(Reader.ReadUnquotedString);
-          end;
-          Reader.ReadMatch(SPressBrackets[2]);
-          SetLength(Result, VParams.Count);
-          for I := 0 to Pred(VParams.Count) do
-            Result[I] := VParams[I];
-        finally
-          VParams.Free;
-        end;
-      end else
-        SetLength(Result, 0);
-    end;
-
-    function ReadFormatList(AItems: TPressItems): Variant;
-    var
-      VParams: TPressStringArray;
-    begin
-      VParams := ReadParams(3);
-      Result := AItems.FormatList(
-       VParams[0], VParams[1], Copy(VParams, 2, Length(VParams)));
-    end;
-
-  {function ReadMethod(
-    Reader: TPressParserReader; AAttr: TPressAttribute): Variant;}
-  var
-    Token: string;
-  begin
-    Token := Reader.ReadIdentifier;
-    if SameText(Token, 'Value') then
-      Result := AAttr.AsVariant
-    else if SameText(Token, 'DisplayText') then
-      Result := AAttr.DisplayText
-    else if SameText(Token, 'Format') and (AAttr is TPressValue) then
-      Result := VarFormat(ReadParams(1, 1)[0], [AAttr.AsVariant])
-    else if SameText(Token, 'FormatFloat') and (AAttr is TPressNumeric) then
-      Result := FormatFloat(ReadParams(1, 1)[0], AAttr.AsFloat)
-    else if SameText(Token, 'FormatDateTime') and ((AAttr is TPressDate) or
-     (AAttr is TPressTime) or (AAttr is TPressDateTime)) then
-      Result := FormatDateTime(ReadParams(1, 1)[0], AAttr.AsDateTime)
-    else if SameText(Token, 'Count') and (AAttr is TPressItems) then
-      Result := TPressItems(AAttr).Count
-    else if SameText(Token, 'FormatList') and (AAttr is TPressItems) then
-      Result := ReadFormatList(TPressItems(AAttr))
-    else
-      Result := InternalReadMethod(AAttr, Token, ReadParams(0)); 
-  end;
-
-  function ReadObject(
-    Reader: TPressParserReader; AObject: TPressObject): Variant;
-
-    function ReadValue(
-      Reader: TPressParserReader; AValue: TPressValue): Variant;
-    begin
-      if Reader.ReadNextToken = SPressAttributeSeparator then
-      begin
-        Reader.ReadToken;
-        Result := ReadMethod(Reader, AValue);
-      end else
-      begin
-        Reader.ReadMatchEof;
-        Result := AValue.AsVariant;
-      end;
-    end;
-
-    function ReadItem(
-      Reader: TPressParserReader; AItem: TPressItem): Variant;
-    var
-      VObj: TPressObject;
-    begin
-      Reader.ReadMatch(SPressAttributeSeparator);
-      VObj := AItem.Value;
-      if Assigned(VObj) then
-        Result := ReadObject(Reader, VObj)
-      else
-        Result := '';
-    end;
-
-    function ReadItems(
-      Reader: TPressParserReader; AItems: TPressItems): Variant;
-    var
-      VIndex: Integer;
-    begin
-      if Reader.ReadNextToken = SPressSquareBrackets[1] then
-      begin
-        Reader.ReadMatch(SPressSquareBrackets[1]);
-        VIndex := Reader.ReadInteger;
-        Reader.ReadMatch(SPressSquareBrackets[2]);
-        Reader.ReadMatch(SPressAttributeSeparator);
-        if VIndex < AItems.Count then
-          Result := ReadObject(Reader, AItems[VIndex])
-        else
-          Result := '';
-      end else
-      begin
-        Reader.ReadMatch(SPressAttributeSeparator);
-        Result := ReadMethod(Reader, AItems);
-      end;
-    end;
-
-  {function ReadObject(
-    Reader: TPressParserReader; AObject: TPressObject): Variant;}
-  var
-    VAttr: TPressAttribute;
-  begin
-    VAttr := AObject.AttributeByName(Reader.ReadIdentifier);
-    if VAttr is TPressValue then
-      Result := ReadValue(Reader, TPressValue(VAttr))
-    else if VAttr is TPressItem then
-      Result := ReadItem(Reader, TPressItem(VAttr))
-    else
-      Result := ReadItems(Reader, TPressItems(VAttr));
-  end;
-
-{function TPressObject.Expression(const AExpression: string): Variant;}
 var
-  Reader: TPressParserReader;
+  VReader: TPressExpressionReader;
+  VExpression: TPressSubjectExpression;
 begin
-  { TODO : Parser class, new unit, function registry, customization }
-  Reader := TPressParserReader.Create(AExpression);
+  VReader := nil;
+  VExpression := nil;
   try
-    Result := ReadObject(Reader, Self);
+    VReader := TPressExpressionReader.Create(AExpression);
+    VExpression := TPressSubjectExpression.Create(Self);
+    VExpression.Read(VReader);
+    Result := VExpression.VarValue;
   finally
-    Reader.Free;
+    VExpression.Free;
+    VReader.Free;
   end;
 end;
 
@@ -3487,6 +3384,157 @@ end;
 function TPressObjectIterator.GetCurrentItem: TPressObject;
 begin
   Result := inherited CurrentItem as TPressObject;
+end;
+
+{ TPressSubjectExpression }
+
+constructor TPressSubjectExpression.Create(AInstance: TPressObject);
+begin
+  inherited Create(nil);
+  FInstance := AInstance;
+end;
+
+function TPressSubjectExpression.InternalParse(
+  Reader: TPressParserReader): TPressExpressionItem;
+begin
+  Result := TPressSubjectExpressionItem(
+   Parse(Reader, [TPressSubjectExpressionItem]));
+end;
+
+{ TPressSubjectExpressionItem }
+
+procedure TPressSubjectExpressionItem.InternalReadElement(
+  Reader: TPressParserReader);
+begin
+  inherited;
+  FValue := ReadObject(Reader as TPressExpressionReader,
+   (Owner as TPressSubjectExpression).Instance);
+  Res := @FValue;
+end;
+
+function TPressSubjectExpressionItem.ReadItem(
+  Reader: TPressExpressionReader; AItem: TPressItem): Variant;
+var
+  VObj: TPressObject;
+begin
+  Reader.ReadMatch(SPressAttributeSeparator);
+  VObj := AItem.Value;
+  if Assigned(VObj) then
+    Result := ReadObject(Reader, VObj)
+  else
+    Result := '';
+end;
+
+function TPressSubjectExpressionItem.ReadItems(
+  Reader: TPressExpressionReader; AItems: TPressItems): Variant;
+var
+  VIndex: Integer;
+begin
+  if Reader.ReadNextToken = SPressSquareBrackets[1] then
+  begin
+    Reader.ReadMatch(SPressSquareBrackets[1]);
+    VIndex := Reader.ReadInteger;
+    Reader.ReadMatch(SPressSquareBrackets[2]);
+    Reader.ReadMatch(SPressAttributeSeparator);
+    if VIndex < AItems.Count then
+      Result := ReadObject(Reader, AItems[VIndex])
+    else
+      Result := '';
+  end else
+  begin
+    Reader.ReadMatch(SPressAttributeSeparator);
+    Result := ReadMethod(Reader, AItems);
+  end;
+end;
+
+function TPressSubjectExpressionItem.ReadMethod(
+  Reader: TPressExpressionReader; AAttr: TPressAttribute): Variant;
+
+  function ReadFormatList(AItems: TPressItems): Variant;
+  var
+    VParams: TPressStringArray;
+  begin
+    VParams := ReadParams(Reader, 3);
+    Result := AItems.FormatList(
+     VParams[0], VParams[1], Copy(VParams, 2, Length(VParams)));
+  end;
+
+var
+  Token: string;
+begin
+  Token := Reader.ReadIdentifier;
+  if SameText(Token, 'Value') then
+    Result := AAttr.AsVariant
+  else if SameText(Token, 'DisplayText') then
+    Result := AAttr.DisplayText
+  else if SameText(Token, 'Format') and (AAttr is TPressValue) then
+    Result := VarFormat(ReadParams(Reader, 1, 1)[0], [AAttr.AsVariant])
+  else if SameText(Token, 'FormatFloat') and (AAttr is TPressNumeric) then
+    Result := FormatFloat(ReadParams(Reader, 1, 1)[0], AAttr.AsFloat)
+  else if SameText(Token, 'FormatDateTime') and ((AAttr is TPressDate) or
+   (AAttr is TPressTime) or (AAttr is TPressDateTime)) then
+    Result := FormatDateTime(ReadParams(Reader, 1, 1)[0], AAttr.AsDateTime)
+  else if SameText(Token, 'Count') and (AAttr is TPressItems) then
+    Result := TPressItems(AAttr).Count
+  else if SameText(Token, 'FormatList') and (AAttr is TPressItems) then
+    Result := ReadFormatList(TPressItems(AAttr))
+  else
+    Result :=
+     AAttr.Owner.InternalReadMethod(AAttr, Token, ReadParams(Reader, 0));  // friend class
+end;
+
+function TPressSubjectExpressionItem.ReadObject(Reader: TPressExpressionReader;
+  AObject: TPressObject): Variant;
+var
+  VAttr: TPressAttribute;
+begin
+  VAttr := AObject.AttributeByName(Reader.ReadIdentifier);
+  if VAttr is TPressValue then
+    Result := ReadValue(Reader, TPressValue(VAttr))
+  else if VAttr is TPressItem then
+    Result := ReadItem(Reader, TPressItem(VAttr))
+  else
+    Result := ReadItems(Reader, TPressItems(VAttr));
+end;
+
+function TPressSubjectExpressionItem.ReadParams(Reader: TPressExpressionReader;
+  AMin, AMax: Integer): TPressStringArray;
+var
+  VParams: TStringList;
+  I: Integer;
+begin
+  if (AMin > 0) or (Reader.ReadNextToken = SPressBrackets[1]) then
+  begin
+    VParams := TStringList.Create;
+    try
+      Reader.ReadMatch(SPressBrackets[1]);
+      while (VParams.Count <> AMax) and ((VParams.Count < AMin) or
+       (Reader.ReadNextToken <> SPressBrackets[2])) do
+      begin
+        if VParams.Count > 0 then
+          Reader.ReadMatch(',');
+        VParams.Add(Reader.ReadUnquotedString);
+      end;
+      Reader.ReadMatch(SPressBrackets[2]);
+      SetLength(Result, VParams.Count);
+      for I := 0 to Pred(VParams.Count) do
+        Result[I] := VParams[I];
+    finally
+      VParams.Free;
+    end;
+  end else
+    SetLength(Result, 0);
+end;
+
+function TPressSubjectExpressionItem.ReadValue(
+  Reader: TPressExpressionReader; AValue: TPressValue): Variant;
+begin
+  if Reader.ReadNextToken = SPressAttributeSeparator then
+  begin
+    Reader.ReadToken;
+    Result := ReadMethod(Reader, AValue);
+  end else
+    Result := AValue.AsVariant;
 end;
 
 { TPressQuery }
