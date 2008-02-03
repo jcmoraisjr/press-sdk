@@ -200,6 +200,7 @@ procedure TPressExpression.InternalRead(Reader: TPressParserReader);
 begin
   inherited;
   ParseExpression(Reader);
+  Reader.ReadMatchEof;
 end;
 
 procedure TPressExpression.ParseExpression(Reader: TPressParserReader);
@@ -242,9 +243,11 @@ begin
   Result := TPressExpressionItem(Parse(Reader, [TPressExpressionBracket,
    TPressExpressionLiteral, TPressExpressionVariable]));
   if not Assigned(Result) then
+  begin
     Result := InternalParse(Reader);
-  if not Assigned(Result) then
-    Reader.ErrorExpected(SPressIdentifierMsg, Reader.ReadToken);
+    if not Assigned(Result) then
+      Reader.ErrorExpected(SPressIdentifierMsg, Reader.ReadToken);
+  end;
 end;
 
 { TPressExpressionItem }
