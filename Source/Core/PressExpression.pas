@@ -44,7 +44,7 @@ type
     FOperations: TObjectList;
     FRes: PPressExpressionValue;
     function GetOperations: TObjectList;
-    function ParseRightOperands(Reader: TPressParserReader; var ALeftItem: TPressExpressionItem): PPressExpressionValue;
+    function ParseRightOperands(Reader: TPressParserReader; var ALeftItem: TPressExpressionItem; ADepth: Integer): PPressExpressionValue;
     function ReadCurrentOperand(Reader: TPressParserReader): TPressExpressionItem;
   protected
     function GetVarValue: Variant;
@@ -208,11 +208,11 @@ var
   VItem: TPressExpressionItem;
 begin
   VItem := ReadCurrentOperand(Reader);
-  FRes := ParseRightOperands(Reader, VItem)
+  FRes := ParseRightOperands(Reader, VItem, 0);
 end;
 
 function TPressExpression.ParseRightOperands(Reader: TPressParserReader;
-  var ALeftItem: TPressExpressionItem): PPressExpressionValue;
+  var ALeftItem: TPressExpressionItem; ADepth: Integer): PPressExpressionValue;
 var
   VRightItem: TPressExpressionItem;
   VCurrentOp, VNextOp: TPressExpressionOperation;
@@ -226,13 +226,17 @@ begin
     VNextOp := VRightItem.NextOperation;
     VCurrentOp.Val1 := VLeftOperand;
     if Assigned(VNextOp) and (VCurrentOp.Priority < VNextOp.Priority) then
-      VCurrentOp.Val2 := ParseRightOperands(Reader, VRightItem)
+      VCurrentOp.Val2 := ParseRightOperands(Reader, VRightItem, Succ(ADepth))
     else
       VCurrentOp.Val2 := VRightItem.Res;
     VLeftOperand := VCurrentOp.Res;
     Operations.Add(VCurrentOp);
     ALeftItem := VRightItem;
-    VCurrentOp := ALeftItem.NextOperation;
+    if (ADepth = 0) or (Assigned(ALeftItem.NextOperation) and
+     (VCurrentOp.Priority = ALeftItem.NextOperation.Priority)) then
+      VCurrentOp := ALeftItem.NextOperation
+    else
+      VCurrentOp := nil;
   end;
   Result := VLeftOperand;
 end;
