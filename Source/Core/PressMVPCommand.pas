@@ -336,6 +336,7 @@ begin
     FCommand := ACommand;
     Caption := FCommand.Caption;
     Enabled := FCommand.Enabled;
+    Visible := FCommand.Visible;
     ShortCut := FCommand.ShortCut;
     FNotifier.AddNotificationItem(FCommand, [TPressMVPCommandChangedEvent]);
   end else
