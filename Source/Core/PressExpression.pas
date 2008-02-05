@@ -53,7 +53,7 @@ type
     procedure InternalRead(Reader: TPressParserReader); override;
   public
     destructor Destroy; override;
-    procedure ParseExpression(Reader: TPressParserReader);
+    function ParseExpression(Reader: TPressParserReader): PPressExpressionValue;
     property Operations: TObjectList read GetOperations;
     property Res: PPressExpressionValue read FRes;
     property VarValue: Variant read GetVarValue;
@@ -92,19 +92,18 @@ type
 
   TPressExpressionOperation = class(TPressExpressionObject)
   private
-    FRes: PPressExpressionValue;
+    FRes: TPressExpressionValue;
     FVal1: PPressExpressionValue;
     FVal2: PPressExpressionValue;
+    function GetRes: PPressExpressionValue;
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     class function InternalOperatorToken: string; virtual; abstract;
     procedure InternalRead(Reader: TPressParserReader); override;
   public
-    constructor Create(AOwner: TPressParserObject); override;
-    destructor Destroy; override;
     function Priority: Byte; virtual; abstract;
     procedure VarCalc; virtual; abstract;
-    property Res: PPressExpressionValue read FRes write FRes;
+    property Res: PPressExpressionValue read GetRes;
     property Val1: PPressExpressionValue read FVal1 write FVal1;
     property Val2: PPressExpressionValue read FVal2 write FVal2;
   end;
@@ -208,12 +207,14 @@ begin
   Reader.ReadMatchEof;
 end;
 
-procedure TPressExpression.ParseExpression(Reader: TPressParserReader);
+function TPressExpression.ParseExpression(
+  Reader: TPressParserReader): PPressExpressionValue;
 var
   VItem: TPressExpressionItem;
 begin
   VItem := ParseItem(Reader);
   FRes := ParseRightOperands(Reader, VItem, 0);
+  Result := FRes;
 end;
 
 function TPressExpression.ParseItem(
@@ -272,15 +273,11 @@ end;
 
 procedure TPressExpressionBracketItem.InternalRead(
   Reader: TPressParserReader);
-var
-  VOwner: TPressExpression;
 begin
   inherited;
-  VOwner := Owner as TPressExpression;
   Reader.ReadMatch('(');
-  VOwner.ParseExpression(Reader);
+  Res := (Owner as TPressExpression).ParseExpression(Reader);
   Reader.ReadMatch(')');
-  Res := VOwner.Res;
 end;
 
 { TPressExpressionLiteralItem }
@@ -338,16 +335,9 @@ end;
 
 { TPressExpressionOperation }
 
-constructor TPressExpressionOperation.Create(AOwner: TPressParserObject);
+function TPressExpressionOperation.GetRes: PPressExpressionValue;
 begin
-  inherited Create(AOwner);
-  New(FRes);
-end;
-
-destructor TPressExpressionOperation.Destroy;
-begin
-  Dispose(FRes);
-  inherited;
+  Result := @FRes;
 end;
 
 class function TPressExpressionOperation.InternalApply(
