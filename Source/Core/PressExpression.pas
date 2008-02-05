@@ -70,13 +70,13 @@ type
     property Res: PPressExpressionValue read FRes write FRes;
   end;
 
-  TPressExpressionBracket = class(TPressExpressionItem)
+  TPressExpressionBracketItem = class(TPressExpressionItem)
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalReadElement(Reader: TPressParserReader); override;
   end;
 
-  TPressExpressionLiteral = class(TPressExpressionItem)
+  TPressExpressionLiteralItem = class(TPressExpressionItem)
   private
     FLiteral: TPressExpressionValue;
   protected
@@ -84,7 +84,7 @@ type
     procedure InternalReadElement(Reader: TPressParserReader); override;
   end;
 
-  TPressExpressionVariable = class(TPressExpressionItem)
+  TPressExpressionVariableItem = class(TPressExpressionItem)
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalReadElement(Reader: TPressParserReader); override;
@@ -109,46 +109,41 @@ type
     property Val2: PPressExpressionValue read FVal2 write FVal2;
   end;
 
-  TPressExpressionAdd = class(TPressExpressionOperation)
+  TPressExpressionAddOperation = class(TPressExpressionOperation)
   protected
     class function InternalOperatorToken: string; override;
-    procedure InternalRead(Reader: TPressParserReader); override;
   public
     function Priority: Byte; override;
     procedure VarCalc; override;
   end;
 
-  TPressExpressionSubtract = class(TPressExpressionOperation)
+  TPressExpressionSubtractOperation = class(TPressExpressionOperation)
   protected
     class function InternalOperatorToken: string; override;
-    procedure InternalRead(Reader: TPressParserReader); override;
   public
     function Priority: Byte; override;
     procedure VarCalc; override;
   end;
 
-  TPressExpressionMultiply = class(TPressExpressionOperation)
+  TPressExpressionMultiplyOperation = class(TPressExpressionOperation)
   protected
     class function InternalOperatorToken: string; override;
-    procedure InternalRead(Reader: TPressParserReader); override;
   public
     function Priority: Byte; override;
     procedure VarCalc; override;
   end;
 
-  TPressExpressionDivide = class(TPressExpressionOperation)
+  TPressExpressionDivideOperation = class(TPressExpressionOperation)
   protected
     class function InternalOperatorToken: string; override;
-    procedure InternalRead(Reader: TPressParserReader); override;
   public
     function Priority: Byte; override;
     procedure VarCalc; override;
   end;
 
-  TPressExpressionIntDiv = class(TPressExpressionOperation)
+  TPressExpressionIntDivOperation = class(TPressExpressionOperation)
   protected
     class function InternalOperatorToken: string; override;
-    procedure InternalRead(Reader: TPressParserReader); override;
   public
     function Priority: Byte; override;
     procedure VarCalc; override;
@@ -244,8 +239,8 @@ end;
 function TPressExpression.ReadCurrentOperand(
   Reader: TPressParserReader): TPressExpressionItem;
 begin
-  Result := TPressExpressionItem(Parse(Reader, [TPressExpressionBracket,
-   TPressExpressionLiteral, TPressExpressionVariable]));
+  Result := TPressExpressionItem(Parse(Reader, [TPressExpressionBracketItem,
+   TPressExpressionLiteralItem, TPressExpressionVariableItem]));
   if not Assigned(Result) then
   begin
     Result := InternalParse(Reader);
@@ -261,23 +256,24 @@ begin
   inherited;
   InternalReadElement(Reader);
   FNextOperation := TPressExpressionOperation(Parse(Reader, [
-   TPressExpressionAdd, TPressExpressionSubtract, TPressExpressionMultiply,
-   TPressExpressionDivide, TPressExpressionIntDiv]));
+   TPressExpressionAddOperation, TPressExpressionSubtractOperation,
+   TPressExpressionMultiplyOperation, TPressExpressionDivideOperation,
+   TPressExpressionIntDivOperation]));
 end;
 
 procedure TPressExpressionItem.InternalReadElement(Reader: TPressParserReader);
 begin
 end;
 
-{ TPressExpressionBracket }
+{ TPressExpressionBracketItem }
 
-class function TPressExpressionBracket.InternalApply(
+class function TPressExpressionBracketItem.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
   Result := Reader.ReadToken = '(';
 end;
 
-procedure TPressExpressionBracket.InternalReadElement(
+procedure TPressExpressionBracketItem.InternalReadElement(
   Reader: TPressParserReader);
 var
   VOwner: TPressExpression;
@@ -290,9 +286,9 @@ begin
   Res := VOwner.Res;
 end;
 
-{ TPressExpressionLiteral }
+{ TPressExpressionLiteralItem }
 
-class function TPressExpressionLiteral.InternalApply(
+class function TPressExpressionLiteralItem.InternalApply(
   Reader: TPressParserReader): Boolean;
 var
   Token: string;
@@ -301,7 +297,7 @@ begin
   Result := (Token <> '') and (Token[1] in ['''', '"', '+', '-', '0'..'9']);
 end;
 
-procedure TPressExpressionLiteral.InternalReadElement(
+procedure TPressExpressionLiteralItem.InternalReadElement(
   Reader: TPressParserReader);
 
   function AsFloat(const AStr: string): Double;
@@ -327,16 +323,16 @@ begin
   Res := @FLiteral;
 end;
 
-{ TPressExpressionVariable }
+{ TPressExpressionVariableItem }
 
-class function TPressExpressionVariable.InternalApply(
+class function TPressExpressionVariableItem.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
   { TODO : Implement }
   Result := False;  // VarExists(Reader.ReadToken);
 end;
 
-procedure TPressExpressionVariable.InternalReadElement(
+procedure TPressExpressionVariableItem.InternalReadElement(
   Reader: TPressParserReader);
 begin
   inherited;
@@ -369,112 +365,87 @@ begin
   Reader.ReadMatch(InternalOperatorToken);
 end;
 
-{ TPressExpressionAdd }
+{ TPressExpressionAddOperation }
 
-class function TPressExpressionAdd.InternalOperatorToken: string;
+class function TPressExpressionAddOperation.InternalOperatorToken: string;
 begin
   Result := '+';
 end;
 
-procedure TPressExpressionAdd.InternalRead(Reader: TPressParserReader);
-begin
-  inherited;
-end;
-
-function TPressExpressionAdd.Priority: Byte;
+function TPressExpressionAddOperation.Priority: Byte;
 begin
   Result := 1;
 end;
 
-procedure TPressExpressionAdd.VarCalc;
+procedure TPressExpressionAddOperation.VarCalc;
 begin
   Res^ := FVal1^ + FVal2^;
 end;
 
-{ TPressExpressionSubtract }
+{ TPressExpressionSubtractOperation }
 
-class function TPressExpressionSubtract.InternalOperatorToken: string;
+class function TPressExpressionSubtractOperation.InternalOperatorToken: string;
 begin
   Result := '-';
 end;
 
-procedure TPressExpressionSubtract.InternalRead(Reader: TPressParserReader);
-begin
-  inherited;
-end;
-
-function TPressExpressionSubtract.Priority: Byte;
+function TPressExpressionSubtractOperation.Priority: Byte;
 begin
   Result := 1;
 end;
 
-procedure TPressExpressionSubtract.VarCalc;
+procedure TPressExpressionSubtractOperation.VarCalc;
 begin
   Res^ := FVal1^ - FVal2^;
 end;
 
-{ TPressExpressionMultiply }
+{ TPressExpressionMultiplyOperation }
 
-class function TPressExpressionMultiply.InternalOperatorToken: string;
+class function TPressExpressionMultiplyOperation.InternalOperatorToken: string;
 begin
   Result := '*';
 end;
 
-procedure TPressExpressionMultiply.InternalRead(Reader: TPressParserReader);
-begin
-  inherited;
-end;
-
-function TPressExpressionMultiply.Priority: Byte;
+function TPressExpressionMultiplyOperation.Priority: Byte;
 begin
   Result := 2;
 end;
 
-procedure TPressExpressionMultiply.VarCalc;
+procedure TPressExpressionMultiplyOperation.VarCalc;
 begin
   Res^ := FVal1^ * FVal2^;
 end;
 
-{ TPressExpressionDivide }
+{ TPressExpressionDivideOperation }
 
-class function TPressExpressionDivide.InternalOperatorToken: string;
+class function TPressExpressionDivideOperation.InternalOperatorToken: string;
 begin
   Result := '/';
 end;
 
-procedure TPressExpressionDivide.InternalRead(Reader: TPressParserReader);
-begin
-  inherited;
-end;
-
-function TPressExpressionDivide.Priority: Byte;
+function TPressExpressionDivideOperation.Priority: Byte;
 begin
   Result := 2;
 end;
 
-procedure TPressExpressionDivide.VarCalc;
+procedure TPressExpressionDivideOperation.VarCalc;
 begin
   Res^ := FVal1^ / FVal2^;
 end;
 
-{ TPressExpressionIntDiv }
+{ TPressExpressionIntDivOperation }
 
-class function TPressExpressionIntDiv.InternalOperatorToken: string;
+class function TPressExpressionIntDivOperation.InternalOperatorToken: string;
 begin
   Result := 'div';
 end;
 
-procedure TPressExpressionIntDiv.InternalRead(Reader: TPressParserReader);
-begin
-  inherited;
-end;
-
-function TPressExpressionIntDiv.Priority: Byte;
+function TPressExpressionIntDivOperation.Priority: Byte;
 begin
   Result := 2;
 end;
 
-procedure TPressExpressionIntDiv.VarCalc;
+procedure TPressExpressionIntDivOperation.VarCalc;
 begin
   Res^ := FVal1^ div FVal2^;
 end;
