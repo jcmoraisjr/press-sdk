@@ -44,11 +44,12 @@ type
     FOperations: TObjectList;
     FRes: PPressExpressionValue;
     function GetOperations: TObjectList;
-    function ParseRightOperands(Reader: TPressParserReader; var ALeftItem: TPressExpressionItem; ADepth: Integer): PPressExpressionValue;
-    function ReadCurrentOperand(Reader: TPressParserReader): TPressExpressionItem;
-  protected
     function GetVarValue: Variant;
-    function InternalParse(Reader: TPressParserReader): TPressExpressionItem; virtual;
+    function ParseItem(Reader: TPressParserReader): TPressExpressionItem;
+    function ParseRightOperands(Reader: TPressParserReader; var ALeftItem: TPressExpressionItem; ADepth: Integer): PPressExpressionValue;
+  protected
+    function InternalParseOperand(Reader: TPressParserReader): TPressExpressionItem; virtual;
+    function InternalParseOperation(Reader: TPressParserReader): TPressExpressionOperation; virtual;
     procedure InternalRead(Reader: TPressParserReader); override;
   public
     destructor Destroy; override;
@@ -64,7 +65,6 @@ type
     FRes: PPressExpressionValue;
   protected
     procedure InternalRead(Reader: TPressParserReader); override;
-    procedure InternalReadElement(Reader: TPressParserReader); virtual;
   public
     property NextOperation: TPressExpressionOperation read FNextOperation;
     property Res: PPressExpressionValue read FRes write FRes;
@@ -73,7 +73,7 @@ type
   TPressExpressionBracketItem = class(TPressExpressionItem)
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
-    procedure InternalReadElement(Reader: TPressParserReader); override;
+    procedure InternalRead(Reader: TPressParserReader); override;
   end;
 
   TPressExpressionLiteralItem = class(TPressExpressionItem)
@@ -81,13 +81,13 @@ type
     FLiteral: TPressExpressionValue;
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
-    procedure InternalReadElement(Reader: TPressParserReader); override;
+    procedure InternalRead(Reader: TPressParserReader); override;
   end;
 
   TPressExpressionVariableItem = class(TPressExpressionItem)
   protected
     class function InternalApply(Reader: TPressParserReader): Boolean; override;
-    procedure InternalReadElement(Reader: TPressParserReader); override;
+    procedure InternalRead(Reader: TPressParserReader); override;
   end;
 
   TPressExpressionOperation = class(TPressExpressionObject)
@@ -185,10 +185,20 @@ begin
     Result := varEmpty;
 end;
 
-function TPressExpression.InternalParse(
+function TPressExpression.InternalParseOperand(
   Reader: TPressParserReader): TPressExpressionItem;
 begin
-  Result := nil;
+  Result := TPressExpressionItem(Parse(Reader, [TPressExpressionBracketItem,
+   TPressExpressionLiteralItem, TPressExpressionVariableItem]));
+end;
+
+function TPressExpression.InternalParseOperation(
+  Reader: TPressParserReader): TPressExpressionOperation;
+begin
+  Result := TPressExpressionOperation(Parse(Reader, [
+   TPressExpressionAddOperation, TPressExpressionSubtractOperation,
+   TPressExpressionMultiplyOperation, TPressExpressionDivideOperation,
+   TPressExpressionIntDivOperation]));
 end;
 
 procedure TPressExpression.InternalRead(Reader: TPressParserReader);
@@ -202,8 +212,17 @@ procedure TPressExpression.ParseExpression(Reader: TPressParserReader);
 var
   VItem: TPressExpressionItem;
 begin
-  VItem := ReadCurrentOperand(Reader);
+  VItem := ParseItem(Reader);
   FRes := ParseRightOperands(Reader, VItem, 0);
+end;
+
+function TPressExpression.ParseItem(
+  Reader: TPressParserReader): TPressExpressionItem;
+begin
+  Result := InternalParseOperand(Reader);
+  if not Assigned(Result) then
+    Reader.ErrorExpected(SPressIdentifierMsg, Reader.ReadToken);
+  Result.FNextOperation := InternalParseOperation(Reader);
 end;
 
 function TPressExpression.ParseRightOperands(Reader: TPressParserReader;
@@ -217,7 +236,7 @@ begin
   VCurrentOp := ALeftItem.NextOperation;
   while Assigned(VCurrentOp) do
   begin
-    VRightItem := ReadCurrentOperand(Reader);
+    VRightItem := ParseItem(Reader);
     VNextOp := VRightItem.NextOperation;
     VCurrentOp.Val1 := VLeftOperand;
     if Assigned(VNextOp) and (VCurrentOp.Priority < VNextOp.Priority) then
@@ -236,33 +255,11 @@ begin
   Result := VLeftOperand;
 end;
 
-function TPressExpression.ReadCurrentOperand(
-  Reader: TPressParserReader): TPressExpressionItem;
-begin
-  Result := TPressExpressionItem(Parse(Reader, [TPressExpressionBracketItem,
-   TPressExpressionLiteralItem, TPressExpressionVariableItem]));
-  if not Assigned(Result) then
-  begin
-    Result := InternalParse(Reader);
-    if not Assigned(Result) then
-      Reader.ErrorExpected(SPressIdentifierMsg, Reader.ReadToken);
-  end;
-end;
-
 { TPressExpressionItem }
 
 procedure TPressExpressionItem.InternalRead(Reader: TPressParserReader);
 begin
   inherited;
-  InternalReadElement(Reader);
-  FNextOperation := TPressExpressionOperation(Parse(Reader, [
-   TPressExpressionAddOperation, TPressExpressionSubtractOperation,
-   TPressExpressionMultiplyOperation, TPressExpressionDivideOperation,
-   TPressExpressionIntDivOperation]));
-end;
-
-procedure TPressExpressionItem.InternalReadElement(Reader: TPressParserReader);
-begin
 end;
 
 { TPressExpressionBracketItem }
@@ -273,7 +270,7 @@ begin
   Result := Reader.ReadToken = '(';
 end;
 
-procedure TPressExpressionBracketItem.InternalReadElement(
+procedure TPressExpressionBracketItem.InternalRead(
   Reader: TPressParserReader);
 var
   VOwner: TPressExpression;
@@ -297,7 +294,7 @@ begin
   Result := (Token <> '') and (Token[1] in ['''', '"', '+', '-', '0'..'9']);
 end;
 
-procedure TPressExpressionLiteralItem.InternalReadElement(
+procedure TPressExpressionLiteralItem.InternalRead(
   Reader: TPressParserReader);
 
   function AsFloat(const AStr: string): Double;
@@ -332,7 +329,7 @@ begin
   Result := False;  // VarExists(Reader.ReadToken);
 end;
 
-procedure TPressExpressionVariableItem.InternalReadElement(
+procedure TPressExpressionVariableItem.InternalRead(
   Reader: TPressParserReader);
 begin
   inherited;

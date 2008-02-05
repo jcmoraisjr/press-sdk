@@ -1141,7 +1141,7 @@ type
   private
     FInstance: TPressObject;
   protected
-    function InternalParse(Reader: TPressParserReader): TPressExpressionItem; override;
+    function InternalParseOperand(Reader: TPressParserReader): TPressExpressionItem; override;
   public
     constructor Create(AInstance: TPressObject); reintroduce;
     property Instance: TPressObject read FInstance;
@@ -1158,7 +1158,7 @@ type
     function ReadParams(Reader: TPressExpressionReader; AMin: Integer; AMax: Integer = -1): TPressStringArray;
     function ReadValue(Reader: TPressExpressionReader; AValue: TPressValue): Variant;
   protected
-    procedure InternalReadElement(Reader: TPressParserReader); override;
+    procedure InternalRead(Reader: TPressParserReader); override;
   end;
 
   TPressQueryItems = class(TPressReferences)
@@ -3394,16 +3394,18 @@ begin
   FInstance := AInstance;
 end;
 
-function TPressSubjectExpression.InternalParse(
+function TPressSubjectExpression.InternalParseOperand(
   Reader: TPressParserReader): TPressExpressionItem;
 begin
-  Result := TPressSubjectExpressionItem(
-   Parse(Reader, [TPressSubjectExpressionItem]));
+  Result := inherited InternalParseOperand(Reader);
+  if not Assigned(Result) then
+    Result := TPressSubjectExpressionItem(
+     Parse(Reader, [TPressSubjectExpressionItem]));
 end;
 
 { TPressSubjectExpressionItem }
 
-procedure TPressSubjectExpressionItem.InternalReadElement(
+procedure TPressSubjectExpressionItem.InternalRead(
   Reader: TPressParserReader);
 begin
   inherited;
