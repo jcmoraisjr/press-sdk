@@ -23,6 +23,7 @@ uses
   Variant,
 {$endif}
   Contnrs,
+  PressClasses,
   PressParser;
 
 type
@@ -35,6 +36,8 @@ type
   TPressExpressionObject = class(TPressParserObject)
   end;
 
+  TPressExpressionVar = class;
+  TPressExpressionVarList = class;
   TPressExpressionItem = class;
   TPressExpressionItemClass = class of TPressExpressionItem;
   TPressExpressionOperation = class;
@@ -43,10 +46,13 @@ type
   private
     FOperations: TObjectList;
     FRes: PPressExpressionValue;
+    FVars: TPressExpressionVarList;
     function GetOperations: TObjectList;
+    function GetVars: TPressExpressionVarList;
     function GetVarValue: Variant;
     function ParseItem(Reader: TPressParserReader): TPressExpressionItem;
     function ParseRightOperands(Reader: TPressParserReader; var ALeftItem: TPressExpressionItem; ADepth: Integer): PPressExpressionValue;
+    function ParseVar(Reader: TPressParserReader): TPressExpressionItem;
   protected
     function InternalParseOperand(Reader: TPressParserReader): TPressExpressionItem; virtual;
     function InternalParseOperation(Reader: TPressParserReader): TPressExpressionOperation; virtual;
@@ -56,7 +62,34 @@ type
     function ParseExpression(Reader: TPressParserReader): PPressExpressionValue;
     property Operations: TObjectList read GetOperations;
     property Res: PPressExpressionValue read FRes;
+    property Vars: TPressExpressionVarList read GetVars;
     property VarValue: Variant read GetVarValue;
+  end;
+
+  TPressExpressionVar = class(TObject)
+  private
+    FName: string;
+    FValue: TPressExpressionValue;
+    function GetValuePtr: PPressExpressionValue;
+  public
+    constructor Create(const AName: string);
+    property Name: string read FName;
+    property Value: TPressExpressionValue read FValue write FValue;
+    property ValuePtr: PPressExpressionValue read GetValuePtr;
+  end;
+
+  TPressExpressionVarList = class(TPressList)
+  private
+    function GetItems(AIndex: Integer): TPressExpressionVar;
+    function GetVariable(const AVarName: string): TPressExpressionValue;
+    procedure SetItems(AIndex: Integer; Value: TPressExpressionVar);
+    procedure SetVariable(const AVarName: string; Value: TPressExpressionValue);
+  public
+    function IndexOf(const AVarName: string): Integer;
+    function FindVar(const AVarName: string): TPressExpressionVar;
+    function VarByName(const AVarName: string): TpressExpressionVar;
+    property Items[AIndex: Integer]: TPressExpressionVar read GetItems write SetItems;
+    property Variable[const AVarName: string]: TPressExpressionValue read GetVariable write SetVariable; default;
   end;
 
   TPressExpressionItem = class(TPressExpressionObject)
@@ -84,10 +117,13 @@ type
     procedure InternalRead(Reader: TPressParserReader); override;
   end;
 
-  TPressExpressionVariableItem = class(TPressExpressionItem)
+  TPressExpressionVarItem = class(TPressExpressionItem)
+  private
+    FVariable: TPressExpressionVar;
   protected
-    class function InternalApply(Reader: TPressParserReader): Boolean; override;
     procedure InternalRead(Reader: TPressParserReader); override;
+  public
+    property Variable: TPressExpressionVar read FVariable write FVariable;
   end;
 
   TPressExpressionOperation = class(TPressExpressionObject)
@@ -152,13 +188,13 @@ implementation
 
 uses
   SysUtils,
-  PressClasses,
   PressConsts;
 
 { TPressExpression }
 
 destructor TPressExpression.Destroy;
 begin
+  FVars.Free;
   FOperations.Free;
   inherited;
 end;
@@ -168,6 +204,13 @@ begin
   if not Assigned(FOperations) then
     FOperations := TObjectList.Create(False);
   Result := FOperations;
+end;
+
+function TPressExpression.GetVars: TPressExpressionVarList;
+begin
+  if not Assigned(FVars) then
+    FVars := TPressExpressionVarList.Create(True);
+  Result := FVars;
 end;
 
 function TPressExpression.GetVarValue: Variant;
@@ -187,8 +230,10 @@ end;
 function TPressExpression.InternalParseOperand(
   Reader: TPressParserReader): TPressExpressionItem;
 begin
-  Result := TPressExpressionItem(Parse(Reader, [TPressExpressionBracketItem,
-   TPressExpressionLiteralItem, TPressExpressionVariableItem]));
+  Result := TPressExpressionItem(Parse(Reader, [
+   TPressExpressionBracketItem, TPressExpressionLiteralItem]));
+  if not Assigned(Result) then
+    Result := ParseVar(Reader);
 end;
 
 function TPressExpression.InternalParseOperation(
@@ -256,6 +301,95 @@ begin
   Result := VLeftOperand;
 end;
 
+function TPressExpression.ParseVar(
+  Reader: TPressParserReader): TPressExpressionItem;
+var
+  VVar: TPressExpressionVar;
+  VVarParser: TPressExpressionVarItem;
+begin
+  Result := nil;
+  VVar := Vars.FindVar(Reader.ReadNextToken);
+  if not Assigned(VVar) then
+    Exit;
+  VVarParser := TPressExpressionVarItem.Create(Self);
+  try
+    VVarParser.Variable := VVar;
+    VVarParser.Read(Reader);
+  except
+    VVarParser.Free;
+    raise;
+  end;
+  Result := VVarParser;
+end;
+
+{ TPressExpressionVar }
+
+constructor TPressExpressionVar.Create(const AName: string);
+begin
+  if not IsValidIdent(AName) then
+    EPressError.CreateFmt('Invalid identifier ''%s''', [AName]);
+  inherited Create;
+  FName := AName;
+end;
+
+function TPressExpressionVar.GetValuePtr: PPressExpressionValue;
+begin
+  Result := @FValue;
+end;
+
+{ TPressExpressionVarList }
+
+function TPressExpressionVarList.FindVar(
+  const AVarName: string): TPressExpressionVar;
+var
+  VIndex: Integer;
+begin
+  VIndex := IndexOf(AVarName);
+  if VIndex >= 0 then
+    Result := Items[VIndex]
+  else
+    Result := nil;
+end;
+
+function TPressExpressionVarList.GetItems(AIndex: Integer): TPressExpressionVar;
+begin
+  Result := inherited Items[AIndex] as TPressExpressionVar;
+end;
+
+function TPressExpressionVarList.GetVariable(
+  const AVarName: string): TPressExpressionValue;
+begin
+  Result := VarByName(AVarName).Value;
+end;
+
+function TPressExpressionVarList.IndexOf(const AVarName: string): Integer;
+begin
+  for Result := 0 to Pred(Count) do
+    if SameText(AVarName, Items[Result].Name) then
+      Exit;
+  Result := -1;
+end;
+
+procedure TPressExpressionVarList.SetItems(
+  AIndex: Integer; Value: TPressExpressionVar);
+begin
+  inherited Items[AIndex] := Value;
+end;
+
+procedure TPressExpressionVarList.SetVariable(
+  const AVarName: string; Value: TPressExpressionValue);
+begin
+  VarByName(AVarName).Value := Value;
+end;
+
+function TPressExpressionVarList.VarByName(
+  const AVarName: string): TpressExpressionVar;
+begin
+  Result := FindVar(AVarName);
+  if not Assigned(Result) then
+    Result := Items[inherited Add(TPressExpressionVar.Create(AVarName))];
+end;
+
 { TPressExpressionItem }
 
 procedure TPressExpressionItem.InternalRead(Reader: TPressParserReader);
@@ -317,20 +451,13 @@ begin
   Res := @FLiteral;
 end;
 
-{ TPressExpressionVariableItem }
+{ TPressExpressionVarItem }
 
-class function TPressExpressionVariableItem.InternalApply(
-  Reader: TPressParserReader): Boolean;
-begin
-  { TODO : Implement }
-  Result := False;  // VarExists(Reader.ReadToken);
-end;
-
-procedure TPressExpressionVariableItem.InternalRead(
-  Reader: TPressParserReader);
+procedure TPressExpressionVarItem.InternalRead(Reader: TPressParserReader);
 begin
   inherited;
-  { TODO : Implement }
+  Reader.ReadMatchText(Variable.Name);
+  Res := Variable.ValuePtr;
 end;
 
 { TPressExpressionOperation }
