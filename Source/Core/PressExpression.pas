@@ -327,7 +327,7 @@ end;
 constructor TPressExpressionVar.Create(const AName: string);
 begin
   if not IsValidIdent(AName) then
-    EPressError.CreateFmt('Invalid identifier ''%s''', [AName]);
+    raise EPressError.CreateFmt(SInvalidIdentifier, [AName]);
   inherited Create;
   FName := AName;
 end;

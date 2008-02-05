@@ -62,6 +62,7 @@ var
   // Error messages from core and adjacent classes
   SCannotReleaseInstance,
   SEnumItemNotFound,
+  SInvalidIdentifier,
   SInvalidLogon,
   SMethodNotFound,
   SNoLoggedUser,

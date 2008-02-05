@@ -1,6 +1,7 @@
   // Error messages from core and adjacent classes
   SCannotReleaseInstance_rst = 'Cannot release instance ''%s''';
   SEnumItemNotFound_rst = 'Enumeration ''%s'' not found';
+  SInvalidIdentifier_rst = 'Invalid identifier ''%s''';
   SInvalidLogon_rst = 'Invalid username or password';
   SMethodNotFound_rst = 'Method ''%s'' not found';
   SNoLoggedUser_rst = 'No user logged in';
