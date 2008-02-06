@@ -31,6 +31,8 @@ type
   PPressExpressionValue = ^TPressExpressionValue;
 
   TPressExpressionReader = class(TPressParserReader)
+  protected
+    function InternalCreateBigSymbolsArray: TPressStringArray; override;
   end;
 
   TPressExpressionObject = class(TPressParserObject)
@@ -184,11 +186,69 @@ type
     procedure VarCalc; override;
   end;
 
+  TPressExpressionGreaterThanOperation = class(TPressExpressionOperation)
+  protected
+    class function InternalOperatorToken: string; override;
+  public
+    function Priority: Byte; override;
+    procedure VarCalc; override;
+  end;
+
+  TPressExpressionLesserThanOperation = class(TPressExpressionOperation)
+  protected
+    class function InternalOperatorToken: string; override;
+  public
+    function Priority: Byte; override;
+    procedure VarCalc; override;
+  end;
+
+  TPressExpressionGreaterThanOrEqualOperation = class(TPressExpressionOperation)
+  protected
+    class function InternalOperatorToken: string; override;
+  public
+    function Priority: Byte; override;
+    procedure VarCalc; override;
+  end;
+
+  TPressExpressionLesserThanOrEqualOperation = class(TPressExpressionOperation)
+  protected
+    class function InternalOperatorToken: string; override;
+  public
+    function Priority: Byte; override;
+    procedure VarCalc; override;
+  end;
+
+  TPressExpressionEqualOperation = class(TPressExpressionOperation)
+  protected
+    class function InternalOperatorToken: string; override;
+  public
+    function Priority: Byte; override;
+    procedure VarCalc; override;
+  end;
+
+  TPressExpressionDiffOperation = class(TPressExpressionOperation)
+  protected
+    class function InternalOperatorToken: string; override;
+  public
+    function Priority: Byte; override;
+    procedure VarCalc; override;
+  end;
+
 implementation
 
 uses
   SysUtils,
   PressConsts;
+
+{ TPressExpressionReader }
+
+function TPressExpressionReader.InternalCreateBigSymbolsArray: TPressStringArray;
+begin
+  SetLength(Result, 3);
+  Result[0] := '<=';
+  Result[1] := '>=';
+  Result[2] := '<>';
+end;
 
 { TPressExpression }
 
@@ -242,7 +302,10 @@ begin
   Result := TPressExpressionOperation(Parse(Reader, [
    TPressExpressionAddOperation, TPressExpressionSubtractOperation,
    TPressExpressionMultiplyOperation, TPressExpressionDivideOperation,
-   TPressExpressionIntDivOperation]));
+   TPressExpressionIntDivOperation,
+   TPressExpressionGreaterThanOperation, TPressExpressionGreaterThanOrEqualOperation,
+   TPressExpressionLesserThanOperation, TPressExpressionLesserThanOrEqualOperation,
+   TPressExpressionEqualOperation, TPressExpressionDiffOperation]));
 end;
 
 procedure TPressExpression.InternalRead(Reader: TPressParserReader);
@@ -488,7 +551,7 @@ end;
 
 function TPressExpressionAddOperation.Priority: Byte;
 begin
-  Result := 1;
+  Result := 10;
 end;
 
 procedure TPressExpressionAddOperation.VarCalc;
@@ -505,7 +568,7 @@ end;
 
 function TPressExpressionSubtractOperation.Priority: Byte;
 begin
-  Result := 1;
+  Result := 10;
 end;
 
 procedure TPressExpressionSubtractOperation.VarCalc;
@@ -522,7 +585,7 @@ end;
 
 function TPressExpressionMultiplyOperation.Priority: Byte;
 begin
-  Result := 2;
+  Result := 15;
 end;
 
 procedure TPressExpressionMultiplyOperation.VarCalc;
@@ -539,7 +602,7 @@ end;
 
 function TPressExpressionDivideOperation.Priority: Byte;
 begin
-  Result := 2;
+  Result := 15;
 end;
 
 procedure TPressExpressionDivideOperation.VarCalc;
@@ -556,12 +619,114 @@ end;
 
 function TPressExpressionIntDivOperation.Priority: Byte;
 begin
-  Result := 2;
+  Result := 15;
 end;
 
 procedure TPressExpressionIntDivOperation.VarCalc;
 begin
   Res^ := FVal1^ div FVal2^;
+end;
+
+{ TPressExpressionGreaterThanOperation }
+
+class function TPressExpressionGreaterThanOperation.InternalOperatorToken: string;
+begin
+  Result := '>';
+end;
+
+function TPressExpressionGreaterThanOperation.Priority: Byte;
+begin
+  Result := 5;
+end;
+
+procedure TPressExpressionGreaterThanOperation.VarCalc;
+begin
+  Res^ := Val1^ > Val2^;
+end;
+
+{ TPressExpressionLesserThanOperation }
+
+class function TPressExpressionLesserThanOperation.InternalOperatorToken: string;
+begin
+  Result := '<';
+end;
+
+function TPressExpressionLesserThanOperation.Priority: Byte;
+begin
+  Result := 5;
+end;
+
+procedure TPressExpressionLesserThanOperation.VarCalc;
+begin
+  Res^ := Val1^ < Val2^;
+end;
+
+{ TPressExpressionGreaterThanOrEqualOperation }
+
+class function TPressExpressionGreaterThanOrEqualOperation.InternalOperatorToken: string;
+begin
+  Result := '>=';
+end;
+
+function TPressExpressionGreaterThanOrEqualOperation.Priority: Byte;
+begin
+  Result := 5;
+end;
+
+procedure TPressExpressionGreaterThanOrEqualOperation.VarCalc;
+begin
+  Res^ := Val1^ >= Val2^;
+end;
+
+{ TPressExpressionLesserThanOrEqualOperation }
+
+class function TPressExpressionLesserThanOrEqualOperation.InternalOperatorToken: string;
+begin
+  Result := '<=';
+end;
+
+function TPressExpressionLesserThanOrEqualOperation.Priority: Byte;
+begin
+  Result := 5;
+end;
+
+procedure TPressExpressionLesserThanOrEqualOperation.VarCalc;
+begin
+  Res^ := Val1^ <= Val2^;
+end;
+
+{ TPressExpressionEqualOperation }
+
+class function TPressExpressionEqualOperation.InternalOperatorToken: string;
+begin
+  Result := '=';
+end;
+
+function TPressExpressionEqualOperation.Priority: Byte;
+begin
+  Result := 5;
+end;
+
+procedure TPressExpressionEqualOperation.VarCalc;
+begin
+  Res^ := Val1^ = Val2^;
+end;
+
+{ TPressExpressionDiffOperation }
+
+class function TPressExpressionDiffOperation.InternalOperatorToken: string;
+begin
+  Result := '<>';
+end;
+
+function TPressExpressionDiffOperation.Priority: Byte;
+begin
+  Result := 5;
+end;
+
+procedure TPressExpressionDiffOperation.VarCalc;
+begin
+  Res^ := Val1^ <> Val2^;
 end;
 
 end.
