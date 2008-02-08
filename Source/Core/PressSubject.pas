@@ -1802,13 +1802,12 @@ function TPressObjectMetadata.FindMetadata(
 var
   I: Integer;
 begin
-  if Assigned(FAttributeMetadatas) then
-    for I := 0 to Pred(FAttributeMetadatas.Count) do
-    begin
-      Result := FAttributeMetadatas[I];
-      if SameText(Result.Name, AName) then
-        Exit;
-    end;
+  for I := 0 to Pred(Map.Count) do
+  begin
+    Result := Map[I];
+    if SameText(Result.Name, AName) then
+      Exit;
+  end;
   Result := nil;
 end;
 
