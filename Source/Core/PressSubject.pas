@@ -192,8 +192,6 @@ type
   public
     function Add(AObject: TPressAttributeMetadata): Integer;
     function CreateIterator: TPressAttributeMetadataIterator;
-    function FindMetadata(const AName: string): TPressAttributeMetadata;
-    function MetadataByName(const AName: string): TPressAttributeMetadata;
     function IndexOf(AObject: TPressAttributeMetadata): Integer;
     function IndexOfName(const AName: string): Integer;
     procedure Insert(Index: Integer; AObject: TPressAttributeMetadata);
@@ -285,6 +283,8 @@ type
   public
     constructor Create(const AObjectClassName: string; AModel: TPressModel); virtual;
     function CreateAttributeMetadata: TPressAttributeMetadata;
+    function FindMetadata(const AName: string): TPressAttributeMetadata;
+    function MetadataByName(const AName: string): TPressAttributeMetadata;
     property AttributeMetadatas: TPressAttributeMetadataList read GetAttributeMetadatas;
     property IdMetadata: TPressAttributeMetadata read GetIdMetadata;
     property Map: TPressClassMap read GetMap;
@@ -1630,20 +1630,6 @@ begin
   Result := TPressAttributeMetadataIterator.Create(Self);
 end;
 
-function TPressAttributeMetadataList.FindMetadata(
-  const AName: string): TPressAttributeMetadata;
-var
-  I: Integer;
-begin
-  for I := 0 to Pred(Count) do
-  begin
-    Result := Items[I];
-    if SameText(Items[I].Name, AName) then
-      Exit;
-  end;
-  Result := nil;
-end;
-
 function TPressAttributeMetadataList.GetItems(
   AIndex: Integer): TPressAttributeMetadata;
 begin
@@ -1673,15 +1659,6 @@ end;
 function TPressAttributeMetadataList.InternalCreateIterator: TPressCustomIterator;
 begin
   Result := CreateIterator;
-end;
-
-function TPressAttributeMetadataList.MetadataByName(
-  const AName: string): TPressAttributeMetadata;
-begin
-  Result := FindMetadata(AName);
-  if not Assigned(Result) then
-    { TODO : Reach the owner of the list (an object metadata instance) }
-    raise EPressError.CreateFmt(SAttributeNotFound, ['', AName]);
 end;
 
 function TPressAttributeMetadataList.Remove(
@@ -1820,6 +1797,21 @@ begin
   Result := InternalAttributeMetadataClass.Create(Self);
 end;
 
+function TPressObjectMetadata.FindMetadata(
+  const AName: string): TPressAttributeMetadata;
+var
+  I: Integer;
+begin
+  if Assigned(FAttributeMetadatas) then
+    for I := 0 to Pred(FAttributeMetadatas.Count) do
+    begin
+      Result := FAttributeMetadatas[I];
+      if SameText(Result.Name, AName) then
+        Exit;
+    end;
+  Result := nil;
+end;
+
 procedure TPressObjectMetadata.Finit;
 begin
   FMap.Free;
@@ -1880,6 +1872,14 @@ end;
 function TPressObjectMetadata.InternalAttributeMetadataClass: TPressAttributeMetadataClass;
 begin
   Result := TPressAttributeMetadata;
+end;
+
+function TPressObjectMetadata.MetadataByName(
+  const AName: string): TPressAttributeMetadata;
+begin
+  Result := FindMetadata(AName);
+  if not Assigned(Result) then
+    raise EPressError.CreateFmt(SAttributeNotFound, [ObjectClassName, AName]);
 end;
 
 procedure TPressObjectMetadata.SetIsPersistent(AValue: Boolean);
@@ -3604,7 +3604,7 @@ var
   VAttr: TPressAttributeMetadata;
   VAttrClass: TPressAttributeClass;
 begin
-  VAttr := AMetadata.AttributeMetadatas.MetadataByName(Reader.ReadIdentifier);
+  VAttr := AMetadata.MetadataByName(Reader.ReadIdentifier);
   VAttrClass := VAttr.AttributeClass;
   if Assigned(VAttrClass) then
     if VAttrClass.InheritsFrom(TPressValue) then
