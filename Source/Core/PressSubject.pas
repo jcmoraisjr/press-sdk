@@ -3959,6 +3959,15 @@ begin
   end;
 end;
 
+{ TPressQueryItems }
+
+procedure TPressQueryItems.InternalUnassignObject(AObject: TPressObject);
+begin
+  { TODO : Cache }
+  AObject.Dispose;
+  inherited;
+end;
+
 { TPressSingletonObject }
 
 constructor TPressSingletonObject.Instance;
@@ -5062,15 +5071,6 @@ end;
 class function TPressStructure.ValidObjectClass: TPressObjectClass;
 begin
   Result := TPressObject;
-end;
-
-{ TPressQueryItems }
-
-procedure TPressQueryItems.InternalUnassignObject(AObject: TPressObject);
-begin
-  { TODO : Cache }
-  AObject.Dispose;
-  inherited;
 end;
 
 initialization
