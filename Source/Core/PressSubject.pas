@@ -192,6 +192,8 @@ type
   public
     function Add(AObject: TPressAttributeMetadata): Integer;
     function CreateIterator: TPressAttributeMetadataIterator;
+    function FindMetadata(const AName: string): TPressAttributeMetadata;
+    function MetadataByName(const AName: string): TPressAttributeMetadata;
     function IndexOf(AObject: TPressAttributeMetadata): Integer;
     function IndexOfName(const AName: string): Integer;
     procedure Insert(Index: Integer; AObject: TPressAttributeMetadata);
@@ -1020,6 +1022,7 @@ type
     {$IFDEF FPC}class{$ENDIF} function ClassType: TPressAttributeClass;
     procedure Clear;
     function Clone: TPressAttribute;
+    class function EmptyValue: Variant; virtual;
     class procedure RegisterAttribute;
     class procedure UnregisterAttribute;
     property AsBoolean: Boolean read GetAsBoolean write SetAsBoolean;
@@ -1152,11 +1155,15 @@ type
     FValue: TPressExpressionValue;
   private
     function ReadItem(Reader: TPressExpressionReader; AItem: TPressItem): Variant;
+    function ReadItemMetadata(Reader: TPressExpressionReader; AAttr: TPressAttributeMetadata): Variant;
     function ReadItems(Reader: TPressExpressionReader; AItems: TPressItems): Variant;
-    function ReadMethod(Reader: TPressExpressionReader; AAttr: TPressAttribute): Variant;
+    function ReadItemsMetadata(Reader: TPressExpressionReader; AAttr: TPressAttributeMetadata): Variant;
+    function ReadMethod(Reader: TPressExpressionReader; AAttr: TPressAttribute; AAttrMetadata: TPressAttributeMetadata = nil): Variant;
     function ReadObject(Reader: TPressExpressionReader; AObject: TPressObject): Variant;
+    function ReadObjectMetadata(Reader: TPressExpressionReader; AMetadata: TPressObjectMetadata): Variant;
     function ReadParams(Reader: TPressExpressionReader; AMin: Integer; AMax: Integer = -1): TPressStringArray;
     function ReadValue(Reader: TPressExpressionReader; AValue: TPressValue): Variant;
+    function ReadValueMetadata(Reader: TPressExpressionReader; AAttr: TPressAttributeMetadata): Variant;
   protected
     procedure InternalRead(Reader: TPressParserReader); override;
   end;
@@ -1623,6 +1630,20 @@ begin
   Result := TPressAttributeMetadataIterator.Create(Self);
 end;
 
+function TPressAttributeMetadataList.FindMetadata(
+  const AName: string): TPressAttributeMetadata;
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(Count) do
+  begin
+    Result := Items[I];
+    if SameText(Items[I].Name, AName) then
+      Exit;
+  end;
+  Result := nil;
+end;
+
 function TPressAttributeMetadataList.GetItems(
   AIndex: Integer): TPressAttributeMetadata;
 begin
@@ -1652,6 +1673,15 @@ end;
 function TPressAttributeMetadataList.InternalCreateIterator: TPressCustomIterator;
 begin
   Result := CreateIterator;
+end;
+
+function TPressAttributeMetadataList.MetadataByName(
+  const AName: string): TPressAttributeMetadata;
+begin
+  Result := FindMetadata(AName);
+  if not Assigned(Result) then
+    { TODO : Reach the owner of the list (an object metadata instance) }
+    raise EPressError.CreateFmt(SAttributeNotFound, ['', AName]);
 end;
 
 function TPressAttributeMetadataList.Remove(
@@ -3398,7 +3428,8 @@ function TPressSubjectExpression.InternalParseOperand(
   Reader: TPressParserReader): TPressExpressionItem;
 begin
   Result := inherited InternalParseOperand(Reader);
-  if not Assigned(Result) then
+  if not Assigned(Result) and
+   Assigned(Instance.FindAttribute(Reader.ReadNextToken)) then
     Result := TPressSubjectExpressionItem(
      Parse(Reader, [TPressSubjectExpressionItem]));
 end;
@@ -3423,13 +3454,29 @@ begin
   VObj := AItem.Value;
   if Assigned(VObj) then
     Result := ReadObject(Reader, VObj)
+  else if Assigned(AItem.Metadata) then
+    Result := ReadObjectMetadata(Reader, AItem.Metadata.ObjectClassMetadata)
   else
-    Result := '';
+    Result := varEmpty;
+end;
+
+function TPressSubjectExpressionItem.ReadItemMetadata(
+  Reader: TPressExpressionReader; AAttr: TPressAttributeMetadata): Variant;
+var
+  VObj: TPressObjectMetadata;
+begin
+  Reader.ReadMatch(SPressAttributeSeparator);
+  VObj := AAttr.ObjectClassMetadata;
+  if Assigned(VObj) then
+    Result := ReadObjectMetadata(Reader, VObj)
+  else
+    Result := varEmpty;
 end;
 
 function TPressSubjectExpressionItem.ReadItems(
   Reader: TPressExpressionReader; AItems: TPressItems): Variant;
 var
+  VObj: TPressObject;
   VIndex: Integer;
 begin
   if Reader.ReadNextToken = SPressSquareBrackets[1] then
@@ -3439,9 +3486,13 @@ begin
     Reader.ReadMatch(SPressSquareBrackets[2]);
     Reader.ReadMatch(SPressAttributeSeparator);
     if VIndex < AItems.Count then
-      Result := ReadObject(Reader, AItems[VIndex])
+      VObj := AItems[VIndex]
     else
-      Result := '';
+      VObj := nil;
+    if Assigned(VObj) then
+      Result := ReadObject(Reader, VObj)
+    else
+      Result := ReadObjectMetadata(Reader, AItems.Metadata.ObjectClassMetadata);
   end else
   begin
     Reader.ReadMatch(SPressAttributeSeparator);
@@ -3449,8 +3500,26 @@ begin
   end;
 end;
 
+function TPressSubjectExpressionItem.ReadItemsMetadata(
+  Reader: TPressExpressionReader; AAttr: TPressAttributeMetadata): Variant;
+begin
+  if Reader.ReadNextToken = SPressSquareBrackets[1] then
+  begin
+    Reader.ReadMatch(SPressSquareBrackets[1]);
+    Reader.ReadInteger;
+    Reader.ReadMatch(SPressSquareBrackets[2]);
+    Reader.ReadMatch(SPressAttributeSeparator);
+    Result := ReadObjectMetadata(Reader, AAttr.ObjectClassMetadata);
+  end else
+  begin
+    Reader.ReadMatch(SPressAttributeSeparator);
+    Result := ReadMethod(Reader, nil, AAttr);
+  end;
+end;
+
 function TPressSubjectExpressionItem.ReadMethod(
-  Reader: TPressExpressionReader; AAttr: TPressAttribute): Variant;
+  Reader: TPressExpressionReader; AAttr: TPressAttribute;
+  AAttrMetadata: TPressAttributeMetadata): Variant;
 
   function ReadFormatList(AItems: TPressItems): Variant;
   var
@@ -3465,24 +3534,54 @@ var
   Token: string;
 begin
   Token := Reader.ReadIdentifier;
+  if not Assigned(AAttr) and
+   (not Assigned(AAttrMetadata) or not Assigned(AAttrMetadata.AttributeClass)) then
+  begin
+    Result := varEmpty;
+    Exit;
+  end;
   if SameText(Token, 'Value') then
-    Result := AAttr.AsVariant
+    if Assigned(AAttr) then
+      Result := AAttr.AsVariant
+    else
+      Result := AAttrMetadata.AttributeClass.EmptyValue
   else if SameText(Token, 'DisplayText') then
-    Result := AAttr.DisplayText
+    if Assigned(AAttr) then
+      Result := AAttr.DisplayText
+    else
+      Result := ''
   else if SameText(Token, 'Format') and (AAttr is TPressValue) then
-    Result := VarFormat(ReadParams(Reader, 1, 1)[0], [AAttr.AsVariant])
+    if Assigned(AAttr) then
+      Result := VarFormat(ReadParams(Reader, 1, 1)[0], [AAttr.AsVariant])
+    else
+      Result := ''
   else if SameText(Token, 'FormatFloat') and (AAttr is TPressNumeric) then
-    Result := FormatFloat(ReadParams(Reader, 1, 1)[0], AAttr.AsFloat)
+    if Assigned(AAttr) then
+      Result := FormatFloat(ReadParams(Reader, 1, 1)[0], AAttr.AsFloat)
+    else
+      Result := ''
   else if SameText(Token, 'FormatDateTime') and ((AAttr is TPressDate) or
    (AAttr is TPressTime) or (AAttr is TPressDateTime)) then
-    Result := FormatDateTime(ReadParams(Reader, 1, 1)[0], AAttr.AsDateTime)
+    if Assigned(AAttr) then
+      Result := FormatDateTime(ReadParams(Reader, 1, 1)[0], AAttr.AsDateTime)
+    else
+      Result := ''
   else if SameText(Token, 'Count') and (AAttr is TPressItems) then
-    Result := TPressItems(AAttr).Count
+    if Assigned(AAttr) then
+      Result := TPressItems(AAttr).Count
+    else
+      Result := 0
   else if SameText(Token, 'FormatList') and (AAttr is TPressItems) then
-    Result := ReadFormatList(TPressItems(AAttr))
+    if Assigned(AAttr) then
+      Result := ReadFormatList(TPressItems(AAttr))
+    else
+      Result := ''
   else
-    Result :=
-     AAttr.Owner.InternalReadMethod(AAttr, Token, ReadParams(Reader, 0));  // friend class
+    if Assigned(AAttr) then
+      Result :=
+       AAttr.Owner.InternalReadMethod(AAttr, Token, ReadParams(Reader, 0))  // friend class
+    else
+      Result := varEmpty;
 end;
 
 function TPressSubjectExpressionItem.ReadObject(Reader: TPressExpressionReader;
@@ -3497,6 +3596,25 @@ begin
     Result := ReadItem(Reader, TPressItem(VAttr))
   else
     Result := ReadItems(Reader, TPressItems(VAttr));
+end;
+
+function TPressSubjectExpressionItem.ReadObjectMetadata(
+  Reader: TPressExpressionReader; AMetadata: TPressObjectMetadata): Variant;
+var
+  VAttr: TPressAttributeMetadata;
+  VAttrClass: TPressAttributeClass;
+begin
+  VAttr := AMetadata.AttributeMetadatas.MetadataByName(Reader.ReadIdentifier);
+  VAttrClass := VAttr.AttributeClass;
+  if Assigned(VAttrClass) then
+    if VAttrClass.InheritsFrom(TPressValue) then
+      Result := ReadValueMetadata(Reader, VAttr)
+    else if VAttrClass.InheritsFrom(TPressItem) then
+      Result := ReadItemMetadata(Reader, VAttr)
+    else
+      Result := ReadItemsMetadata(Reader, VAttr)
+  else
+    Result := varEmpty;
 end;
 
 function TPressSubjectExpressionItem.ReadParams(Reader: TPressExpressionReader;
@@ -3537,6 +3655,19 @@ begin
     Result := ReadMethod(Reader, AValue);
   end else
     Result := AValue.AsVariant;
+end;
+
+function TPressSubjectExpressionItem.ReadValueMetadata(
+  Reader: TPressExpressionReader; AAttr: TPressAttributeMetadata): Variant;
+begin
+  if Reader.ReadNextToken = SPressAttributeSeparator then
+  begin
+    Reader.ReadToken;
+    Result := ReadMethod(Reader, nil, AAttr);
+  end else if Assigned(AAttr.AttributeClass) then
+    Result := AAttr.AttributeClass.EmptyValue
+  else
+    Result := varEmpty;
 end;
 
 { TPressQuery }
@@ -4370,6 +4501,11 @@ end;
 function TPressAttribute.CreateMemento: TPressAttributeMemento;
 begin
   Result := InternalCreateMemento;
+end;
+
+class function TPressAttribute.EmptyValue: Variant;
+begin
+  Result := varEmpty;
 end;
 
 function TPressAttribute.FindUnchangedMemento: TPressAttributeMemento;

@@ -1,6 +1,6 @@
 (*
   PressObjects, Attribute Classes
-  Copyright (C) 2006-2007 Laserpress Ltda.
+  Copyright (C) 2006-2008 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -156,6 +156,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    class function EmptyValue: Variant; override;
     property OldValue: string read GetOldValue;
     property PubValue: string read GetPubValue write SetPubValue;
     property Value: string read GetValue write SetValue;
@@ -205,6 +206,7 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Decrement(AValue: Integer = 1); virtual;
+    class function EmptyValue: Variant; override;
     procedure Increment(AValue: Integer = 1); virtual;
     property Diff: Integer read FDiff;
     property OldValue: Integer read GetOldValue;
@@ -239,6 +241,7 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Decrement(AValue: Double = 1); virtual;
+    class function EmptyValue: Variant; override;
     procedure Increment(AValue: Double = 1); virtual;
     property Diff: Double read FDiff;
     property OldValue: Double read GetOldValue;
@@ -276,6 +279,7 @@ type
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
     procedure Decrement(AValue: Currency = 1); virtual;
+    class function EmptyValue: Variant; override;
     procedure Increment(AValue: Currency = 1); virtual;
     property Diff: Currency read FDiff;
     property OldValue: Currency read GetOldValue;
@@ -315,6 +319,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    class function EmptyValue: Variant; override;
     function SameValue(AValue: Integer): Boolean;
     property OldValue: Integer read GetOldValue;
     property PubValue: Integer read GetPubValue write SetPubValue;
@@ -349,6 +354,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    class function EmptyValue: Variant; override;
     property OldValue: Boolean read GetOldValue;
     property PubValue: Boolean read GetPubValue write SetPubValue;
     property Value: Boolean read GetValue write SetValue;
@@ -383,6 +389,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    class function EmptyValue: Variant; override;
     property OldValue: TDate read GetOldValue;
     property PubValue: TDate read GetPubValue write SetPubValue;
     property Value: TDate read GetValue write SetValue;
@@ -417,6 +424,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    class function EmptyValue: Variant; override;
     property OldValue: TTime read GetOldValue;
     property PubValue: TTime read GetPubValue write SetPubValue;
     property Value: TTime read GetValue write SetValue;
@@ -451,6 +459,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    class function EmptyValue: Variant; override;
     property OldValue: TDateTime read GetOldValue;
     property PubValue: TDateTime read GetPubValue write SetPubValue;
     property Value: TDateTime read GetValue write SetValue;
@@ -487,6 +496,7 @@ type
     procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
+    class function EmptyValue: Variant; override;
     property OldValue: Variant read GetOldValue;
     property PubValue: Variant read GetPubValue write SetPubValue;
     property Value: Variant read GetValue write SetValue;
@@ -514,6 +524,7 @@ type
   public
     procedure Assign(Source: TPersistent); override;
     procedure ClearBuffer;
+    class function EmptyValue: Variant; override;
     procedure LoadFromStream(AStream: TStream);
     procedure SaveToStream(AStream: TStream);
     function WriteBuffer(const ABuffer; ACount: Integer): Boolean;
@@ -1076,6 +1087,11 @@ begin
   Result := 'String';
 end;
 
+class function TPressString.EmptyValue: Variant;
+begin
+  Result := '';
+end;
+
 function TPressString.GetAsBoolean: Boolean;
 var
   VValue: string;
@@ -1360,6 +1376,11 @@ begin
   Increment(-AValue);
 end;
 
+class function TPressInteger.EmptyValue: Variant;
+begin
+  Result := 0;
+end;
+
 function TPressInteger.GetAsFloat: Double;
 begin
   Result := PubValue;
@@ -1522,6 +1543,11 @@ begin
   Increment(-AValue);
 end;
 
+class function TPressFloat.EmptyValue: Variant;
+begin
+  Result := 0.0;
+end;
+
 function TPressFloat.GetAsFloat: Double;
 begin
   Result := PubValue;
@@ -1682,6 +1708,11 @@ end;
 procedure TPressCurrency.Decrement(AValue: Currency);
 begin
   Increment(-AValue);
+end;
+
+class function TPressCurrency.EmptyValue: Variant;
+begin
+  Result := 0.0;
 end;
 
 function TPressCurrency.GetAsCurrency: Currency;
@@ -1859,6 +1890,11 @@ end;
 class function TPressEnum.AttributeName: string;
 begin
   Result := 'Enum';
+end;
+
+class function TPressEnum.EmptyValue: Variant;
+begin
+  Result := 0;
 end;
 
 function TPressEnum.GetAsBoolean: Boolean;
@@ -2053,6 +2089,11 @@ begin
   Result := 'Boolean';
 end;
 
+class function TPressBoolean.EmptyValue: Variant;
+begin
+  Result := False;
+end;
+
 function TPressBoolean.GetAsBoolean: Boolean;
 begin
   Result := PubValue;
@@ -2220,6 +2261,11 @@ end;
 class function TPressDate.AttributeName: string;
 begin
   Result := 'Date';
+end;
+
+class function TPressDate.EmptyValue: Variant;
+begin
+  Result := 0;
 end;
 
 function TPressDate.GetAsDate: TDate;
@@ -2405,6 +2451,11 @@ begin
   Result := 'Time';
 end;
 
+class function TPressTime.EmptyValue: Variant;
+begin
+  Result := 0;
+end;
+
 function TPressTime.GetAsDate: TDate;
 begin
   Result := 0;
@@ -2575,6 +2626,11 @@ end;
 class function TPressDateTime.AttributeName: string;
 begin
   Result := 'DateTime';
+end;
+
+class function TPressDateTime.EmptyValue: Variant;
+begin
+  Result := 0;
 end;
 
 function TPressDateTime.GetAsDate: TDate;
@@ -2759,6 +2815,11 @@ end;
 class function TPressVariant.AttributeName: string;
 begin
   Result := 'Variant';
+end;
+
+class function TPressVariant.EmptyValue: Variant;
+begin
+  Result := varEmpty;
 end;
 
 function TPressVariant.GetAsBoolean: Boolean;
@@ -2985,6 +3046,11 @@ begin
     FStream.Clear;
     ValueUnassigned;
   end;
+end;
+
+class function TPressBlob.EmptyValue: Variant;
+begin
+  Result := '';
 end;
 
 procedure TPressBlob.Finit;
