@@ -106,8 +106,6 @@ type
     procedure UpdateCommandMenu;
   protected
     procedure AfterInitInteractors; virtual;
-    function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; virtual;
-    function BindPresenter(APresenterClass: TPressMVPFormPresenterClass; const AComponentName: ShortString): TPressMVPCommand; virtual;
     procedure InitPresenter; virtual;
     function InternalCreateCommandMenu: TPressMVPCommandMenu; virtual;
     property CommandMenu: TPressMVPCommandMenu read FCommandMenu write SetCommandMenu;
@@ -116,6 +114,8 @@ type
     constructor Create(AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; AView: TPressMVPView); virtual;
     destructor Destroy; override;
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; virtual; abstract;
+    function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; virtual;
+    function BindPresenter(APresenterClass: TPressMVPFormPresenterClass; const AComponentName: ShortString): TPressMVPCommand; virtual;
     { TODO : Remove this factory method }
     class function CreateFromControllers(AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
     class procedure RegisterPresenter;
@@ -230,8 +230,6 @@ type
     function GetView: TPressMVPFormView;
   protected
     function AttributeByName(const AAttributeName: ShortString): TPressAttribute;
-    function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; override;
-    function BindPresenter(APresenterClass: TPressMVPFormPresenterClass; const AComponentName: ShortString): TPressMVPCommand; override;
     function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; AViewClass: TPressMVPViewClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
     procedure InitPresenter; override;
     function InternalCreateSubModel(ASubject: TPressSubject): TPressMVPModel; virtual;
@@ -244,6 +242,8 @@ type
   public
     destructor Destroy; override;
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
+    function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; override;
+    function BindPresenter(APresenterClass: TPressMVPFormPresenterClass; const AComponentName: ShortString): TPressMVPCommand; override;
     function CreatePresenterIterator: TPressMVPPresenterIterator;
     procedure Refresh;
     class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil; AViewClass: TPressMVPCustomFormViewClass = nil);
