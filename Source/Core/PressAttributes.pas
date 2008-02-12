@@ -551,6 +551,7 @@ type
   TPressItem = class(TPressStructure)
   private
     FProxy: TPressProxy;
+    function GetOldValue: TPressObject;
     function GetProxy: TPressProxy;
     function GetPubValue: TPressObject;
     function GetValue: TPressObject;
@@ -577,6 +578,7 @@ type
     procedure AssignReference(const AClassName, AId: string);
     function SameReference(AObject: TPressObject): Boolean; overload;
     function SameReference(const ARefClass, ARefID: string): Boolean; overload;
+    property OldValue: TPressObject read GetOldValue;
     property Proxy: TPressProxy read GetProxy;
     property PubValue: TPressObject read GetPubValue write SetPubValue;
     property Value: TPressObject read GetValue write SetValue;
@@ -3299,6 +3301,17 @@ end;
 function TPressItem.GetIsEmpty: Boolean;
 begin
   Result := not Assigned(FProxy) or FProxy.IsEmpty; 
+end;
+
+function TPressItem.GetOldValue: TPressObject;
+var
+  VMemento: TPressItemMemento;
+begin
+  VMemento := inherited FindUnchangedMemento as TPressItemMemento;
+  if Assigned(VMemento) and Assigned(VMemento.FProxyClone) then  // friend class
+    Result := VMemento.FProxyClone.Instance  // friend class
+  else
+    Result := Value;
 end;
 
 function TPressItem.GetProxy: TPressProxy;
