@@ -338,6 +338,7 @@ type
   TPressMVPObjectItem = class(TObject)
   private
     FAttributes: TPressAttributeList;
+    FBuildingList: Boolean;
     FItemNumber: Integer;
     FNotifier: TPressNotifier;
     FOwner: TPressMVPObjectList;
@@ -1351,7 +1352,8 @@ function TPressMVPObjectItem.GetAttributes: TPressAttributeList;
           if Assigned(TPressItem(Result).Value) then
           begin
             Notifier.AddNotificationItem(
-             TPressItem(Result), [TPressReferenceChangedEvent]);
+             TPressItem(Result), [
+             TPressReferenceChangedEvent, TPressAttributeChangedEvent]);
             Result := FindPathAttribute(TPressItem(Result).Value,
              Copy(APath, VPos + 1, Length(APath) - VPos));
           end else
@@ -1373,19 +1375,24 @@ function TPressMVPObjectItem.GetAttributes: TPressAttributeList;
     VSubject: TPressItems;
     I: Integer;
   begin
-    VColumnData := FOwner.ColumnData;
-    for I := 0 to Pred(VColumnData.ColumnCount) do
-    begin
-      VAttribute := FindAttribute(VColumnData[I].AttributeName);
-      FAttributes.Add(VAttribute);
-      if Assigned(VAttribute) then
-        VAttribute.AddRef;
-    end;
-    if FOwner.Model.HasSubject then
-    begin
-      VSubject := FOwner.Model.Subject;
-      if VSubject is TPressReferences then
-        Notifier.AddNotificationItem(VSubject, [TPressReferenceChangedEvent]);
+    FBuildingList := True;
+    try
+      VColumnData := FOwner.ColumnData;
+      for I := 0 to Pred(VColumnData.ColumnCount) do
+      begin
+        VAttribute := FindAttribute(VColumnData[I].AttributeName);
+        FAttributes.Add(VAttribute);
+        if Assigned(VAttribute) then
+          VAttribute.AddRef;
+      end;
+      if FOwner.Model.HasSubject then
+      begin
+        VSubject := FOwner.Model.Subject;
+        if VSubject is TPressReferences then
+          Notifier.AddNotificationItem(VSubject, [TPressReferenceChangedEvent]);
+      end;
+    finally
+      FBuildingList := False;
     end;
   end;
 
@@ -1427,6 +1434,8 @@ end;
 
 procedure TPressMVPObjectItem.Notify(AEvent: TPressEvent);
 begin
+  if FBuildingList then
+    Exit;
   ClearAttributes;
   FOwner.Model.Changed(ctSubject);
 end;
