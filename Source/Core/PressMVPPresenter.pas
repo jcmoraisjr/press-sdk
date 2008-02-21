@@ -236,7 +236,7 @@ type
     function InternalCreateSubPresenter(AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter; virtual;
     function InternalCreateSubView(AControl: TControl): TPressMVPView; virtual;
     class function InternalModelClass: TPressMVPObjectModelClass; virtual;
-    class function InternalViewClass: TPressMVPCustomFormViewClass; virtual;
+    class function InternalViewClass: TPressMVPFormViewClass; virtual;
     procedure Running; virtual;
     property SubPresenters: TPressMVPPresenterList read GetSubPresenters;
   public
@@ -246,8 +246,8 @@ type
     function BindPresenter(APresenterClass: TPressMVPFormPresenterClass; const AComponentName: ShortString): TPressMVPCommand; override;
     function CreatePresenterIterator: TPressMVPPresenterIterator;
     procedure Refresh;
-    class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil; AViewClass: TPressMVPCustomFormViewClass = nil);
-    class procedure RegisterFormPresenter(AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil; AViewClass: TPressMVPCustomFormViewClass = nil);
+    class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil; AViewClass: TPressMVPFormViewClass = nil);
+    class procedure RegisterFormPresenter(AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil; AViewClass: TPressMVPFormViewClass = nil);
     class procedure RegisterLCLForm(AFormClass: TFormClass);
     class procedure RegisterVCLForm(AFormClass: TFormClass);
     class function Run(AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
@@ -945,7 +945,7 @@ begin
   Result := nil;
 end;
 
-class function TPressMVPFormPresenter.InternalViewClass: TPressMVPCustomFormViewClass;
+class function TPressMVPFormPresenter.InternalViewClass: TPressMVPFormViewClass;
 begin
   Result := nil;
 end;
@@ -968,7 +968,7 @@ class procedure TPressMVPFormPresenter.RegisterBO(
   AObjectClass: TPressObjectClass;
   AFormPresenterTypes: TPressMVPFormPresenterTypes;
   AModelClass: TPressMVPObjectModelClass;
-  AViewClass: TPressMVPCustomFormViewClass);
+  AViewClass: TPressMVPFormViewClass);
 begin
   PressDefaultMVPFactory.RegisterBO(Self, AObjectClass, AFormPresenterTypes,
    AModelClass, AViewClass);
@@ -978,7 +978,7 @@ class procedure TPressMVPFormPresenter.RegisterFormPresenter(
   AObjectClass: TPressObjectClass; AFormClass: TFormClass;
   AFormPresenterTypes: TPressMVPFormPresenterTypes;
   AModelClass: TPressMVPObjectModelClass;
-  AViewClass: TPressMVPCustomFormViewClass);
+  AViewClass: TPressMVPFormViewClass);
 begin
   PressDefaultMVPFactory.RegisterForm(Self, AObjectClass, AFormClass,
    AFormPresenterTypes, AModelClass, AViewClass);
@@ -1008,8 +1008,8 @@ var
   VModelClass: TPressMVPObjectModelClass;
   VModel: TPressMVPObjectModel;
   VParentModel: TPressMVPObjectModel;
-  VViewClass: TPressMVPCustomFormViewClass;
-  VView: TPressMVPCustomFormView;
+  VViewClass: TPressMVPFormViewClass;
+  VView: TPressMVPFormView;
   VFormClass: TFormClass;
   VObjectClass: TPressObjectClass;
   VIndex: Integer;
@@ -1061,7 +1061,7 @@ begin
     VView := VViewClass.Create(VFormClass.Create(nil), True)
   else
     VView := TPressMVPView.CreateFromControl(
-     VFormClass.Create(nil), True) as TPressMVPCustomFormView;
+     VFormClass.Create(nil), True) as TPressMVPFormView;
 
   Result := Create(AParent, VModel, VView);
   Result.FAutoDestroy := AAutoDestroy;
@@ -1132,8 +1132,8 @@ constructor TPressMVPMainFormPresenter.Create;
 var
   VModelClass: TPressMVPObjectModelClass;
   VModel: TPressMVPObjectModel;
-  VViewClass: TPressMVPCustomFormViewClass;
-  VView: TPressMVPCustomFormView;
+  VViewClass: TPressMVPFormViewClass;
+  VView: TPressMVPFormView;
   VSubject: TPressObject;
   VIndex: Integer;
   VRegForms: TPressMVPRegisteredFormList;
@@ -1170,7 +1170,7 @@ begin
     VView := VViewClass.Create(Application.MainForm)
   else
     VView :=
-     TPressMVPView.CreateFromControl(Application.MainForm) as TPressMVPCustomFormView;
+     TPressMVPView.CreateFromControl(Application.MainForm) as TPressMVPFormView;
 
   inherited Create(nil, VModel, VView);
   FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);

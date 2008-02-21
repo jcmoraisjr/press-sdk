@@ -552,13 +552,13 @@ type
     property Control: TImage read GetControl;
   end;
 
-  TPressMVPCustomFormViewClass = class of TPressMVPCustomFormView;
-
   TPressMVPCustomFormView = class(TPressMVPView)
   public
     function ComponentByName(const AComponentName: ShortString): TComponent;
     function ControlByName(const AControlName: ShortString): TControl;
   end;
+
+  TPressMVPFormViewClass = class of TPressMVPFormView;
 
   TPressMVPFormView = class(TPressMVPCustomFormView)
   private

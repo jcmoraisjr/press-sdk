@@ -38,7 +38,7 @@ type
     FModelClass: TPressMVPObjectModelClass;
     FObjectClass: TPressObjectClass;
     FPresenterClass: TPressMVPFormPresenterClass;
-    FViewClass: TPressMVPCustomFormViewClass;
+    FViewClass: TPressMVPFormViewClass;
   public
     constructor Create(APresenterClass: TPressMVPFormPresenterClass);
     property FormClass: TFormClass read FFormClass;
@@ -46,7 +46,7 @@ type
     property ModelClass: TPressMVPObjectModelClass read FModelClass;
     property ObjectClass: TPressObjectClass read FObjectClass;
     property PresenterClass: TPressMVPFormPresenterClass read FPresenterClass;
-    property ViewClass: TPressMVPCustomFormViewClass read FViewClass;
+    property ViewClass: TPressMVPFormViewClass read FViewClass;
   end;
 
   TPressMVPRegisteredFormIterator = class;
@@ -97,9 +97,9 @@ type
     function MVPModelFactory(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
     function MVPPresenterFactory(AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
     function MVPViewFactory(AControl: TControl; AOwnsControl: Boolean = False): TPressMVPView;
-    procedure RegisterBO(APresenterClass: TPressMVPFormPresenterClass; AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes; AModelClass: TPressMVPObjectModelClass; AViewClass: TPressMVPCustomFormViewClass);
+    procedure RegisterBO(APresenterClass: TPressMVPFormPresenterClass; AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes; AModelClass: TPressMVPObjectModelClass; AViewClass: TPressMVPFormViewClass);
     procedure RegisterInteractor(AInteractorClass: TPressMVPInteractorClass);
-    procedure RegisterForm(APresenterClass: TPressMVPFormPresenterClass; AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes; AModelClass: TPressMVPObjectModelClass; AViewClass: TPressMVPCustomFormViewClass);
+    procedure RegisterForm(APresenterClass: TPressMVPFormPresenterClass; AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes; AModelClass: TPressMVPObjectModelClass; AViewClass: TPressMVPFormViewClass);
     procedure RegisterXCLForm(APresenterClass: TPressMVPFormPresenterClass; AFormClass: TFormClass);
     procedure RegisterModel(AModelClass: TPressMVPModelClass);
     procedure RegisterPresenter(APresenterClass: TPressMVPPresenterClass);
@@ -423,7 +423,7 @@ procedure TPressMVPFactory.RegisterBO(
   AObjectClass: TPressObjectClass;
   AFormPresenterTypes: TPressMVPFormPresenterTypes;
   AModelClass: TPressMVPObjectModelClass;
-  AViewClass: TPressMVPCustomFormViewClass);
+  AViewClass: TPressMVPFormViewClass);
 var
   VForm: TPressMVPRegisteredForm;
 begin
@@ -439,7 +439,7 @@ procedure TPressMVPFactory.RegisterForm(
   AObjectClass: TPressObjectClass; AFormClass: TFormClass;
   AFormPresenterTypes: TPressMVPFormPresenterTypes;
   AModelClass: TPressMVPObjectModelClass;
-  AViewClass: TPressMVPCustomFormViewClass);
+  AViewClass: TPressMVPFormViewClass);
 var
   VForm: TPressMVPRegisteredForm;
 begin
