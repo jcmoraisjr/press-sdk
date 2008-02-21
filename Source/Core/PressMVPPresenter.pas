@@ -229,7 +229,9 @@ type
     function GetSubPresenters: TPressMVPPresenterList;
     function GetView: TPressMVPFormView;
   protected
+    class procedure AssignAccessor(AForm: TCustomForm; const AAccessorName: ShortString; AInstance: Pointer);
     function AttributeByName(const AAttributeName: ShortString): TPressAttribute;
+    class function CreateForm(AFormClass: TFormClass; AModel: TPressMVPObjectModel): TForm;
     function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; AViewClass: TPressMVPViewClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
     procedure InitPresenter; override;
     function InternalCreateSubModel(ASubject: TPressSubject): TPressMVPModel; virtual;
@@ -807,6 +809,16 @@ begin
    not (AModel is TPressMVPQueryModel) and (AView is TPressMVPFormView);
 end;
 
+class procedure TPressMVPFormPresenter.AssignAccessor(
+  AForm: TCustomForm; const AAccessorName: ShortString; AInstance: Pointer);
+var
+  VAccessor: Pointer;
+begin
+  VAccessor := AForm.FieldAddress(AAccessorName);
+  if Assigned(VAccessor) then
+    Pointer(VAccessor^) := AInstance;
+end;
+
 function TPressMVPFormPresenter.AttributeByName(
   const AAttributeName: ShortString): TPressAttribute;
 begin
@@ -843,6 +855,16 @@ begin
   Model.AddCommandInstance(Result);
   Result.AddComponent(VComponent);
   Result.EnabledIfNoUser := True;
+end;
+
+class function TPressMVPFormPresenter.CreateForm(
+  AFormClass: TFormClass; AModel: TPressMVPObjectModel): TForm;
+begin
+  Result := TForm(AFormClass.NewInstance);
+  AssignAccessor(Result, SPressSubjectAccessorName, AModel);
+  if AModel.HasSubject then
+    AssignAccessor(Result, SPressSubjectAccessorName, AModel.Subject);
+  Result.Create(nil);
 end;
 
 function TPressMVPFormPresenter.CreatePresenterIterator: TPressMVPPresenterIterator;
@@ -1061,9 +1083,11 @@ begin
     VView := VViewClass.Create(VFormClass.Create(nil), True)
   else
     VView := TPressMVPView.CreateFromControl(
-     VFormClass.Create(nil), True) as TPressMVPFormView;
+     CreateForm(VFormClass, VModel), True) as TPressMVPFormView;
+  AssignAccessor(VView.Control, SPressViewAccessorName, VView);
 
   Result := Create(AParent, VModel, VView);
+  AssignAccessor(VView.Control, SPressPresenterAccessorName, Result);
   Result.FAutoDestroy := AAutoDestroy;
   Result.Refresh;
   Result.View.Control.Show;
@@ -1173,6 +1197,10 @@ begin
      TPressMVPView.CreateFromControl(Application.MainForm) as TPressMVPFormView;
 
   inherited Create(nil, VModel, VView);
+  AssignAccessor(Application.MainForm, SPressPresenterAccessorName, Self);
+  AssignAccessor(Application.MainForm, SPressModelAccessorName, VModel);
+  AssignAccessor(Application.MainForm, SPressViewAccessorName, VView);
+  AssignAccessor(Application.MainForm, SPressSubjectAccessorName, VSubject);
   FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   FNotifier.AddNotificationItem(PressApp, [TPressApplicationEvent]);
 end;

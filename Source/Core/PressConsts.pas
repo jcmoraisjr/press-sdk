@@ -50,6 +50,10 @@ const
   SPressPersistentIdParamString = 'PressPersistId';
   SPressCalcString = 'Calc';
   SPressQueryItemsString = 'QueryItems';
+  SPressPresenterAccessorName = '_Presenter';
+  SPressModelAccessorName = '_Model';
+  SPressViewAccessorName = '_View';
+  SPressSubjectAccessorName = '_Subject';
   SPressUserAdminId = 'admin';
   SPressDAOServiceName = 'DAO';
   SPressOIDGeneratorServiceName = 'OIDGen';
