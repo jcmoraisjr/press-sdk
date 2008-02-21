@@ -3284,6 +3284,8 @@ end;
 
 procedure TPressObject.NotifyMemento(AAttribute: TPressAttribute);
 begin
+  if Assigned(FOwnerAttribute) and Assigned(FOwnerAttribute.Owner) then
+    FOwnerAttribute.Owner.NotifyMemento(FOwnerAttribute);  // friend class
   if Assigned(FMemento) then
     FMemento.Notify(AAttribute);  // friend class
 end;
