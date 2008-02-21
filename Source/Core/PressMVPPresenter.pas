@@ -280,6 +280,7 @@ type
   public
     constructor Create; reintroduce; virtual;
     destructor Destroy; override;
+    class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
     class procedure Initialize;
     class procedure Run;
   end;
@@ -1152,6 +1153,12 @@ end;
 
 { TPressMVPMainFormPresenter }
 
+class function TPressMVPMainFormPresenter.Apply(AModel: TPressMVPModel;
+  AView: TPressMVPView): Boolean;
+begin
+  Result := True;
+end;
+
 constructor TPressMVPMainFormPresenter.Create;
 var
   VModelClass: TPressMVPObjectModelClass;
@@ -1183,7 +1190,10 @@ begin
   if not Assigned(VModelClass) then
     VModelClass := InternalModelClass;
   if not Assigned(VModelClass) then
-    VModelClass := TPressMVPQueryModel;
+    if VSubject is TPressQuery then
+      VModelClass := TPressMVPQueryModel
+    else
+      VModelClass := TPressMVPObjectModel;
   VModel := VModelClass.Create(nil, VSubject);
   if Assigned(VSubject) then
     VSubject.Release;
