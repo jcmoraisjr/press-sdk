@@ -20,7 +20,7 @@ interface
 
 uses
 {$ifndef d5down}
-  Variant,
+  Variants,
 {$endif}
   Contnrs,
   PressClasses,
