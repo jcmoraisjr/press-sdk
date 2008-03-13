@@ -2429,7 +2429,7 @@ begin
       Exit;
   end;
   Result := nil;
-  if FCreatingMetadatas then
+  if FCreatingMetadatas or (Metadatas.Count = 0) then
   begin
     VClass := FindClass(AClassName);
     if Assigned(VClass) then
