@@ -594,7 +594,7 @@ var
 begin
   if not AObject.IsPersistent then
     AddClassIdParam(ADataset, AObject);
-  VPartsAttribute := AObject.Metadata.OwnerPartsMetadata;
+  VPartsAttribute := Map.Metadata.OwnerPartsMetadata;
   if Assigned(VPartsAttribute) then
     if Assigned(AObject.Owner) and (AObject.Owner.Id <> '') then
     begin
