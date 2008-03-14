@@ -31,6 +31,7 @@
   SInstanceAlreadyOwned_rst = 'The instance %s(''%s'') already has an owner';
   SInstanceNotFound_rst = 'Instance not found: %s(''%s'')';
   SInvalidAttributeClass_rst = 'Attribute %s(''%s'') requires objects of class ''%s''';
+  SInvalidAttributeName_rst = 'Invalid attribute name (''%s'')';
   SInvalidAttributeValue_rst = 'Value ''%s'' is invalid for %s(''%s'')';
   SInvalidClassInheritance_rst = 'Class ''%s'' is not a descendant of ''%s''';
   SMetadataNotFound_rst = 'Metadata ''%s'' not found';

@@ -31,6 +31,7 @@
   SInstanceAlreadyOwned := SInstanceAlreadyOwned_rst;
   SInstanceNotFound := SInstanceNotFound_rst;
   SInvalidAttributeClass := SInvalidAttributeClass_rst;
+  SInvalidAttributeName := SInvalidAttributeName_rst;
   SInvalidAttributeValue := SInvalidAttributeValue_rst;
   SInvalidClassInheritance := SInvalidClassInheritance_rst;
   SMetadataNotFound := SMetadataNotFound_rst;

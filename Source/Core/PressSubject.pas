@@ -112,6 +112,7 @@ type
     FDefaultValue: string;
     FEditMask: string;
     FEnumMetadata: TPressEnumMetadata;
+    FInherited: TPressAttributeMetadata;
     FIsPersistent: Boolean;
     FModel: TPressModel;
     FName: string;
@@ -145,6 +146,7 @@ type
     function StorePersLinkParentName: Boolean;
     function StorePersLinkPosName: Boolean;
     function StoreShortName: Boolean;
+    procedure UpdateDefaultValues;
   protected
     procedure Finit; override;
     function GetAttributeName: string; virtual;
@@ -1389,7 +1391,9 @@ end;
 
 function TPressAttributeMetadata.BuildPersLinkChildName: string;
 begin
-  if Assigned(Owner) then
+  if Assigned(FInherited) then
+    Result := FInherited.PersLinkChildName
+  else if Assigned(Owner) then
     if IsEmbeddedLink then
       Result := ObjectClassMetadata.IdMetadata.PersistentName
     else
@@ -1400,7 +1404,9 @@ end;
 
 function TPressAttributeMetadata.BuildPersLinkName: string;
 begin
-  if Assigned(Owner) then
+  if Assigned(FInherited) then
+    Result := FInherited.PersLinkName
+  else if Assigned(Owner) then
     if IsEmbeddedLink then
       Result := ObjectClassMetadata.PersistentName
     else
@@ -1411,7 +1417,9 @@ end;
 
 function TPressAttributeMetadata.BuildPersLinkParentName: string;
 begin
-  if Assigned(Owner) then
+  if Assigned(FInherited) then
+    Result := FInherited.PersLinkParentName
+  else if Assigned(Owner) then
     Result := Owner.ShortName + SPressIdString
   else
     Result := SPressParentString + SPressIdString;
@@ -1428,9 +1436,7 @@ begin
     FModel := FOwner.Model;
   end else
     FModel := PressModel;
-  FIsPersistent := True;
-  FPersLinkIdName := SPressIdString;
-  FPersLinkPosName := SPressItemPosString;
+  UpdateDefaultValues;
 end;
 
 function TPressAttributeMetadata.CreateAttribute(
@@ -1497,8 +1503,9 @@ end;
 
 function TPressAttributeMetadata.IsEmbeddedLink: Boolean;
 begin
-  Result := Assigned(FOwner) and Assigned(FObjectClassMetadata) and
-   (FOwner = FObjectClassMetadata.OwnerMetadata);
+  Result := (Assigned(FInherited) and FInherited.IsEmbeddedLink) or
+   (Assigned(FOwner) and Assigned(FObjectClassMetadata) and
+   (FOwner = FObjectClassMetadata.OwnerMetadata));
 end;
 
 procedure TPressAttributeMetadata.SetAttributeClass(
@@ -1545,9 +1552,20 @@ end;
 
 procedure TPressAttributeMetadata.SetName(const Value: string);
 begin
-  FName := Value;
-  if FPersistentName = '' then
-    FPersistentName := FName;
+  if not IsValidIdent(Value) then
+    raise EPressError.CreateFmt(SInvalidAttributeName, [Value]);
+  if FName <> Value then
+  begin
+    FName := Value;
+    if FPersistentName = '' then
+      FPersistentName := FName;
+    { TODO : Implement inherited check within Store<...> methods }
+    if Assigned(FOwner) and Assigned(FOwner.Parent) then
+      FInherited := FOwner.Parent.Map.FindMetadata(Value)
+    else
+      FInherited := nil;
+    UpdateDefaultValues;
+  end;
 end;
 
 procedure TPressAttributeMetadata.SetObjectClass(Value: TPressObjectClass);
@@ -1615,6 +1633,21 @@ end;
 function TPressAttributeMetadata.StoreShortName: Boolean;
 begin
   Result := (FShortName <> '') and not SameText(FShortName, FName);
+end;
+
+procedure TPressAttributeMetadata.UpdateDefaultValues;
+begin
+  if not Assigned(FInherited) then
+  begin
+    FIsPersistent := True;
+    FPersLinkIdName := SPressIdString;
+    FPersLinkPosName := SPressItemPosString;
+  end else
+  begin
+    FIsPersistent := FInherited.IsPersistent;
+    FPersLinkIdName := FInherited.PersLinkIdName;
+    FPersLinkPosName := FInherited.PersLinkPosName;
+  end;
 end;
 
 { TPressAttributeMetadataList }
@@ -1748,7 +1781,6 @@ begin
       if VIndex = -1 then
         Add(VCurrentMetadata)
       else
-        { TODO : Merge with the inherited metadata }
         Items[VIndex] := VCurrentMetadata;
     end;
   finally
