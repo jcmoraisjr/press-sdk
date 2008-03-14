@@ -96,6 +96,7 @@ var
   SInstanceAlreadyOwned,
   SInstanceNotFound,
   SInvalidAttributeClass,
+  SInvalidAttributeName,
   SInvalidAttributeValue,
   SInvalidClassInheritance,
   SMetadataNotFound,
