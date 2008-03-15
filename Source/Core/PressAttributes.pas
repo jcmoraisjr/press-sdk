@@ -3865,9 +3865,9 @@ end;
 
 procedure TPressItems.InternalChanged(AChangedWhenDisabled: Boolean);
 begin
-  inherited;
   if AChangedWhenDisabled then
     NotifyRebuild;
+  inherited;
 end;
 
 function TPressItems.InternalCreateIterator: TPressItemsIterator;
