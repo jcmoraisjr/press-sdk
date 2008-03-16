@@ -234,6 +234,30 @@ type
     procedure VarCalc; override;
   end;
 
+  TPressExpressionAndOperation = class(TPressExpressionOperation)
+  protected
+    class function InternalOperatorToken: string; override;
+  public
+    function Priority: Byte; override;
+    procedure VarCalc; override;
+  end;
+
+  TPressExpressionOrOperation = class(TPressExpressionOperation)
+  protected
+    class function InternalOperatorToken: string; override;
+  public
+    function Priority: Byte; override;
+    procedure VarCalc; override;
+  end;
+
+  TPressExpressionXorOperation = class(TPressExpressionOperation)
+  protected
+    class function InternalOperatorToken: string; override;
+  public
+    function Priority: Byte; override;
+    procedure VarCalc; override;
+  end;
+
 implementation
 
 uses
@@ -305,7 +329,9 @@ begin
    TPressExpressionIntDivOperation,
    TPressExpressionGreaterThanOperation, TPressExpressionGreaterThanOrEqualOperation,
    TPressExpressionLesserThanOperation, TPressExpressionLesserThanOrEqualOperation,
-   TPressExpressionEqualOperation, TPressExpressionDiffOperation]));
+   TPressExpressionEqualOperation, TPressExpressionDiffOperation,
+   TPressExpressionAndOperation, TPressExpressionOrOperation,
+   TPressExpressionXorOperation]));
 end;
 
 procedure TPressExpression.InternalRead(Reader: TPressParserReader);
@@ -727,6 +753,57 @@ end;
 procedure TPressExpressionDiffOperation.VarCalc;
 begin
   Res^ := Val1^ <> Val2^;
+end;
+
+{ TPressExpressionAndOperation }
+
+class function TPressExpressionAndOperation.InternalOperatorToken: string;
+begin
+  Result := 'and';
+end;
+
+function TPressExpressionAndOperation.Priority: Byte;
+begin
+  Result := 15;
+end;
+
+procedure TPressExpressionAndOperation.VarCalc;
+begin
+  Res^ := Val1^ and Val2^;
+end;
+
+{ TPressExpressionOrOperation }
+
+class function TPressExpressionOrOperation.InternalOperatorToken: string;
+begin
+  Result := 'or';
+end;
+
+function TPressExpressionOrOperation.Priority: Byte;
+begin
+  Result := 10;
+end;
+
+procedure TPressExpressionOrOperation.VarCalc;
+begin
+  Res^ := Val1^ or Val2^;
+end;
+
+{ TPressExpressionXorOperation }
+
+class function TPressExpressionXorOperation.InternalOperatorToken: string;
+begin
+  Result := 'xor';
+end;
+
+function TPressExpressionXorOperation.Priority: Byte;
+begin
+  Result := 10;
+end;
+
+procedure TPressExpressionXorOperation.VarCalc;
+begin
+  Res^ := Val1^ xor Val2^;
 end;
 
 end.
