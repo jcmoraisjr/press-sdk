@@ -3300,6 +3300,7 @@ end;
 
 function TPressItem.GetIsEmpty: Boolean;
 begin
+  VerifyCalcAttribute;
   Result := not Assigned(FProxy) or FProxy.IsEmpty; 
 end;
 
