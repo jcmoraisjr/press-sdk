@@ -559,13 +559,13 @@ end;
 class function TPressExpressionOperation.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := Reader.ReadToken = InternalOperatorToken;
+  Result := SameText(Reader.ReadToken, InternalOperatorToken);
 end;
 
 procedure TPressExpressionOperation.InternalRead(Reader: TPressParserReader);
 begin
   inherited;
-  Reader.ReadMatch(InternalOperatorToken);
+  Reader.ReadMatchText(InternalOperatorToken);
 end;
 
 { TPressExpressionAddOperation }
