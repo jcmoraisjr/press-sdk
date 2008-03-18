@@ -197,7 +197,7 @@ type
     function Add(AObject: TPressAttributeMetadata): Integer;
     function CreateIterator: TPressAttributeMetadataIterator;
     function IndexOf(AObject: TPressAttributeMetadata): Integer;
-    function IndexOfName(const AName: string): Integer;
+    function IndexOfName(const AName: string; ALastOccurrence: Boolean = False): Integer;
     procedure Insert(Index: Integer; AObject: TPressAttributeMetadata);
     function Remove(AObject: TPressAttributeMetadata): Integer;
     property Items[AIndex: Integer]: TPressAttributeMetadata read GetItems write SetItems; default;
@@ -1685,11 +1685,20 @@ begin
   Result := inherited IndexOf(AObject);
 end;
 
-function TPressAttributeMetadataList.IndexOfName(const AName: string): Integer;
+function TPressAttributeMetadataList.IndexOfName(
+  const AName: string; ALastOccurrence: Boolean): Integer;
 begin
-  for Result := 0 to Pred(Count) do
-    if SameText(Items[Result].Name, AName) then
-      Exit;
+  if not ALastOccurrence then
+  begin
+    for Result := 0 to Pred(Count) do
+      if SameText(Items[Result].Name, AName) then
+        Exit;
+  end else
+  begin
+    for Result := Pred(Count) downto 0 do
+      if SameText(Items[Result].Name, AName) then
+        Exit;
+  end;
   Result := -1;
 end;
 
@@ -1787,7 +1796,7 @@ begin
     while NextItem do
     begin
       VCurrentMetadata := CurrentItem;
-      VIndex := IndexOfName(VCurrentMetadata.Name);
+      VIndex := IndexOfName(VCurrentMetadata.Name, True);
       if VIndex = -1 then
         Add(VCurrentMetadata)
       else
