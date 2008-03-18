@@ -363,9 +363,9 @@ constructor TPressOQLTableReference.Create(
   const ATableAliasPrefix, AReferencedAlias: string; AId: Integer);
 begin
   inherited Create;
-  if AObjectMetadata = AAttributeMetadata.Owner then
+  if AObjectMetadata = AAttributeMetadata.BaseMetadata.Owner then
     FReferencedFieldName := AObjectMetadata.IdMetadata.PersistentName
-  else if AObjectMetadata.ObjectClass = AAttributeMetadata.ObjectClass then
+  else if AObjectMetadata.ObjectClass = AAttributeMetadata.BaseMetadata.ObjectClass then
   begin
     if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItems) then
       FReferencedFieldName := AAttributeMetadata.PersLinkChildName
@@ -482,7 +482,7 @@ begin
     raise EPressError.CreateFmt(SUnsupportedAttribute, [
      AAttributeMetadata.Owner.ObjectClassName, AAttributeMetadata.Name]);
   Result := NewAttribute(AReferencedAlias,
-   AAttributeMetadata.Owner, AAttributeMetadata);
+   AAttributeMetadata.BaseMetadata.Owner, AAttributeMetadata);
 end;
 
 { TPressOQLSelectStatement }
@@ -742,10 +742,10 @@ begin
     if VIndex = -1 then
       Reader.ErrorExpected(SPressAttributeNameMsg, Token);
     VAttribute := VMetadata.Map[VIndex];
-    if VAttribute.Owner <> VMetadata then
+    if VAttribute.BaseMetadata.Owner <> VMetadata then
     begin
       VTableAlias := VSelect.TableReferences.NewValue(VTableAlias, VAttribute);
-      VMetadata := VAttribute.Owner;
+      VMetadata := VAttribute.BaseMetadata.Owner;
     end;
     Token := Reader.ReadToken;
     if Token = '.' then
