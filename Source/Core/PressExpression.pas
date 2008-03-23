@@ -29,6 +29,7 @@ uses
 type
   TPressExpressionValue = Variant;
   PPressExpressionValue = ^TPressExpressionValue;
+  PPressExpressionValueArray = array of PPressExpressionValue;
 
   TPressExpressionReader = class(TPressParserReader)
   protected
@@ -46,12 +47,13 @@ type
 
   TPressExpression = class(TPressExpressionObject)
   private
-    FOperations: TObjectList;
+    FCalc: TObjectList;
     FRes: PPressExpressionValue;
     FVars: TPressExpressionVarList;
-    function GetOperations: TObjectList;
+    function GetCalc: TObjectList;
     function GetVars: TPressExpressionVarList;
     function GetVarValue: Variant;
+    function ParseFunction(Reader: TPressParserReader): TPressExpressionItem;
     function ParseItem(Reader: TPressParserReader): TPressExpressionItem;
     function ParseRightOperands(Reader: TPressParserReader; var ALeftItem: TPressExpressionItem; ADepth: Integer): PPressExpressionValue;
     function ParseVar(Reader: TPressParserReader): TPressExpressionItem;
@@ -62,7 +64,7 @@ type
   public
     destructor Destroy; override;
     function ParseExpression(Reader: TPressParserReader): PPressExpressionValue;
-    property Operations: TObjectList read GetOperations;
+    property Calc: TObjectList read GetCalc;
     property Res: PPressExpressionValue read FRes;
     property Vars: TPressExpressionVarList read GetVars;
     property VarValue: Variant read GetVarValue;
@@ -119,6 +121,17 @@ type
     procedure InternalRead(Reader: TPressParserReader); override;
   end;
 
+  TPressExpressionFunction = class;
+
+  TPressExpressionFunctionItem = class(TPressExpressionItem)
+  private
+    FFnc: TPressExpressionFunction;
+  protected
+    procedure InternalRead(Reader: TPressParserReader); override;
+  public
+    property Fnc: TPressExpressionFunction read FFnc write FFnc;
+  end;
+
   TPressExpressionVarItem = class(TPressExpressionItem)
   private
     FVariable: TPressExpressionVar;
@@ -128,9 +141,14 @@ type
     property Variable: TPressExpressionVar read FVariable write FVariable;
   end;
 
+  TPressExpressionCalc = class(TPressExpressionObject)
+  public
+    procedure VarCalc; virtual; abstract;
+  end;
+
   TPressExpressionOperationClass = class of TPressExpressionOperation;
 
-  TPressExpressionOperation = class(TPressExpressionObject)
+  TPressExpressionOperation = class(TPressExpressionCalc)
   private
     FRes: TPressExpressionValue;
     FVal1: PPressExpressionValue;
@@ -142,10 +160,26 @@ type
   public
     function Priority: Byte; virtual; abstract;
     class function Token: string;
-    procedure VarCalc; virtual; abstract;
     property Res: PPressExpressionValue read GetRes;
     property Val1: PPressExpressionValue read FVal1 write FVal1;
     property Val2: PPressExpressionValue read FVal2 write FVal2;
+  end;
+
+  TPressExpressionFunctionClass = class of TPressExpressionFunction;
+
+  TPressExpressionFunction = class(TPressExpressionCalc)
+  private
+    FParams: PPressExpressionValueArray;
+    FRes: TPressExpressionValue;
+    function GetRes: PPressExpressionValue;
+  protected
+    procedure InternalRead(Reader: TPressParserReader); override;
+  public
+    function MaxParams: Integer; virtual;
+    function MinParams: Integer; virtual; abstract;
+    class function Name: string; virtual; abstract;
+    property Params: PPressExpressionValueArray read FParams write FParams;
+    property Res: PPressExpressionValue read GetRes;
   end;
 
 implementation
@@ -170,15 +204,15 @@ end;
 destructor TPressExpression.Destroy;
 begin
   FVars.Free;
-  FOperations.Free;
+  FCalc.Free;
   inherited;
 end;
 
-function TPressExpression.GetOperations: TObjectList;
+function TPressExpression.GetCalc: TObjectList;
 begin
-  if not Assigned(FOperations) then
-    FOperations := TObjectList.Create(False);
-  Result := FOperations;
+  if not Assigned(FCalc) then
+    FCalc := TObjectList.Create(False);
+  Result := FCalc;
 end;
 
 function TPressExpression.GetVars: TPressExpressionVarList;
@@ -194,9 +228,9 @@ var
 begin
   if Assigned(FRes) then
   begin
-    if Assigned(FOperations) then
-      for I := 0 to Pred(FOperations.Count) do
-        TPressExpressionOperation(FOperations[I]).VarCalc;
+    if Assigned(FCalc) then
+      for I := 0 to Pred(FCalc.Count) do
+        TPressExpressionCalc(FCalc[I]).VarCalc;
     Result := FRes^;
   end else
     Result := varEmpty;
@@ -208,7 +242,11 @@ begin
   Result := TPressExpressionItem(Parse(Reader, [
    TPressExpressionBracketItem, TPressExpressionLiteralItem]));
   if not Assigned(Result) then
-    Result := ParseVar(Reader);
+  begin
+    Result := ParseFunction(Reader);
+    if not Assigned(Result) then
+      Result := ParseVar(Reader);
+  end;
 end;
 
 function TPressExpression.InternalParseOperation(
@@ -241,6 +279,36 @@ begin
   Result := FRes;
 end;
 
+function TPressExpression.ParseFunction(
+  Reader: TPressParserReader): TPressExpressionItem;
+var
+  VFunctionParser: TPressExpressionFunctionItem;
+  VFunctionClass: TPressExpressionFunctionClass;
+  VFunction: TPressExpressionFunction;
+  VPosition: TPressTextPos;
+  VIsFunction: Boolean;
+  Token: string;
+begin
+  Result := nil;
+  VPosition := Reader.Position;
+  Token := Reader.ReadToken;
+  VIsFunction :=
+   IsValidIdent(Token) and not Reader.Eof and (Reader.ReadChar = '(');
+  Reader.Position := VPosition;
+  if VIsFunction then
+  begin
+    VFunctionClass := PressExpressionLibrary.FindFunctionClass(Token);
+    if not Assigned(VFunctionClass) then
+      Exit;
+    VFunctionParser := TPressExpressionFunctionItem.Create(Self);
+    VFunction := VFunctionClass.Create(Self);
+    VFunctionParser.Fnc := VFunction;
+    VFunctionParser.Read(Reader);
+    Calc.Add(VFunction);
+    Result := VFunctionParser;
+  end;
+end;
+
 function TPressExpression.ParseItem(
   Reader: TPressParserReader): TPressExpressionItem;
 begin
@@ -269,7 +337,7 @@ begin
     else
       VCurrentOp.Val2 := VRightItem.Res;
     VLeftOperand := VCurrentOp.Res;
-    Operations.Add(VCurrentOp);
+    Calc.Add(VCurrentOp);
     ALeftItem := VRightItem;
     if (ADepth = 0) or (Assigned(ALeftItem.NextOperation) and
      (VCurrentOp.Priority = ALeftItem.NextOperation.Priority)) then
@@ -425,6 +493,38 @@ begin
   Res := @FLiteral;
 end;
 
+{ TPressExpressionFunctionItem }
+
+procedure TPressExpressionFunctionItem.InternalRead(
+  Reader: TPressParserReader);
+const
+  CDelta = 4;
+var
+  VParams: PPressExpressionValueArray;
+  VMin, VMax, I: Integer;
+begin
+  inherited;
+  Reader.ReadMatchText(Fnc.Name);
+  Reader.ReadMatch('(');
+  VMin := Fnc.MinParams;
+  VMax := Fnc.MaxParams;
+  I := 0;
+  SetLength(VParams, CDelta);
+  while (I <> VMax) and ((I < VMin) or (Reader.ReadNextToken <> ')')) do
+  begin
+    if I > 0 then
+      Reader.ReadMatch(',');
+    if Length(VParams) = I then
+      SetLength(VParams, I + CDelta);
+    VParams[I] := (Owner as TPressExpression).ParseExpression(Reader);
+    Inc(I);
+  end;
+  Reader.ReadMatch(')');
+  SetLength(VParams, I);
+  Fnc.Params := VParams;
+  Res := Fnc.Res;
+end;
+
 { TPressExpressionVarItem }
 
 procedure TPressExpressionVarItem.InternalRead(Reader: TPressParserReader);
@@ -450,6 +550,24 @@ end;
 class function TPressExpressionOperation.Token: string;
 begin
   Result := InternalOperatorToken;
+end;
+
+{ TPressExpressionFunction }
+
+function TPressExpressionFunction.GetRes: PPressExpressionValue;
+begin
+  Result := @FRes;
+end;
+
+procedure TPressExpressionFunction.InternalRead(
+  Reader: TPressParserReader);
+begin
+  inherited;
+end;
+
+function TPressExpressionFunction.MaxParams: Integer;
+begin
+  Result := -1;
 end;
 
 end.

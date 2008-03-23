@@ -25,10 +25,13 @@ uses
 type
   TPressExpressionLibrary = class(TObject)
   private
+    FFunctions: TStringList;
     FOperations: TStringList;
   public
     destructor Destroy; override;
+    function FindFunctionClass(const AFunctionToken: string): TPressExpressionFunctionClass;
     function FindOperationClass(const AOperationToken: string): TPressExpressionOperationClass;
+    procedure RegisterFunctions(AFunctions: array of TPressExpressionFunctionClass);
     procedure RegisterOperations(AOperations: array of TPressExpressionOperationClass);
   end;
 
@@ -152,6 +155,54 @@ type
     procedure VarCalc; override;
   end;
 
+  TPressExpressionMinFunction = class(TPressExpressionFunction)
+  public
+    function MaxParams: Integer; override;
+    function MinParams: Integer; override;
+    class function Name: string; override;
+    procedure VarCalc; override;
+  end;
+
+  TPressExpressionMaxFunction = class(TPressExpressionFunction)
+  public
+    function MaxParams: Integer; override;
+    function MinParams: Integer; override;
+    class function Name: string; override;
+    procedure VarCalc; override;
+  end;
+
+  TPressExpressionSqrtFunction = class(TPressExpressionFunction)
+  public
+    function MaxParams: Integer; override;
+    function MinParams: Integer; override;
+    class function Name: string; override;
+    procedure VarCalc; override;
+  end;
+
+  TPressExpressionPowerFunction = class(TPressExpressionFunction)
+  public
+    function MaxParams: Integer; override;
+    function MinParams: Integer; override;
+    class function Name: string; override;
+    procedure VarCalc; override;
+  end;
+
+  TPressExpressionIntPowerFunction = class(TPressExpressionFunction)
+  public
+    function MaxParams: Integer; override;
+    function MinParams: Integer; override;
+    class function Name: string; override;
+    procedure VarCalc; override;
+  end;
+
+  TPressExpressionIfFunction = class(TPressExpressionFunction)
+  public
+    function MaxParams: Integer; override;
+    function MinParams: Integer; override;
+    class function Name: string; override;
+    procedure VarCalc; override;
+  end;
+
 function PressExpressionLibrary: TPressExpressionLibrary;
 
 implementation
@@ -173,8 +224,20 @@ end;
 
 destructor TPressExpressionLibrary.Destroy;
 begin
+  FFunctions.Free;
   FOperations.Free;
   inherited;
+end;
+
+function TPressExpressionLibrary.FindFunctionClass(
+  const AFunctionToken: string): TPressExpressionFunctionClass;
+var
+  VIndex: Integer;
+begin
+  if Assigned(FFunctions) and FFunctions.Find(AFunctionToken, VIndex) then
+    Result := TPressExpressionFunctionClass(FFunctions.Objects[VIndex])
+  else
+    Result := nil;
 end;
 
 function TPressExpressionLibrary.FindOperationClass(
@@ -186,6 +249,20 @@ begin
     Result := TPressExpressionOperationClass(FOperations.Objects[VIndex])
   else
     Result := nil;
+end;
+
+procedure TPressExpressionLibrary.RegisterFunctions(
+  AFunctions: array of TPressExpressionFunctionClass);
+var
+  I: Integer;
+begin
+  if not Assigned(FFunctions) then
+  begin
+    FFunctions := TStringList.Create;
+    FFunctions.Sorted := True;
+  end;
+  for I := 0 to Pred(Length(AFunctions)) do
+    FFunctions.AddObject(AFunctions[I].Name, TObject(AFunctions[I]));
 end;
 
 procedure TPressExpressionLibrary.RegisterOperations(
@@ -457,6 +534,141 @@ begin
   Res^ := Val1^ xor Val2^;
 end;
 
+{ TPressExpressionMinFunction }
+
+function TPressExpressionMinFunction.MaxParams: Integer;
+begin
+  Result := 2;
+end;
+
+function TPressExpressionMinFunction.MinParams: Integer;
+begin
+  Result := 2;
+end;
+
+class function TPressExpressionMinFunction.Name: string;
+begin
+  Result := 'Min';
+end;
+
+procedure TPressExpressionMinFunction.VarCalc;
+begin
+  Res^ := Min(Params[0]^, Params[1]^);
+end;
+
+{ TPressExpressionMaxFunction }
+
+function TPressExpressionMaxFunction.MaxParams: Integer;
+begin
+  Result := 2;
+end;
+
+function TPressExpressionMaxFunction.MinParams: Integer;
+begin
+  Result := 2;
+end;
+
+class function TPressExpressionMaxFunction.Name: string;
+begin
+  Result := 'Max';
+end;
+
+procedure TPressExpressionMaxFunction.VarCalc;
+begin
+  Res^ := Max(Params[0]^, Params[1]^);
+end;
+
+{ TPressExpressionSqrtFunction }
+
+function TPressExpressionSqrtFunction.MaxParams: Integer;
+begin
+  Result := 1;
+end;
+
+function TPressExpressionSqrtFunction.MinParams: Integer;
+begin
+  Result := 1;
+end;
+
+class function TPressExpressionSqrtFunction.Name: string;
+begin
+  Result := 'Sqrt';
+end;
+
+procedure TPressExpressionSqrtFunction.VarCalc;
+begin
+  Res^ := Sqrt(Params[0]^);
+end;
+
+{ TPressExpressionPowerFunction }
+
+function TPressExpressionPowerFunction.MaxParams: Integer;
+begin
+  Result := 2;
+end;
+
+function TPressExpressionPowerFunction.MinParams: Integer;
+begin
+  Result := 2;
+end;
+
+class function TPressExpressionPowerFunction.Name: string;
+begin
+  Result := 'Power';
+end;
+
+procedure TPressExpressionPowerFunction.VarCalc;
+begin
+  Res^ := Power(Params[0]^, Params[1]^);
+end;
+
+{ TPressExpressionIntPowerFunction }
+
+function TPressExpressionIntPowerFunction.MaxParams: Integer;
+begin
+  Result := 2;
+end;
+
+function TPressExpressionIntPowerFunction.MinParams: Integer;
+begin
+  Result := 2;
+end;
+
+class function TPressExpressionIntPowerFunction.Name: string;
+begin
+  Result := 'IntPower';
+end;
+
+procedure TPressExpressionIntPowerFunction.VarCalc;
+begin
+  Res^ := IntPower(Params[0]^, Params[1]^);
+end;
+
+{ TPressExpressionIfFunction }
+
+function TPressExpressionIfFunction.MaxParams: Integer;
+begin
+  Result := 3;
+end;
+
+function TPressExpressionIfFunction.MinParams: Integer;
+begin
+  Result := 3;
+end;
+
+class function TPressExpressionIfFunction.Name: string;
+begin
+  Result := 'If';
+end;
+
+procedure TPressExpressionIfFunction.VarCalc;
+begin
+  if Params[0]^ then
+    Res^ := Params[1]^
+  else
+    Res^ := Params[2]^;
+end;
+
 initialization
   PressExpressionLibrary.RegisterOperations([
    TPressExpressionAddOperation,
@@ -474,6 +686,13 @@ initialization
    TPressExpressionAndOperation,
    TPressExpressionOrOperation,
    TPressExpressionXorOperation]);
+  PressExpressionLibrary.RegisterFunctions([
+   TPressExpressionMinFunction,
+   TPressExpressionMaxFunction,
+   TPressExpressionSqrtFunction,
+   TPressExpressionPowerFunction,
+   TPressExpressionIntPowerFunction,
+   TPressExpressionIfFunction]);
 
 finalization
   _ExpressionLibrary.Free;
