@@ -1157,17 +1157,16 @@ type
   TPressSubjectExpressionItem = class(TPressExpressionItem)
   private
     FValue: TPressExpressionValue;
-  private
-    function ReadItem(Reader: TPressExpressionReader; AItem: TPressItem): Variant;
-    function ReadItemMetadata(Reader: TPressExpressionReader; AAttr: TPressAttributeMetadata): Variant;
-    function ReadItems(Reader: TPressExpressionReader; AItems: TPressItems): Variant;
-    function ReadItemsMetadata(Reader: TPressExpressionReader; AAttr: TPressAttributeMetadata): Variant;
-    function ReadMethod(Reader: TPressExpressionReader; AAttr: TPressAttribute; AAttrMetadata: TPressAttributeMetadata = nil): Variant;
-    function ReadObject(Reader: TPressExpressionReader; AObject: TPressObject): Variant;
-    function ReadObjectMetadata(Reader: TPressExpressionReader; AMetadata: TPressObjectMetadata): Variant;
-    function ReadParams(Reader: TPressExpressionReader; AMin: Integer; AMax: Integer = -1): TPressStringArray;
-    function ReadValue(Reader: TPressExpressionReader; AValue: TPressValue): Variant;
-    function ReadValueMetadata(Reader: TPressExpressionReader; AAttr: TPressAttributeMetadata): Variant;
+    function ReadItem(Reader: TPressParserReader; AItem: TPressItem): Variant;
+    function ReadItemMetadata(Reader: TPressParserReader; AAttr: TPressAttributeMetadata): Variant;
+    function ReadItems(Reader: TPressParserReader; AItems: TPressItems): Variant;
+    function ReadItemsMetadata(Reader: TPressParserReader; AAttr: TPressAttributeMetadata): Variant;
+    function ReadMethod(Reader: TPressParserReader; AAttr: TPressAttribute; AAttrMetadata: TPressAttributeMetadata = nil): Variant;
+    function ReadObject(Reader: TPressParserReader; AObject: TPressObject): Variant;
+    function ReadObjectMetadata(Reader: TPressParserReader; AMetadata: TPressObjectMetadata): Variant;
+    function ReadParams(Reader: TPressParserReader; AMin: Integer; AMax: Integer = -1): TPressStringArray;
+    function ReadValue(Reader: TPressParserReader; AValue: TPressValue): Variant;
+    function ReadValueMetadata(Reader: TPressParserReader; AAttr: TPressAttributeMetadata): Variant;
   protected
     procedure InternalRead(Reader: TPressParserReader); override;
   end;
@@ -3492,13 +3491,12 @@ procedure TPressSubjectExpressionItem.InternalRead(
   Reader: TPressParserReader);
 begin
   inherited;
-  FValue := ReadObject(Reader as TPressExpressionReader,
-   (Owner as TPressSubjectExpression).Instance);
+  FValue := ReadObject(Reader, (Owner as TPressSubjectExpression).Instance);
   Res := @FValue;
 end;
 
 function TPressSubjectExpressionItem.ReadItem(
-  Reader: TPressExpressionReader; AItem: TPressItem): Variant;
+  Reader: TPressParserReader; AItem: TPressItem): Variant;
 var
   VObj: TPressObject;
 begin
@@ -3513,7 +3511,7 @@ begin
 end;
 
 function TPressSubjectExpressionItem.ReadItemMetadata(
-  Reader: TPressExpressionReader; AAttr: TPressAttributeMetadata): Variant;
+  Reader: TPressParserReader; AAttr: TPressAttributeMetadata): Variant;
 var
   VObj: TPressObjectMetadata;
 begin
@@ -3526,7 +3524,7 @@ begin
 end;
 
 function TPressSubjectExpressionItem.ReadItems(
-  Reader: TPressExpressionReader; AItems: TPressItems): Variant;
+  Reader: TPressParserReader; AItems: TPressItems): Variant;
 var
   VObj: TPressObject;
   VIndex: Integer;
@@ -3553,7 +3551,7 @@ begin
 end;
 
 function TPressSubjectExpressionItem.ReadItemsMetadata(
-  Reader: TPressExpressionReader; AAttr: TPressAttributeMetadata): Variant;
+  Reader: TPressParserReader; AAttr: TPressAttributeMetadata): Variant;
 begin
   if Reader.ReadNextToken = SPressSquareBrackets[1] then
   begin
@@ -3570,7 +3568,7 @@ begin
 end;
 
 function TPressSubjectExpressionItem.ReadMethod(
-  Reader: TPressExpressionReader; AAttr: TPressAttribute;
+  Reader: TPressParserReader; AAttr: TPressAttribute;
   AAttrMetadata: TPressAttributeMetadata): Variant;
 
   function ReadFormatList(AItems: TPressItems): Variant;
@@ -3636,8 +3634,8 @@ begin
       Result := varEmpty;
 end;
 
-function TPressSubjectExpressionItem.ReadObject(Reader: TPressExpressionReader;
-  AObject: TPressObject): Variant;
+function TPressSubjectExpressionItem.ReadObject(
+  Reader: TPressParserReader; AObject: TPressObject): Variant;
 var
   VAttr: TPressAttribute;
 begin
@@ -3651,7 +3649,7 @@ begin
 end;
 
 function TPressSubjectExpressionItem.ReadObjectMetadata(
-  Reader: TPressExpressionReader; AMetadata: TPressObjectMetadata): Variant;
+  Reader: TPressParserReader; AMetadata: TPressObjectMetadata): Variant;
 var
   VAttr: TPressAttributeMetadata;
   VAttrClass: TPressAttributeClass;
@@ -3669,8 +3667,8 @@ begin
     Result := varEmpty;
 end;
 
-function TPressSubjectExpressionItem.ReadParams(Reader: TPressExpressionReader;
-  AMin, AMax: Integer): TPressStringArray;
+function TPressSubjectExpressionItem.ReadParams(
+  Reader: TPressParserReader; AMin, AMax: Integer): TPressStringArray;
 var
   VParams: TStringList;
   I: Integer;
@@ -3699,7 +3697,7 @@ begin
 end;
 
 function TPressSubjectExpressionItem.ReadValue(
-  Reader: TPressExpressionReader; AValue: TPressValue): Variant;
+  Reader: TPressParserReader; AValue: TPressValue): Variant;
 begin
   if Reader.ReadNextToken = SPressAttributeSeparator then
   begin
@@ -3710,7 +3708,7 @@ begin
 end;
 
 function TPressSubjectExpressionItem.ReadValueMetadata(
-  Reader: TPressExpressionReader; AAttr: TPressAttributeMetadata): Variant;
+  Reader: TPressParserReader; AAttr: TPressAttributeMetadata): Variant;
 begin
   if Reader.ReadNextToken = SPressAttributeSeparator then
   begin
