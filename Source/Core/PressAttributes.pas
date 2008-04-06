@@ -3564,9 +3564,12 @@ begin
     ValidateObjectClass(AClass)
   else
     AClass := ObjectClass;
-  Result := AClass.Create;
+  Result := TPressObject(AClass.NewInstance);
   try
+    // lacks inherited Create
+    TPressObjectFriend(Result).InitInstance(PressDefaultDAO, nil);
     Add(Result);
+    TPressObjectFriend(Result).AfterCreate;
     if InternalProxyType = ptShared then
       Result.Release;
   except
