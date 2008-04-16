@@ -105,7 +105,21 @@ type
   TPressAttributeMetadata = class(TPressStreamable)
   private
     { TODO : Refactor attribute metadatas to use attribute class inheritance,
-      instead of object class inheritance. }
+      instead of object class inheritance.
+
+      Fields that does not belong to the base attribute class:
+
+       FEnumMetadata        (Enum)
+       FObjectClass         (Structure)
+       FObjectClassMetadata (Structure)
+       FPersLinkChildName   (Items)
+       FPersLinkIdName      (Items)
+       FPersLinkName        (Items)
+       FPersLinkParentName  (Items)
+       FPersLinkPosName     (Items)
+
+      as well as methods and properties that use them
+      }
     { TODO : Implement data packet in the dao/persistence unit }
     FAttributeClass: TPressAttributeClass;
     FBaseMetadata: TPressAttributeMetadata;
@@ -1526,10 +1540,13 @@ begin
     { TODO : Improve }
     { TODO : Implement estimated size per-attribute type after
       implementing metadata inheritance per attribute class }
-    if (FSize = 0) and (FAttributeClass.AttributeBaseType in [
-     attInteger, attFloat, attCurrency, attEnum, attBoolean,
-     attDate, attTime, attDateTime]) then
-      FSize := 10;
+    if FSize = 0 then
+      if FAttributeClass.AttributeBaseType in [
+       attInteger, attFloat, attCurrency, attEnum, attBoolean,
+       attDate, attTime] then
+        FSize := 10
+      else if FAttributeClass = TPressDateTime then
+        FSize := 23;
     if (FEditMask = '') and (FAttributeClass = TPressCurrency) then
       FEditMask := ',0.00';
 
