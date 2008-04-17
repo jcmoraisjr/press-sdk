@@ -3752,7 +3752,7 @@ end;
 
 procedure TPressItems.Clear;
 begin
-  if Assigned(FProxyList) then
+  if Assigned(FProxyList) and (FProxyList.Count > 0) then
   begin
     BeginUpdate;
     try
