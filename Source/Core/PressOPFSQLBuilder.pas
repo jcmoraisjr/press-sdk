@@ -66,6 +66,7 @@ type
   private
     FMap: TPressOPFStorageMap;
     FMaps: TPressOPFStorageMapList;
+    FMetadata: TPressObjectMetadata;
   protected
     function BuildFieldList(AFieldListType: TPressOPFFieldListType; AHelperFields: TPressOPFHelperFields; AMaps: TPressOPFStorageMapArray = nil): string;
     function BuildKeyName(AMaps: TPressOPFStorageMapArray): string;
@@ -77,6 +78,7 @@ type
     function CreateIdParamList(ACount: Integer): string;
     property Map: TPressOPFStorageMap read FMap;
     property Maps: TPressOPFStorageMapList read FMaps;
+    property Metadata: TPressObjectMetadata read FMetadata;
   public
     constructor Create(AMaps: TPressOPFStorageMapList);
     function DeleteLinkItemsStatement(AItems: TPressItems): string; virtual;
@@ -459,9 +461,9 @@ function TPressOPFDMLBuilder.BuildKeyName(
   AMaps: TPressOPFStorageMapArray): string;
 begin
   if Length(AMaps) > 1 then
-    Result := BuildTableAlias(0) + '.' + Map.Metadata.KeyName
+    Result := BuildTableAlias(0) + '.' + Metadata.KeyName
   else
-    Result := Map.Metadata.KeyName;
+    Result := Metadata.KeyName;
 end;
 
 function TPressOPFDMLBuilder.BuildLinkList(
@@ -532,6 +534,7 @@ begin
   inherited Create;
   FMaps := AMaps;
   FMap := FMaps.Last;
+  FMetadata := FMap.Metadata;
 end;
 
 function TPressOPFDMLBuilder.CreateAssignParamToFieldList(
@@ -556,7 +559,7 @@ var
   I: Integer;
 begin
   Result := '';
-  VOwnerParts := Map.Metadata.OwnerPartsMetadata;
+  VOwnerParts := Metadata.OwnerPartsMetadata;
   if Assigned(VOwnerParts) then
   begin
     AddParam(VOwnerParts.PersLinkParentName);
@@ -577,8 +580,8 @@ begin
       end;
     end;
   end;
-  if Map.Metadata = AObject.Metadata then
-    AddParam(Map.Metadata.UpdateCountName);
+  if Metadata = AObject.Metadata then
+    AddParam(Metadata.UpdateCountName);
 end;
 
 function TPressOPFDMLBuilder.CreateIdParamList(ACount: Integer): string;
@@ -611,8 +614,8 @@ end;
 function TPressOPFDMLBuilder.DeleteStatement: string;
 begin
   Result := Format('delete from %s where %s = %s', [
-   Map.Metadata.PersistentName,
-   Map.Metadata.KeyName,
+   Metadata.PersistentName,
+   Metadata.KeyName,
    ':' + SPressPersistentIdParamString]);
 end;
 
@@ -628,7 +631,7 @@ end;
 function TPressOPFDMLBuilder.InsertStatement: string;
 begin
   Result := Format('insert into %s (%s) values (%s)', [
-   Map.Metadata.PersistentName,
+   Metadata.PersistentName,
    BuildFieldList(ftSimple, [hfOID, hfClassId, hfUpdateCount]),
    BuildFieldList(ftParams, [hfOID, hfClassId, hfUpdateCount])]);
 end;
@@ -680,15 +683,15 @@ begin
   if VAssignParamList <> '' then
   begin
     Result := Format('update %s set %s where (%s = %s)', [
-     Map.Metadata.PersistentName,
+     Metadata.PersistentName,
      VAssignParamList,
-     Map.Metadata.KeyName,
+     Metadata.KeyName,
      ':' + SPressPersistentIdParamString]);
-    if (Map.Metadata = AObject.Metadata) and
-     (Map.Metadata.UpdateCountName <> '') then
+    if (Metadata = AObject.Metadata) and
+     (Metadata.UpdateCountName <> '') then
       Result := Format('%s and (%s = %d)', [
        Result,
-       Map.Metadata.UpdateCountName,
+       Metadata.UpdateCountName,
        AObject.PersUpdateCount]);
   end else
     Result := '';
