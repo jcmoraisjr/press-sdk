@@ -553,7 +553,10 @@ end;
 
 procedure TPressExpressionMinFunction.VarCalc;
 begin
-  Res^ := Min(Params[0]^, Params[1]^);
+  if Params[0]^ < Params[1]^ then
+    Res^ := Params[0]^
+  else
+    Res^ := Params[1]^;
 end;
 
 { TPressExpressionMaxFunction }
@@ -575,7 +578,10 @@ end;
 
 procedure TPressExpressionMaxFunction.VarCalc;
 begin
-  Res^ := Max(Params[0]^, Params[1]^);
+  if Params[0]^ > Params[1]^ then
+    Res^ := Params[0]^
+  else
+    Res^ := Params[1]^;
 end;
 
 { TPressExpressionSqrtFunction }
