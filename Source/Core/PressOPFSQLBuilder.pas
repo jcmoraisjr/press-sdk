@@ -1,6 +1,6 @@
 (*
   PressObjects, SQL Builder Classes
-  Copyright (C) 2007 Laserpress Ltda.
+  Copyright (C) 2007-2008 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -22,6 +22,7 @@ uses
   Classes,
   PressSubject,
   PressAttributes,
+  PressDAO,
   PressOPFClasses,
   PressOPFStorage;
 
@@ -68,7 +69,7 @@ type
     FMaps: TPressOPFStorageMapList;
     FMetadata: TPressObjectMetadata;
   protected
-    function BuildFieldList(AFieldListType: TPressOPFFieldListType; AHelperFields: TPressOPFHelperFields; AMaps: TPressOPFStorageMapArray = nil): string;
+    function BuildFieldList(AFieldListType: TPressOPFFieldListType; AHelperFields: TPressOPFHelperFields; AMaps: TPressOPFStorageMapArray = nil; AAttributes: TPressDAOAttributes = nil): string;
     function BuildKeyName(AMaps: TPressOPFStorageMapArray): string;
     function BuildLinkList(const APrefix: string; AMetadata: TPressAttributeMetadata): string;
     function BuildMapArray(ABaseClass: TPressObjectClass): TPressOPFStorageMapArray;
@@ -86,9 +87,10 @@ type
     function DeleteStatement: string; virtual;
     function InsertLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
     function InsertStatement: string; virtual;
-    function SelectGroupStatement(AIdCount: Integer; ABaseClass: TPressObjectClass = nil): string; virtual;
+    function SelectAttributeStatement(AAttribute: TPressAttributeMetadata): string;
+    function SelectGroupStatement(AIdCount: Integer; ABaseClass: TPressObjectClass = nil; AAttributes: TPressDAOAttributes = nil): string; virtual;
     function SelectLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
-    function SelectStatement(ABaseClass: TPressObjectClass = nil): string; virtual;
+    function SelectStatement(ABaseClass: TPressObjectClass = nil; AAttributes: TPressDAOAttributes = nil): string; virtual;
     function UpdateStatement(AObject: TPressObject): string; virtual;
   end;
 
@@ -381,7 +383,18 @@ end;
 function TPressOPFDMLBuilder.BuildFieldList(
   AFieldListType: TPressOPFFieldListType;
   AHelperFields: TPressOPFHelperFields;
-  AMaps: TPressOPFStorageMapArray): string;
+  AMaps: TPressOPFStorageMapArray;
+  AAttributes: TPressDAOAttributes): string;
+
+  function IncludeAttribute(AAttribute: TPressAttributeMetadata): Boolean;
+  begin
+    Result := not AAttribute.AttributeClass.InheritsFrom(TPressItems);
+    if Result then
+      if Assigned(AAttributes) then
+        Result := AAttributes.Include(AAttribute)
+      else
+        Result := not AAttribute.LazyLoad;
+  end;
 
   procedure AddStatement(const AStatement: string; var ABuffer: string);
   begin
@@ -424,7 +437,7 @@ function TPressOPFDMLBuilder.BuildFieldList(
     for I := 1 to Pred(AMap.Count) do  // skips ID
     begin
       VAttribute := AMap[I];
-      if not VAttribute.AttributeClass.InheritsFrom(TPressItems) then
+      if IncludeAttribute(VAttribute) then
         AddStatement(VFieldPrefix + VAttribute.PersistentName, ABuffer);
     end;
   end;
@@ -438,7 +451,7 @@ function TPressOPFDMLBuilder.BuildFieldList(
     for I := 1 to Pred(AMap.Count) do  // skips ID
     begin
       VAttribute := AMap[I];
-      if not VAttribute.AttributeClass.InheritsFrom(TPressItems) then
+      if IncludeAttribute(VAttribute) then
         AddStatement(
          BuildTableAlias(AIndex) + '.' + VAttribute.PersistentName, ABuffer);
     end;
@@ -636,14 +649,25 @@ begin
    BuildFieldList(ftParams, [hfOID, hfClassId, hfUpdateCount])]);
 end;
 
+function TPressOPFDMLBuilder.SelectAttributeStatement(
+  AAttribute: TPressAttributeMetadata): string;
+begin
+  Result := Format('select %s from %s where %s = %s', [
+   AAttribute.PersistentName,
+   Metadata.PersistentName,
+   Metadata.KeyName,
+   ':' + SPressPersistentIdParamString]);
+end;
+
 function TPressOPFDMLBuilder.SelectGroupStatement(
-  AIdCount: Integer; ABaseClass: TPressObjectClass): string;
+  AIdCount: Integer; ABaseClass: TPressObjectClass;
+  AAttributes: TPressDAOAttributes): string;
 var
   VMaps: TPressOPFStorageMapArray;
 begin
   VMaps := BuildMapArray(ABaseClass);
   Result := Format('select %s from %s where %s in (%s)', [
-   BuildFieldList(ftSimple, [hfOID, hfClassId, hfUpdateCount], VMaps),
+   BuildFieldList(ftSimple, [hfOID, hfClassId, hfUpdateCount], VMaps, AAttributes),
    BuildTableList(VMaps),
    BuildKeyName(VMaps),
    CreateIdParamList(AIdCount)]);
@@ -662,13 +686,13 @@ begin
 end;
 
 function TPressOPFDMLBuilder.SelectStatement(
-  ABaseClass: TPressObjectClass): string;
+  ABaseClass: TPressObjectClass; AAttributes: TPressDAOAttributes): string;
 var
   VMaps: TPressOPFStorageMapArray;
 begin
   VMaps := BuildMapArray(ABaseClass);
   Result := Format('select %s from %s where %s = %s', [
-   BuildFieldList(ftSimple, [hfClassId, hfUpdateCount], VMaps),
+   BuildFieldList(ftSimple, [hfClassId, hfUpdateCount], VMaps, AAttributes),
    BuildTableList(VMaps),
    BuildKeyName(VMaps),
    ':' + SPressPersistentIdParamString]);

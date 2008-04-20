@@ -128,6 +128,7 @@ type
     FEditMask: string;
     FEnumMetadata: TPressEnumMetadata;
     FIsPersistent: Boolean;
+    FLazyLoad: Boolean;
     FModel: TPressModel;
     FName: string;
     FObjectClass: TPressObjectClass;
@@ -145,6 +146,7 @@ type
     function BuildPersLinkChildName: string;
     function BuildPersLinkName: string;
     function BuildPersLinkParentName: string;
+    function DefaultLazyLoadState: Boolean;
     function GetPersLinkChildName: string;
     function GetPersLinkName: string;
     function GetPersLinkParentName: string;
@@ -153,6 +155,7 @@ type
     procedure SetCalcMetadata(Value: TPressCalcMetadata);
     procedure SetEnumMetadata(Value: TPressEnumMetadata);
     procedure SetObjectClass(Value: TPressObjectClass);
+    function StoreLazyLoad: Boolean;
     function StorePersistentName: Boolean;
     function StorePersLinkChildName: Boolean;
     function StorePersLinkIdName: Boolean;
@@ -189,6 +192,7 @@ type
     property DefaultValue: string read FDefaultValue write FDefaultValue;
     property EditMask: string read FEditMask write FEditMask;
     property IsPersistent: Boolean read FIsPersistent write FIsPersistent default True;
+    property LazyLoad: Boolean read FLazyLoad write FLazyLoad stored StoreLazyLoad;
     property PersistentName: string read FPersistentName write FPersistentName stored StorePersistentName;
     property PersLinkChildName: string read GetPersLinkChildName write FPersLinkChildName stored StorePersLinkChildName;
     property PersLinkIdName: string read FPersLinkIdName write FPersLinkIdName stored StorePersLinkIdName;
@@ -604,15 +608,17 @@ type
   IPressDAO = interface(IInterface)
   ['{8B46DE54-6987-477B-8AA4-9176D66018D4}']
     procedure AssignObject(AObject: TPressObject);
-    procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
+    procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer; const AAttributes: string);
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function ExecuteStatement(const AStatement: string; AParams: TPressParamList = nil): Integer;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
+    procedure Load(AObject: TPressObject; AIncludeLazyLoading: Boolean);
     function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure Refresh(AObject: TPressObject);
     procedure ReleaseObject(AObject: TPressObject);
-    function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil): TPressObject;
+    function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil; const AAttributes: string = ''): TPressObject;
+    procedure RetrieveAttribute(AAttribute: TPressAttribute);
     function RetrieveQuery(AQuery: TPressQuery): TPressProxyList;
     procedure Rollback;
     procedure ShowConnectionManager;
@@ -663,7 +669,7 @@ type
     FUpdateCount: Integer;
     procedure AttributesDisableChanges;
     procedure AttributesEnableChanges;
-    procedure CreateAttributes;
+    procedure CreateAttributes(AIsPersistent: Boolean);
     function GetAttributes(AIndex: Integer): TPressAttribute;
     function GetDataAccess: IPressDAO;
     function GetId: string;
@@ -692,7 +698,7 @@ type
     procedure Finit; override;
     function GetOwner: TPersistent; override;
     procedure Init; virtual;
-    procedure InitInstance(ADataAccess: IPressDAO; AMetadata: TPressObjectMetadata);
+    procedure InitInstance(ADataAccess: IPressDAO; AMetadata: TPressObjectMetadata; AIsPersistent: Boolean = False);
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; virtual;
     procedure InternalCalcAttribute(AAttribute: TPressAttribute); virtual;
     procedure InternalChanged(AChangedWhenDisabled: Boolean); override;
@@ -728,6 +734,7 @@ type
     function Expression(const AExpression: string): Variant;
     function FindAttribute(const AAttributeName: string): TPressAttribute;
     function FindPathAttribute(const APath: string; ASilent: Boolean = True): TPressAttribute;
+    procedure Load(AIncludeLazyLoading: Boolean = True);
     class function ObjectMetadataClass: TPressObjectMetadataClass; virtual;
     procedure Refresh;
     class procedure RegisterClass;
@@ -965,14 +972,16 @@ type
   TPressAttributeChangedEvent = class(TPressSubjectChangedEvent)
   end;
 
+  TPressAttributeState = (asNotLoaded, asNull, asValue);
+
   TPressAttribute = class(TPressSubject)
   private
     FCalcUpdated: Boolean;
-    FIsCalculating: Boolean;
-    FIsNull: Boolean;
+    FIsSynchronizing: Boolean;
     FMetadata: TPressAttributeMetadata;
     FNotifier: TPressNotifier;
     FOwner: TPressObject;
+    FState: TPressAttributeState;
     FUsePublishedGetter: Boolean;
     FUsePublishedSetter: Boolean;
     function CreateMemento: TPressAttributeMemento;
@@ -981,9 +990,11 @@ type
     function GetEditMask: string;
     function GetIsCalcAttribute: Boolean;
     function GetIsNull: Boolean;
+    function GetIsPersistent: Boolean;
     function GetName: string;
     function GetNotifier: TPressNotifier;
     function GetPersistentName: string;
+    function GetState: TPressAttributeState;
     function GetUsePublishedGetter: Boolean;
     function GetUsePublishedSetter: Boolean;
     procedure InitPropInfo;
@@ -1026,15 +1037,16 @@ type
     procedure SetAsString(const AValue: string); virtual;
     procedure SetAsTime(AValue: TTime); virtual;
     procedure SetAsVariant(AValue: Variant); virtual;
+    procedure Synchronize;
     function ValidateChars(const AStr: string; const AChars: TChars): Boolean;
     procedure ValueAssigned(AUpdateIsChangedFlag: Boolean = True);
     procedure ValueUnassigned;
-    procedure VerifyCalcAttribute;
     property UsePublishedGetter: Boolean read GetUsePublishedGetter;
     property UsePublishedSetter: Boolean read GetUsePublishedSetter;
     property Notifier: TPressNotifier read GetNotifier;
   public
     constructor Create(AOwner: TPressObject; AMetadata: TPressAttributeMetadata); virtual;
+    procedure Assign(Source: TPersistent); override;
     class function AttributeBaseType: TPressAttributeBaseType; virtual; abstract;
     class function AttributeName: string; virtual; abstract;
     {$IFDEF FPC}class{$ENDIF} function ClassType: TPressAttributeClass;
@@ -1042,6 +1054,7 @@ type
     function Clone: TPressAttribute;
     class function EmptyValue: Variant; virtual;
     class procedure RegisterAttribute;
+    procedure Unload;
     class procedure UnregisterAttribute;
     property AsBoolean: Boolean read GetAsBoolean write SetAsBoolean;
     property AsCurrency: Currency read GetAsCurrency write SetAsCurrency;
@@ -1057,13 +1070,14 @@ type
     property DisplayText: string read GetDisplayText;
     property EditMask: string read GetEditMask;
     property IsCalcAttribute: Boolean read GetIsCalcAttribute;
-    property IsCalculating: Boolean read FIsCalculating;
     property IsEmpty: Boolean read GetIsEmpty;
     property IsNull: Boolean read GetIsNull;
+    property IsPersistent: Boolean read GetIsPersistent;
     property Metadata: TPressAttributeMetadata read FMetadata;
     property Name: string read GetName;
     property Owner: TPressObject read FOwner;
     property PersistentName: string read GetPersistentName;
+    property State: TPressAttributeState read GetState;
   end;
 
   TPressAttributeList = class(TPressList)
@@ -1464,6 +1478,12 @@ begin
      [AOwner.ClassName, Name]);
 end;
 
+function TPressAttributeMetadata.DefaultLazyLoadState: Boolean;
+begin
+  Result := Assigned(FAttributeClass) and
+   FAttributeClass.InheritsFrom(TPressItems);
+end;
+
 procedure TPressAttributeMetadata.Finit;
 begin
   FCalcMetadata.Free;
@@ -1536,6 +1556,7 @@ begin
   if FAttributeClass <> Value then
   begin
     FAttributeClass := Value;
+    FLazyLoad := DefaultLazyLoadState;
 
     { TODO : Improve }
     { TODO : Implement estimated size per-attribute type after
@@ -1621,6 +1642,11 @@ procedure TPressAttributeMetadata.SetObjectClassName(const Value: string);
 begin
   if ObjectClassName <> Value then
     ObjectClass := Model.ClassByName(Value);
+end;
+
+function TPressAttributeMetadata.StoreLazyLoad: Boolean;
+begin
+  Result := FLazyLoad <> DefaultLazyLoadState;
 end;
 
 function TPressAttributeMetadata.StorePersistentName: Boolean;
@@ -3022,7 +3048,7 @@ begin
   Result := FAttributes.CreateIterator;
 end;
 
-procedure TPressObject.CreateAttributes;
+procedure TPressObject.CreateAttributes(AIsPersistent: Boolean);
 var
   VAttributePtr: PPressAttribute;
   VAttribute: TPressAttribute;
@@ -3039,6 +3065,8 @@ begin
       VMetadata := CurrentItem;
       VAttribute := VMetadata.CreateAttribute(Self);
       FAttributes.Add(VAttribute);
+      if AIsPersistent then
+        VAttribute.Unload;
       VAttributePtr := InternalAttributeAddress(VMetadata.Name);
       if Assigned(VAttributePtr) then
         VAttributePtr^ := VAttribute;
@@ -3232,15 +3260,15 @@ procedure TPressObject.Init;
 begin
 end;
 
-procedure TPressObject.InitInstance(
-  ADataAccess: IPressDAO; AMetadata: TPressObjectMetadata);
+procedure TPressObject.InitInstance(ADataAccess: IPressDAO;
+  AMetadata: TPressObjectMetadata; AIsPersistent: Boolean);
 begin
   FDataAccess := ADataAccess;
   FMetadata := AMetadata;
   FAttributes := TPressAttributeList.Create(True);
   DisableChanges;
   try
-    CreateAttributes;
+    CreateAttributes(AIsPersistent);
     if Assigned(FDataAccess) then
       FDataAccess.AssignObject(Self);
     Init;
@@ -3341,6 +3369,11 @@ begin
   inherited;
   { TODO : Implement lock attributes }
   TPressUnlockObjectEvent.Create(Self).Notify;
+end;
+
+procedure TPressObject.Load(AIncludeLazyLoading: Boolean);
+begin
+  DataAccess.Load(Self, AIncludeLazyLoading);
 end;
 
 procedure TPressObject.NotifyChange;
@@ -4106,7 +4139,7 @@ begin
   begin
     VIndex := FOwner.IndexOf(Self);
     if VIndex >= 0 then
-      FDataAccess.BulkRetrieve(FOwner, VIndex, 50, 0);
+      FDataAccess.BulkRetrieve(FOwner, VIndex, 50, '');
   end;
 end;
 
@@ -4518,6 +4551,18 @@ begin
    SAttributeAccessError, [ClassName, Name, AAttributeName]);
 end;
 
+procedure TPressAttribute.Assign(Source: TPersistent);
+begin
+  if Source is TPressAttribute then
+    case TPressAttribute(Source).State of
+      asNotLoaded: Unload;
+      asNull: Clear;
+      else inherited;  // should be catched by the subclass
+    end
+  else
+    inherited;
+end;
+
 procedure TPressAttribute.BindCalcNotification(AInstance: TPressObject);
 begin
   if IsCalcAttribute and Assigned(AInstance) then
@@ -4531,7 +4576,7 @@ end;
 
 procedure TPressAttribute.Clear;
 begin
-  if not FIsNull then
+  if State <> asNull then
   begin
     Changing;
     InternalReset;
@@ -4565,6 +4610,7 @@ begin
   inherited Create;
   FOwner := AOwner;
   FMetadata := AMetadata;
+  FCalcUpdated := True;
   DisableChanges;
   try
     Initialize;
@@ -4687,8 +4733,14 @@ end;
 
 function TPressAttribute.GetIsNull: Boolean;
 begin
-  VerifyCalcAttribute;
-  Result := FIsNull;
+  Synchronize;
+  Result := State = asNull;
+end;
+
+function TPressAttribute.GetIsPersistent: Boolean;
+begin
+  Result := Assigned(FMetadata) and (FMetadata.IsPersistent) and
+   Assigned(FOwner) and (FOwner.IsPersistent);
 end;
 
 function TPressAttribute.GetName: string;
@@ -4712,6 +4764,13 @@ begin
     Result := Metadata.PersistentName
   else
     Result := '';
+end;
+
+function TPressAttribute.GetState: TPressAttributeState;
+begin
+  if FState <> asNotLoaded then
+    Synchronize;
+  Result := FState;
 end;
 
 function TPressAttribute.GetUsePublishedGetter: Boolean;
@@ -4759,7 +4818,7 @@ end;
 procedure TPressAttribute.InternalChanging;
 begin
   inherited;
-  if Assigned(FOwner) and not IsCalculating then
+  if Assigned(FOwner) and not FIsSynchronizing then
     FOwner.NotifyMemento(Self);  // friend class
 end;
 
@@ -4857,6 +4916,38 @@ begin
   raise AccessError(TPressVariant.AttributeName);
 end;
 
+procedure TPressAttribute.Synchronize;
+begin
+  if not Assigned(FOwner) or FIsSynchronizing then
+    Exit;
+  if (FState = asNotLoaded) and IsPersistent then
+  begin
+    FIsSynchronizing := True;
+    try
+      FOwner.DataAccess.RetrieveAttribute(Self);
+    finally
+      FIsSynchronizing := False;
+    end;
+  end;
+  if not FCalcUpdated and IsCalcAttribute then
+  begin
+    FIsSynchronizing := True;
+    try
+      FOwner.InternalCalcAttribute(Self);  // friend class
+      FCalcUpdated := True;
+    finally
+      FIsSynchronizing := False;
+    end;
+  end;
+end;
+
+procedure TPressAttribute.Unload;
+begin
+  InternalReset;
+  FState := asNotLoaded;
+  Changed(False);
+end;
+
 class procedure TPressAttribute.UnregisterAttribute;
 begin
   PressModel.RemoveAttribute(Self);
@@ -4878,30 +4969,14 @@ end;
 
 procedure TPressAttribute.ValueAssigned(AUpdateIsChangedFlag: Boolean);
 begin
-  FIsNull := False;
+  FState := asValue;
   Changed(AUpdateIsChangedFlag);
 end;
 
 procedure TPressAttribute.ValueUnassigned;
 begin
-  FIsNull := True;
+  FState := asNull;
   Changed;
-end;
-
-procedure TPressAttribute.VerifyCalcAttribute;
-begin
-  if IsCalculating then
-    Exit;
-  if not FCalcUpdated and IsCalcAttribute and Assigned(Owner) then
-  begin
-    FIsCalculating := True;
-    try
-      Owner.InternalCalcAttribute(Self);  // friend class
-      FCalcUpdated := True;
-    finally
-      FIsCalculating := False;
-    end;
-  end;
 end;
 
 { TPressAttributeList }

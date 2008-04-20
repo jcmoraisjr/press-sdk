@@ -653,6 +653,7 @@ type
     function InternalCreateIterator: TPressItemsIterator; virtual;
     function InternalCreateMemento: TPressAttributeMemento; override;
     function InternalFormatList(const AFormat, AConn: string; AParams: array of string): string; virtual;
+    procedure InternalReset; override;
     procedure InternalUnassignObject(AObject: TPressObject); override;
     procedure InternalUnchanged; override;
     procedure NotifyMemento(AProxy: TPressProxy; AItemState: TPressItemState; AOldIndex: Integer = -1);
@@ -667,8 +668,7 @@ type
     function AddReference(const AClassName, AId: string; ADataAccess: IPressDAO): Integer;
     procedure Assign(Source: TPersistent); override;
     procedure AssignProxyList(AProxyList: TPressProxyList);
-    { TODO : Refactor Clear, move to virtual Reset }
-    procedure Clear;
+    procedure BulkRetrieve(AStartingAt, AItemCount: Integer; const AAttributes: string);
     function Count: Integer;
     function CreateIterator: TPressItemsIterator;
     function CreateProxyIterator: TPressProxyIterator;
@@ -1070,11 +1070,8 @@ end;
 
 procedure TPressString.Assign(Source: TPersistent);
 begin
-  if Source is TPressString then
-    if not TPressString(Source).IsNull then
-      PubValue := TPressString(Source).PubValue
-    else
-      Clear
+  if (Source is TPressString) and (TPressString(Source).State = asValue) then
+    PubValue := TPressString(Source).PubValue
   else
     inherited;
 end;
@@ -1197,7 +1194,7 @@ end;
 
 function TPressString.GetValue: string;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := FValue;
 end;
 
@@ -1278,7 +1275,7 @@ var
   VMaxSize: Integer;
   VOwnerName: string;
 begin
-  if IsNull or (FValue <> AValue) then
+  if (FValue <> AValue) or (State <> asValue) then
   begin
     if Assigned(Metadata) then
       VMaxSize := Metadata.Size
@@ -1354,11 +1351,8 @@ end;
 
 procedure TPressInteger.Assign(Source: TPersistent);
 begin
-  if Source is TPressInteger then
-    if not TPressInteger(Source).IsNull then
-      PubValue := TPressInteger(Source).PubValue
-    else
-      Clear
+  if (Source is TPressInteger) and (TPressInteger(Source).State = asValue) then
+    PubValue := TPressInteger(Source).PubValue
   else
     inherited;
 end;
@@ -1431,7 +1425,7 @@ end;
 
 function TPressInteger.GetValue: Integer;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := FValue;
 end;
 
@@ -1508,7 +1502,7 @@ end;
 
 procedure TPressInteger.SetValue(AValue: Integer);
 begin
-  if IsNull or (AValue <> FValue) then
+  if (AValue <> FValue) or (State <> asValue) then
   begin
     Changing;
     FValue := AValue;
@@ -1521,11 +1515,8 @@ end;
 
 procedure TPressFloat.Assign(Source: TPersistent);
 begin
-  if Source is TPressFloat then
-    if not TPressFloat(Source).IsNull then
-      PubValue := TPressFloat(Source).PubValue
-    else
-      Clear
+  if (Source is TPressFloat) and (TPressFloat(Source).State = asValue) then
+    PubValue := TPressFloat(Source).PubValue
   else
     inherited;
 end;
@@ -1598,7 +1589,7 @@ end;
 
 function TPressFloat.GetValue: Double;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := FValue;
 end;
 
@@ -1675,7 +1666,7 @@ end;
 
 procedure TPressFloat.SetValue(AValue: Double);
 begin
-  if IsNull or (AValue <> FValue) then
+  if (AValue <> FValue) or (State <> asValue) then
   begin
     Changing;
     FValue := AValue;
@@ -1688,11 +1679,8 @@ end;
 
 procedure TPressCurrency.Assign(Source: TPersistent);
 begin
-  if Source is TPressCurrency then
-    if not TPressCurrency(Source).IsNull then
-      PubValue := TPressCurrency(Source).PubValue
-    else
-      Clear
+  if (Source is TPressCurrency) and (TPressCurrency(Source).State = asValue) then
+    PubValue := TPressCurrency(Source).PubValue
   else
     inherited;
 end;
@@ -1780,7 +1768,7 @@ end;
 
 function TPressCurrency.GetValue: Currency;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := FValue;
 end;
 
@@ -1862,7 +1850,7 @@ end;
 
 procedure TPressCurrency.SetValue(AValue: Currency);
 begin
-  if IsNull or (AValue <> FValue) then
+  if (AValue <> FValue) or (State <> asValue) then
   begin
     Changing;
     FValue := AValue;
@@ -1875,11 +1863,8 @@ end;
 
 procedure TPressEnum.Assign(Source: TPersistent);
 begin
-  if Source is TPressEnum then
-    if not TPressEnum(Source).IsNull then
-      PubValue := TPressEnum(Source).PubValue
-    else
-      Clear
+  if (Source is TPressEnum) and (TPressEnum(Source).State = asValue) then
+    PubValue := TPressEnum(Source).PubValue
   else
     inherited;
 end;
@@ -1962,7 +1947,7 @@ end;
 
 function TPressEnum.GetValue: Integer;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   if (FValue < 0) or
    (Assigned(Metadata) and (FValue >= Metadata.EnumMetadata.Items.Count)) then
     raise EPressError.CreateFmt(SEnumOutOfBounds, [Name, FValue]);
@@ -2060,7 +2045,7 @@ procedure TPressEnum.SetValue(AValue: Integer);
 begin
   if AValue = -1 then
     Clear
-  else if IsNull or (AValue <> FValue) then
+  else if (AValue <> FValue) or (State <> asValue) then
   begin
     Changing;
     FValue := AValue;
@@ -2072,11 +2057,8 @@ end;
 
 procedure TPressBoolean.Assign(Source: TPersistent);
 begin
-  if Source is TPressBoolean then
-    if not TPressBoolean(Source).IsNull then
-      PubValue := TPressBoolean(Source).PubValue
-    else
-      Clear
+  if (Source is TPressBoolean) and (TPressBoolean(Source).State = asValue) then
+    PubValue := TPressBoolean(Source).PubValue
   else
     inherited;
 end;
@@ -2144,7 +2126,7 @@ end;
 
 function TPressBoolean.GetValue: Boolean;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := FValue;
 end;
 
@@ -2167,7 +2149,7 @@ begin
     FValues[True] := Copy(VEditMask, 1, VPos - 1);
   end;
   inherited;
-  if IsNull then
+  if State = asNull then
     Value := False;
 end;
 
@@ -2234,7 +2216,7 @@ end;
 
 procedure TPressBoolean.SetValue(AValue: Boolean);
 begin
-  if IsNull or (AValue <> FValue) then
+  if (AValue <> FValue) or (State <> asValue) then
   begin
     Changing;
     FValue := AValue;
@@ -2246,11 +2228,8 @@ end;
 
 procedure TPressDate.Assign(Source: TPersistent);
 begin
-  if Source is TPressDate then
-    if not TPressDate(Source).IsNull then
-      PubValue := TPressDate(Source).PubValue
-    else
-      Clear
+  if (Source is TPressDate) and (TPressDate(Source).State = asValue) then
+    PubValue := TPressDate(Source).PubValue
   else
     inherited;
 end;
@@ -2334,7 +2313,7 @@ end;
 
 function TPressDate.GetValue: TDate;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := FValue;
 end;
 
@@ -2417,7 +2396,7 @@ end;
 
 procedure TPressDate.SetValue(AValue: TDate);
 begin
-  if IsNull or (FValue <> AValue) then
+  if (FValue <> AValue) and (State <> asValue) then
   begin
     Changing;
     if AValue = 0 then
@@ -2434,11 +2413,8 @@ end;
 
 procedure TPressTime.Assign(Source: TPersistent);
 begin
-  if Source is TPressTime then
-    if not TPressTime(Source).IsNull then
-      PubValue := TPressTime(Source).PubValue
-    else
-      Clear
+  if (Source is TPressTime) and (TPressTime(Source).State = asValue) then
+    PubValue := TPressTime(Source).PubValue
   else
     inherited;
 end;
@@ -2516,7 +2492,7 @@ end;
 
 function TPressTime.GetValue: TTime;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := FValue;
 end;
 
@@ -2599,7 +2575,7 @@ end;
 
 procedure TPressTime.SetValue(AValue: TTime);
 begin
-  if IsNull or (FValue <> AValue) then
+  if (FValue <> AValue) or (State <> asValue) then
   begin
     Changing;
     FValue := Frac(AValue);
@@ -2611,11 +2587,8 @@ end;
 
 procedure TPressDateTime.Assign(Source: TPersistent);
 begin
-  if Source is TPressDateTime then
-    if not TPressDateTime(Source).IsNull then
-      PubValue := TPressDateTime(Source).PubValue
-    else
-      Clear
+  if (Source is TPressDateTime) and (TPressDateTime(Source).State = asValue) then
+    PubValue := TPressDateTime(Source).PubValue
   else
     inherited;
 end;
@@ -2703,7 +2676,7 @@ end;
 
 function TPressDateTime.GetValue: TDateTime;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := FValue;
 end;
 
@@ -2786,7 +2759,7 @@ end;
 
 procedure TPressDateTime.SetValue(AValue: TDateTime);
 begin
-  if IsNull or (FValue <> AValue) then
+  if (FValue <> AValue) or (State <> asValue) then
   begin
     Changing;
     if AValue = 0 then
@@ -2952,7 +2925,7 @@ end;
 
 function TPressVariant.GetValue: Variant;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := FValue;
 end;
 
@@ -3017,7 +2990,7 @@ end;
 
 procedure TPressVariant.SetValue(AValue: Variant);
 begin
-  if IsNull or (FValue <> AValue) then
+  if (FValue <> AValue) or (State <> asValue) then
   begin
     Changing;
     if VarIsEmpty(AValue) or VarIsNull(AValue) then
@@ -3101,7 +3074,7 @@ end;
 
 function TPressBlob.GetValue: string;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   if Assigned(FStream) and (FStream.Size > 0) then
   begin
     SetLength(Result, FStream.Size);
@@ -3136,7 +3109,7 @@ end;
 
 procedure TPressBlob.SaveToStream(AStream: TStream);
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   if Assigned(AStream) then
     Stream.SaveToStream(AStream);
 end;
@@ -3173,7 +3146,7 @@ procedure TPressBlob.SetValue(const AValue: string);
 begin
   if AValue <> '' then
     WriteBuffer(AValue[1], Length(AValue))
-  else if IsNull then
+  else if State <> asValue then
   begin
     Changing;
     ValueAssigned;
@@ -3300,7 +3273,7 @@ end;
 
 function TPressItem.GetIsEmpty: Boolean;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := not Assigned(FProxy) or FProxy.IsEmpty; 
 end;
 
@@ -3335,6 +3308,7 @@ end;
 
 function TPressItem.GetSignature: string;
 begin
+  Synchronize;
   if Assigned(FProxy) then
   begin
     if Proxy.HasInstance then
@@ -3349,7 +3323,7 @@ end;
 
 function TPressItem.GetValue: TPressObject;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := Proxy.Instance;
 end;
 
@@ -3384,12 +3358,14 @@ end;
 
 function TPressItem.SameReference(AObject: TPressObject): Boolean;
 begin
+  Synchronize;
   Result := (not Assigned(AObject) and not Assigned(FProxy)) or
    (Assigned(FProxy) and FProxy.SameReference(AObject));
 end;
 
 function TPressItem.SameReference(const ARefClass, ARefID: string): Boolean;
 begin
+  Synchronize;
   Result := Proxy.SameReference(ARefClass, ARefID);
 end;
 
@@ -3644,7 +3620,12 @@ begin
   finally
     EnableChanges;
   end;
-  NotifyRebuild;
+end;
+
+procedure TPressItems.BulkRetrieve(
+  AStartingAt, AItemCount: Integer; const AAttributes: string);
+begin
+  DataAccess.BulkRetrieve(ProxyList, AStartingAt, AItemCount, AAttributes);
 end;
 
 procedure TPressItems.ChangedInstance(
@@ -3750,19 +3731,6 @@ begin
     ValueUnassigned;
 end;
 
-procedure TPressItems.Clear;
-begin
-  if Assigned(FProxyList) and (FProxyList.Count > 0) then
-  begin
-    BeginUpdate;
-    try
-      FProxyList.Clear;
-    finally
-      EndUpdate;
-    end;
-  end;
-end;
-
 procedure TPressItems.ClearObjectCache;
 begin
   if Assigned(FAddedProxies) then
@@ -3773,7 +3741,7 @@ end;
 
 function TPressItems.Count: Integer;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   if Assigned(FProxyList) then
     Result := FProxyList.Count
   else
@@ -3782,13 +3750,13 @@ end;
 
 function TPressItems.CreateIterator: TPressItemsIterator;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := InternalCreateIterator;
 end;
 
 function TPressItems.CreateProxyIterator: TPressProxyIterator;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := TPressProxyIterator.Create(ProxyList);
 end;
 
@@ -3827,13 +3795,13 @@ end;
 
 function TPressItems.GetObjects(AIndex: Integer): TPressObject;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := ProxyList[AIndex].Instance;
 end;
 
 function TPressItems.GetProxies(AIndex: Integer): TPressProxy;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := ProxyList[AIndex];
 end;
 
@@ -3853,7 +3821,7 @@ end;
 
 function TPressItems.IndexOf(AObject: TPressObject): Integer;
 begin
-  VerifyCalcAttribute;
+  Synchronize;
   Result := ProxyList.IndexOfInstance(AObject);
 end;
 
@@ -3870,7 +3838,13 @@ end;
 procedure TPressItems.InternalChanged(AChangedWhenDisabled: Boolean);
 begin
   if AChangedWhenDisabled then
+  begin
+    if Count > 0 then
+      ValueAssigned
+    else
+      ValueUnassigned;
     NotifyRebuild;
+  end;
   inherited;
 end;
 
@@ -3913,6 +3887,20 @@ begin
   Result := '';
   for I := 0 to Pred(Count) do
     ConcatObject(Result, Objects[I]);
+end;
+
+procedure TPressItems.InternalReset;
+begin
+  inherited;
+  if Assigned(FProxyList) and (FProxyList.Count > 0) then
+  begin
+    BeginUpdate;
+    try
+      FProxyList.Clear;
+    finally
+      EndUpdate;
+    end;
+  end;
 end;
 
 procedure TPressItems.InternalUnassignObject(AObject: TPressObject);

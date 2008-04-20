@@ -1,6 +1,6 @@
 (*
   PressObjects, Core Persistence Classes
-  Copyright (C) 2007 Laserpress Ltda.
+  Copyright (C) 2007-2008 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -21,6 +21,7 @@ interface
 uses
   PressApplication,
   PressSubject,
+  PressDAO,
   PressPersistence,
   PressOPFConnector,
   PressOPFMapper;
@@ -45,16 +46,19 @@ type
     function CreatePressObject(AClass: TPressObjectClass; ADataset: TPressOPFDataset; ADatasetIndex: Integer): TPressObject;
     procedure DoneService; override;
     procedure Finit; override;
-    procedure InternalBulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer); override;
+    procedure InternalBulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer; AAttributes: TPressDAOAttributes); override;
     procedure InternalCommit; override;
     function InternalDBMSName: string; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
     function InternalExecuteStatement(const AStatement: string; AParams: TPressParamList): Integer; override;
     function InternalImplementsBulkRetrieve: Boolean; override;
+    function InternalImplementsLazyLoading: Boolean; override;
     procedure InternalIsDefaultChanged; override;
+    procedure InternalLoad(AObject: TPressObject; AIncludeLazyLoading: Boolean); override;
     function InternalOQLQuery(const AOQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
     procedure InternalRefresh(AObject: TPressObject); override;
-    function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; override;
+    function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressDAOAttributes): TPressObject; override;
+    procedure InternalRetrieveAttribute(AAttribute: TPressAttribute); override;
     procedure InternalRollback; override;
     procedure InternalShowConnectionManager; override;
     function InternalSQLProxy(const ASQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
@@ -193,9 +197,10 @@ begin
 end;
 
 procedure TPressOPF.InternalBulkRetrieve(
-  AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
+  AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer;
+  AAttributes: TPressDAOAttributes);
 begin
-  Mapper.BulkRetrieve(AProxyList, AStartingAt, AItemCount, ADepth);
+  Mapper.BulkRetrieve(AProxyList, AStartingAt, AItemCount, AAttributes);
 end;
 
 procedure TPressOPF.InternalCommit;
@@ -227,6 +232,11 @@ begin
   Result := True;
 end;
 
+function TPressOPF.InternalImplementsLazyLoading: Boolean;
+begin
+  Result := True;
+end;
+
 procedure TPressOPF.InternalIsDefaultChanged;
 begin
   inherited;
@@ -234,6 +244,12 @@ begin
     _PressOPFService := Self
   else
     _PressOPFService := nil;
+end;
+
+procedure TPressOPF.InternalLoad(
+  AObject: TPressObject; AIncludeLazyLoading: Boolean);
+begin
+  Mapper.Load(AObject, AIncludeLazyLoading);
 end;
 
 function TPressOPF.InternalOQLQuery(
@@ -286,9 +302,15 @@ begin
 end;
 
 function TPressOPF.InternalRetrieve(AClass: TPressObjectClass;
-  const AId: string; AMetadata: TPressObjectMetadata): TPressObject;
+  const AId: string; AMetadata: TPressObjectMetadata;
+  AAttributes: TPressDAOAttributes): TPressObject;
 begin
-  Result := Mapper.Retrieve(AClass, AId, AMetadata);
+  Result := Mapper.Retrieve(AClass, AId, AMetadata, AAttributes);
+end;
+
+procedure TPressOPF.InternalRetrieveAttribute(AAttribute: TPressAttribute);
+begin
+  Mapper.RetrieveAttribute(AAttribute);
 end;
 
 procedure TPressOPF.InternalRollback;

@@ -403,6 +403,7 @@ type
   TPressMVPItemsModel = class(TPressMVPStructureModel)
   private
     FObjectList: TPressMVPObjectList;
+    procedure BulkRetrieve;
     function GetObjectList: TPressMVPObjectList;
     function GetObjects(AIndex: Integer): TPressObject;
     function GetSubject: TPressItems;
@@ -419,7 +420,6 @@ type
     procedure Notify(AEvent: TPressEvent); override;
     property ObjectList: TPressMVPObjectList read GetObjectList;
   public
-    constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
     destructor Destroy; override;
     function Count: Integer;
     function DisplayText(ACol, ARow: Integer): string;
@@ -1676,19 +1676,29 @@ end;
 
 { TPressMVPItemsModel }
 
+procedure TPressMVPItemsModel.BulkRetrieve;
+var
+  VSubject: TPressItems;
+  VAttrList: string;
+  I: Integer;
+begin
+  VSubject := Subject;
+  if (VSubject.Count > 0) and not VSubject.Proxies[0].HasInstance then
+  begin
+    VAttrList := '';
+    for I := 0 to Pred(ColumnData.ColumnCount) do
+      VAttrList := VAttrList + ColumnData[I].AttributeName + ';';
+    if VAttrList <> '' then
+      VSubject.BulkRetrieve(0, 50, VAttrList);
+  end;
+end;
+
 function TPressMVPItemsModel.Count: Integer;
 begin
   if Assigned(FObjectList) then
     Result := FObjectList.Count
   else
     Result := 0;
-end;
-
-constructor TPressMVPItemsModel.Create(
-  AParent: TPressMVPModel; ASubject: TPressSubject);
-begin
-  inherited Create(AParent, ASubject);
-  RebuildObjectList;
 end;
 
 destructor TPressMVPItemsModel.Destroy;
@@ -1738,6 +1748,7 @@ procedure TPressMVPItemsModel.InternalAssignDisplayNames(
 begin
   AssignColumnData(ADisplayNames);
   InternalCreateSortCommands;
+  RebuildObjectList;
 end;
 
 procedure TPressMVPItemsModel.InternalCreateAddCommands;
@@ -1886,6 +1897,7 @@ begin
   try
     Selection.Clear;
     ObjectList.Clear;
+    BulkRetrieve;
     for I := 0 to Pred(Subject.Count) do
       ObjectList.AddProxy(Subject.Proxies[I]);
     if ObjectList.Count > 0 then

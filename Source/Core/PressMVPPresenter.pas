@@ -1056,7 +1056,8 @@ begin
   begin
     AObject := VObjectClass.Create;
     AIncluding := True;
-  end;
+  end else if AObject.IsPersistent then
+    AObject.Load;
 
   if not Assigned(AParent) then
     AParent := _PressMVPMainPresenter;

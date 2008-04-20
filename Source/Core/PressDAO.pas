@@ -1,6 +1,6 @@
 (*
   PressObjects, Data Access Classes
-  Copyright (C) 2007 Laserpress Ltda.
+  Copyright (C) 2007-2008 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -19,6 +19,7 @@ unit PressDAO;
 interface
 
 uses
+  Classes,
   PressApplication,
   PressClasses,
   PressNotifier,
@@ -45,6 +46,18 @@ type
     function RemoveObject(AObject: TPressObject): Integer; virtual;
   end;
 
+  TPressDAOAttributes = class(TObject)
+  private
+    FList: TStringList;
+  public
+    constructor Create(const AAttributes: string = '');
+    destructor Destroy; override;
+    procedure Add(const AAttribute: string);
+    procedure AddUnloadedAttributes(AObject: TPressObject; AIncludeLazyLoading: Boolean);
+    function IsEmpty: Boolean;
+    function Include(AAttribute: TPressAttributeMetadata): Boolean;
+  end;
+
   TPressDAO = class(TPressService, IPressDAO)
   private
     { TODO : Implement transacted object control }
@@ -57,16 +70,19 @@ type
   protected
     procedure DoneService; override;
     procedure Finit; override;
-    procedure InternalBulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer); virtual;
+    procedure InternalBulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer; AAttributes: TPressDAOAttributes); virtual;
     function InternalCacheClass: TPressDAOCacheClass; virtual;
     procedure InternalCommit; virtual;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); virtual;
     function InternalExecuteStatement(const AStatement: string; AParams: TPressParamList): Integer; virtual;
     function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; virtual;
     function InternalImplementsBulkRetrieve: Boolean; virtual;
+    function InternalImplementsLazyLoading: Boolean; virtual;
+    procedure InternalLoad(AObject: TPressObject; AIncludeLazyLoading: Boolean); virtual;
     function InternalOQLQuery(const AOQLStatement: string; AParams: TPressParamList): TPressProxyList; virtual;
     procedure InternalRefresh(AObject: TPressObject); virtual;
-    function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata): TPressObject; virtual;
+    function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressDAOAttributes): TPressObject; virtual;
+    procedure InternalRetrieveAttribute(AAttribute: TPressAttribute); virtual;
     function InternalRetrieveQuery(AQuery: TPressQuery): TPressProxyList; virtual;
     procedure InternalRollback; virtual;
     class function InternalServiceType: TPressServiceType; override;
@@ -81,15 +97,17 @@ type
     constructor Create; override;
     function CreateObject(AClass: TPressObjectClass; AMetadata: TPressObjectMetadata): TPressObject;
     procedure AssignObject(AObject: TPressObject);
-    procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
+    procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer; const AAttributes: string);
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function ExecuteStatement(const AStatement: string; AParams: TPressParamList = nil): Integer;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
+    procedure Load(AObject: TPressObject; AIncludeLazyLoading: Boolean = True);
     function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure Refresh(AObject: TPressObject);
     procedure ReleaseObject(AObject: TPressObject);
-    function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil): TPressObject;
+    function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil; const AAttributes: string = ''): TPressObject;
+    procedure RetrieveAttribute(AAttribute: TPressAttribute);
     function RetrieveQuery(AQuery: TPressQuery): TPressProxyList;
     procedure Rollback;
     procedure ShowConnectionManager;
@@ -171,6 +189,72 @@ begin
   Result := ObjectList.Remove(AObject);
 end;
 
+{ TPressDAOAttributes }
+
+procedure TPressDAOAttributes.Add(const AAttribute: string);
+begin
+  FList.Add(AAttribute);
+end;
+
+procedure TPressDAOAttributes.AddUnloadedAttributes(
+  AObject: TPressObject; AIncludeLazyLoading: Boolean);
+var
+  VAttribute: TPressAttribute;
+begin
+  with AObject.CreateAttributeIterator do
+  try
+    BeforeFirstItem;
+    while NextItem do
+    begin
+      VAttribute := CurrentItem;
+      if VAttribute.IsPersistent and
+       (AIncludeLazyLoading or not VAttribute.Metadata.LazyLoad) and
+       (VAttribute.State = asNotLoaded) then
+        Add(VAttribute.Metadata.Name);
+    end;
+  finally
+    Free;
+  end;
+end;
+
+constructor TPressDAOAttributes.Create(const AAttributes: string);
+begin
+  inherited Create;
+  FList := TStringList.Create;
+  FList.Sorted := True;
+  FList.Duplicates := dupError;
+  FList.CommaText := StringReplace(AAttributes, ';', ',', [rfReplaceAll]);
+end;
+
+destructor TPressDAOAttributes.Destroy;
+begin
+  FList.Free;
+  inherited;
+end;
+
+function TPressDAOAttributes.Include(
+  AAttribute: TPressAttributeMetadata): Boolean;
+var
+  VAttribute: string;
+  VPos: Integer;
+begin
+  Result := ((FList.Count = 0) and not AAttribute.LazyLoad) or
+   (FList.Count = 1) and (FList[0] = '*');
+  if not Result and (FList.Count > 0) then
+  begin
+    VAttribute := AAttribute.Name;
+    Result := FList.Find(VAttribute, VPos);
+    if not Result and (VPos < FList.Count) then
+      Result := Copy(FList[VPos], 1, Length(VAttribute) + 1) =
+       VAttribute + SPressAttributeSeparator;
+  end;
+end;
+
+function TPressDAOAttributes.IsEmpty: Boolean;
+begin
+  Result := FList.Count = 0;
+end;
+
 { TPressDAO }
 
 procedure TPressDAO.AssignObject(AObject: TPressObject);
@@ -179,13 +263,21 @@ begin
 end;
 
 procedure TPressDAO.BulkRetrieve(
-  AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
+  AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer;
+  const AAttributes: string);
+var
+  VAttributes: TPressDAOAttributes;
 begin
   if not InternalImplementsBulkRetrieve then
     Exit;
   StartTransaction;
   try
-    InternalBulkRetrieve(AProxyList, AStartingAt, AItemCount, ADepth);
+    VAttributes := TPressDAOAttributes.Create(AAttributes);
+    try
+      InternalBulkRetrieve(AProxyList, AStartingAt, AItemCount, VAttributes);
+    finally
+      VAttributes.Free;
+    end;
     Commit;
   except
     Rollback;
@@ -222,7 +314,7 @@ begin
   Result := TPressObject(AClass.NewInstance);
   try
     // lacks inherited Create
-    TPressObjectFriend(Result).InitInstance(Self, AMetadata);
+    TPressObjectFriend(Result).InitInstance(Self, AMetadata, True);
   except
     FreeAndNil(Result);
     raise;
@@ -303,7 +395,8 @@ begin
 end;
 
 procedure TPressDAO.InternalBulkRetrieve(
-  AProxyList: TPressProxyList; AStartingAt, AItemCount, ADepth: Integer);
+  AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer;
+  AAttributes: TPressDAOAttributes);
 begin
   raise UnsupportedFeatureError('Bulk retrieve');
 end;
@@ -341,6 +434,17 @@ begin
   Result := False;
 end;
 
+function TPressDAO.InternalImplementsLazyLoading: Boolean;
+begin
+  Result := False;
+end;
+
+procedure TPressDAO.InternalLoad(
+  AObject: TPressObject; AIncludeLazyLoading: Boolean);
+begin
+  raise UnsupportedFeatureError('Load object');
+end;
+
 function TPressDAO.InternalOQLQuery(
   const AOQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
@@ -354,9 +458,14 @@ end;
 
 function TPressDAO.InternalRetrieve(
   AClass: TPressObjectClass; const AId: string;
-  AMetadata: TPressObjectMetadata): TPressObject;
+  AMetadata: TPressObjectMetadata; AAttributes: TPressDAOAttributes): TPressObject;
 begin
   raise UnsupportedFeatureError('Retrieve object');
+end;
+
+procedure TPressDAO.InternalRetrieveAttribute(AAttribute: TPressAttribute);
+begin
+  raise UnsupportedFeatureError('Retrieve attribute');
 end;
 
 function TPressDAO.InternalRetrieveQuery(
@@ -450,6 +559,25 @@ begin
   raise UnsupportedFeatureError('Store object');
 end;
 
+procedure TPressDAO.Load(AObject: TPressObject; AIncludeLazyLoading: Boolean);
+begin
+  if not InternalImplementsLazyLoading then
+    Exit;
+  StartTransaction;
+  try
+    AObject.DisableChanges;
+    try
+      InternalLoad(AObject, AIncludeLazyLoading);
+    finally
+      AObject.EnableChanges;
+    end;
+    Commit;
+  except
+    Rollback;
+    raise;
+  end;
+end;
+
 procedure TPressDAO.Notify(AEvent: TPressEvent);
 begin
   if FTransactionLevel = 1 then
@@ -503,7 +631,9 @@ end;
 
 function TPressDAO.Retrieve(
   AClass: TPressObjectClass; const AId: string;
-  AMetadata: TPressObjectMetadata): TPressObject;
+  AMetadata: TPressObjectMetadata; const AAttributes: string): TPressObject;
+var
+  VAttributes: TPressDAOAttributes;
 begin
   Result := Cache.FindObject(AClass, AId);
   if Assigned(Result) then
@@ -515,7 +645,12 @@ begin
       {$IFDEF PressLogDAOInterface}PressLogMsg(Self,
        Format('Retrieving %s(%s)', [AClass.ClassName, AId]));{$ENDIF}
       { TODO : Ensure the class type of the retrieved object }
-      Result := InternalRetrieve(AClass, AId, AMetadata);
+      VAttributes := TPressDAOAttributes.Create(AAttributes);
+      try
+        Result := InternalRetrieve(AClass, AId, AMetadata, VAttributes);
+      finally
+        VAttributes.Free;
+      end;
       Commit;
     except
       Rollback;
@@ -523,6 +658,25 @@ begin
     end;
     if Assigned(Result) then
       TPressObjectFriend(Result).AfterRetrieve;
+  end;
+end;
+
+procedure TPressDAO.RetrieveAttribute(AAttribute: TPressAttribute);
+begin
+  if not InternalImplementsLazyLoading then
+    Exit;
+  StartTransaction;
+  try
+    AAttribute.DisableChanges;
+    try
+      InternalRetrieveAttribute(AAttribute);
+    finally
+      AAttribute.EnableChanges;
+    end;
+    Commit;
+  except
+    Rollback;
+    raise;
   end;
 end;
 
