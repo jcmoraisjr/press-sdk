@@ -49,13 +49,17 @@ type
   TPressDAOAttributes = class(TObject)
   private
     FList: TStringList;
+    function GetItems(AIndex: Integer): string;
   public
     constructor Create(const AAttributes: string = '');
     destructor Destroy; override;
     procedure Add(const AAttribute: string);
     procedure AddUnloadedAttributes(AObject: TPressObject; AIncludeLazyLoading: Boolean);
+    function Count: Integer;
+    function CreatePathAttributes: TPressDAOAttributes;
     function IsEmpty: Boolean;
     function Include(AAttribute: TPressAttributeMetadata): Boolean;
+    property Items[AIndex: Integer]: string read GetItems; default;
   end;
 
   TPressDAO = class(TPressService, IPressDAO)
@@ -217,6 +221,11 @@ begin
   end;
 end;
 
+function TPressDAOAttributes.Count: Integer;
+begin
+  Result := FList.Count;
+end;
+
 constructor TPressDAOAttributes.Create(const AAttributes: string);
 begin
   inherited Create;
@@ -226,10 +235,30 @@ begin
   FList.CommaText := StringReplace(AAttributes, ';', ',', [rfReplaceAll]);
 end;
 
+function TPressDAOAttributes.CreatePathAttributes: TPressDAOAttributes;
+var
+  I: Integer;
+begin
+  Result := TPressDAOAttributes.Create;
+  try
+    for I := 0 to Pred(FList.Count) do
+      if Pos(SPressAttributeSeparator, FList[I]) > 0 then
+        Result.Add(FList[I]);
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
+end;
+
 destructor TPressDAOAttributes.Destroy;
 begin
   FList.Free;
   inherited;
+end;
+
+function TPressDAOAttributes.GetItems(AIndex: Integer): string;
+begin
+  Result := FList[AIndex];
 end;
 
 function TPressDAOAttributes.Include(

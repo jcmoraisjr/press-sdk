@@ -60,6 +60,7 @@ type
   private
     FSourceProxyList: TPressProxyList;
     procedure AfterRetrieveEvent;
+    procedure BulkRetrieveItem;
   protected
     procedure CreateProxies(AStartingAt, AItemCount: Integer);
     function InternalCreateMap(AClass: TPressObjectClass): TPressOPFCustomBulkMap; override;
@@ -175,10 +176,10 @@ type
 
 implementation
 
-{$IFDEF PressLog}
 uses
-  PressLog;
-{$ENDIF}
+  {$IFDEF PressLog}PressLog,{$ENDIF}
+  PressConsts,
+  PressAttributes;
 
 { TPressOPFCustomBulkRetrieve }
 
@@ -330,6 +331,58 @@ begin
     end;
 end;
 
+procedure TPressOPFBulkRetrieve.BulkRetrieveItem;
+
+  procedure AddItemProxies(AProxyList: TPressProxyList;
+    AInstance: TPressObject; AAttributes: TPressDAOAttributes);
+  var
+    VMap: TPressClassMap;
+    VAttribute: TPressAttribute;
+    VAttributeName: string;
+    VPos: Integer;
+    I: Integer;
+  begin
+    VMap := AInstance.Map;
+    for I := 0 to Pred(AAttributes.Count) do
+      if Assigned(VMap.FindMetadata(AAttributes[I])) then
+      begin
+        VAttributeName := AAttributes[I];
+        VPos := Pos(SPressAttributeSeparator, VAttributeName);
+        if VPos > 0 then
+          SetLength(VAttributeName, VPos - 1);
+        VAttribute := AInstance.AttributeByName(VAttributeName);
+        if VAttribute is TPressItem then
+          AProxyList.Add(TPressItem(VAttribute).Proxy);
+      end;
+  end;
+
+var
+  VPathAttributes, VEmptyAttributes: TPressDAOAttributes;
+  VProxyList: TPressProxyList;
+  I: Integer;
+begin
+  VPathAttributes := Attributes.CreatePathAttributes;
+  try
+    if not VPathAttributes.IsEmpty then
+    begin
+      VProxyList := TPressProxyList.Create(False, ptShared);
+      VEmptyAttributes := TPressDAOAttributes.Create;
+      try
+        for I := 0 to Pred(FProxyList.Count) do  // friend class
+          AddItemProxies(VProxyList, FProxyList[I].Instance, VPathAttributes);
+        { TODO : Implement customized attribute list (instead an empty one)
+          after implement a smart retrieve attribute approach }
+        ObjectMapper.BulkRetrieve(VProxyList, 0, VProxyList.Count, VEmptyAttributes);
+      finally
+        VEmptyAttributes.Free;
+        VProxyList.Free;
+      end;
+    end;
+  finally
+    VPathAttributes.Free;
+  end;
+end;
+
 constructor TPressOPFBulkRetrieve.Create(
   AObjectMapper: TPressOPFObjectMapper;
   ASourceProxyList: TPressProxyList; AAttributes: TPressDAOAttributes);
@@ -367,6 +420,7 @@ begin
   RetrieveMaps;
   AfterRetrieveEvent;
   UpdateProxies;
+  BulkRetrieveItem;
 end;
 
 function TPressOPFBulkRetrieve.InternalCreateMap(
