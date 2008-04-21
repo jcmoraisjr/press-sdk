@@ -613,7 +613,7 @@ type
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function ExecuteStatement(const AStatement: string; AParams: TPressParamList = nil): Integer;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
-    procedure Load(AObject: TPressObject; AIncludeLazyLoading: Boolean);
+    procedure Load(AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean);
     function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure Refresh(AObject: TPressObject);
     procedure ReleaseObject(AObject: TPressObject);
@@ -734,7 +734,7 @@ type
     function Expression(const AExpression: string): Variant;
     function FindAttribute(const AAttributeName: string): TPressAttribute;
     function FindPathAttribute(const APath: string; ASilent: Boolean = True): TPressAttribute;
-    procedure Load(AIncludeLazyLoading: Boolean = True);
+    procedure Load(AIncludeLazyLoading: Boolean = True; ALoadContainers: Boolean = False);
     class function ObjectMetadataClass: TPressObjectMetadataClass; virtual;
     procedure Refresh;
     class procedure RegisterClass;
@@ -3371,9 +3371,9 @@ begin
   TPressUnlockObjectEvent.Create(Self).Notify;
 end;
 
-procedure TPressObject.Load(AIncludeLazyLoading: Boolean);
+procedure TPressObject.Load(AIncludeLazyLoading, ALoadContainers: Boolean);
 begin
-  DataAccess.Load(Self, AIncludeLazyLoading);
+  DataAccess.Load(Self, AIncludeLazyLoading, ALoadContainers);
 end;
 
 procedure TPressObject.NotifyChange;

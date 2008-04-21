@@ -82,7 +82,7 @@ type
     function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; virtual;
     function InternalImplementsBulkRetrieve: Boolean; virtual;
     function InternalImplementsLazyLoading: Boolean; virtual;
-    procedure InternalLoad(AObject: TPressObject; AIncludeLazyLoading: Boolean); virtual;
+    procedure InternalLoad(AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean); virtual;
     function InternalOQLQuery(const AOQLStatement: string; AParams: TPressParamList): TPressProxyList; virtual;
     procedure InternalRefresh(AObject: TPressObject); virtual;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressDAOAttributes): TPressObject; virtual;
@@ -106,7 +106,7 @@ type
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function ExecuteStatement(const AStatement: string; AParams: TPressParamList = nil): Integer;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
-    procedure Load(AObject: TPressObject; AIncludeLazyLoading: Boolean = True);
+    procedure Load(AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean);
     function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure Refresh(AObject: TPressObject);
     procedure ReleaseObject(AObject: TPressObject);
@@ -469,7 +469,7 @@ begin
 end;
 
 procedure TPressDAO.InternalLoad(
-  AObject: TPressObject; AIncludeLazyLoading: Boolean);
+  AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean);
 begin
   raise UnsupportedFeatureError('Load object');
 end;
@@ -588,7 +588,8 @@ begin
   raise UnsupportedFeatureError('Store object');
 end;
 
-procedure TPressDAO.Load(AObject: TPressObject; AIncludeLazyLoading: Boolean);
+procedure TPressDAO.Load(AObject: TPressObject;
+  AIncludeLazyLoading, ALoadContainers: Boolean);
 begin
   if not InternalImplementsLazyLoading then
     Exit;
@@ -596,7 +597,7 @@ begin
   try
     AObject.DisableChanges;
     try
-      InternalLoad(AObject, AIncludeLazyLoading);
+      InternalLoad(AObject, AIncludeLazyLoading, ALoadContainers);
     finally
       AObject.EnableChanges;
     end;

@@ -54,7 +54,7 @@ type
     function InternalImplementsBulkRetrieve: Boolean; override;
     function InternalImplementsLazyLoading: Boolean; override;
     procedure InternalIsDefaultChanged; override;
-    procedure InternalLoad(AObject: TPressObject; AIncludeLazyLoading: Boolean); override;
+    procedure InternalLoad(AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean); override;
     function InternalOQLQuery(const AOQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
     procedure InternalRefresh(AObject: TPressObject); override;
     function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressDAOAttributes): TPressObject; override;
@@ -110,6 +110,7 @@ implementation
 uses
   SysUtils,
   PressConsts,
+  PressAttributes,
   PressOPFClasses,
   PressOPFStorage,
   PressOQL;
@@ -247,9 +248,28 @@ begin
 end;
 
 procedure TPressOPF.InternalLoad(
-  AObject: TPressObject; AIncludeLazyLoading: Boolean);
+  AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean);
+var
+  VAttribute: TPressAttribute;
 begin
   Mapper.Load(AObject, AIncludeLazyLoading);
+  with AObject.CreateAttributeIterator do
+  try
+    BeforeFirstItem;
+    while NextItem do
+    begin
+      VAttribute := CurrentItem;
+      if VAttribute is TPressItem then
+        TPressItem(VAttribute).Value
+      else if VAttribute is TPressItems then
+      begin
+        if ALoadContainers then
+          TPressItems(VAttribute).BulkRetrieve(0, 50, '');
+      end;
+    end;
+  finally
+    Free;
+  end;
 end;
 
 function TPressOPF.InternalOQLQuery(

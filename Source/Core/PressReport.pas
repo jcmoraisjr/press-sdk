@@ -769,6 +769,7 @@ function TPressCustomReportData.ReportGroupByClassName(ADataAccess: IPressDAO;
       begin
         Result := VList[0].Instance as TPressCustomReportGroup;
         Result.AddRef;
+        Result.Load(True, True);
       end else
       begin
         Result := VReportClass.Create;
