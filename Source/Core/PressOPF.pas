@@ -223,6 +223,7 @@ end;
 function TPressOPF.InternalExecuteStatement(
   const AStatement: string; AParams: TPressParamList): Integer;
 begin
+  { TODO : Lock }
   StatementDataset.SQL := AStatement;
   StatementDataset.AssignParams(AParams);
   Result := StatementDataset.Execute;
@@ -400,7 +401,7 @@ end;
 
 procedure TPressOPF.InternalStartTransaction;
 begin
-  Connector.StartTransaction;
+  // do not start a db transaction; datasets will do when necessary
 end;
 
 procedure TPressOPF.InternalStore(AObject: TPressObject);

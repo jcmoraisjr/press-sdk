@@ -135,6 +135,8 @@ type
   end;
 
   TPressOPFConnector = class(TPersistent)
+  private
+    FActiveDBTransaction: Boolean;
   protected
     function GetSupportTransaction: Boolean; virtual;
     procedure InternalCommit; virtual;
@@ -374,6 +376,7 @@ var
   I: Integer;
 {$ENDIF}
 begin
+  Connector.StartTransaction;
   {$IFDEF PressLogDAOPersistence}
     PressLogMsg(Self, 'OPF: ' + FSQL);
     for I := 0 to Pred(Params.Count) do
@@ -422,10 +425,13 @@ end;
 
 procedure TPressOPFConnector.Commit;
 begin
+  if not FActiveDBTransaction then
+    Exit;
   {$IFDEF PressLogDAOPersistence}
   PressLogMsg(Self, 'OPF: Commit');
   {$ENDIF}
   InternalCommit;
+  FActiveDBTransaction := False;
 end;
 
 constructor TPressOPFConnector.Create;
@@ -480,19 +486,25 @@ end;
 
 procedure TPressOPFConnector.Rollback;
 begin
+  if not FActiveDBTransaction then
+    Exit;
   {$IFDEF PressLogDAOPersistence}
   PressLogMsg(Self, 'OPF: Rollback');
   {$ENDIF}
   InternalRollback;
+  FActiveDBTransaction := False;
 end;
 
 procedure TPressOPFConnector.StartTransaction;
 begin
+  if FActiveDBTransaction then
+    Exit;
   InternalConnect;
   {$IFDEF PressLogDAOPersistence}
   PressLogMsg(Self, 'OPF: Start transaction');
   {$ENDIF}
   InternalStartTransaction;
+  FActiveDBTransaction := True;
 end;
 
 function TPressOPFConnector.UnsupportedFeatureError(
