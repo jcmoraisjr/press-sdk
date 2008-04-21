@@ -194,12 +194,17 @@ type
   end;
 
   TPressCustomReportData = class(TPressService)
+  private
+    FReportGroups: TStrings;
   protected
+    procedure Finit; override;
     function InternalReportGroupClass: TPressReportGroupClass; virtual; abstract;
     class function InternalServiceType: TPressServiceType; override;
   public
-    function FindReportGroup(ADataAccess: IPressDAO; const AObjectClassName: string): TPressCustomReportGroup;
+    function ReportGroupByClassName(ADataAccess: IPressDAO; const AObjectClassName: string): TPressCustomReportGroup;
   end;
+
+function PressDefaultReportDataService: TPressCustomReportData;
 
 implementation
 
@@ -207,6 +212,11 @@ uses
   SysUtils,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressConsts;
+
+function PressDefaultReportDataService: TPressCustomReportData;
+begin
+  Result := PressApp.DefaultService(CPressReportDataService) as TPressCustomReportData;
+end;
 
 { TPressReport }
 
@@ -711,14 +721,44 @@ end;
 
 { TPressReportData }
 
-function TPressCustomReportData.FindReportGroup(
-  ADataAccess: IPressDAO; const AObjectClassName: string): TPressCustomReportGroup;
+procedure TPressCustomReportData.Finit;
 var
-  VReportClass: TPressReportGroupClass;
-  VList: TPressProxyList;
+  I: Integer;
 begin
-  ADataAccess.StartTransaction;
-  try
+  inherited;
+  if Assigned(FReportGroups) then
+  begin
+    for I := 0 to Pred(FReportGroups.Count) do
+      FReportGroups.Objects[I].Free;
+    FReportGroups.Free;
+  end;
+end;
+
+class function TPressCustomReportData.InternalServiceType: TPressServiceType;
+begin
+  Result := CPressReportDataService;
+end;
+
+function TPressCustomReportData.ReportGroupByClassName(ADataAccess: IPressDAO;
+  const AObjectClassName: string): TPressCustomReportGroup;
+
+  function CreateReportList: TStringList;
+  begin
+    Result := TStringList.Create;
+    try
+      Result.Sorted := True;
+      Result.Duplicates := dupError;
+    except
+      FreeAndNil(Result);
+      raise;
+    end;
+  end;
+
+  function CreateReportGroup: TPressCustomReportGroup;
+  var
+    VReportClass: TPressReportGroupClass;
+    VList: TPressProxyList;
+  begin
     VReportClass := InternalReportGroupClass;
     VList := ADataAccess.OQLQuery(Format('select * from %s where %s = "%s"', [
      VReportClass.ClassName,
@@ -739,16 +779,27 @@ begin
     finally
       VList.Free;
     end;
-    ADataAccess.Commit;
-  except
-    ADataAccess.Rollback;
-    raise;
   end;
-end;
 
-class function TPressCustomReportData.InternalServiceType: TPressServiceType;
+var
+  VIndex: Integer;
 begin
-  Result := CPressReportDataService;
+  if not Assigned(FReportGroups) then
+    FReportGroups := CreateReportList;
+  VIndex := FReportGroups.IndexOf(AObjectClassName);
+  if VIndex = -1 then
+  begin
+    ADataAccess.StartTransaction;
+    try
+      Result := CreateReportGroup;
+      ADataAccess.Commit;
+    except
+      ADataAccess.Rollback;
+      raise;
+    end;
+    FReportGroups.AddObject(AObjectClassName, Result);
+  end else
+    Result := TPressCustomReportGroup(FReportGroups.Objects[VIndex]);
 end;
 
 initialization
