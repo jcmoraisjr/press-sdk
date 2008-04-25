@@ -24,7 +24,7 @@ uses
   Classes,
   TypInfo,
   Contnrs,
-  PressCompatibility,
+  PressUtils,
   PressConsts,
   PressClasses,
   PressApplication,
@@ -3652,7 +3652,7 @@ begin
       Result := ''
   else if SameText(Token, 'Format') and (AAttr is TPressValue) then
     if Assigned(AAttr) then
-      Result := VarFormat(ReadParams(Reader, 1, 1)[0], [AAttr.AsVariant])
+      Result := PressVarFormat(ReadParams(Reader, 1, 1)[0], [AAttr.AsVariant])
     else
       Result := ''
   else if SameText(Token, 'FormatFloat') and (AAttr is TPressNumeric) then
@@ -4708,7 +4708,7 @@ end;
 function TPressAttribute.GetDisplayText: string;
 begin
   if EditMask <> '' then
-    Result := FormatMaskText(EditMask, AsString)
+    Result := PressFormatMaskText(EditMask, AsString)
   else
     Result := AsString;
 end;

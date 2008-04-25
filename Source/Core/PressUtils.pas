@@ -1,5 +1,5 @@
 (*
-  PressObjects, Compatibility and Utilities unit
+  PressObjects, Utilities unit
   Copyright (C) 2006-2007 Laserpress Ltda.
 
   http://www.pressobjects.org
@@ -12,8 +12,7 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 *)
 
-unit PressCompatibility;
-{ TODO : Rename to PressUtils }
+unit PressUtils;
 
 {$DEFINE PressBaseUnit}
 {$I Press.inc}
@@ -26,17 +25,12 @@ uses
 {$endif}
   Classes;
 
-{$IFDEF D5Down}
-type
-  IInterface = IUnknown;
-{$ENDIF}
-
-function FormatMaskText(const EditMask: string; const Value: string): string;
-function VarFormat(const AFormat: string; const AArgs: array of Variant): string;
-procedure GenerateGUID(out AGUID: TGUID);
-function SetPropertyValue(AObject: TPersistent; const APathName, AValue: string; AError: Boolean = False): Boolean;
-procedure OutputDebugString(const AStr: string);
-function UnquotedStr(const AStr: string): string;
+function PressFormatMaskText(const EditMask: string; const Value: string): string;
+function PressVarFormat(const AFormat: string; const AArgs: array of Variant): string;
+procedure PressGenerateGUID(out AGUID: TGUID);
+function PressSetPropertyValue(AObject: TPersistent; const APathName, AValue: string; AError: Boolean = False): Boolean;
+procedure PressOutputDebugString(const AStr: string);
+function PressUnquotedStr(const AStr: string): string;
 
 implementation
 
@@ -56,7 +50,7 @@ uses
   PressClasses,
   PressConsts;
 
-function FormatMaskText(const EditMask: string; const Value: string): string;
+function PressFormatMaskText(const EditMask: string; const Value: string): string;
 begin
   { TODO : MaskEdit for plain/laz/mse FPC }
   Result :=
@@ -64,7 +58,7 @@ begin
    .FormatMaskText(EditMask, Value){$ENDIF};
 end;
 
-function VarFormat(const AFormat: string; const AArgs: array of Variant): string;
+function PressVarFormat(const AFormat: string; const AArgs: array of Variant): string;
 var
   VConsts: array of TVarRec;
   VExtended: Extended;
@@ -152,7 +146,7 @@ begin
 end;
 {$ENDIF}
 
-procedure GenerateGUID(out AGUID: TGUID);
+procedure PressGenerateGUID(out AGUID: TGUID);
 begin
   {$IFDEF FPC}
   CreateGUIDResultCheck(CreateGUID(AGUID));
@@ -161,7 +155,7 @@ begin
   {$ENDIF}
 end;
 
-function SetPropertyValue(AObject: TPersistent;
+function PressSetPropertyValue(AObject: TPersistent;
   const APathName, AValue: string; AError: Boolean): Boolean;
 var
   VPropInfo: PPropInfo;
@@ -181,7 +175,7 @@ begin
       VPropInfo := GetPropInfo(AObject, VPropName);
       if Assigned(VPropInfo) and (VPropInfo^.PropType^.Kind = tkClass) then
       begin
-        Result := SetPropertyValue(TPersistent(
+        Result := PressSetPropertyValue(TPersistent(
          GetObjectProp(AObject, VPropInfo, TPersistent)), VPathName, AValue);
       end else
       begin
@@ -189,7 +183,7 @@ begin
         { TODO : VField might point to an interface }
         if Assigned(VField) and Assigned(TObject(VField^)) and
          (TObject(VField^) is TPersistent) then
-          Result := SetPropertyValue(TPersistent(VField^), VPathName, AValue);
+          Result := PressSetPropertyValue(TPersistent(VField^), VPathName, AValue);
       end;
     end else
     begin
@@ -206,7 +200,7 @@ begin
         {$ELSE}
           tkString, tkLString, tkWString:
         {$ENDIF}
-            VPropValue := UnquotedStr(AValue);
+            VPropValue := PressUnquotedStr(AValue);
           tkEnumeration:
             begin
               VPropValue := GetEnumValue(
@@ -230,7 +224,7 @@ begin
   end;
 end;
 
-procedure OutputDebugString(const AStr: string);
+procedure PressOutputDebugString(const AStr: string);
 begin
   {$IFDEF FPC}
   {$ELSE}
@@ -238,7 +232,7 @@ begin
   {$ENDIF}
 end;
 
-function UnquotedStr(const AStr: string): string;
+function PressUnquotedStr(const AStr: string): string;
 var
   PStr: PChar;
 begin

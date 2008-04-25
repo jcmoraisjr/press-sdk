@@ -22,9 +22,6 @@ interface
 uses
   SysUtils,
   Classes,
-{$IFDEF D5Down}
-  PressCompatibility,
-{$ENDIF}
   SyncObjs;
 
 type
@@ -58,6 +55,10 @@ type
 
   TPressWriter = class(TWriter)
   end;
+
+{$ifdef d5down}
+  IInterface = IUnknown;
+{$endif}
 
   TPressManagedObject = class(TPersistent, IInterface)
   private

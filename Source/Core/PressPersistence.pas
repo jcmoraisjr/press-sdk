@@ -99,7 +99,7 @@ implementation
 
 uses
   SysUtils,
-  PressCompatibility,
+  PressUtils,
   PressConsts;
 
 { TPressOIDGenerator }
@@ -118,7 +118,7 @@ var
   VId: array[0..15] of Byte;
   I: Integer;
 begin
-  GenerateGUID(TGUID(VId));
+  PressGenerateGUID(TGUID(VId));
   SetLength(Result, 32);
   for I := 0 to 15 do
     Move(IntToHex(VId[I], 2)[1], Result[2*I+1], 2);

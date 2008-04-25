@@ -736,7 +736,7 @@ uses
   SysUtils,
   {$IFNDEF D5Down}Variants,{$ENDIF}
   {$IFDEF PressLog}PressLog,{$ENDIF}
-  PressCompatibility,
+  PressUtils,
   PressConsts;
 
 type
@@ -3873,7 +3873,7 @@ function TPressItems.InternalFormatList(
     SetLength(VVars, Length(AParams));
     for I := 0 to Pred(Length(AParams)) do
       VVars[I] := AObject.Expression(AParams[I]);
-    VStr := VarFormat(AFormat, VVars);
+    VStr := PressVarFormat(AFormat, VVars);
     if VStr <> '' then
       if ABuffer <> '' then
         ABuffer := ABuffer + AConn + VStr

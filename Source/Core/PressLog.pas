@@ -54,7 +54,7 @@ implementation
 uses
   SysUtils,
   PressConsts,
-  PressCompatibility;
+  PressUtils;
 
 function PressDefaultLog: TPressLog;
 begin
@@ -110,7 +110,7 @@ begin
    FormatDateTime('mmm/dd hh:nn:ss', Now),
    FormatClassName(AMsg, Sender),
    ArrayToString(AParams)]);
-  OutputDebugString(Result);
+  PressOutputDebugString(Result);
 end;
 
 class function TPressLog.InternalServiceType: TPressServiceType;

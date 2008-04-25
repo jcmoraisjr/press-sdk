@@ -144,7 +144,7 @@ implementation
 uses
   SysUtils,
   PressConsts,
-  PressCompatibility,
+  PressUtils,
   PressAttributes;
 
 { Local routines }
@@ -500,7 +500,7 @@ begin
       Token := Reader.ReadToken;
     end else
       VValue := SPressTrueString;
-    if not SetPropertyValue(FTarget, VPropertyName, VValue) then
+    if not PressSetPropertyValue(FTarget, VPropertyName, VValue) then
       Reader.ErrorExpected(SPressPropertyNameMsg, VPropertyName);
   end;
   Reader.UnreadToken;

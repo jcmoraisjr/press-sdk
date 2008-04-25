@@ -330,7 +330,7 @@ implementation
 uses
   SysUtils,
   PressConsts,
-  PressCompatibility,
+  PressUtils,
   PressAttributes;
 
 { TPressOQLReader }
@@ -677,7 +677,7 @@ var
 begin
   Token := Reader.ReadToken;
   if (Token <> '') and (Token[1] in ['''', '"']) and (Token[1] <> CQuote) then
-    FLiteral := AnsiQuotedStr(UnquotedStr(Token), CQuote)
+    FLiteral := AnsiQuotedStr(PressUnquotedStr(Token), CQuote)
   else
     FLiteral := Token;
 end;

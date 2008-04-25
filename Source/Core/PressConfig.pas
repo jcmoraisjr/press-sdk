@@ -132,7 +132,7 @@ implementation
 uses
   SysUtils,
   PressConsts,
-  PressCompatibility;
+  PressUtils;
 
 var
   _FunctionsList: IPressHolder;
@@ -233,7 +233,7 @@ var
 begin
   for I := 0 to Pred(AssignmentCount) do
     with Assignments[I] do
-      SetPropertyValue(AObject, PropertyName, PropertyValue, True);
+      PressSetPropertyValue(AObject, PropertyName, PropertyValue, True);
 end;
 
 function TPressConfigSection.GetAssignments(
