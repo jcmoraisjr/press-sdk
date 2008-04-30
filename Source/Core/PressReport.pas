@@ -201,7 +201,7 @@ type
     function InternalReportGroupClass: TPressReportGroupClass; virtual; abstract;
     class function InternalServiceType: TPressServiceType; override;
   public
-    function ReportGroupByClassName(ADataAccess: IPressDAO; const AObjectClassName: string): TPressCustomReportGroup;
+    function ReportGroupByClassName(ADataAccess: IPressSession; const AObjectClassName: string): TPressCustomReportGroup;
   end;
 
 function PressDefaultReportDataService: TPressCustomReportData;
@@ -739,7 +739,7 @@ begin
   Result := CPressReportDataService;
 end;
 
-function TPressCustomReportData.ReportGroupByClassName(ADataAccess: IPressDAO;
+function TPressCustomReportData.ReportGroupByClassName(ADataAccess: IPressSession;
   const AObjectClassName: string): TPressCustomReportGroup;
 
   function CreateReportList: TStringList;

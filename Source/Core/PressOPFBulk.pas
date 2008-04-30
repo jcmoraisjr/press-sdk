@@ -33,7 +33,7 @@ type
 
   TPressOPFCustomBulkRetrieve = class(TObject)
   private
-    FAttributes: TPressDAOAttributes;
+    FAttributes: TPressSessionAttributes;
     FMaps: TObjectList;
     FObjectMapper: TPressOPFObjectMapper;
     FPersistence: TPressPersistence;
@@ -45,11 +45,11 @@ type
     function InternalCreateMap(AClass: TPressObjectClass): TPressOPFCustomBulkMap; virtual; abstract;
     function InternalOwnsProxy: Boolean; virtual; abstract;
     procedure RetrieveMaps;
-    property Attributes: TPressDAOAttributes read FAttributes;
+    property Attributes: TPressSessionAttributes read FAttributes;
     property Persistence: TPressPersistence read FPersistence;
     property ProxyList: TPressOPFBulkProxyList read GetProxyList;
   public
-    constructor Create(AObjectMapper: TPressOPFObjectMapper; AAttributes: TPressDAOAttributes);
+    constructor Create(AObjectMapper: TPressOPFObjectMapper; AAttributes: TPressSessionAttributes);
     destructor Destroy; override;
     function CreateProxyListByClass(AClass: TPressObjectClass): TPressOPFBulkProxyList;
     property ObjectMapper: TPressOPFObjectMapper read FObjectMapper;
@@ -66,7 +66,7 @@ type
     function InternalOwnsProxy: Boolean; override;
     procedure UpdateProxies;
   public
-    constructor Create(AObjectMapper: TPressOPFObjectMapper; ASourceProxyList: TPressProxyList; AAttributes: TPressDAOAttributes);
+    constructor Create(AObjectMapper: TPressOPFObjectMapper; ASourceProxyList: TPressProxyList; AAttributes: TPressSessionAttributes);
     procedure Execute(AStartingAt, AItemCount: Integer);
   end;
 
@@ -79,7 +79,7 @@ type
     function InternalCreateMap(AClass: TPressObjectClass): TPressOPFCustomBulkMap; override;
     function InternalOwnsProxy: Boolean; override;
   public
-    constructor Create(AObjectMapper: TPressOPFObjectMapper; ASourceProxyList: TPressOPFBulkProxyList; ABaseClass: TPressObjectClass; AAttributes: TPressDAOAttributes);
+    constructor Create(AObjectMapper: TPressOPFObjectMapper; ASourceProxyList: TPressOPFBulkProxyList; ABaseClass: TPressObjectClass; AAttributes: TPressSessionAttributes);
     procedure Execute;
   end;
 
@@ -91,7 +91,7 @@ type
     function InternalCreateMap(AClass: TPressObjectClass): TPressOPFCustomBulkMap; override;
     function InternalOwnsProxy: Boolean; override;
   public
-    constructor Create(AObjectMapper: TPressOPFObjectMapper; AAttributes: TPressDAOAttributes; ASourceProxyList: TPressProxyList);
+    constructor Create(AObjectMapper: TPressOPFObjectMapper; AAttributes: TPressSessionAttributes; ASourceProxyList: TPressProxyList);
     procedure Execute;
   end;
 
@@ -135,16 +135,16 @@ type
 
   TPressOPFCustomBulkMap = class(TObject)
   private
-    FAttributes: TPressDAOAttributes;
+    FAttributes: TPressSessionAttributes;
     FMaps: TPressOPFStorageMapList;
     FObjectMapper: TPressOPFObjectMapper;
     FProxyList: TPressOPFBulkProxyList;
   protected
     function BuildIDs: TPressStringArray;
     function CreateObjectArray: TPressObjectArray;
-    property Attributes: TPressDAOAttributes read FAttributes;
+    property Attributes: TPressSessionAttributes read FAttributes;
   public
-    constructor Create(AOwner: TPressOPFCustomBulkRetrieve; AClass: TPressObjectClass; AAttributes: TPressDAOAttributes);
+    constructor Create(AOwner: TPressOPFCustomBulkRetrieve; AClass: TPressObjectClass; AAttributes: TPressSessionAttributes);
     destructor Destroy; override;
     procedure Retrieve; virtual;
     property Maps: TPressOPFStorageMapList read FMaps;
@@ -164,7 +164,7 @@ type
   private
     FBaseClass: TPressObjectClass;
   public
-    constructor Create(AOwner: TPressOPFBulkRetrieveComplementary; AClass, ABaseClass: TPressObjectClass; AAttributes: TPressDAOAttributes);
+    constructor Create(AOwner: TPressOPFBulkRetrieveComplementary; AClass, ABaseClass: TPressObjectClass; AAttributes: TPressSessionAttributes);
     procedure Retrieve; override;
   end;
 
@@ -198,7 +198,7 @@ begin
 end;
 
 constructor TPressOPFCustomBulkRetrieve.Create(
-  AObjectMapper: TPressOPFObjectMapper; AAttributes: TPressDAOAttributes);
+  AObjectMapper: TPressOPFObjectMapper; AAttributes: TPressSessionAttributes);
 begin
   inherited Create;
   FObjectMapper := AObjectMapper;
@@ -333,7 +333,7 @@ end;
 procedure TPressOPFBulkRetrieve.BulkRetrieveItem;
 
   procedure AddItemProxies(AProxyList: TPressProxyList;
-    AInstance: TPressObject; AAttributes: TPressDAOAttributes);
+    AInstance: TPressObject; AAttributes: TPressSessionAttributes);
   var
     VMap: TPressClassMap;
     VAttribute: TPressAttribute;
@@ -356,7 +356,7 @@ procedure TPressOPFBulkRetrieve.BulkRetrieveItem;
   end;
 
 var
-  VPathAttributes, VEmptyAttributes: TPressDAOAttributes;
+  VPathAttributes, VEmptyAttributes: TPressSessionAttributes;
   VProxyList: TPressProxyList;
   I: Integer;
 begin
@@ -365,7 +365,7 @@ begin
     if not VPathAttributes.IsEmpty then
     begin
       VProxyList := TPressProxyList.Create(False, ptShared);
-      VEmptyAttributes := TPressDAOAttributes.Create;
+      VEmptyAttributes := TPressSessionAttributes.Create;
       try
         for I := 0 to Pred(FProxyList.Count) do  // friend class
           AddItemProxies(VProxyList, FProxyList[I].Instance, VPathAttributes);
@@ -384,7 +384,7 @@ end;
 
 constructor TPressOPFBulkRetrieve.Create(
   AObjectMapper: TPressOPFObjectMapper;
-  ASourceProxyList: TPressProxyList; AAttributes: TPressDAOAttributes);
+  ASourceProxyList: TPressProxyList; AAttributes: TPressSessionAttributes);
 begin
   inherited Create(AObjectMapper, AAttributes);
   FSourceProxyList := ASourceProxyList;
@@ -447,7 +447,7 @@ end;
 constructor TPressOPFBulkRetrieveComplementary.Create(
   AObjectMapper: TPressOPFObjectMapper;
   ASourceProxyList: TPressOPFBulkProxyList; ABaseClass: TPressObjectClass;
-  AAttributes: TPressDAOAttributes);
+  AAttributes: TPressSessionAttributes);
 begin
   inherited Create(AObjectMapper, AAttributes);
   FSourceProxyList := ASourceProxyList;
@@ -489,7 +489,7 @@ end;
 { TPressOPFBulkRefresh }
 
 constructor TPressOPFBulkRefresh.Create(AObjectMapper: TPressOPFObjectMapper;
-  AAttributes: TPressDAOAttributes; ASourceProxyList: TPressProxyList);
+  AAttributes: TPressSessionAttributes; ASourceProxyList: TPressProxyList);
 begin
   inherited Create(AObjectMapper, AAttributes);
   FSourceProxyList := ASourceProxyList;
@@ -683,7 +683,7 @@ end;
 
 constructor TPressOPFCustomBulkMap.Create(
   AOwner: TPressOPFCustomBulkRetrieve; AClass: TPressObjectClass;
-  AAttributes: TPressDAOAttributes);
+  AAttributes: TPressSessionAttributes);
 begin
   inherited Create;
   FObjectMapper := AOwner.ObjectMapper;
@@ -752,7 +752,7 @@ end;
 constructor TPressOPFBulkMapComplementary.Create(
   AOwner: TPressOPFBulkRetrieveComplementary;
   AClass, ABaseClass: TPressObjectClass;
-  AAttributes: TPressDAOAttributes);
+  AAttributes: TPressSessionAttributes);
 begin
   inherited Create(AOwner, AClass, AAttributes);
   FBaseClass := ABaseClass;

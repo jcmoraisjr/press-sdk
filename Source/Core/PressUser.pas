@@ -55,11 +55,11 @@ type
   TPressCustomUserData = class(TPressService)
   private
     FCurrentUser: TPressCustomUser;
-    FDataAccess: IPressDAO;
+    FDataAccess: IPressSession;
     function GetCurrentUser: TPressCustomUser;
-    function GetDataAccess: IPressDAO;
+    function GetDataAccess: IPressSession;
     function GetHasUser: Boolean;
-    procedure SetDataAccess(AValue: IPressDAO);
+    procedure SetDataAccess(AValue: IPressSession);
   protected
     procedure DoneService; override;
     procedure Finit; override;
@@ -72,7 +72,7 @@ type
     function Logon(const AUserId: string = ''; const APassword: string = ''): Boolean;
     function QueryUser(const AUserId, APassword: string): TPressCustomUser;
     property CurrentUser: TPressCustomUser read GetCurrentUser;
-    property DataAccess: IPressDAO read GetDataAccess write SetDataAccess;
+    property DataAccess: IPressSession read GetDataAccess write SetDataAccess;
     property HasUser: Boolean read GetHasUser;
     property User: TPressCustomUser read FCurrentUser;
   end;
@@ -134,10 +134,10 @@ begin
   Result := FCurrentUser;
 end;
 
-function TPressCustomUserData.GetDataAccess: IPressDAO;
+function TPressCustomUserData.GetDataAccess: IPressSession;
 begin
   if not Assigned(FDataAccess) then
-    FDataAccess := PressDefaultDAO;
+    FDataAccess := PressDefaultSession;
   Result := FDataAccess;
 end;
 
@@ -203,7 +203,7 @@ begin
   Result := InternalQueryUser(AUserId, APassword);
 end;
 
-procedure TPressCustomUserData.SetDataAccess(AValue: IPressDAO);
+procedure TPressCustomUserData.SetDataAccess(AValue: IPressSession);
 begin
   FDataAccess := AValue;
 end;

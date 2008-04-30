@@ -69,7 +69,7 @@ type
     FMaps: TPressOPFStorageMapList;
     FMetadata: TPressObjectMetadata;
   protected
-    function BuildFieldList(AFieldListType: TPressOPFFieldListType; AHelperFields: TPressOPFHelperFields; AMaps: TPressOPFStorageMapArray = nil; AAttributes: TPressDAOAttributes = nil): string;
+    function BuildFieldList(AFieldListType: TPressOPFFieldListType; AHelperFields: TPressOPFHelperFields; AMaps: TPressOPFStorageMapArray = nil; AAttributes: TPressSessionAttributes = nil): string;
     function BuildKeyName(AMaps: TPressOPFStorageMapArray): string;
     function BuildLinkList(const APrefix: string; AMetadata: TPressAttributeMetadata): string;
     function BuildMapArray(ABaseClass: TPressObjectClass): TPressOPFStorageMapArray;
@@ -88,9 +88,9 @@ type
     function InsertLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
     function InsertStatement: string; virtual;
     function SelectAttributeStatement(AAttribute: TPressAttributeMetadata): string;
-    function SelectGroupStatement(AIdCount: Integer; ABaseClass: TPressObjectClass = nil; AAttributes: TPressDAOAttributes = nil): string; virtual;
+    function SelectGroupStatement(AIdCount: Integer; ABaseClass: TPressObjectClass = nil; AAttributes: TPressSessionAttributes = nil): string; virtual;
     function SelectLinkStatement(AMetadata: TPressAttributeMetadata): string; virtual;
-    function SelectStatement(ABaseClass: TPressObjectClass = nil; AAttributes: TPressDAOAttributes = nil): string; virtual;
+    function SelectStatement(ABaseClass: TPressObjectClass = nil; AAttributes: TPressSessionAttributes = nil): string; virtual;
     function UpdateStatement(AObject: TPressObject): string; virtual;
   end;
 
@@ -384,7 +384,7 @@ function TPressOPFDMLBuilder.BuildFieldList(
   AFieldListType: TPressOPFFieldListType;
   AHelperFields: TPressOPFHelperFields;
   AMaps: TPressOPFStorageMapArray;
-  AAttributes: TPressDAOAttributes): string;
+  AAttributes: TPressSessionAttributes): string;
 
   function IncludeAttribute(AAttribute: TPressAttributeMetadata): Boolean;
   begin
@@ -661,7 +661,7 @@ end;
 
 function TPressOPFDMLBuilder.SelectGroupStatement(
   AIdCount: Integer; ABaseClass: TPressObjectClass;
-  AAttributes: TPressDAOAttributes): string;
+  AAttributes: TPressSessionAttributes): string;
 var
   VMaps: TPressOPFStorageMapArray;
 begin
@@ -686,7 +686,7 @@ begin
 end;
 
 function TPressOPFDMLBuilder.SelectStatement(
-  ABaseClass: TPressObjectClass; AAttributes: TPressDAOAttributes): string;
+  ABaseClass: TPressObjectClass; AAttributes: TPressSessionAttributes): string;
 var
   VMaps: TPressOPFStorageMapArray;
 begin

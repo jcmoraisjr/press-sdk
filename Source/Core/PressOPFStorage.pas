@@ -568,14 +568,14 @@ var
   VInstance: TPressInstanceClass;
   I: Integer;
 begin
-  { TODO : Remove coupling with the default DAO }
+  { TODO : Remove coupling with the default Session }
   if not Assigned(FClassIdList) or not Assigned(FClassNameList) then
   begin
     FreeAndNil(FClassIdList);
     FreeAndNil(FClassNameList);
     FClassIdList := TStringList.Create;
     FClassNameList := TStringList.Create;
-    VObjects := PressDefaultDAO.OQLQuery(
+    VObjects := PressDefaultSession.OQLQuery(
      'select * from ' + TPressInstanceClass.ClassName);
     try
       for I := 0 to Pred(VObjects.Count) do
@@ -601,7 +601,7 @@ var
   VInstance: TPressInstanceClass;
   VIndex: Integer;
 begin
-  { TODO : Remove coupling with the default DAO }
+  { TODO : Remove coupling with the default Session }
   if HasClassIdStorage and (AClassName <> '') then
   begin
     VIndex := FindClass(FClassNameList, AClassName);
@@ -613,7 +613,7 @@ begin
       VInstance := TPressInstanceClass.Create;
       try
         VInstance.ObjectClassName := AClassName;
-        PressDefaultDAO.Store(VInstance);
+        PressDefaultSession.Store(VInstance);
         Result := VInstance.Id;
         FClassNameList.Add(AClassName);
         FClassIdList.Add(Result);

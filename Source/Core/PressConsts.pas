@@ -55,7 +55,7 @@ const
   SPressViewAccessorName = '_View';
   SPressSubjectAccessorName = '_Subject';
   SPressUserAdminId = 'admin';
-  SPressDAOServiceName = 'DAO';
+  SPressSessionServiceName = 'Session';
   SPressOIDGeneratorServiceName = 'OIDGen';
   SPressOPFBrokerServiceName = 'OPFBroker';
   SPressUserServiceName = 'User';

@@ -665,7 +665,7 @@ type
   public
     function Add(AClass: TPressObjectClass = nil): TPressObject; overload;
     function Add(AObject: TPressObject): Integer; overload;
-    function AddReference(const AClassName, AId: string; ADataAccess: IPressDAO): Integer;
+    function AddReference(const AClassName, AId: string; ADataAccess: IPressSession): Integer;
     procedure Assign(Source: TPersistent); override;
     procedure AssignProxyList(AProxyList: TPressProxyList);
     procedure BulkRetrieve(AStartingAt, AItemCount: Integer; const AAttributes: string);
@@ -3543,7 +3543,7 @@ begin
   Result := TPressObject(AClass.NewInstance);
   try
     // lacks inherited Create
-    TPressObjectFriend(Result).InitInstance(PressDefaultDAO, nil);
+    TPressObjectFriend(Result).InitInstance(PressDefaultSession, nil);
     Add(Result);
     TPressObjectFriend(Result).AfterCreate;
     if InternalProxyType = ptShared then
@@ -3561,7 +3561,7 @@ begin
 end;
 
 function TPressItems.AddReference(
-  const AClassName, AId: string; ADataAccess: IPressDAO): Integer;
+  const AClassName, AId: string; ADataAccess: IPressSession): Integer;
 begin
   Result := ProxyList.AddReference(AClassName, AId, ADataAccess);
 end;

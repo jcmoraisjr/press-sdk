@@ -52,14 +52,14 @@ type
   public
     constructor Create(APersistence: TPressPersistence; AStorageModel: TPressOPFStorageModel; AConnector: TPressOPFConnector);
     destructor Destroy; override;
-    procedure BulkRefresh(AProxyList: TPressProxyList; AAttributes: TPressDAOAttributes);
-    procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer; AAttributes: TPressDAOAttributes);
+    procedure BulkRefresh(AProxyList: TPressProxyList; AAttributes: TPressSessionAttributes);
+    procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer; AAttributes: TPressSessionAttributes);
     function CreateDatabaseStatement(ACreateClearDatabaseStatements: Boolean = False): string;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function DMLBuilderClass: TPressOPFDMLBuilderClass;
     procedure Load(AObject: TPressObject; AIncludeLazyLoading: Boolean);
     procedure Refresh(AObject: TPressObject);
-    function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressDAOAttributes): TPressObject;
+    function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressSessionAttributes): TPressObject;
     procedure RetrieveAttribute(AAttribute: TPressAttribute);
     procedure Rollback;
     procedure Store(AObject: TPressObject);
@@ -104,17 +104,17 @@ type
     function GetDDLBuilder: TPressOPFDDLBuilder;
     function InsertDataset: TPressOPFDataset;
     function SelectAttributeDataset(AAttribute: TPressAttribute): TPressOPFDataset;
-    function SelectBaseDataset(AAttributes: TPressDAOAttributes): TPressOPFDataset;
-    function SelectBaseGroupDataset(AIdCount: Integer; AAttributes: TPressDAOAttributes): TPressOPFDataset;
-    function SelectComplementaryDataset(ABaseClass: TPressObjectClass; AAttributes: TPressDAOAttributes): TPressOPFDataset;
-    function SelectComplementaryGroupDataset(AIdCount: Integer; ABaseClass: TPressObjectClass; AAttributes: TPressDAOAttributes): TPressOPFDataset;
+    function SelectBaseDataset(AAttributes: TPressSessionAttributes): TPressOPFDataset;
+    function SelectBaseGroupDataset(AIdCount: Integer; AAttributes: TPressSessionAttributes): TPressOPFDataset;
+    function SelectComplementaryDataset(ABaseClass: TPressObjectClass; AAttributes: TPressSessionAttributes): TPressOPFDataset;
+    function SelectComplementaryGroupDataset(AIdCount: Integer; ABaseClass: TPressObjectClass; AAttributes: TPressSessionAttributes): TPressOPFDataset;
     function UpdateDataset(AObject: TPressObject): TPressOPFDataset;
   protected
-    function CreateObject(AClass: TPressObjectClass; AMetadata: TPressObjectMetadata; const AId: string; ADataRow: TPressOPFDataRow; AAttributes: TPressDAOAttributes): TPressObject;
+    function CreateObject(AClass: TPressObjectClass; AMetadata: TPressObjectMetadata; const AId: string; ADataRow: TPressOPFDataRow; AAttributes: TPressSessionAttributes): TPressObject;
     procedure DoConcurrencyError(AObject: TPressObject); virtual;
     procedure ReadAttribute(AAttribute: TPressAttribute; ADataRow: TPressOPFDataRow; var ADatasetCache: TPressOPFDataset);
-    procedure ReadAttributes(AObject: TPressObject; ADataRow: TPressOPFDataRow; AAttributes: TPressDAOAttributes);
-    procedure ReadObject(AObject: TPressObject; ABaseClass: TPressObjectClass; ADataRow: TPressOPFDataRow; AAttributes: TPressDAOAttributes);
+    procedure ReadAttributes(AObject: TPressObject; ADataRow: TPressOPFDataRow; AAttributes: TPressSessionAttributes);
+    procedure ReadObject(AObject: TPressObject; ABaseClass: TPressObjectClass; ADataRow: TPressOPFDataRow; AAttributes: TPressSessionAttributes);
     function ResolveClassType(ADataRow: TPressOPFDataRow): TPressObjectClass;
     property Connector: TPressOPFConnector read FConnector;
     property DDLBuilder: TPressOPFDDLBuilder read GetDDLBuilder;
@@ -126,12 +126,12 @@ type
     destructor Destroy; override;
     procedure DisposeObject(AObject: TPressObject);
     procedure DisposeRecord(const AId: string);
-    procedure RefreshStructures(AObjects: array of TPressObject; AAttributes: TPressDAOAttributes);
+    procedure RefreshStructures(AObjects: array of TPressObject; AAttributes: TPressSessionAttributes);
     procedure RetrieveAttribute(AAttribute: TPressAttribute);
-    function RetrieveBaseMaps(const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressDAOAttributes): TPressObject;
-    procedure RetrieveBaseMapsList(AIDs: TPressStringArray; AObjects: TPressObjectList; AAttributes: TPressDAOAttributes);
-    procedure RetrieveComplementaryMaps(AObject: TPressObject; ABaseClass: TPressObjectClass; AAttributes: TPressDAOAttributes);
-    procedure RetrieveComplementaryMapsArray(AObjects: array of TPressObject; ABaseClass: TPressObjectClass; AAttributes: TPressDAOAttributes);
+    function RetrieveBaseMaps(const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressSessionAttributes): TPressObject;
+    procedure RetrieveBaseMapsList(AIDs: TPressStringArray; AObjects: TPressObjectList; AAttributes: TPressSessionAttributes);
+    procedure RetrieveComplementaryMaps(AObject: TPressObject; ABaseClass: TPressObjectClass; AAttributes: TPressSessionAttributes);
+    procedure RetrieveComplementaryMapsArray(AObjects: array of TPressObject; ABaseClass: TPressObjectClass; AAttributes: TPressSessionAttributes);
     procedure Store(AObject: TPressObject);
     property Map: TPressOPFStorageMap read FMap;
     property Maps: TPressOPFStorageMapList read FMaps;
@@ -149,7 +149,7 @@ uses
 { TPressOPFObjectMapper }
 
 procedure TPressOPFObjectMapper.BulkRefresh(
-  AProxyList: TPressProxyList; AAttributes: TPressDAOAttributes);
+  AProxyList: TPressProxyList; AAttributes: TPressSessionAttributes);
 var
   VBulkRefresh: TPressOPFBulkRefresh;
 begin
@@ -163,7 +163,7 @@ end;
 
 procedure TPressOPFObjectMapper.BulkRetrieve(
   AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer;
-  AAttributes: TPressDAOAttributes);
+  AAttributes: TPressSessionAttributes);
 var
   VBulkRetrieve: TPressOPFBulkRetrieve;
 begin
@@ -302,9 +302,9 @@ end;
 procedure TPressOPFObjectMapper.Load(
   AObject: TPressObject; AIncludeLazyLoading: Boolean);
 var
-  VAttributes: TPressDAOAttributes;
+  VAttributes: TPressSessionAttributes;
 begin
-  VAttributes := TPressDAOAttributes.Create;
+  VAttributes := TPressSessionAttributes.Create;
   try
     VAttributes.AddUnloadedAttributes(AObject, AIncludeLazyLoading);
     if not VAttributes.IsEmpty then
@@ -319,14 +319,14 @@ procedure TPressOPFObjectMapper.Refresh(AObject: TPressObject);
 var
   VAttributeMapper: TPressOPFAttributeMapper;
   VMaps: TPressOPFStorageMapList;
-  VAttributes: TPressDAOAttributes;
+  VAttributes: TPressSessionAttributes;
 begin
   VMaps := StorageModel.Maps[AObject.ClassType];
   if VMaps.Count > 0 then
   begin
     AObject.Id := AObject.PersistentId;
     VAttributeMapper := AttributeMapper[VMaps.Last];
-    VAttributes := TPressDAOAttributes.Create('*');
+    VAttributes := TPressSessionAttributes.Create('*');
     try
       VAttributeMapper.RetrieveComplementaryMaps(AObject, nil, VAttributes);
       VAttributeMapper.RefreshStructures([AObject], VAttributes);
@@ -338,7 +338,7 @@ end;
 
 function TPressOPFObjectMapper.Retrieve(AClass: TPressObjectClass;
   const AId: string; AMetadata: TPressObjectMetadata;
-  AAttributes: TPressDAOAttributes): TPressObject;
+  AAttributes: TPressSessionAttributes): TPressObject;
 var
   VMaps: TPressOPFStorageMapList;
   VObject: TPressObject;
@@ -613,7 +613,7 @@ end;
 function TPressOPFAttributeMapper.CreateObject(
   AClass: TPressObjectClass; AMetadata: TPressObjectMetadata;
   const AId: string; ADataRow: TPressOPFDataRow;
-  AAttributes: TPressDAOAttributes): TPressObject;
+  AAttributes: TPressSessionAttributes): TPressObject;
 var
   VId: string;
   I: Integer;
@@ -826,7 +826,7 @@ end;
 
 procedure TPressOPFAttributeMapper.ReadAttributes(
   AObject: TPressObject; ADataRow: TPressOPFDataRow;
-  AAttributes: TPressDAOAttributes);
+  AAttributes: TPressSessionAttributes);
 var
   VDataset: TPressOPFDataset;
   VAttribute: TPressAttributeMetadata;
@@ -847,7 +847,7 @@ end;
 
 procedure TPressOPFAttributeMapper.ReadObject(AObject: TPressObject;
   ABaseClass: TPressObjectClass; ADataRow: TPressOPFDataRow;
-  AAttributes: TPressDAOAttributes);
+  AAttributes: TPressSessionAttributes);
 var
   I: Integer;
 begin
@@ -865,7 +865,7 @@ begin
 end;
 
 procedure TPressOPFAttributeMapper.RefreshStructures(
-  AObjects: array of TPressObject; AAttributes: TPressDAOAttributes);
+  AObjects: array of TPressObject; AAttributes: TPressSessionAttributes);
 var
   VProxyList: TPressProxyList;
 
@@ -964,7 +964,7 @@ end;
 
 function TPressOPFAttributeMapper.RetrieveBaseMaps(
   const AId: string; AMetadata: TPressObjectMetadata;
-  AAttributes: TPressDAOAttributes): TPressObject;
+  AAttributes: TPressSessionAttributes): TPressObject;
 var
   VDataset: TPressOPFDataset;
 begin
@@ -980,7 +980,7 @@ end;
 
 procedure TPressOPFAttributeMapper.RetrieveBaseMapsList(
   AIDs: TPressStringArray; AObjects: TPressObjectList;
-  AAttributes: TPressDAOAttributes);
+  AAttributes: TPressSessionAttributes);
 var
   VDataset: TPressOPFDataset;
   I: Integer;
@@ -995,7 +995,7 @@ end;
 
 procedure TPressOPFAttributeMapper.RetrieveComplementaryMaps(
   AObject: TPressObject; ABaseClass: TPressObjectClass;
-  AAttributes: TPressDAOAttributes);
+  AAttributes: TPressSessionAttributes);
 var
   VDataset: TPressOPFDataset;
 begin
@@ -1011,7 +1011,7 @@ end;
 
 procedure TPressOPFAttributeMapper.RetrieveComplementaryMapsArray(
   AObjects: array of TPressObject; ABaseClass: TPressObjectClass;
-  AAttributes: TPressDAOAttributes);
+  AAttributes: TPressSessionAttributes);
 
   function BuildIDs: TPressStringArray;
   var
@@ -1067,7 +1067,7 @@ begin
 end;
 
 function TPressOPFAttributeMapper.SelectBaseDataset(
-  AAttributes: TPressDAOAttributes): TPressOPFDataset;
+  AAttributes: TPressSessionAttributes): TPressOPFDataset;
 begin
   if not Assigned(FSelectBaseDataset) then
     FSelectBaseDataset := Connector.CreateDataset;
@@ -1076,7 +1076,7 @@ begin
 end;
 
 function TPressOPFAttributeMapper.SelectBaseGroupDataset(
-  AIdCount: Integer; AAttributes: TPressDAOAttributes): TPressOPFDataset;
+  AIdCount: Integer; AAttributes: TPressSessionAttributes): TPressOPFDataset;
 begin
   if not Assigned(FSelectBaseGroupDataset) then
     FSelectBaseGroupDataset := Connector.CreateDataset;
@@ -1087,7 +1087,7 @@ end;
 
 function TPressOPFAttributeMapper.SelectComplementaryDataset(
   ABaseClass: TPressObjectClass;
-  AAttributes: TPressDAOAttributes): TPressOPFDataset;
+  AAttributes: TPressSessionAttributes): TPressOPFDataset;
 begin
   if not Assigned(FSelectComplementaryDataset) then
     FSelectComplementaryDataset := Connector.CreateDataset;
@@ -1098,7 +1098,7 @@ end;
 
 function TPressOPFAttributeMapper.SelectComplementaryGroupDataset(
   AIdCount: Integer; ABaseClass: TPressObjectClass;
-  AAttributes: TPressDAOAttributes): TPressOPFDataset;
+  AAttributes: TPressSessionAttributes): TPressOPFDataset;
 begin
   if not Assigned(FSelectComplementaryGroupDataset) then
     FSelectComplementaryGroupDataset := Connector.CreateDataset;

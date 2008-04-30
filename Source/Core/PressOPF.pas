@@ -26,7 +26,7 @@ uses
   PressOPFMapper;
 
 const
-  CPressOPFBrokerService = CPressDataAccessServicesBase + $0003;
+  CPressOPFBrokerService = CPressSessionServicesBase + $0003;
 
 type
   TPressOPFBroker = class;
@@ -45,7 +45,7 @@ type
     function CreatePressObject(AClass: TPressObjectClass; ADataset: TPressOPFDataset; ADatasetIndex: Integer): TPressObject;
     procedure DoneService; override;
     procedure Finit; override;
-    procedure InternalBulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer; AAttributes: TPressDAOAttributes); override;
+    procedure InternalBulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer; AAttributes: TPressSessionAttributes); override;
     procedure InternalCommit; override;
     function InternalDBMSName: string; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
@@ -56,7 +56,7 @@ type
     procedure InternalLoad(AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean); override;
     function InternalOQLQuery(const AOQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
     procedure InternalRefresh(AObject: TPressObject); override;
-    function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressDAOAttributes): TPressObject; override;
+    function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressSessionAttributes): TPressObject; override;
     procedure InternalRetrieveAttribute(AAttribute: TPressAttribute); override;
     procedure InternalRollback; override;
     procedure InternalShowConnectionManager; override;
@@ -121,7 +121,7 @@ function PressOPFService: TPressOPF;
 begin
   if not Assigned(_PressOPFService) then
   begin
-    PressDefaultDAO;
+    PressDefaultSession;
     if not Assigned(_PressOPFService) then
       raise EPressOPFError.Create(SUnassignedPersistenceService);
   end;
@@ -198,7 +198,7 @@ end;
 
 procedure TPressOPF.InternalBulkRetrieve(
   AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer;
-  AAttributes: TPressDAOAttributes);
+  AAttributes: TPressSessionAttributes);
 begin
   Mapper.BulkRetrieve(AProxyList, AStartingAt, AItemCount, AAttributes);
 end;
@@ -323,7 +323,7 @@ end;
 
 function TPressOPF.InternalRetrieve(AClass: TPressObjectClass;
   const AId: string; AMetadata: TPressObjectMetadata;
-  AAttributes: TPressDAOAttributes): TPressObject;
+  AAttributes: TPressSessionAttributes): TPressObject;
 begin
   Result := Mapper.Retrieve(AClass, AId, AMetadata, AAttributes);
 end;
@@ -478,7 +478,7 @@ var
   VOPFClass: TPressServiceClass;
   VOPF: TPressOPF;
 begin
-  VOPFClass := PressApp.DefaultServiceClass(CPressDAOService);
+  VOPFClass := PressApp.DefaultServiceClass(CPressSessionService);
   if not VOPFClass.InheritsFrom(TPressOPF) then
     VOPFClass := TPressOPF;
   VOPF := VOPFClass.Create as TPressOPF;

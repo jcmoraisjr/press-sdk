@@ -1,5 +1,5 @@
 (*
-  PressObjects, DAO + Persistence Interface Classes
+  PressObjects, Session Classes
   Copyright (C) 2006-2008 Laserpress Ltda.
 
   http://www.pressobjects.org
@@ -27,12 +27,12 @@ uses
   PressSubject;
 
 const
-  CPressOIDGeneratorService = CPressDataAccessServicesBase + $0002;
+  CPressOIDGeneratorService = CPressSessionServicesBase + $0002;
 
 type
-  TPressDAOCacheClass = class of TPressDAOCache;
+  TPressSessionCacheClass = class of TPressSessionCache;
 
-  TPressDAOCache = class(TObject)
+  TPressSessionCache = class(TObject)
   private
     { TODO : Implement binary tree }
     { TODO : Implement IsBroken support }
@@ -50,7 +50,7 @@ type
     function RemoveObject(AObject: TPressObject): Integer; virtual;
   end;
 
-  TPressDAOAttributes = class(TObject)
+  TPressSessionAttributes = class(TObject)
   private
     FList: TStringList;
     function GetItems(AIndex: Integer): string;
@@ -60,16 +60,16 @@ type
     procedure Add(const AAttribute: string);
     procedure AddUnloadedAttributes(AObject: TPressObject; AIncludeLazyLoading: Boolean);
     function Count: Integer;
-    function CreatePathAttributes: TPressDAOAttributes;
+    function CreatePathAttributes: TPressSessionAttributes;
     function IsEmpty: Boolean;
     function Include(AAttribute: TPressAttributeMetadata): Boolean;
     property Items[AIndex: Integer]: string read GetItems; default;
   end;
 
-  TPressDAO = class(TPressService, IPressDAO)
+  TPressSession = class(TPressService, IPressSession)
   private
     { TODO : Implement transacted object control }
-    FCache: TPressDAOCache;
+    FCache: TPressSessionCache;
     FLazyCommit: Boolean;
     FNotifier: TPressNotifier;
     FTransactionLevel: Integer;
@@ -78,8 +78,8 @@ type
   protected
     procedure DoneService; override;
     procedure Finit; override;
-    procedure InternalBulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer; AAttributes: TPressDAOAttributes); virtual;
-    function InternalCacheClass: TPressDAOCacheClass; virtual;
+    procedure InternalBulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer; AAttributes: TPressSessionAttributes); virtual;
+    function InternalCacheClass: TPressSessionCacheClass; virtual;
     procedure InternalCommit; virtual;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); virtual;
     function InternalExecuteStatement(const AStatement: string; AParams: TPressParamList): Integer; virtual;
@@ -89,7 +89,7 @@ type
     procedure InternalLoad(AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean); virtual;
     function InternalOQLQuery(const AOQLStatement: string; AParams: TPressParamList): TPressProxyList; virtual;
     procedure InternalRefresh(AObject: TPressObject); virtual;
-    function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressDAOAttributes): TPressObject; virtual;
+    function InternalRetrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressSessionAttributes): TPressObject; virtual;
     procedure InternalRetrieveAttribute(AAttribute: TPressAttribute); virtual;
     function InternalRetrieveQuery(AQuery: TPressQuery): TPressProxyList; virtual;
     procedure InternalRollback; virtual;
@@ -100,7 +100,7 @@ type
     procedure InternalStartTransaction; virtual;
     procedure InternalStore(AObject: TPressObject); virtual;
     function UnsupportedFeatureError(const AFeatureName: string): EPressError;
-    property Cache: TPressDAOCache read FCache;
+    property Cache: TPressSessionCache read FCache;
   public
     constructor Create; override;
     function CreateObject(AClass: TPressObjectClass; AMetadata: TPressObjectMetadata): TPressObject;
@@ -141,7 +141,7 @@ type
     procedure ReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
   end;
 
-  TPressPersistence = class(TPressDAO)
+  TPressPersistence = class(TPressSession)
   private
     FOIDGenerator: TPressOIDGenerator;
     function GetOIDGenerator: TPressOIDGenerator;
@@ -167,7 +167,7 @@ type
     property PressObject: TPressObject read FPressObject;
   end;
 
-  TPressThirdPartyPersistenceCache = class(TPressDAOCache)
+  TPressThirdPartyPersistenceCache = class(TPressSessionCache)
   private
     FPersistentObjectLinkList: TObjectList;
     function GetPersistentObjectLink(AIndex: Integer): TPressPersistentObjectLink;
@@ -189,7 +189,7 @@ type
     function GetPersistentObject(APressObject: TPressObject): TObject;
     procedure SetPersistentObject(APressObject: TPressObject; AValue: TObject);
   protected
-    function InternalCacheClass: TPressDAOCacheClass; override;
+    function InternalCacheClass: TPressSessionCacheClass; override;
     property Cache: TPressThirdPartyPersistenceCache read GetCache;
     property PersistentObject[APressObject: TPressObject]: TObject read GetPersistentObject write SetPersistentObject;
   end;
@@ -207,34 +207,34 @@ uses
 type
   TPressObjectFriend = class(TPressObject);
 
-  TPressDAOCommit = class(TPressEvent)
+  TPressSessionCommit = class(TPressEvent)
   end;
 
-{ TPressDAOCache }
+{ TPressSessionCache }
 
-procedure TPressDAOCache.AddObject(AObject: TPressObject);
+procedure TPressSessionCache.AddObject(AObject: TPressObject);
 begin
   ObjectList.Add(AObject);
 end;
 
-constructor TPressDAOCache.Create;
+constructor TPressSessionCache.Create;
 begin
   inherited Create;
   FObjectList := TPressObjectList.Create(False);
 end;
 
-function TPressDAOCache.CreateIterator: TPressObjectIterator;
+function TPressSessionCache.CreateIterator: TPressObjectIterator;
 begin
   Result := ObjectList.CreateIterator;
 end;
 
-destructor TPressDAOCache.Destroy;
+destructor TPressSessionCache.Destroy;
 begin
   FObjectList.Free;
   inherited;
 end;
 
-function TPressDAOCache.FindObject(
+function TPressSessionCache.FindObject(
   AClass: TPressObjectClass; const AId: string): TPressObject;
 var
   I: Integer;
@@ -250,29 +250,29 @@ begin
   Result := nil;
 end;
 
-function TPressDAOCache.HasObject: Boolean;
+function TPressSessionCache.HasObject: Boolean;
 begin
   Result := Assigned(FObjectList) and (FObjectList.Count > 0);
 end;
 
-procedure TPressDAOCache.ReleaseObjects;
+procedure TPressSessionCache.ReleaseObjects;
 begin
   { TODO : IsBroken support }
 end;
 
-function TPressDAOCache.RemoveObject(AObject: TPressObject): Integer;
+function TPressSessionCache.RemoveObject(AObject: TPressObject): Integer;
 begin
   Result := ObjectList.Remove(AObject);
 end;
 
-{ TPressDAOAttributes }
+{ TPressSessionAttributes }
 
-procedure TPressDAOAttributes.Add(const AAttribute: string);
+procedure TPressSessionAttributes.Add(const AAttribute: string);
 begin
   FList.Add(AAttribute);
 end;
 
-procedure TPressDAOAttributes.AddUnloadedAttributes(
+procedure TPressSessionAttributes.AddUnloadedAttributes(
   AObject: TPressObject; AIncludeLazyLoading: Boolean);
 var
   VAttribute: TPressAttribute;
@@ -293,12 +293,12 @@ begin
   end;
 end;
 
-function TPressDAOAttributes.Count: Integer;
+function TPressSessionAttributes.Count: Integer;
 begin
   Result := FList.Count;
 end;
 
-constructor TPressDAOAttributes.Create(const AAttributes: string);
+constructor TPressSessionAttributes.Create(const AAttributes: string);
 begin
   inherited Create;
   FList := TStringList.Create;
@@ -307,11 +307,11 @@ begin
   FList.CommaText := StringReplace(AAttributes, ';', ',', [rfReplaceAll]);
 end;
 
-function TPressDAOAttributes.CreatePathAttributes: TPressDAOAttributes;
+function TPressSessionAttributes.CreatePathAttributes: TPressSessionAttributes;
 var
   I: Integer;
 begin
-  Result := TPressDAOAttributes.Create;
+  Result := TPressSessionAttributes.Create;
   try
     for I := 0 to Pred(FList.Count) do
       if Pos(SPressAttributeSeparator, FList[I]) > 0 then
@@ -322,18 +322,18 @@ begin
   end;
 end;
 
-destructor TPressDAOAttributes.Destroy;
+destructor TPressSessionAttributes.Destroy;
 begin
   FList.Free;
   inherited;
 end;
 
-function TPressDAOAttributes.GetItems(AIndex: Integer): string;
+function TPressSessionAttributes.GetItems(AIndex: Integer): string;
 begin
   Result := FList[AIndex];
 end;
 
-function TPressDAOAttributes.Include(
+function TPressSessionAttributes.Include(
   AAttribute: TPressAttributeMetadata): Boolean;
 var
   VAttribute: string;
@@ -351,29 +351,29 @@ begin
   end;
 end;
 
-function TPressDAOAttributes.IsEmpty: Boolean;
+function TPressSessionAttributes.IsEmpty: Boolean;
 begin
   Result := FList.Count = 0;
 end;
 
-{ TPressDAO }
+{ TPressSession }
 
-procedure TPressDAO.AssignObject(AObject: TPressObject);
+procedure TPressSession.AssignObject(AObject: TPressObject);
 begin
   FCache.AddObject(AObject);
 end;
 
-procedure TPressDAO.BulkRetrieve(
+procedure TPressSession.BulkRetrieve(
   AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer;
   const AAttributes: string);
 var
-  VAttributes: TPressDAOAttributes;
+  VAttributes: TPressSessionAttributes;
 begin
   if not InternalImplementsBulkRetrieve then
     Exit;
   StartTransaction;
   try
-    VAttributes := TPressDAOAttributes.Create(AAttributes);
+    VAttributes := TPressSessionAttributes.Create(AAttributes);
     try
       InternalBulkRetrieve(AProxyList, AStartingAt, AItemCount, VAttributes);
     finally
@@ -386,14 +386,14 @@ begin
   end;
 end;
 
-procedure TPressDAO.Commit;
+procedure TPressSession.Commit;
 begin
   if FTransactionLevel < 1 then
     Exit;
   if FTransactionLevel > 1 then
     Dec(FTransactionLevel)
   else if LazyCommit then
-    TPressDAOCommit.Create(Self).QueueNotification
+    TPressSessionCommit.Create(Self).QueueNotification
   else
   begin
     FTransactionLevel := 0;
@@ -401,15 +401,15 @@ begin
   end;
 end;
 
-constructor TPressDAO.Create;
+constructor TPressSession.Create;
 begin
   inherited;
   FCache := InternalCacheClass.Create;
   FNotifier := TPressNotifier.Create({$ifdef FPC}@{$endif}Notify);
-  FNotifier.AddNotificationItem(Self, [TPressDAOCommit]);
+  FNotifier.AddNotificationItem(Self, [TPressSessionCommit]);
 end;
 
-function TPressDAO.CreateObject(AClass: TPressObjectClass;
+function TPressSession.CreateObject(AClass: TPressObjectClass;
   AMetadata: TPressObjectMetadata): TPressObject;
 begin
   Result := TPressObject(AClass.NewInstance);
@@ -422,7 +422,7 @@ begin
   end;
 end;
 
-procedure TPressDAO.Dispose(AClass: TPressObjectClass; const AId: string);
+procedure TPressSession.Dispose(AClass: TPressObjectClass; const AId: string);
 var
   VObject: TPressObject;
 begin
@@ -457,19 +457,19 @@ begin
   end;
 end;
 
-procedure TPressDAO.DisposeObject(AObject: TPressObject);
+procedure TPressSession.DisposeObject(AObject: TPressObject);
 begin
   InternalDispose(AObject.ClassType, AObject.PersistentId);
 end;
 
-procedure TPressDAO.DoneService;
+procedure TPressSession.DoneService;
 begin
   inherited;
   if Assigned(Cache) then
     Cache.ReleaseObjects;
 end;
 
-function TPressDAO.ExecuteStatement(
+function TPressSession.ExecuteStatement(
   const AStatement: string; AParams: TPressParamList): Integer;
 begin
   StartTransaction;
@@ -482,94 +482,94 @@ begin
   end;
 end;
 
-procedure TPressDAO.Finit;
+procedure TPressSession.Finit;
 begin
   FNotifier.Free;
   FCache.Free;
   inherited;
 end;
 
-function TPressDAO.GenerateOID(AClass: TPressObjectClass;
+function TPressSession.GenerateOID(AClass: TPressObjectClass;
   const AAttributeName: string): string;
 begin
   Result := InternalGenerateOID(AClass, AAttributeName);
 end;
 
-procedure TPressDAO.InternalBulkRetrieve(
+procedure TPressSession.InternalBulkRetrieve(
   AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer;
-  AAttributes: TPressDAOAttributes);
+  AAttributes: TPressSessionAttributes);
 begin
   raise UnsupportedFeatureError('Bulk retrieve');
 end;
 
-function TPressDAO.InternalCacheClass: TPressDAOCacheClass;
+function TPressSession.InternalCacheClass: TPressSessionCacheClass;
 begin
-  Result := TPressDAOCache;
+  Result := TPressSessionCache;
 end;
 
-procedure TPressDAO.InternalCommit;
+procedure TPressSession.InternalCommit;
 begin
   raise UnsupportedFeatureError('Commit transaction');
 end;
 
-procedure TPressDAO.InternalDispose(
+procedure TPressSession.InternalDispose(
   AClass: TPressObjectClass; const AId: string);
 begin
   raise UnsupportedFeatureError('Dispose object');
 end;
 
-function TPressDAO.InternalExecuteStatement(
+function TPressSession.InternalExecuteStatement(
   const AStatement: string; AParams: TPressParamList): Integer;
 begin
   raise UnsupportedFeatureError('Execute statement');
 end;
 
-function TPressDAO.InternalGenerateOID(AClass: TPressObjectClass;
+function TPressSession.InternalGenerateOID(AClass: TPressObjectClass;
   const AAttributeName: string): string;
 begin
   raise UnsupportedFeatureError('Generator');
 end;
 
-function TPressDAO.InternalImplementsBulkRetrieve: Boolean;
+function TPressSession.InternalImplementsBulkRetrieve: Boolean;
 begin
   Result := False;
 end;
 
-function TPressDAO.InternalImplementsLazyLoading: Boolean;
+function TPressSession.InternalImplementsLazyLoading: Boolean;
 begin
   Result := False;
 end;
 
-procedure TPressDAO.InternalLoad(
+procedure TPressSession.InternalLoad(
   AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean);
 begin
   raise UnsupportedFeatureError('Load object');
 end;
 
-function TPressDAO.InternalOQLQuery(
+function TPressSession.InternalOQLQuery(
   const AOQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   raise UnsupportedFeatureError('OQL Query');
 end;
 
-procedure TPressDAO.InternalRefresh(AObject: TPressObject);
+procedure TPressSession.InternalRefresh(AObject: TPressObject);
 begin
   raise UnsupportedFeatureError('Refresh object');
 end;
 
-function TPressDAO.InternalRetrieve(
+function TPressSession.InternalRetrieve(
   AClass: TPressObjectClass; const AId: string;
-  AMetadata: TPressObjectMetadata; AAttributes: TPressDAOAttributes): TPressObject;
+  AMetadata: TPressObjectMetadata; AAttributes: TPressSessionAttributes): TPressObject;
 begin
   raise UnsupportedFeatureError('Retrieve object');
 end;
 
-procedure TPressDAO.InternalRetrieveAttribute(AAttribute: TPressAttribute);
+procedure TPressSession.InternalRetrieveAttribute(AAttribute: TPressAttribute);
 begin
   raise UnsupportedFeatureError('Retrieve attribute');
 end;
 
-function TPressDAO.InternalRetrieveQuery(
+function TPressSession.InternalRetrieveQuery(
   AQuery: TPressQuery): TPressProxyList;
 
   function SelectPart: string;
@@ -624,43 +624,43 @@ begin
   end;
 end;
 
-procedure TPressDAO.InternalRollback;
+procedure TPressSession.InternalRollback;
 begin
   raise UnsupportedFeatureError('Rollback transaction');
 end;
 
-class function TPressDAO.InternalServiceType: TPressServiceType;
+class function TPressSession.InternalServiceType: TPressServiceType;
 begin
-  Result := CPressDAOService;
+  Result := CPressSessionService;
 end;
 
-procedure TPressDAO.InternalShowConnectionManager;
+procedure TPressSession.InternalShowConnectionManager;
 begin
 end;
 
-function TPressDAO.InternalSQLProxy(
+function TPressSession.InternalSQLProxy(
   const ASQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   raise UnsupportedFeatureError('SQL Proxy');
 end;
 
-function TPressDAO.InternalSQLQuery(AClass: TPressObjectClass;
+function TPressSession.InternalSQLQuery(AClass: TPressObjectClass;
   const ASQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   raise UnsupportedFeatureError('SQL Query');
 end;
 
-procedure TPressDAO.InternalStartTransaction;
+procedure TPressSession.InternalStartTransaction;
 begin
   raise UnsupportedFeatureError('Start transaction');
 end;
 
-procedure TPressDAO.InternalStore(AObject: TPressObject);
+procedure TPressSession.InternalStore(AObject: TPressObject);
 begin
   raise UnsupportedFeatureError('Store object');
 end;
 
-procedure TPressDAO.Load(AObject: TPressObject;
+procedure TPressSession.Load(AObject: TPressObject;
   AIncludeLazyLoading, ALoadContainers: Boolean);
 begin
   if not InternalImplementsLazyLoading then
@@ -680,7 +680,7 @@ begin
   end;
 end;
 
-procedure TPressDAO.Notify(AEvent: TPressEvent);
+procedure TPressSession.Notify(AEvent: TPressEvent);
 begin
   if FTransactionLevel = 1 then
   begin
@@ -689,7 +689,7 @@ begin
   end;
 end;
 
-function TPressDAO.OQLQuery(
+function TPressSession.OQLQuery(
   const AOQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   StartTransaction;
@@ -702,7 +702,7 @@ begin
   end;
 end;
 
-procedure TPressDAO.Refresh(AObject: TPressObject);
+procedure TPressSession.Refresh(AObject: TPressObject);
 begin
   if not AObject.IsPersistent then
     Exit;
@@ -726,16 +726,16 @@ begin
   end;
 end;
 
-procedure TPressDAO.ReleaseObject(AObject: TPressObject);
+procedure TPressSession.ReleaseObject(AObject: TPressObject);
 begin
   Cache.RemoveObject(AObject);
 end;
 
-function TPressDAO.Retrieve(
+function TPressSession.Retrieve(
   AClass: TPressObjectClass; const AId: string;
   AMetadata: TPressObjectMetadata; const AAttributes: string): TPressObject;
 var
-  VAttributes: TPressDAOAttributes;
+  VAttributes: TPressSessionAttributes;
 begin
   Result := Cache.FindObject(AClass, AId);
   if Assigned(Result) then
@@ -747,7 +747,7 @@ begin
       {$ifdef PressLogDAOInterface}PressLogMsg(Self,
        Format('Retrieving %s(%s)', [AClass.ClassName, AId]));{$endif}
       { TODO : Ensure the class type of the retrieved object }
-      VAttributes := TPressDAOAttributes.Create(AAttributes);
+      VAttributes := TPressSessionAttributes.Create(AAttributes);
       try
         Result := InternalRetrieve(AClass, AId, AMetadata, VAttributes);
       finally
@@ -763,7 +763,7 @@ begin
   end;
 end;
 
-procedure TPressDAO.RetrieveAttribute(AAttribute: TPressAttribute);
+procedure TPressSession.RetrieveAttribute(AAttribute: TPressAttribute);
 begin
   if not InternalImplementsLazyLoading then
     Exit;
@@ -782,7 +782,7 @@ begin
   end;
 end;
 
-function TPressDAO.RetrieveQuery(AQuery: TPressQuery): TPressProxyList;
+function TPressSession.RetrieveQuery(AQuery: TPressQuery): TPressProxyList;
 begin
   StartTransaction;
   try
@@ -794,7 +794,7 @@ begin
   end;
 end;
 
-procedure TPressDAO.Rollback;
+procedure TPressSession.Rollback;
 begin
   if FTransactionLevel < 1 then
     Exit;
@@ -803,12 +803,12 @@ begin
     InternalRollback;
 end;
 
-procedure TPressDAO.ShowConnectionManager;
+procedure TPressSession.ShowConnectionManager;
 begin
   InternalShowConnectionManager;
 end;
 
-function TPressDAO.SQLProxy(
+function TPressSession.SQLProxy(
   const ASQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   StartTransaction;
@@ -821,7 +821,7 @@ begin
   end;
 end;
 
-function TPressDAO.SQLQuery(AClass: TPressObjectClass;
+function TPressSession.SQLQuery(AClass: TPressObjectClass;
   const ASQLStatement: string; AParams: TPressParamList): TPressProxyList;
 begin
   StartTransaction;
@@ -834,7 +834,7 @@ begin
   end;
 end;
 
-procedure TPressDAO.StartTransaction;
+procedure TPressSession.StartTransaction;
 begin
   if FTransactionLevel > 0 then
     Inc(FTransactionLevel)
@@ -845,7 +845,7 @@ begin
   end;
 end;
 
-procedure TPressDAO.Store(AObject: TPressObject);
+procedure TPressSession.Store(AObject: TPressObject);
 begin
   if Assigned(AObject) and not AObject.IsOwned and not AObject.IsUpdated then
   begin
@@ -878,7 +878,7 @@ begin
   end;
 end;
 
-procedure TPressDAO.SynchronizeProxy(AProxy: TPressProxy);
+procedure TPressSession.SynchronizeProxy(AProxy: TPressProxy);
 var
   VObject: TPressObject;
 begin
@@ -895,7 +895,7 @@ begin
   end;
 end;
 
-function TPressDAO.UnsupportedFeatureError(
+function TPressSession.UnsupportedFeatureError(
   const AFeatureName: string): EPressError;
 begin
   Result := EPressError.CreateFmt(SUnsupportedFeature, [AFeatureName]);
@@ -1073,7 +1073,7 @@ begin
     Result := nil;
 end;
 
-function TPressThirdPartyPersistence.InternalCacheClass: TPressDAOCacheClass;
+function TPressThirdPartyPersistence.InternalCacheClass: TPressSessionCacheClass;
 begin
   Result := TPressThirdPartyPersistenceCache;
 end;
@@ -1091,8 +1091,7 @@ begin
 end;
 
 initialization
-  PressApp.Registry[CPressOIDGeneratorService].ServiceTypeName :=
-   SPressOIDGeneratorServiceName;
+  PressApp.Registry[CPressOIDGeneratorService].ServiceTypeName := SPressOIDGeneratorServiceName;
   TPressOIDGenerator.RegisterService;
 
 finalization

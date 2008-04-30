@@ -28,7 +28,7 @@ uses
   PressConfig;
 
 const
-  CPressDataAccessServicesBase  = $0100;
+  CPressSessionServicesBase     = $0100;
   CPressUserServicesBase        = $0200;
   CPressReportServicesBase      = $0300;
   CPressMVPServicesBase         = $0400;
