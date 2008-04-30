@@ -33,7 +33,7 @@ interface
 
 uses
   PressMessages_en,
-  PressSubject, PressPersistence,
+  PressSubject, PressSession,
 {$IFDEF UseReport}
   PressFastReportBroker,
 {$ENDIF}

@@ -133,7 +133,7 @@ type
 implementation
 
 uses
-  PressPersistence;
+  PressSession;
 
 { TContact }
 

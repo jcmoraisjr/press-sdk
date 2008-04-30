@@ -170,7 +170,7 @@ end;
 
 procedure TMainConnectorCommand.InternalExecute;
 begin
-  PressDefaultDAO.ShowConnectionManager;
+  PressDefaultSession.ShowConnectionManager;
 end;
 
 initialization
