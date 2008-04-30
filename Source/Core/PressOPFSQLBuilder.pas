@@ -22,7 +22,7 @@ uses
   Classes,
   PressSubject,
   PressAttributes,
-  PressDAO,
+  PressSession,
   PressOPFClasses,
   PressOPFStorage;
 

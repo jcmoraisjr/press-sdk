@@ -1,6 +1,6 @@
 (*
-  PressObjects, Data Access Classes
-  Copyright (C) 2007-2008 Laserpress Ltda.
+  PressObjects, DAO + Persistence Interface Classes
+  Copyright (C) 2006-2008 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -12,7 +12,7 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 *)
 
-unit PressDAO;
+unit PressSession;
 
 {$I Press.inc}
 
@@ -20,10 +20,14 @@ interface
 
 uses
   Classes,
+  Contnrs,
   PressApplication,
   PressClasses,
   PressNotifier,
   PressSubject;
+
+const
+  CPressOIDGeneratorService = CPressDataAccessServicesBase + $0002;
 
 type
   TPressDAOCacheClass = class of TPressDAOCache;
@@ -123,14 +127,82 @@ type
     property LazyCommit: Boolean read FLazyCommit write FLazyCommit;
   end;
 
+  TPressPersistence = class;
+
+  TPressOIDGeneratorClass = class of TPressOIDGenerator;
+
+  TPressOIDGenerator = class(TPressService)
+  protected
+    function InternalGenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string; virtual;
+    procedure InternalReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName, AOID: string); virtual;
+    class function InternalServiceType: TPressServiceType; override;
+  public
+    function GenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+    procedure ReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
+  end;
+
+  TPressPersistence = class(TPressDAO)
+  private
+    FOIDGenerator: TPressOIDGenerator;
+    function GetOIDGenerator: TPressOIDGenerator;
+  protected
+    procedure Finit; override;
+    function InternalDBMSName: string; virtual;
+    function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; override;
+    function InternalOIDGeneratorClass: TPressOIDGeneratorClass; virtual;
+    property OIDGenerator: TPressOIDGenerator read GetOIDGenerator;
+  public
+    function DBMSName: string;
+  end;
+
+  TPressPersistentObjectLink = class(TObject)
+  private
+    FPersistentObject: TObject;
+    FPressObject: TPressObject;
+    procedure SetPersistentObject(AValue: TObject);
+  public
+    constructor Create(APressObject: TPressObject; APersistentObject: TObject);
+    destructor Destroy; override;
+    property PersistentObject: TObject read FPersistentObject write SetPersistentObject;
+    property PressObject: TPressObject read FPressObject;
+  end;
+
+  TPressThirdPartyPersistenceCache = class(TPressDAOCache)
+  private
+    FPersistentObjectLinkList: TObjectList;
+    function GetPersistentObjectLink(AIndex: Integer): TPressPersistentObjectLink;
+  protected
+    property PersistentObjectLinkList: TObjectList read FPersistentObjectLinkList;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    function AddLink(APressObject: TPressObject; APersistentObject: TObject): Integer;
+    function IndexOfLink(APressObject: TPressObject): Integer;
+    procedure ReleaseObjects; override;
+    function RemoveObject(AObject: TPressObject): Integer; override;
+    property PersistentObjectLink[AIndex: Integer]: TPressPersistentObjectLink read GetPersistentObjectLink;
+  end;
+
+  TPressThirdPartyPersistence = class(TPressPersistence)
+  private
+    function GetCache: TPressThirdPartyPersistenceCache;
+    function GetPersistentObject(APressObject: TPressObject): TObject;
+    procedure SetPersistentObject(APressObject: TPressObject; AValue: TObject);
+  protected
+    function InternalCacheClass: TPressDAOCacheClass; override;
+    property Cache: TPressThirdPartyPersistenceCache read GetCache;
+    property PersistentObject[APressObject: TPressObject]: TObject read GetPersistentObject write SetPersistentObject;
+  end;
+
 implementation
 
 uses
   SysUtils,
-{$IFDEF PressLog}
+{$ifdef PressLog}
   PressLog,
-{$ENDIF}
-  PressConsts;
+{$endif}
+  PressConsts,
+  PressUtils;
 
 type
   TPressObjectFriend = class(TPressObject);
@@ -333,7 +405,7 @@ constructor TPressDAO.Create;
 begin
   inherited;
   FCache := InternalCacheClass.Create;
-  FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
+  FNotifier := TPressNotifier.Create({$ifdef FPC}@{$endif}Notify);
   FNotifier.AddNotificationItem(Self, [TPressDAOCommit]);
 end;
 
@@ -364,11 +436,11 @@ begin
         TPressObjectFriend(VObject).BeforeDispose;
         VObject.DisableChanges;
         try
-{$IFDEF PressLogDAOInterface}
+{$ifdef PressLogDAOInterface}
           PressLogMsg(Self, 'Disposing', [VObject]);
-{$ENDIF}
+{$endif}
           TPressObjectFriend(VObject).InternalDispose(
-           {$IFDEF FPC}@{$ENDIF}DisposeObject);
+           {$ifdef FPC}@{$endif}DisposeObject);
           PressAssignPersistentId(VObject, '');
         finally
           VObject.EnableChanges;
@@ -540,7 +612,7 @@ var
   VQueryStr: string;
 begin
   VQueryStr := SelectPart + FromPart + WherePart + GroupByPart + OrderByPart;
-  {$IFDEF PressLogDAOPersistence}PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');{$ENDIF}
+  {$ifdef PressLogDAOPersistence}PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');{$endif}
   case AQuery.Style of
     qsOQL:
       Result := OQLQuery(VQueryStr, AQuery.Params);
@@ -638,11 +710,11 @@ begin
   try
     AObject.DisableChanges;
     try
-{$IFDEF PressLogDAOInterface}
+{$ifdef PressLogDAOInterface}
       PressLogMsg(Self, 'Refresh', [AObject]);
-{$ENDIF}
+{$endif}
       TPressObjectFriend(AObject).InternalRefresh(
-       {$IFDEF FPC}@{$ENDIF}InternalRefresh);
+       {$ifdef FPC}@{$endif}InternalRefresh);
     finally
       AObject.EnableChanges;
     end;
@@ -672,8 +744,8 @@ begin
   begin
     StartTransaction;
     try
-      {$IFDEF PressLogDAOInterface}PressLogMsg(Self,
-       Format('Retrieving %s(%s)', [AClass.ClassName, AId]));{$ENDIF}
+      {$ifdef PressLogDAOInterface}PressLogMsg(Self,
+       Format('Retrieving %s(%s)', [AClass.ClassName, AId]));{$endif}
       { TODO : Ensure the class type of the retrieved object }
       VAttributes := TPressDAOAttributes.Create(AAttributes);
       try
@@ -784,11 +856,11 @@ begin
       try
         AObject.DisableChanges;
         try
-{$IFDEF PressLogDAOInterface}
+{$ifdef PressLogDAOInterface}
           PressLogMsg(Self, 'Storing', [AObject]);
-{$ENDIF}
+{$endif}
           TPressObjectFriend(AObject).InternalStore(
-           {$IFDEF FPC}@{$ENDIF}InternalStore);
+           {$ifdef FPC}@{$endif}InternalStore);
           PressAssignPersistentId(AObject, AObject.Id);
         finally
           AObject.EnableChanges;
@@ -828,5 +900,202 @@ function TPressDAO.UnsupportedFeatureError(
 begin
   Result := EPressError.CreateFmt(SUnsupportedFeature, [AFeatureName]);
 end;
+
+{ TPressOIDGenerator }
+
+function TPressOIDGenerator.GenerateOID(
+  Sender: TPressPersistence; AObjectClass: TPressObjectClass;
+  const AAttributeName: string): string;
+begin
+  Result := InternalGenerateOID(Sender, AObjectClass, AAttributeName);
+end;
+
+function TPressOIDGenerator.InternalGenerateOID(
+  Sender: TPressPersistence; AObjectClass: TPressObjectClass;
+  const AAttributeName: string): string;
+var
+  VId: array[0..15] of Byte;
+  I: Integer;
+begin
+  PressGenerateGUID(TGUID(VId));
+  SetLength(Result, 32);
+  for I := 0 to 15 do
+    Move(IntToHex(VId[I], 2)[1], Result[2*I+1], 2);
+end;
+
+procedure TPressOIDGenerator.InternalReleaseOID(Sender: TPressPersistence;
+  AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
+begin
+end;
+
+class function TPressOIDGenerator.InternalServiceType: TPressServiceType;
+begin
+  Result := CPressOIDGeneratorService;
+end;
+
+procedure TPressOIDGenerator.ReleaseOID(Sender: TPressPersistence;
+  AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
+begin
+  InternalReleaseOID(Sender, AObjectClass, AAttributeName, AOID);
+end;
+
+{ TPressPersistence }
+
+function TPressPersistence.DBMSName: string;
+begin
+  Result := InternalDBMSName;
+end;
+
+procedure TPressPersistence.Finit;
+begin
+  FOIDGenerator.Free;
+  inherited;
+end;
+
+function TPressPersistence.GetOIDGenerator: TPressOIDGenerator;
+begin
+  if not Assigned(FOIDGenerator) then
+  begin
+    FOIDGenerator := InternalOIDGeneratorClass.Create;
+    FOIDGenerator.AddRef;
+  end;
+  Result := FOIDGenerator;
+end;
+
+function TPressPersistence.InternalDBMSName: string;
+begin
+  raise UnsupportedFeatureError('DBMS name');
+end;
+
+function TPressPersistence.InternalGenerateOID(AClass: TPressObjectClass;
+  const AAttributeName: string): string;
+begin
+  Result := OIDGenerator.GenerateOID(Self, AClass, AAttributeName);
+end;
+
+function TPressPersistence.InternalOIDGeneratorClass: TPressOIDGeneratorClass;
+begin
+  Result := TPressOIDGeneratorClass(
+   PressApp.DefaultServiceClass(CPressOIDGeneratorService));
+end;
+
+{ TPressPersistentObjectLink }
+
+constructor TPressPersistentObjectLink.Create(
+  APressObject: TPressObject; APersistentObject: TObject);
+begin
+  inherited Create;
+  FPressObject := APressObject;
+  FPersistentObject := APersistentObject;
+end;
+
+destructor TPressPersistentObjectLink.Destroy;
+begin
+  FPersistentObject.Free;
+  inherited;
+end;
+
+procedure TPressPersistentObjectLink.SetPersistentObject(AValue: TObject);
+begin
+  FPersistentObject.Free;
+  FPersistentObject := AValue;
+end;
+
+{ TPressThirdPartyPersistenceCache }
+
+function TPressThirdPartyPersistenceCache.AddLink(
+  APressObject: TPressObject; APersistentObject: TObject): Integer;
+begin
+  Result := PersistentObjectLinkList.Add(
+   TPressPersistentObjectLink.Create(APressObject, APersistentObject));
+end;
+
+constructor TPressThirdPartyPersistenceCache.Create;
+begin
+  inherited Create;
+  FPersistentObjectLinkList := TObjectList.Create(True);
+end;
+
+destructor TPressThirdPartyPersistenceCache.Destroy;
+begin
+  FPersistentObjectLinkList.Free;
+  inherited;
+end;
+
+function TPressThirdPartyPersistenceCache.GetPersistentObjectLink(
+  AIndex: Integer): TPressPersistentObjectLink;
+begin
+  Result := PersistentObjectLinkList[AIndex] as TPressPersistentObjectLink;
+end;
+
+function TPressThirdPartyPersistenceCache.IndexOfLink(
+  APressObject: TPressObject): Integer;
+begin
+  for Result := 0 to Pred(PersistentObjectLinkList.Count) do
+    if PersistentObjectLink[Result].PressObject = APressObject then
+      Exit;
+  Result := -1;
+end;
+
+procedure TPressThirdPartyPersistenceCache.ReleaseObjects;
+begin
+  inherited;
+  PersistentObjectLinkList.Clear;
+end;
+
+function TPressThirdPartyPersistenceCache.RemoveObject(
+  AObject: TPressObject): Integer;
+var
+  VIndex: Integer;
+begin
+  Result := inherited RemoveObject(AObject);
+  VIndex := IndexOfLink(AObject);
+  if VIndex >= 0 then
+    PersistentObjectLinkList.Delete(VIndex);
+end;
+
+{ TPressThirdPartyPersistence }
+
+function TPressThirdPartyPersistence.GetCache: TPressThirdPartyPersistenceCache;
+begin
+  Result := inherited Cache as TPressThirdPartyPersistenceCache;
+end;
+
+function TPressThirdPartyPersistence.GetPersistentObject(
+  APressObject: TPressObject): TObject;
+var
+  VIndex: Integer;
+begin
+  VIndex := Cache.IndexOfLink(APressObject);
+  if VIndex >= 0 then
+    Result := Cache.PersistentObjectLink[VIndex].PersistentObject
+  else
+    Result := nil;
+end;
+
+function TPressThirdPartyPersistence.InternalCacheClass: TPressDAOCacheClass;
+begin
+  Result := TPressThirdPartyPersistenceCache;
+end;
+
+procedure TPressThirdPartyPersistence.SetPersistentObject(
+  APressObject: TPressObject; AValue: TObject);
+var
+  VIndex: Integer;
+begin
+  VIndex := Cache.IndexOfLink(APressObject);
+  if VIndex >= 0 then
+    Cache.PersistentObjectLink[VIndex].PersistentObject := AValue
+  else
+    Cache.AddLink(APressObject, AValue);
+end;
+
+initialization
+  PressApp.Registry[CPressOIDGeneratorService].ServiceTypeName :=
+   SPressOIDGeneratorServiceName;
+  TPressOIDGenerator.RegisterService;
+
+finalization
+  TPressOIDGenerator.UnregisterService;
 
 end.

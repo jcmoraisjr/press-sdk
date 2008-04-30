@@ -21,8 +21,7 @@ interface
 uses
   PressApplication,
   PressSubject,
-  PressDAO,
-  PressPersistence,
+  PressSession,
   PressOPFConnector,
   PressOPFMapper;
 

@@ -22,8 +22,7 @@ uses
   Contnrs,
   PressClasses,
   PressSubject,
-  PressDAO,
-  PressPersistence,
+  PressSession,
   PressOPFMapper,
   PressOPFStorage;
 
