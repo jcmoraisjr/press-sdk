@@ -503,11 +503,15 @@ type
     function FindMetadata(const AClassName: string): TPressObjectMetadata;
     function MetadataByName(const AClassName: string): TPressObjectMetadata;
     function ParentMetadataOf(AMetadata: TPressObjectMetadata): TPressObjectMetadata;
+    procedure RegisterAttributes(AAttributes: array of TPressAttributeClass);
+    procedure RegisterClasses(AClasses: array of TPressObjectClass);
     function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string): TPressEnumMetadata; overload;
     function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string; AEnumValues: array of string): TPressEnumMetadata; overload;
     function RegisterMetadata(const AMetadataStr: string): TPressObjectMetadata;
     procedure RemoveAttribute(AAttributeClass: TPressAttributeClass);
     procedure RemoveClass(AClass: TPressObjectClass);
+    procedure UnregisterAttributes(AAttributes: array of TPressAttributeClass);
+    procedure UnregisterClasses(AClasses: array of TPressObjectClass);
     procedure UnregisterMetadata(AMetadata: TPressObjectMetadata);
     property ClassIdStorageName: string read FClassIdStorageName write SetClassIdStorageName;
     property ClassIdType: TPressAttributeClass read GetClassIdType write SetClassIdType;
@@ -2609,6 +2613,23 @@ begin
   FEnumMetadatas.Add(Result);
 end;
 
+procedure TPressModel.RegisterAttributes(
+  AAttributes: array of TPressAttributeClass);
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(Length(AAttributes)) do
+    AddAttribute(AAttributes[I]);
+end;
+
+procedure TPressModel.RegisterClasses(AClasses: array of TPressObjectClass);
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(Length(AClasses)) do
+    AddClass(AClasses[I]);
+end;
+
 function TPressModel.RegisterEnumMetadata(AEnumAddress: Pointer;
   const AEnumName: string;
   AEnumValues: array of string): TPressEnumMetadata;
@@ -2694,6 +2715,23 @@ begin
     raise EPressError.CreateFmt(SUnsupportedAttributeType, [SPressNilString]);
   FDefaultKeyType := Value;
   ClearMetadatas;
+end;
+
+procedure TPressModel.UnregisterAttributes(
+  AAttributes: array of TPressAttributeClass);
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(Length(AAttributes)) do
+    RemoveAttribute(AAttributes[I]);
+end;
+
+procedure TPressModel.UnregisterClasses(AClasses: array of TPressObjectClass);
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(Length(AClasses)) do
+    RemoveClass(AClasses[I]);
 end;
 
 procedure TPressModel.UnregisterMetadata(AMetadata: TPressObjectMetadata);
@@ -5217,46 +5255,18 @@ end;
 
 initialization
   PressApp.Registry[CPressSessionService].ServiceTypeName := SPressSessionServiceName;
-  TPressObject.RegisterClass;
-  TPressQuery.RegisterClass;
-  TPressSingletonObject.RegisterClass;
-  TPressString.RegisterAttribute;
-  TPressInteger.RegisterAttribute;
-  TPressFloat.RegisterAttribute;
-  TPressCurrency.RegisterAttribute;
-  TPressEnum.RegisterAttribute;
-  TPressBoolean.RegisterAttribute;
-  TPressDate.RegisterAttribute;
-  TPressTime.RegisterAttribute;
-  TPressDateTime.RegisterAttribute;
-  TPressVariant.RegisterAttribute;
-  TPressMemo.RegisterAttribute;
-  TPressBinary.RegisterAttribute;
-  TPressPart.RegisterAttribute;
-  TPressReference.RegisterAttribute;
-  TPressParts.RegisterAttribute;
-  TPressReferences.RegisterAttribute;
-  TPressQueryItems.RegisterAttribute;
+  PressModel.RegisterClasses([TPressObject, TPressQuery, TPressSingletonObject]);
+  PressModel.RegisterAttributes([TPressString, TPressInteger, TPressFloat,
+   TPressCurrency, TPressEnum, TPressBoolean, TPressDate, TPressTime,
+   TPressDateTime, TPressVariant, TPressMemo, TPressBinary,
+   TPressPart, TPressReference, TPressParts, TPressReferences,
+   TPressQueryItems]);
 
 finalization
-  TPressQuery.UnregisterClass;
-  TPressSingletonObject.UnregisterClass;
-  TPressString.UnregisterAttribute;
-  TPressInteger.UnregisterAttribute;
-  TPressFloat.UnregisterAttribute;
-  TPressCurrency.UnregisterAttribute;
-  TPressEnum.UnregisterAttribute;
-  TPressBoolean.UnregisterAttribute;
-  TPressDate.UnregisterAttribute;
-  TPressTime.UnregisterAttribute;
-  TPressDateTime.UnregisterAttribute;
-  TPressVariant.UnregisterAttribute;
-  TPressMemo.UnregisterAttribute;
-  TPressBinary.UnregisterAttribute;
-  TPressPart.UnregisterAttribute;
-  TPressReference.UnregisterAttribute;
-  TPressParts.UnregisterAttribute;
-  TPressReferences.UnregisterAttribute;
-  TPressQueryItems.UnregisterAttribute;
-
+  PressModel.UnregisterClasses([TPressQuery, TPressSingletonObject]);
+  PressModel.UnregisterAttributes([TPressString, TPressInteger, TPressFloat,
+   TPressCurrency, TPressEnum, TPressBoolean, TPressDate, TPressTime,
+   TPressDateTime, TPressVariant, TPressMemo, TPressBinary,
+   TPressPart, TPressReference, TPressParts, TPressReferences,
+   TPressQueryItems]);
 end.
