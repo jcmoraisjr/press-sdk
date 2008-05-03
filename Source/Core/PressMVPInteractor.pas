@@ -310,14 +310,6 @@ type
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
   end;
 
-  TPressMVPNotifySubModelsInteractor = class(TPressMVPInteractor)
-  protected
-    procedure InitInteractor; override;
-    procedure Notify(AEvent: TPressEvent); override;
-  public
-    class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
-  end;
-
   TPressMVPCloseFormInteractor = class(TPressMVPInteractor)
   private
     function GetOwner: TPressMVPFormPresenter;
@@ -1250,43 +1242,6 @@ begin
   ExecuteQueryPresenter;
 end;
 
-{ TPressMVPNotifySubModelsInteractor }
-
-class function TPressMVPNotifySubModelsInteractor.Apply(
-  APresenter: TPressMVPPresenter): Boolean;
-begin
-  Result := APresenter is TPressMVPFormPresenter;
-end;
-
-procedure TPressMVPNotifySubModelsInteractor.InitInteractor;
-begin
-  inherited;
-  Notifier.AddNotificationItem(Owner.Model, [TPressMVPModelChangedEvent]);
-end;
-
-procedure TPressMVPNotifySubModelsInteractor.Notify(AEvent: TPressEvent);
-var
-  VModel: TPressMVPModel;
-begin
-  inherited;
-  if (AEvent is TPressMVPModelChangedEvent) and
-   (TPressMVPModelChangedEvent(AEvent).ChangeType = ctDisplay) then
-  begin
-    with (Owner as TPressMVPFormPresenter).CreatePresenterIterator do
-    try
-      BeforeFirstItem;
-      while NextItem do
-      begin
-        VModel := CurrentItem.Model;
-        if VModel.HasSubject then
-          VModel.Changed(ctDisplay);
-      end;
-    finally
-      Free;
-    end;
-  end;
-end;
-
 { TPressMVPCloseFormInteractor }
 
 class function TPressMVPCloseFormInteractor.Apply(
@@ -1359,7 +1314,6 @@ begin
   TPressMVPCreateIncludeFormInteractor.RegisterInteractor;
   TPressMVPCreatePresentFormInteractor.RegisterInteractor;
   TPressMVPCreateSearchFormInteractor.RegisterInteractor;
-  TPressMVPNotifySubModelsInteractor.RegisterInteractor;
   TPressMVPCloseFormInteractor.RegisterInteractor;
   TPressMVPFreePresenterInteractor.RegisterInteractor;
 end;

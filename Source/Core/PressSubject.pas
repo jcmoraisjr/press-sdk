@@ -566,12 +566,6 @@ type
     {$ENDIF}
   end;
 
-  TPressSubjectUnchangedEvent = class(TPressSubjectEvent)
-  end;
-
-  TPressSubjectChangedEvent = class(TPressSubjectEvent)
-  end;
-
   TPressSubjectClass = class of TPressSubject;
 
   TPressSubject = class(TPressStreamable)
@@ -633,12 +627,6 @@ type
   end;
 
   { Business Object base-type declarations }
-
-  TPressObjectUnchangedEvent = class(TPressSubjectUnchangedEvent)
-  end;
-
-  TPressObjectChangedEvent = class(TPressSubjectChangedEvent)
-  end;
 
   TPressLockingEvent = class(TPressSubjectEvent)
   end;
@@ -705,7 +693,6 @@ type
     procedure InitInstance(ADataAccess: IPressSession; AMetadata: TPressObjectMetadata; AIsPersistent: Boolean = False);
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; virtual;
     procedure InternalCalcAttribute(AAttribute: TPressAttribute); virtual;
-    procedure InternalChanged(AChangedWhenDisabled: Boolean); override;
     procedure InternalChangesDisabled; override;
     procedure InternalChangesEnabled; override;
     procedure InternalChanging; override;
@@ -718,8 +705,6 @@ type
     procedure InternalUnchanged; override;
     procedure InternalUnlock; override;
     class function InternalMetadataStr: string; virtual;
-    procedure NotifyChange;
-    procedure NotifyUnchange;
     procedure SetOwnerContext(AOwner: TPressStructure);
   public
     constructor Create(ADataAccess: IPressSession = nil; AMetadata: TPressObjectMetadata = nil);
@@ -973,7 +958,7 @@ type
 
   { Attribute base-type declarations }
 
-  TPressAttributeChangedEvent = class(TPressSubjectChangedEvent)
+  TPressAttributeChangedEvent = class(TPressSubjectEvent)
   end;
 
   TPressAttributeState = (asNotLoaded, asNull, asValue);
@@ -1117,14 +1102,6 @@ type
     property UnassignedObject: TPressObject read FUnassignedObject;
   end;
 
-  TPressReferenceChangedEvent = class(TPressSubjectEvent)
-  private
-    FInstance: TPressObject;
-  public
-    constructor Create(AOwner: TObject; AInstance: TPressObject);
-    property Instance: TPressObject read FInstance;
-  end;
-
   TPressStructureClass = class of TPressStructure;
 
   TPressStructure = class(TPressAttribute)
@@ -1144,7 +1121,6 @@ type
     procedure InternalAssignObject(AObject: TPressObject); virtual; abstract;
     function InternalProxyType: TPressProxyType; virtual; abstract;
     procedure InternalUnassignObject(AObject: TPressObject); virtual; abstract;
-    procedure ReferenceChanged(AInstance: TPressObject);
     procedure ReleaseInstance(AInstance: TPressObject); virtual;
     procedure ValidateObject(AObject: TPressObject);
     procedure ValidateObjectClass(AClass: TPressObjectClass); overload;
@@ -2997,21 +2973,10 @@ end;
 
 procedure TPressObject.AttributesEnableChanges;
 var
-  VAttributesChanged: Boolean;
-  VAttribute: TPressAttribute;
   I: Integer;
 begin
-  VAttributesChanged := False;
-  if Assigned(FAttributes) then
-    for I := 0 to Pred(FAttributes.Count) do
-    begin
-      VAttribute := FAttributes[I];
-      VAttributesChanged := VAttributesChanged or
-       VAttribute.FChangedWhenDisabled;  // friend class
-      VAttribute.EnableChanges;
-    end;
-  if VAttributesChanged then
-    NotifyChange;
+  for I := 0 to Pred(FAttributes.Count) do
+    FAttributes[I].EnableChanges;
 end;
 
 procedure TPressObject.BeforeCreateAttributes;
@@ -3332,14 +3297,6 @@ procedure TPressObject.InternalCalcAttribute(AAttribute: TPressAttribute);
 begin
 end;
 
-procedure TPressObject.InternalChanged(AChangedWhenDisabled: Boolean);
-begin
-  inherited;
-  NotifyChange;
-  if Assigned(FOwnerAttribute) then
-    FOwnerAttribute.ChangedItem(Self, not AChangedWhenDisabled);  // friend class
-end;
-
 procedure TPressObject.InternalChangesDisabled;
 begin
   inherited;
@@ -3406,7 +3363,6 @@ begin
     FMemento.Unchange;
   end;
   UnchangeAttributes;
-  NotifyUnchange;
 end;
 
 procedure TPressObject.InternalUnlock;
@@ -3421,24 +3377,12 @@ begin
   DataAccess.Load(Self, AIncludeLazyLoading, ALoadContainers);
 end;
 
-procedure TPressObject.NotifyChange;
-begin
-  {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s changed', [Signature]));{$ENDIF}
-  TPressObjectChangedEvent.Create(Self).Notify;
-end;
-
 procedure TPressObject.NotifyMemento(AAttribute: TPressAttribute);
 begin
   if Assigned(FOwnerAttribute) and Assigned(FOwnerAttribute.Owner) then
     FOwnerAttribute.Owner.NotifyMemento(FOwnerAttribute);  // friend class
   if Assigned(FMemento) then
     FMemento.Notify(AAttribute);  // friend class
-end;
-
-procedure TPressObject.NotifyUnchange;
-begin
-  {$IFDEF PressLogSubjectChanges}PressLogMsg(Self, Format('Object %s unchanged', [Signature]));{$ENDIF}
-  TPressObjectUnchangedEvent.Create(Self).Notify;
 end;
 
 class function TPressObject.ObjectMetadataClass: TPressObjectMetadataClass;
@@ -5099,15 +5043,6 @@ begin
   inherited;
 end;
 
-{ TPressReferenceChangedEvent }
-
-constructor TPressReferenceChangedEvent.Create(AOwner: TObject;
-  AInstance: TPressObject);
-begin
-  inherited Create(AOwner);
-  FInstance := AInstance;
-end;
-
 { TPressStructure }
 
 procedure TPressStructure.AfterChangeInstance(
@@ -5173,8 +5108,6 @@ end;
 
 procedure TPressStructure.BindInstance(AInstance: TPressObject);
 begin
-  Notifier.AddNotificationItem(AInstance, [TPressObjectChangedEvent]);
-  { TODO : Bind owner's attributes calc notifications }
 end;
 
 procedure TPressStructure.BindProxy(AProxy: TPressProxy);
@@ -5204,11 +5137,6 @@ end;
 function TPressStructure.ProxyType: TPressProxyType;
 begin
   Result := InternalProxyType;
-end;
-
-procedure TPressStructure.ReferenceChanged(AInstance: TPressObject);
-begin
-  TPressReferenceChangedEvent.Create(Self, AInstance).Notify;
 end;
 
 procedure TPressStructure.ReleaseInstance(AInstance: TPressObject);

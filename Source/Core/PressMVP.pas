@@ -323,21 +323,12 @@ type
     {$ENDIF}
   end;
 
-  TPressMVPChangeType = (ctSubject, ctDisplay);
-
-  TPressMVPModelChangedEvent = class(TPressMVPModelEvent)
-  private
-    FChangeType: TPressMVPChangeType;
-  public
-    constructor Create(AOwner: TObject; AChangeType: TPressMVPChangeType);
-    property ChangeType: TPressMVPChangeType read FChangeType;
-  end;
-
   TPressMVPModelUpdateDataEvent = class(TPressMVPModelEvent)
   end;
 
-  TPressMVPModelNotifyEvent =
-   procedure(AChangeType: TPressMVPChangeType) of object;
+  TPressMVPChangeType = (ctSubject, ctDisplay);
+
+  TPressMVPModelChangeEvent = procedure(AChangeType: TPressMVPChangeType) of object;
 
   TPressMVPModelClass = class of TPressMVPModel;
 
@@ -345,6 +336,7 @@ type
   private
     FCommands: TPressMVPCommands;
     FNotifier: TPressNotifier;
+    FOnChange: TPressMVPModelChangeEvent;
     FOwnedCommands: TPressMVPCommandList;
     FParent: TPressMVPModel;
     FResourceIdNewObjects: Integer;
@@ -393,6 +385,7 @@ type
     procedure UpdateData;
     property HasParent: Boolean read GetHasParent;
     property HasSubject: Boolean read GetHasSubject;
+    property OnChange: TPressMVPModelChangeEvent read FOnChange write FOnChange;
     property Parent: TPressMVPModel read FParent;
     property ResourceId: Integer write SetResourceId;
     property ResourceIdNewObjects: Integer read FResourceIdNewObjects write SetResourceIdNewObjects;
@@ -709,11 +702,17 @@ end;
 
 procedure TPressMVPCommand.InitNotifier;
 begin
-  Notifier.AddNotificationItem(
-   Model.Selection, [TPressMVPSelectionChangedEvent]);
-  if Model.HasSubject and (Model.Subject is TPressObject) then
-    Notifier.AddNotificationItem(Model.Subject, [TPressObjectChangedEvent]);
+  Notifier.AddNotificationItem(Model.Selection, [TPressMVPSelectionChangedEvent]);
   Notifier.AddNotificationItem(nil, [TPressUserEvent]);
+  if Model.HasSubject and (Model.Subject is TPressObject) then
+    with TPressObject(Model.Subject).CreateAttributeIterator do
+    try
+      BeforeFirstItem;
+      while NextItem do
+        Notifier.AddNotificationItem(CurrentItem, [TPressAttributeChangedEvent]);
+    finally
+      Free;
+    end;
 end;
 
 procedure TPressMVPCommand.InitRegistryFields;
@@ -1268,15 +1267,6 @@ begin
 end;
 {$ENDIF}
 
-{ TPressMVPModelChangedEvent }
-
-constructor TPressMVPModelChangedEvent.Create(AOwner: TObject;
-  AChangeType: TPressMVPChangeType);
-begin
-  inherited Create(AOwner);
-  FChangeType := AChangeType;
-end;
-
 { TPressMVPModel }
 
 function TPressMVPModel.AccessMode: TPressAccessMode;
@@ -1305,8 +1295,8 @@ end;
 
 procedure TPressMVPModel.Changed(AChangeType: TPressMVPChangeType);
 begin
-  if not EventsDisabled then
-    TPressMVPModelChangedEvent.Create(Self, AChangeType).Notify;
+  if Assigned(FOnChange) and not EventsDisabled then
+    FOnChange(AChangeType);
 end;
 
 constructor TPressMVPModel.Create(
@@ -1471,8 +1461,7 @@ end;
 
 procedure TPressMVPModel.Notify(AEvent: TPressEvent);
 begin
-  if AEvent is TPressSubjectChangedEvent then
-    Changed(ctSubject);
+  Changed(ctSubject);
 end;
 
 function TPressMVPModel.RegisterCommand(

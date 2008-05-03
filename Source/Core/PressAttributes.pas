@@ -604,7 +604,6 @@ type
   protected
     procedure InternalAssignItem(AProxy: TPressProxy); override;
     function InternalProxyType: TPressProxyType; override;
-    procedure Notify(AEvent: TPressEvent); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
@@ -724,7 +723,6 @@ type
   protected
     procedure InternalAssignItem(AProxy: TPressProxy); override;
     function InternalProxyType: TPressProxyType; override;
-    procedure Notify(AEvent: TPressEvent); override;
   public
     class function AttributeBaseType: TPressAttributeBaseType; override;
     class function AttributeName: string; override;
@@ -3513,13 +3511,6 @@ begin
     Result := ptShared;
 end;
 
-procedure TPressReference.Notify(AEvent: TPressEvent);
-begin
-  inherited;
-  if AEvent is TPressObjectChangedEvent then
-    ReferenceChanged(Value);
-end;
-
 { TPressItemsChangedEvent }
 
 constructor TPressItemsChangedEvent.Create(
@@ -4079,13 +4070,6 @@ begin
     Result := ptWeakReference
   else
     Result := ptShared;
-end;
-
-procedure TPressReferences.Notify(AEvent: TPressEvent);
-begin
-  inherited;
-  if AEvent is TPressObjectChangedEvent then
-    ReferenceChanged(AEvent.Owner as TPressObject);
 end;
 
 end.

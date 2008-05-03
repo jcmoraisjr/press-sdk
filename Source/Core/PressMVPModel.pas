@@ -301,12 +301,16 @@ type
   TPressMVPReferenceModel = class(TPressMVPStructureModel)
   private
     FMetadata: TPressQueryMetadata;
+    FPathChangedNotifier: TPressNotifier;
     FQuery: TPressMVPReferenceQuery;
     FReferencedAttribute: string;
+    procedure BindSubject;
     function GetMetadata: TPressQueryMetadata;
+    function GetPathChangedNotifier: TPressNotifier;
     function GetQuery: TPressMVPReferenceQuery;
     function GetSubject: TPressReference;
     function GetObjectClass: TPressObjectClass;
+    procedure PathChanged(AEvent: TPressEvent);
   protected
     function CreateReferenceQuery: TPressMVPReferenceQuery; virtual;
     function GetAsString: string; override;
@@ -317,6 +321,7 @@ type
     procedure InternalUpdateQueryMetadata(const AQueryString: string); virtual;
     procedure Notify(AEvent: TPressEvent); override;
     property Metadata: TPressQueryMetadata read GetMetadata;
+    property PathChangedNotifier: TPressNotifier read GetPathChangedNotifier;
   public
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
     destructor Destroy; override;
@@ -1141,12 +1146,24 @@ begin
   Result := ASubject is TPressReference;
 end;
 
+procedure TPressMVPReferenceModel.BindSubject;
+var
+  VObject: TPressObject;
+begin
+  FreeAndNil(FPathChangedNotifier);
+  if not HasSubject then
+    Exit;
+  VObject := Subject.Value;
+  Selection.Select(VObject);
+  if Assigned(VObject) and (FReferencedAttribute <> '') then
+    VObject.FindPathAttribute(FReferencedAttribute, True, PathChangedNotifier);
+end;
+
 constructor TPressMVPReferenceModel.Create(
   AParent: TPressMVPModel; ASubject: TPressSubject);
 begin
   inherited Create(AParent, ASubject);
-  if HasSubject then
-    Selection.Select(Subject.Value);
+  BindSubject;
 end;
 
 function TPressMVPReferenceModel.CreateQueryIterator(
@@ -1170,6 +1187,7 @@ end;
 
 destructor TPressMVPReferenceModel.Destroy;
 begin
+  FPathChangedNotifier.Free;
   FQuery.Free;
   PressModel.UnregisterMetadata(FMetadata);
   inherited;
@@ -1203,6 +1221,13 @@ begin
   Result := InternalObjectClass;
 end;
 
+function TPressMVPReferenceModel.GetPathChangedNotifier: TPressNotifier;
+begin
+  if not Assigned(FPathChangedNotifier) then
+    FPathChangedNotifier := TPressNotifier.Create(PathChanged);
+  Result := FPathChangedNotifier;
+end;
+
 function TPressMVPReferenceModel.GetQuery: TPressMVPReferenceQuery;
 begin
   if not Assigned(FQuery) then
@@ -1231,12 +1256,14 @@ begin
   VPos := Pos(SPressFieldDelimiter, ADisplayNames);
   if VPos > 0 then
   begin
+    { TODO : Implement path changed notification }
     FReferencedAttribute := Copy(ADisplayNames, 1, VPos - 1);
     AssignColumnData(
      Copy(ADisplayNames, VPos + 1, Length(ADisplayNames) - VPos));
   end else
   begin
     FReferencedAttribute := ADisplayNames;
+    BindSubject;
     AssignColumnData(ADisplayNames);
   end;
 end;
@@ -1274,18 +1301,20 @@ end;
 procedure TPressMVPReferenceModel.Notify(AEvent: TPressEvent);
 begin
   inherited;
-  { TODO : Listen all reference attributes within the path }
-  if AEvent is TPressAttributeChangedEvent then
-  begin
-    if HasSubject then
-      Selection.Select(Subject.Value);
-  end else if AEvent is TPressReferenceChangedEvent then
-    Changed(ctSubject);
+  if (AEvent is TPressAttributeChangedEvent) and HasSubject and
+   (TPressAttributeChangedEvent(AEvent).Owner = Subject) then
+    BindSubject;
 end;
 
 function TPressMVPReferenceModel.ObjectOf(AIndex: Integer): TPressObject;
 begin
   Result := Query[AIndex];
+end;
+
+procedure TPressMVPReferenceModel.PathChanged(AEvent: TPressEvent);
+begin
+  BindSubject;
+  Changed(ctSubject);
 end;
 
 function TPressMVPReferenceModel.ReferencedValue(
@@ -1333,46 +1362,10 @@ end;
 
 function TPressMVPObjectItem.GetAttributes: TPressAttributeList;
 
-  function FindAttribute(const AAttributeName: string): TPressValue;
-
-    function FindPathAttribute(
-      AInstance: TPressObject; const APath: string): TPressAttribute;
-    var
-      VItemPart: string;
-      VPos: Integer;
-    begin
-      VPos := Pos(SPressAttributeSeparator, APath);
-      if VPos = 0 then
-        Result := AInstance.AttributeByName(APath)
-      else
-      begin
-        VItemPart := Copy(APath, 1, VPos - 1);
-        Result := AInstance.AttributeByName(VItemPart);
-        if Result is TPressItem then
-          if Assigned(TPressItem(Result).Value) then
-          begin
-            Notifier.AddNotificationItem(
-             TPressItem(Result), [
-             TPressReferenceChangedEvent, TPressAttributeChangedEvent]);
-            Result := FindPathAttribute(TPressItem(Result).Value,
-             Copy(APath, VPos + 1, Length(APath) - VPos));
-          end else
-            Result := nil
-        else
-          raise EPressError.CreateFmt(SAttributeIsNotItem,
-           [AInstance.ClassName, VItemPart]);
-      end;
-    end;
-
-  begin
-    Result := FindPathAttribute(Instance, AAttributeName) as TPressValue;
-  end;
-
   procedure AddReferencedAttributes;
   var
     VColumnData: TPressMVPColumnData;
     VAttribute: TPressValue;
-    VSubject: TPressItems;
     I: Integer;
   begin
     FBuildingList := True;
@@ -1380,16 +1373,11 @@ function TPressMVPObjectItem.GetAttributes: TPressAttributeList;
       VColumnData := FOwner.ColumnData;
       for I := 0 to Pred(VColumnData.ColumnCount) do
       begin
-        VAttribute := FindAttribute(VColumnData[I].AttributeName);
+        VAttribute := Instance.FindPathAttribute(
+         VColumnData[I].AttributeName, True, Notifier) as TPressValue;
         FAttributes.Add(VAttribute);
         if Assigned(VAttribute) then
           VAttribute.AddRef;
-      end;
-      if FOwner.Model.HasSubject then
-      begin
-        VSubject := FOwner.Model.Subject;
-        if VSubject is TPressReferences then
-          Notifier.AddNotificationItem(VSubject, [TPressReferenceChangedEvent]);
       end;
     finally
       FBuildingList := False;
