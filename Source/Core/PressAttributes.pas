@@ -4041,9 +4041,10 @@ var
   I: Integer;
 begin
   inherited;
-  for I := 0 to Pred(Count) do
-    if Proxies[I].HasInstance then
-      Proxies[I].Instance.Unchanged;
+  if State <> asNotLoaded then
+    for I := 0 to Pred(Count) do
+      if Proxies[I].HasInstance then
+        Proxies[I].Instance.Unchanged;
 end;
 
 procedure TPressParts.ReleaseInstance(AInstance: TPressObject);
