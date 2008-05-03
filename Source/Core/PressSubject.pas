@@ -737,7 +737,7 @@ type
     procedure Dispose;
     function Expression(const AExpression: string): Variant;
     function FindAttribute(const AAttributeName: string): TPressAttribute;
-    function FindPathAttribute(const APath: string; ASilent: Boolean = True): TPressAttribute;
+    function FindPathAttribute(const APath: string; ASilent: Boolean = True; APathChangedNotifier: TPressNotifier = nil): TPressAttribute;
     procedure Load(AIncludeLazyLoading: Boolean = True; ALoadContainers: Boolean = False);
     class function ObjectMetadataClass: TPressObjectMetadataClass; virtual;
     procedure Refresh;
@@ -3153,7 +3153,8 @@ begin
 end;
 
 function TPressObject.FindPathAttribute(
-  const APath: string; ASilent: Boolean): TPressAttribute;
+  const APath: string; ASilent: Boolean;
+  APathChangedNotifier: TPressNotifier): TPressAttribute;
 
   function AttributeSearch(const AAttributeName: string): TPressAttribute;
   begin
@@ -3161,11 +3162,15 @@ function TPressObject.FindPathAttribute(
       Result := FindAttribute(AAttributeName)
     else
       Result := AttributeByName(AAttributeName);
+    if Assigned(Result) and Assigned(APathChangedNotifier) then
+      APathChangedNotifier.AddNotificationItem(
+       Result, [TPressAttributeChangedEvent]);
   end;
 
 var
-  P: Integer;
+  VObject: TPressObject;
   VItemPart: string;
+  P: Integer;
 begin
   P := Pos(SPressAttributeSeparator, APath);
   if P = 0 then
@@ -3175,12 +3180,14 @@ begin
     VItemPart := Copy(APath, 1, P-1);
     Result := AttributeSearch(VItemPart);
     if Result is TPressItem then
-      if Assigned(TPressItem(Result).Value) then
-        Result := TPressItem(Result).Value.
-         FindPathAttribute(Copy(APath, P+1, Length(APath)-P), ASilent)
+    begin
+      VObject := TPressItem(Result).Value;
+      if Assigned(VObject) then
+        Result := VObject.FindPathAttribute(
+          Copy(APath, P+1, Length(APath)-P), ASilent, APathChangedNotifier)
       else
         Result := nil
-    else
+    end else
       if ASilent then
         Result := nil
       else
