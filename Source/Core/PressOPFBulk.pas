@@ -360,6 +360,8 @@ var
   VProxyList: TPressProxyList;
   I: Integer;
 begin
+  if not Assigned(FProxyList) then
+    Exit;
   VPathAttributes := Attributes.CreatePathAttributes;
   try
     if not VPathAttributes.IsEmpty then
