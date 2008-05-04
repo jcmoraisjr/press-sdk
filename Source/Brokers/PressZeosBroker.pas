@@ -1,6 +1,6 @@
 (*
   PressObjects, ZeosDBO Connection Broker
-  Copyright (C) 2007 Laserpress Ltda.
+  Copyright (C) 2007-2008 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -147,6 +147,8 @@ uses
   PressConsts,
   PressOPFClasses,
   PressIBFbBroker,
+  PressPgSQLBroker,
+  PressOracleBroker,
   ZDbcIntfs;
 
 { TPressZeosBroker }
@@ -275,8 +277,13 @@ var
 begin
   { TODO : Implement }
   VProtocol := (Connector as TPressZeosConnector).Connection.Protocol;
-  if SameText(Copy(VProtocol, 1, 8), 'firebird') then
+  if SameText(Copy(VProtocol, 1, 9), 'interbase')
+   or SameText(Copy(VProtocol, 1, 8), 'firebird') then
     Result := TPressIBFbDDLBuilder
+  else if SameText(Copy(VProtocol, 1, 7), 'postgre') then
+    Result := TPressPgSQLDDLBuilder
+  else if SameText(Copy(VProtocol, 1, 6), 'oracle') then
+    Result := TPressOracleDDLBuilder
   else
     raise EPressOPFError.CreateFmt(
      SUnsupportedConnector, [VProtocol]);
