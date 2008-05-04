@@ -50,7 +50,7 @@ function TPressOPFDBDataset.DBTypeToOPFType(
   AFieldType: TFieldType): TPressOPFFieldType;
 begin
   case AFieldType of
-    ftString:
+    ftString, ftWideString:
       Result := oftString;
     ftSmallint:
       Result := oftInt16;
