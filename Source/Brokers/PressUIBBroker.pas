@@ -173,6 +173,9 @@ begin
   FDatabase := TJvUIBDatabase.Create(nil);
   FTransaction := TJvUIBTransaction.Create(nil);
   FTransaction.DataBase := FDatabase;
+  FTransaction.AutoRetain := False;
+  FTransaction.AutoStart := False;
+  FTransaction.AutoStop := False;
   FTransaction.Options := [tpReadCommitted];
 end;
 
