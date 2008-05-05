@@ -176,7 +176,7 @@ begin
   FTransaction.AutoRetain := False;
   FTransaction.AutoStart := False;
   FTransaction.AutoStop := False;
-  FTransaction.Options := [tpReadCommitted];
+  FTransaction.Options := [tpReadCommitted, tpRecVersion, tpWrite];
 end;
 
 destructor TPressUIBConnector.Destroy;
@@ -278,10 +278,10 @@ var
   VBlobParam: string;
   I: Integer;
 begin
+  VDBParams := Query.Params;
   for I := 0 to Pred(Params.Count) do
   begin
     VParam := Params[I];
-    VDBParams := Query.Params;
     if not VParam.IsNull then
     begin
       case VParam.DataType of
