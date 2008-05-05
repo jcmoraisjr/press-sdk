@@ -456,14 +456,14 @@ begin
   Result := Items[DataSet.CurrentIndex];
 end;
 
-{ TPressReportGroup }
+{ TPressCustomReportGroup }
 
 function TPressCustomReportGroup.CreateReportItemIterator: TPressItemsIterator;
 begin
   Result := InternalCreateReportItemIterator;
 end;
 
-{ TPressReportItem }
+{ TPressCustomReportItem }
 
 procedure TPressCustomReportItem.Design;
 begin
@@ -720,7 +720,7 @@ procedure TPressCustomReportItem.SetReportData(AStream: TStream);
 begin
 end;
 
-{ TPressReportData }
+{ TPressCustomReportData }
 
 procedure TPressCustomReportData.Finit;
 var
