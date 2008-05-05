@@ -65,6 +65,7 @@ type
     function InternalExecuteReportCommandClass: TPressExecuteReportCommandClass; virtual;
   public
     constructor Create(AModel: TPressMVPObjectModel);
+    destructor Destroy; override;
     property ReportGroup: TPressCustomReportGroup read GetReportGroup;
     property Model: TPressMVPObjectModel read FModel;
   end;
@@ -96,7 +97,7 @@ procedure TPressExecuteReportCommand.InternalExecute;
 begin
   inherited;
   if Assigned(FReportItem) then
-    FReportItem.Execute;
+    FReportItem.Execute(Model.Subject);
 end;
 
 function TPressExecuteReportCommand.InternalIsEnabled: Boolean;
@@ -203,17 +204,23 @@ begin
   end;
 end;
 
+destructor TPressReportManager.Destroy;
+begin
+  if Assigned(FReportGroup) then
+    FReportGroup.ReleaseObject(Model.Subject);
+  inherited;
+end;
+
 function TPressReportManager.GetReportGroup: TPressCustomReportGroup;
 var
   VObject: TPressObject;
 begin
   if not Assigned(FReportGroup) then
   begin
-    { TODO : Cache report group objects; include refresh option }
+    { TODO : Implement update report list }
     VObject := Model.Subject;
-    FReportGroup :=
-     PressDefaultReportDataService.ReportGroupByClassName(VObject.DataAccess, VObject.ClassName);
-    FReportGroup.BusinessObj := VObject;
+    FReportGroup := PressDefaultReportDataService.ReportGroupByClassName(
+     VObject.DataAccess, VObject.ClassName);
   end;
   Result := FReportGroup;
 end;

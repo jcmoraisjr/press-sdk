@@ -151,26 +151,26 @@ type
   TPressReportGroupClass = class of TPressCustomReportGroup;
 
   TPressCustomReportGroup = class(TPressObject)
-  private
-    FBusinessObj: TObject;
   protected
     function InternalCreateReportItemIterator: TPressItemsIterator; virtual; abstract;
   public
     function CreateReportItemIterator: TPressItemsIterator;
     class function ObjectClassAttributeName: string; virtual; abstract;
-    property BusinessObj: TObject read FBusinessObj write FBusinessObj;
+    procedure ReleaseObject(AObject: TObject);
   end;
 
   TPressCustomReportItem = class(TPressObject)
   private
+    FCurrentObject: TObject;
     FDataSources: TPressReportDataSourceList;
     FReport: TPressReport;
-    function GetBusinessObj: TObject;
+    procedure AssignObject(AObject: TObject);
     function GetDataSources: TPressReportDataSourceList;
     function GetReport: TPressReport;
     procedure LoadFields;
-    procedure LoadMetadatas;
+    procedure LoadMetadatas(AObject: TObject);
     procedure LoadReport;
+    procedure ReleaseObject(AObject: TObject);
     procedure ReportNeedValue(const ADataSetName, AFieldName: string; var AValue: Variant; AForceData: Boolean);
     procedure SaveReport;
   protected
@@ -179,12 +179,11 @@ type
     procedure GetReportData(AStream: TStream); virtual;
     function GetReportVisible: Boolean; virtual;
     procedure SetReportData(AStream: TStream); virtual;
-    property BusinessObj: TObject read GetBusinessObj;
     property DataSources: TPressReportDataSourceList read GetDataSources;
     property Report: TPressReport read GetReport;
   public
     procedure Design;
-    procedure Execute;
+    procedure Execute(AObject: TObject);
     procedure LoadFromFile(const AFileName: string);
     procedure LoadFromStream(AStream: TStream);
     procedure SaveToFile(const AFileName: string);
@@ -463,7 +462,34 @@ begin
   Result := InternalCreateReportItemIterator;
 end;
 
+procedure TPressCustomReportGroup.ReleaseObject(AObject: TObject);
+begin
+  with CreateReportItemIterator do
+  try
+    BeforeFirstItem;
+    while NextItem do
+      (CurrentItem as TPressCustomReportItem).ReleaseObject(AObject);  // friend class
+  finally
+    Free;
+  end;
+end;
+
 { TPressCustomReportItem }
+
+procedure TPressCustomReportItem.AssignObject(AObject: TObject);
+begin
+  if AObject <> FCurrentObject then
+  begin
+    FreeAndNil(FDataSources);
+    FCurrentObject := nil;
+    LoadMetadatas(AObject);
+    if Assigned(AObject) then
+    begin
+      LoadFields;
+      FCurrentObject := AObject;
+    end;
+  end;
+end;
 
 procedure TPressCustomReportItem.Design;
 begin
@@ -471,8 +497,12 @@ begin
   SaveReport;
 end;
 
-procedure TPressCustomReportItem.Execute;
+procedure TPressCustomReportItem.Execute(AObject: TObject);
 begin
+  if not Assigned(AObject) then
+    Exit;
+  { TODO : Lock }
+  AssignObject(AObject);
   Report.Execute;
 end;
 
@@ -481,14 +511,6 @@ begin
   FReport.Free;
   FDataSources.Free;
   inherited;
-end;
-
-function TPressCustomReportItem.GetBusinessObj: TObject;
-begin
-  if Owner is TPressCustomReportGroup then
-    Result := TPressCustomReportGroup(Owner).BusinessObj
-  else
-    Result := nil;
 end;
 
 function TPressCustomReportItem.GetDataSources: TPressReportDataSourceList;
@@ -508,8 +530,6 @@ begin
     FReport.OnNeedValue := {$IFDEF FPC}@{$ENDIF}ReportNeedValue;
     FReport.OnNeedUpdateFields := {$IFDEF FPC}@{$ENDIF}LoadFields;
     LoadReport;
-    LoadMetadatas;
-    LoadFields;
   end;
   Result := FReport;
 end;
@@ -559,7 +579,7 @@ begin
   SaveReport;
 end;
 
-procedure TPressCustomReportItem.LoadMetadatas;
+procedure TPressCustomReportItem.LoadMetadatas(AObject: TObject);
 
   function CreateDataSet(const ADataSetName: string): TPressReportDataSet;
   begin
@@ -646,17 +666,14 @@ procedure TPressCustomReportItem.LoadMetadatas;
     end;
   end;
 
-var
-  VBusinessObj: TObject;
 begin
-  VBusinessObj := BusinessObj;
-  if not Assigned(VBusinessObj) then
+  if not Assigned(AObject) then
     Exit;
-  if VBusinessObj is TPressObject then
+  if AObject is TPressObject then
     LoadPressMetadata(
-     TPressObjectClass(VBusinessObj.ClassType),
-     CreateDataSource(VBusinessObj.ClassName, TPressObject(VBusinessObj)),
-     VBusinessObj.ClassName, '');
+     TPressObjectClass(AObject.ClassType),
+     CreateDataSource(AObject.ClassName, TPressObject(AObject)),
+     AObject.ClassName, '');
   { TODO : else if BO has RTTI then read published fields }
 end;
 
@@ -670,6 +687,15 @@ begin
     Report.LoadFromStream(VStream);
   finally
     VStream.Free;
+  end;
+end;
+
+procedure TPressCustomReportItem.ReleaseObject(AObject: TObject);
+begin
+  if AObject = FCurrentObject then
+  begin
+    FreeAndNil(FDataSources);
+    FCurrentObject := nil;
   end;
 end;
 
