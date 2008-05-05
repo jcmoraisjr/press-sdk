@@ -36,6 +36,7 @@ type
     function GetAsString: string;
   public
     constructor Create(AFieldType: TPressOPFFieldType);
+    procedure Clear;
     property AsString: string read GetAsString;
     property FieldType: TPressOPFFieldType read FFieldType;
     property IsNull: Boolean read FIsNull;
@@ -121,6 +122,7 @@ type
     procedure ClearFields;
     function InternalExecute: Integer; virtual; abstract;
     procedure InternalSQLChanged; virtual;
+    function IsSelectStatement: Boolean;
     property Connector: TPressOPFConnector read FConnector;
   public
     constructor Create(AConnector: TPressOPFConnector);
@@ -164,6 +166,11 @@ uses
   PressConsts;
 
 { TPressOPFField }
+
+procedure TPressOPFField.Clear;
+begin
+  Value := Null;
+end;
 
 constructor TPressOPFField.Create(AFieldType: TPressOPFFieldType);
 begin
@@ -412,6 +419,11 @@ end;
 
 procedure TPressOPFDataset.InternalSQLChanged;
 begin
+end;
+
+function TPressOPFDataset.IsSelectStatement: Boolean;
+begin
+  Result := SameText(Copy(Trim(FSQL), 1, 6), 'select');
 end;
 
 procedure TPressOPFDataset.SetSQL(AValue: string);

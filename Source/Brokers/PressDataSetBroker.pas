@@ -31,7 +31,6 @@ type
   private
     function DBTypeToOPFType(AFieldType: TFieldType): TPressOPFFieldType;
   protected
-    function IsSelectStatement: Boolean;
     procedure PopulateOPFDataset(ADataSet: TDataSet);
     procedure PopulateParams(AParams: TParams);
   end;
@@ -74,11 +73,6 @@ begin
       raise EPressOPFError.CreateFmt(SUnsupportedFieldType, [
        GetEnumName(TypeInfo(TFieldType), Ord(AFieldType))]);
   end;
-end;
-
-function TPressOPFDBDataset.IsSelectStatement: Boolean;
-begin
-  Result := SameText(Copy(Trim(SQL), 1, 6), 'select');
 end;
 
 procedure TPressOPFDBDataset.PopulateOPFDataset(ADataSet: TDataSet);
