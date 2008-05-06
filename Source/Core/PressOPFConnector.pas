@@ -428,9 +428,12 @@ end;
 
 procedure TPressOPFDataset.SetSQL(AValue: string);
 begin
-  ClearDataset;
-  FSQL := AValue;
-  InternalSQLChanged;
+  if FSQL <> AValue then
+  begin
+    ClearDataset;
+    FSQL := AValue;
+    InternalSQLChanged;
+  end;
 end;
 
 { TPressOPFConnector }
