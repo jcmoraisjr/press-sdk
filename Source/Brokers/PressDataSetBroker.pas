@@ -116,7 +116,9 @@ begin
       case VParam.DataType of
         oftString:
           AParams.ParamByName(VParam.Name).AsString := VParam.AsString;
-        oftInt16, oftInt32:
+        oftInt16:
+          AParams.ParamByName(VParam.Name).AsSmallint := VParam.AsInt16;
+        oftInt32:
           AParams.ParamByName(VParam.Name).AsInteger := VParam.AsInt32;
         oftInt64:
           {$IFDEF FPC}

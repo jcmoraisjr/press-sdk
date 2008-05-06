@@ -301,7 +301,9 @@ begin
       case VParam.DataType of
         oftString:
           VQuery.ParamByNameAsString(VParam.Name, VParam.AsString);
-        oftInt16, oftInt32:
+        oftInt16:
+          VQuery.ParamByNameAsShort(VParam.Name, VParam.AsInt16);
+        oftInt32:
           VQuery.ParamByNameAsLong(VParam.Name, VParam.AsInt32);
         oftInt64:
           VQuery.ParamByNameAsInt64(VParam.Name, VParam.AsInt64);

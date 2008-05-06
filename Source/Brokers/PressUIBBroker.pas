@@ -287,7 +287,9 @@ begin
       case VParam.DataType of
         oftString:
           VDBParams.ByNameAsString[VParam.Name] := VParam.AsString;
-        oftInt16, oftInt32:
+        oftInt16:
+          VDBParams.ByNameAsSmallint[VParam.Name] := VParam.AsInt16;
+        oftInt32:
           VDBParams.ByNameAsInteger[VParam.Name] := VParam.AsInt32;
         oftInt64:
           VDBParams.ByNameAsInt64[VParam.Name] := VParam.AsInt64;
