@@ -57,6 +57,7 @@ type
     function CreateDatabaseStatement(ACreateClearDatabaseStatements: Boolean = False): string;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function DMLBuilderClass: TPressOPFDMLBuilderClass;
+    function GeneratorStatement: string;
     procedure Load(AObject: TPressObject; AIncludeLazyLoading: Boolean);
     procedure Refresh(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressSessionAttributes): TPressObject;
@@ -258,6 +259,11 @@ end;
 function TPressOPFObjectMapper.DMLBuilderClass: TPressOPFDMLBuilderClass;
 begin
   Result := InternalDMLBuilderClass;
+end;
+
+function TPressOPFObjectMapper.GeneratorStatement: string;
+begin
+  Result := DDLBuilder.GeneratorStatement;
 end;
 
 function TPressOPFObjectMapper.GetAttributeMapper(

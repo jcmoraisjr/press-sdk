@@ -134,10 +134,12 @@ type
   TPressOIDGenerator = class(TPressService)
   protected
     function InternalGenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string; virtual;
+    function InternalGeneratorName(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string; virtual;
     procedure InternalReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName, AOID: string); virtual;
     class function InternalServiceType: TPressServiceType; override;
   public
     function GenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+    function GeneratorName(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string;
     procedure ReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
   end;
 
@@ -910,6 +912,12 @@ begin
   Result := InternalGenerateOID(Sender, AObjectClass, AAttributeName);
 end;
 
+function TPressOIDGenerator.GeneratorName(Sender: TPressPersistence;
+  AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+begin
+  Result := InternalGeneratorName(Sender, AObjectClass, AAttributeName);
+end;
+
 function TPressOIDGenerator.InternalGenerateOID(
   Sender: TPressPersistence; AObjectClass: TPressObjectClass;
   const AAttributeName: string): string;
@@ -921,6 +929,13 @@ begin
   SetLength(Result, 32);
   for I := 0 to 15 do
     Move(IntToHex(VId[I], 2)[1], Result[2*I+1], 2);
+end;
+
+function TPressOIDGenerator.InternalGeneratorName(
+  Sender: TPressPersistence; AObjectClass: TPressObjectClass;
+  const AAttributeName: string): string;
+begin
+  Result := '';
 end;
 
 procedure TPressOIDGenerator.InternalReleaseOID(Sender: TPressPersistence;

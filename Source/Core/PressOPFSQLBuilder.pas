@@ -55,6 +55,7 @@ type
     function CreateTableStatement(ATableMetadata: TPressOPFTableMetadata): string; virtual;
     function DropConstraintStatement(ATableMetadata: TPressOPFTableMetadata; AMetadata: TPressOPFMetadata): string; virtual;
     function DropTableStatement(ATableMetadata: TPressOPFTableMetadata): string; virtual;
+    function GeneratorStatement: string; virtual;
   end;
 
   TPressOPFFieldListType = (ftSimple, ftParams);
@@ -360,6 +361,11 @@ function TPressOPFDDLBuilder.DropTableStatement(
 begin
   Result := Format('drop table %s;'#10, [
    ATableMetadata.Name]);
+end;
+
+function TPressOPFDDLBuilder.GeneratorStatement: string;
+begin
+  Result := '';
 end;
 
 function TPressOPFDDLBuilder.InternalFieldTypeStr(

@@ -1,5 +1,5 @@
 (*
-  PressObjects, Oracle Database Broker
+  PressObjects, Oracle database Broker
   Copyright (C) 2007 Laserpress Ltda.
 
   http://www.pressobjects.org
@@ -31,6 +31,7 @@ type
     function InternalMaxIdentLength: Integer; override;
   public
     function CreateForeignKeyStatement(ATableMetadata: TPressOPFTableMetadata; AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string; override;
+    function GeneratorStatement: string; override;             
   end;
 
 implementation
@@ -61,6 +62,11 @@ begin
      Result,
      CReferentialAction[AForeignKeyMetadata.OnDeleteAction]]);
   Result := Result + ';' + #10#10;
+end;
+
+function TPressOracleDDLBuilder.GeneratorStatement: string;
+begin
+  Result := 'select %s.nextval from dual';
 end;
 
 function TPressOracleDDLBuilder.InternalFieldTypeStr(

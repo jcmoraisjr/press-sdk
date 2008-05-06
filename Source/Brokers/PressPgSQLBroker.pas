@@ -28,11 +28,18 @@ type
     function InternalFieldTypeStr(AFieldType: TPressOPFFieldType): string; override;
     function InternalImplicitIndexCreation: Boolean; override;
     function InternalMaxIdentLength: Integer; override;
+  public
+    function GeneratorStatement: string; override;
   end;
 
 implementation
 
 { TPressPgSQLDDLBuilder }
+
+function TPressPgSQLDDLBuilder.GeneratorStatement: string;
+begin
+  Result := 'select nextval(''%s'')';
+end;
 
 function TPressPgSQLDDLBuilder.InternalFieldTypeStr(
   AFieldType: TPressOPFFieldType): string;

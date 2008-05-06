@@ -28,11 +28,18 @@ type
     function InternalFieldTypeStr(AFieldType: TPressOPFFieldType): string; override;
     function InternalImplicitIndexCreation: Boolean; override;
     function InternalMaxIdentLength: Integer; override;
+  public
+    function GeneratorStatement: string; override;
   end;
 
 implementation
 
 { TPressIBFbDDLBuilder }
+
+function TPressIBFbDDLBuilder.GeneratorStatement: string;
+begin
+  Result := 'select gen_id(%s, 1) from rdb$database';
+end;
 
 function TPressIBFbDDLBuilder.InternalFieldTypeStr(
   AFieldType: TPressOPFFieldType): string;

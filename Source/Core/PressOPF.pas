@@ -35,9 +35,11 @@ type
   private
     FBroker: TPressOPFBroker;
     FConnector: TPressOPFConnector;
+    FGeneratorDataset: TPressOPFDataset;
     FMapper: TPressOPFObjectMapper;
     FStatementDataset: TPressOPFDataset;
     function GetConnector: TPressOPFConnector;
+    function GetGeneratorDataset: TPressOPFDataset;
     function GetMapper: TPressOPFObjectMapper;
     function GetStatementDataset: TPressOPFDataset;
     procedure SetBroker(AValue: TPressOPFBroker);
@@ -50,6 +52,7 @@ type
     function InternalDBMSName: string; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
     function InternalExecuteStatement(const AStatement: string; AParams: TPressParamList): Integer; override;
+    function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; override;
     function InternalImplementsBulkRetrieve: Boolean; override;
     function InternalImplementsLazyLoading: Boolean; override;
     procedure InternalIsDefaultChanged; override;
@@ -64,6 +67,7 @@ type
     function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
     procedure InternalStartTransaction; override;
     procedure InternalStore(AObject: TPressObject); override;
+    property GeneratorDataset: TPressOPFDataset read GetGeneratorDataset;
     property StatementDataset: TPressOPFDataset read GetStatementDataset;
   public
     function EnsureBroker: TPressOPFBroker;
@@ -153,6 +157,7 @@ end;
 procedure TPressOPF.DoneService;
 begin
   FMapper.Free;
+  FGeneratorDataset.Free;
   FStatementDataset.Free;
   inherited;
 end;
@@ -179,6 +184,13 @@ begin
   if not Assigned(FConnector) then
     FConnector := EnsureBroker.Connector;
   Result := FConnector;
+end;
+
+function TPressOPF.GetGeneratorDataset: TPressOPFDataset;
+begin
+  if not Assigned(FGeneratorDataset) then
+    FGeneratorDataset := Connector.CreateDataset;
+  Result := FGeneratorDataset;
 end;
 
 function TPressOPF.GetMapper: TPressOPFObjectMapper;
@@ -226,6 +238,25 @@ begin
   StatementDataset.SQL := AStatement;
   StatementDataset.AssignParams(AParams);
   Result := StatementDataset.Execute;
+end;
+
+function TPressOPF.InternalGenerateOID(
+  AClass: TPressObjectClass; const AAttributeName: string): string;
+var
+  VDataset: TPressOPFDataset;
+  VGenerator: string;
+begin
+  VGenerator := OIDGenerator.GeneratorName(Self, AClass, AAttributeName);
+  if VGenerator <> '' then
+    VGenerator := Format(Mapper.GeneratorStatement, [VGenerator]);
+  if VGenerator <> '' then
+  begin
+    VDataset := GeneratorDataset;
+    VDataset.SQL := VGenerator;
+    VDataset.Execute;
+    Result := VDataset[0][0].AsString;
+  end else
+    Result := inherited InternalGenerateOID(AClass, AAttributeName);
 end;
 
 function TPressOPF.InternalImplementsBulkRetrieve: Boolean;
