@@ -1,0 +1,21 @@
+diff -u fblib1/FBLParamDsql.pas fblib2/FBLParamDsql.pas
+--- fblib1/FBLParamDsql.pas	2006-03-26 16:03:16.000000000 -0300
++++ fblib2/FBLParamDsql.pas	2008-05-05 16:22:54.000000000 -0300
+@@ -496,7 +496,7 @@
+         while (j <= Length(Line)) and (
+           Pos(
+             Line[j],
+-            '012345689ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_'
++            '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_'
+           ) > 0
+         ) do
+           inc(j);
+@@ -564,7 +564,7 @@
+       	p := p + d;
+       	Line[p] := ':';
+         Insert(mParamName, Line, p + 1);
+-        d := d + Length(mParamName);
++//        d := d + Length(mParamName);
+       end;
+ 
+       // The following Code does not work if there are '?' characters
