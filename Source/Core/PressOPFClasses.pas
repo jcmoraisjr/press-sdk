@@ -42,7 +42,7 @@ type
     function GetAsDate: TDateTime;
     function GetAsDateTime: TDateTime;
     function GetAsFloat: Double;
-    function GetAsInt16: Integer;
+    function GetAsInt16: Smallint;
     function GetAsInt32: Integer;
     function GetAsInt64: Int64;
     function GetAsString: string;
@@ -53,7 +53,7 @@ type
     procedure SetAsDate(AValue: TDateTime);
     procedure SetAsDateTime(AValue: TDateTime);
     procedure SetAsFloat(AValue: Double);
-    procedure SetAsInt16(AValue: Integer);
+    procedure SetAsInt16(AValue: Smallint);
     procedure SetAsInt32(AValue: Integer);
     procedure SetAsInt64(AValue: Int64);
     procedure SetAsMemo(const AValue: string);
@@ -71,7 +71,7 @@ type
     property AsDate: TDateTime read GetAsDate write SetAsDate;
     property AsDateTime: TDateTime read GetAsDateTime write SetAsDateTime;
     property AsFloat: Double read GetAsFloat write SetAsFloat;
-    property AsInt16: Integer read GetAsInt16 write SetAsInt16;
+    property AsInt16: Smallint read GetAsInt16 write SetAsInt16;
     property AsInt32: Integer read GetAsInt32 write SetAsInt32;
     property AsInt64: Int64 read GetAsInt64 write SetAsInt64;
     property AsMemo: string read GetAsString write SetAsMemo;
@@ -188,7 +188,7 @@ begin
     Result := 0;
 end;
 
-function TPressOPFParam.GetAsInt16: Integer;
+function TPressOPFParam.GetAsInt16: Smallint;
 begin
   if not IsNull then
     Result := FValue
@@ -275,7 +275,7 @@ begin
   ValueAssigned;
 end;
 
-procedure TPressOPFParam.SetAsInt16(AValue: Integer);
+procedure TPressOPFParam.SetAsInt16(AValue: Smallint);
 begin
   FValue := AValue;
   FDataType := oftInt16;
