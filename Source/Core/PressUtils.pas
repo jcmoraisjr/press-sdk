@@ -31,6 +31,10 @@ procedure PressGenerateGUID(out AGUID: TGUID);
 function PressSetPropertyValue(AObject: TPersistent; const APathName, AValue: string; AError: Boolean = False): Boolean;
 procedure PressOutputDebugString(const AStr: string);
 function PressUnquotedStr(const AStr: string): string;
+{$ifdef d5down}
+function PressD5VariantToInt64(AVariant: Variant): Int64;
+function PressD5Int64ToVariant(AInt64: Int64): Variant;
+{$endif}
 
 implementation
 
@@ -244,5 +248,26 @@ begin
   end else
     Result := AStr;
 end;
+
+{$ifdef d5down}
+function PressD5VariantToInt64(AVariant: Variant): Int64;
+var
+  VInt32: Integer;
+begin
+  if TVarData(AVariant).VType = VT_DECIMAL then
+    Result := Decimal(AVariant).lo64
+  else
+  begin
+    VInt32 := AVariant;
+    Result := VInt32;
+  end;
+end;
+
+function PressD5Int64ToVariant(AInt64: Int64): Variant;
+begin
+  TVarData(Result).VType := VT_DECIMAL;
+  Decimal(Result).lo64 := AInt64;
+end;
+{$endif}
 
 end.
