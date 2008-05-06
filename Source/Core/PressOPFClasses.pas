@@ -121,6 +121,9 @@ implementation
 uses
   SysUtils,
   TypInfo,
+{$ifdef d5down}
+  PressUtils,
+{$endif}
   PressConsts;
 
 { TPressOPFParam }
@@ -206,15 +209,10 @@ end;
 
 function TPressOPFParam.GetAsInt64: Int64;
 begin
-  (*
   if not IsNull then
-    Result := FValue64
+    Result := {$ifdef d5down}PressD5VariantToInt64(FValue){$else}FValue{$endif}
   else
     Result := 0;
-  *)
-
-  { TODO : Implement }
-  Result := 0;
 end;
 
 function TPressOPFParam.GetAsString: string;
@@ -291,12 +289,9 @@ end;
 
 procedure TPressOPFParam.SetAsInt64(AValue: Int64);
 begin
-  (*
-  FValue := AValue;
+  FValue := {$ifdef d5down}PressD5Int64ToVariant(AValue){$else}AValue{$endif};
   FDataType := oftInt64;
-  *)
-
-  { TODO : Implement }
+  ValueAssigned;
 end;
 
 procedure TPressOPFParam.SetAsMemo(const AValue: string);
