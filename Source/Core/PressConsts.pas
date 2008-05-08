@@ -56,7 +56,7 @@ const
   SPressSubjectAccessorName = '_Subject';
   SPressUserAdminId = 'admin';
   SPressSessionServiceName = 'Session';
-  SPressOIDGeneratorServiceName = 'OIDGen';
+  SPressGeneratorServiceName = 'Generator';
   SPressOPFBrokerServiceName = 'OPFBroker';
   SPressUserServiceName = 'User';
   SPressMessagesServiceName = 'Messages';

@@ -52,7 +52,7 @@ type
     function InternalDBMSName: string; override;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); override;
     function InternalExecuteStatement(const AStatement: string; AParams: TPressParamList): Integer; override;
-    function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; override;
+    function InternalGeneratorClass: TPressGeneratorClass; override;
     function InternalImplementsBulkRetrieve: Boolean; override;
     function InternalImplementsLazyLoading: Boolean; override;
     procedure InternalIsDefaultChanged; override;
@@ -104,6 +104,15 @@ type
     property Connector: TPressOPFConnector read FConnector;
   public
     property Service: TPressOPF read GetService;
+  end;
+
+  TPressOPFGenerator = class(TPressGenerator)
+  private
+    FDataset: TPressOPFDataset;
+    FMapper: TPressOPFObjectMapper;
+  protected
+    procedure DoneService; override;
+    function InternalGenerateOID(AObjectClass: TPressObjectClass; const AAttributeName: string): string; override;
   end;
 
 function PressOPFService: TPressOPF;
@@ -240,23 +249,9 @@ begin
   Result := StatementDataset.Execute;
 end;
 
-function TPressOPF.InternalGenerateOID(
-  AClass: TPressObjectClass; const AAttributeName: string): string;
-var
-  VDataset: TPressOPFDataset;
-  VGenerator: string;
+function TPressOPF.InternalGeneratorClass: TPressGeneratorClass;
 begin
-  VGenerator := OIDGenerator.GeneratorName(Self, AClass, AAttributeName);
-  if VGenerator <> '' then
-    VGenerator := Format(Mapper.GeneratorStatement, [VGenerator]);
-  if VGenerator <> '' then
-  begin
-    VDataset := GeneratorDataset;
-    VDataset.SQL := VGenerator;
-    VDataset.Execute;
-    Result := VDataset[0][0].AsString;
-  end else
-    Result := inherited InternalGenerateOID(AClass, AAttributeName);
+  Result := TPressOPFGenerator;
 end;
 
 function TPressOPF.InternalImplementsBulkRetrieve: Boolean;
@@ -512,6 +507,42 @@ begin
   VOPF.Broker := InternalBrokerClass.Create;
   FConnector := VOPF.Connector;
   Result := VOPF;
+end;
+
+{ TPressOPFGenerator }
+
+procedure TPressOPFGenerator.DoneService;
+begin
+  FDataset.Free;
+  inherited;
+end;
+
+function TPressOPFGenerator.InternalGenerateOID(
+  AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+var
+  VOwner: TPressOPF;
+  VGenerator: string;
+begin
+  if not Assigned(FDataset) or not Assigned(FMapper) then
+  begin
+    if not Assigned(Owner) then
+      Exit;
+    VOwner := Owner as TPressOPF;
+    if not Assigned(FDataset) then
+      FDataset := VOwner.Connector.CreateDataset;
+    if not Assigned(FMapper) then
+      FMapper := VOwner.Mapper;
+  end;
+  VGenerator := GeneratorName(AObjectClass, AAttributeName);
+  if VGenerator <> '' then
+    VGenerator := Format(FMapper.GeneratorStatement, [VGenerator]);
+  if VGenerator <> '' then
+  begin
+    FDataset.SQL := VGenerator;
+    FDataset.Execute;
+    Result := FDataset[0][0].AsString;
+  end else
+    Result := inherited InternalGenerateOID(AObjectClass, AAttributeName);
 end;
 
 initialization

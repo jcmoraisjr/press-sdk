@@ -27,7 +27,7 @@ uses
   PressSubject;
 
 const
-  CPressOIDGeneratorService = CPressSessionServicesBase + $0002;
+  CPressGeneratorService = CPressSessionServicesBase + $0002;
 
 type
   TPressSessionCacheClass = class of TPressSessionCache;
@@ -129,30 +129,33 @@ type
 
   TPressPersistence = class;
 
-  TPressOIDGeneratorClass = class of TPressOIDGenerator;
+  TPressGeneratorClass = class of TPressGenerator;
 
-  TPressOIDGenerator = class(TPressService)
+  TPressGenerator = class(TPressService)
+  private
+    FOwner: TPressPersistence;
   protected
-    function InternalGenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string; virtual;
-    function InternalGeneratorName(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string; virtual;
-    procedure InternalReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName, AOID: string); virtual;
+    function InternalGenerateOID(AObjectClass: TPressObjectClass; const AAttributeName: string): string; virtual;
+    function InternalGeneratorName(AObjectClass: TPressObjectClass; const AAttributeName: string): string; virtual;
+    procedure InternalReleaseOID(AObjectClass: TPressObjectClass; const AAttributeName, AOID: string); virtual;
     class function InternalServiceType: TPressServiceType; override;
+    property Owner: TPressPersistence read FOwner;
   public
-    function GenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string;
-    function GeneratorName(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string;
-    procedure ReleaseOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
+    function GenerateOID(AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+    function GeneratorName(AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+    procedure ReleaseOID(AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
   end;
 
   TPressPersistence = class(TPressSession)
   private
-    FOIDGenerator: TPressOIDGenerator;
-    function GetOIDGenerator: TPressOIDGenerator;
+    FGenerator: TPressGenerator;
+    function GetGenerator: TPressGenerator;
   protected
     procedure Finit; override;
     function InternalDBMSName: string; virtual;
     function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; override;
-    function InternalOIDGeneratorClass: TPressOIDGeneratorClass; virtual;
-    property OIDGenerator: TPressOIDGenerator read GetOIDGenerator;
+    function InternalGeneratorClass: TPressGeneratorClass; virtual;
+    property Generator: TPressGenerator read GetGenerator;
   public
     function DBMSName: string;
   end;
@@ -903,24 +906,22 @@ begin
   Result := EPressError.CreateFmt(SUnsupportedFeature, [AFeatureName]);
 end;
 
-{ TPressOIDGenerator }
+{ TPressGenerator }
 
-function TPressOIDGenerator.GenerateOID(
-  Sender: TPressPersistence; AObjectClass: TPressObjectClass;
-  const AAttributeName: string): string;
-begin
-  Result := InternalGenerateOID(Sender, AObjectClass, AAttributeName);
-end;
-
-function TPressOIDGenerator.GeneratorName(Sender: TPressPersistence;
+function TPressGenerator.GenerateOID(
   AObjectClass: TPressObjectClass; const AAttributeName: string): string;
 begin
-  Result := InternalGeneratorName(Sender, AObjectClass, AAttributeName);
+  Result := InternalGenerateOID(AObjectClass, AAttributeName);
 end;
 
-function TPressOIDGenerator.InternalGenerateOID(
-  Sender: TPressPersistence; AObjectClass: TPressObjectClass;
-  const AAttributeName: string): string;
+function TPressGenerator.GeneratorName(
+  AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+begin
+  Result := InternalGeneratorName(AObjectClass, AAttributeName);
+end;
+
+function TPressGenerator.InternalGenerateOID(
+  AObjectClass: TPressObjectClass; const AAttributeName: string): string;
 var
   VId: array[0..15] of Byte;
   I: Integer;
@@ -931,27 +932,26 @@ begin
     Move(IntToHex(VId[I], 2)[1], Result[2*I+1], 2);
 end;
 
-function TPressOIDGenerator.InternalGeneratorName(
-  Sender: TPressPersistence; AObjectClass: TPressObjectClass;
-  const AAttributeName: string): string;
+function TPressGenerator.InternalGeneratorName(
+  AObjectClass: TPressObjectClass; const AAttributeName: string): string;
 begin
   Result := '';
 end;
 
-procedure TPressOIDGenerator.InternalReleaseOID(Sender: TPressPersistence;
+procedure TPressGenerator.InternalReleaseOID(
   AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
 begin
 end;
 
-class function TPressOIDGenerator.InternalServiceType: TPressServiceType;
+class function TPressGenerator.InternalServiceType: TPressServiceType;
 begin
-  Result := CPressOIDGeneratorService;
+  Result := CPressGeneratorService;
 end;
 
-procedure TPressOIDGenerator.ReleaseOID(Sender: TPressPersistence;
+procedure TPressGenerator.ReleaseOID(
   AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
 begin
-  InternalReleaseOID(Sender, AObjectClass, AAttributeName, AOID);
+  InternalReleaseOID(AObjectClass, AAttributeName, AOID);
 end;
 
 { TPressPersistence }
@@ -963,18 +963,20 @@ end;
 
 procedure TPressPersistence.Finit;
 begin
-  FOIDGenerator.Free;
+  FGenerator.Free;
   inherited;
 end;
 
-function TPressPersistence.GetOIDGenerator: TPressOIDGenerator;
+function TPressPersistence.GetGenerator: TPressGenerator;
 begin
-  if not Assigned(FOIDGenerator) then
+  if not Assigned(FGenerator) then
   begin
-    FOIDGenerator := InternalOIDGeneratorClass.Create;
-    FOIDGenerator.AddRef;
+    FGenerator := TPressGenerator(
+     PressApp.Services.CreateServiceByBaseClass(InternalGeneratorClass));
+    FGenerator.AddRef;
+    FGenerator.FOwner := Self;  // friend class
   end;
-  Result := FOIDGenerator;
+  Result := FGenerator;
 end;
 
 function TPressPersistence.InternalDBMSName: string;
@@ -985,13 +987,12 @@ end;
 function TPressPersistence.InternalGenerateOID(AClass: TPressObjectClass;
   const AAttributeName: string): string;
 begin
-  Result := OIDGenerator.GenerateOID(Self, AClass, AAttributeName);
+  Result := Generator.GenerateOID(AClass, AAttributeName);
 end;
 
-function TPressPersistence.InternalOIDGeneratorClass: TPressOIDGeneratorClass;
+function TPressPersistence.InternalGeneratorClass: TPressGeneratorClass;
 begin
-  Result := TPressOIDGeneratorClass(
-   PressApp.Services.DefaultServiceClassByType(CPressOIDGeneratorService));
+  Result := TPressGenerator;
 end;
 
 { TPressPersistentObjectLink }
@@ -1106,10 +1107,10 @@ begin
 end;
 
 initialization
-  PressApp.Registry[CPressOIDGeneratorService].ServiceTypeName := SPressOIDGeneratorServiceName;
-  TPressOIDGenerator.RegisterService;
+  PressApp.Registry[CPressGeneratorService].ServiceTypeName := SPressGeneratorServiceName;
+  TPressGenerator.RegisterService;
 
 finalization
-  TPressOIDGenerator.UnregisterService;
+  TPressGenerator.UnregisterService;
 
 end.
