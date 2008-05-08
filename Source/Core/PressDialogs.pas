@@ -53,7 +53,7 @@ uses
 
 function PressDialog: TPressDialogs;
 begin
-  Result := PressApp.DefaultService(TPressDialogs) as TPressDialogs;
+  Result := TPressDialogs(PressApp.Services.DefaultServiceByBaseClass(TPressDialogs));
 end;
 
 { TPressDialogs }

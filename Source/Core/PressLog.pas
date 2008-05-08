@@ -58,7 +58,7 @@ uses
 
 function PressDefaultLog: TPressLog;
 begin
-  Result := TPressLog(PressApp.DefaultService(TPressLog));
+  Result := TPressLog(PressApp.Services.DefaultServiceByBaseClass(TPressLog));
 end;
 
 procedure PressLogMsg(Sender: TObject; const AMsg: string);

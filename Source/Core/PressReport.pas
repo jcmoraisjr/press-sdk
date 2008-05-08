@@ -214,7 +214,7 @@ uses
 
 function PressDefaultReportDataService: TPressCustomReportData;
 begin
-  Result := PressApp.DefaultService(CPressReportDataService) as TPressCustomReportData;
+  Result := PressApp.Services.DefaultServiceByType(CPressReportDataService) as TPressCustomReportData;
 end;
 
 { TPressReport }
@@ -525,7 +525,7 @@ begin
   if not Assigned(FReport) then
   begin
     FReport :=
-     PressApp.CreateDefaultService(CPressReportService) as TPressReport;
+     PressApp.Services.CreateServiceByType(CPressReportService) as TPressReport;
     FReport.AddRef;
     FReport.OnNeedValue := {$IFDEF FPC}@{$ENDIF}ReportNeedValue;
     FReport.OnNeedUpdateFields := {$IFDEF FPC}@{$ENDIF}LoadFields;

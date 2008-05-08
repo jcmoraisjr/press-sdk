@@ -991,7 +991,7 @@ end;
 function TPressPersistence.InternalOIDGeneratorClass: TPressOIDGeneratorClass;
 begin
   Result := TPressOIDGeneratorClass(
-   PressApp.DefaultServiceClass(CPressOIDGeneratorService));
+   PressApp.Services.DefaultServiceClassByType(CPressOIDGeneratorService));
 end;
 
 { TPressPersistentObjectLink }

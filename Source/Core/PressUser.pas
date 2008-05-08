@@ -87,7 +87,7 @@ uses
 
 function PressUserData: TPressCustomUserData;
 begin
-  Result := PressApp.DefaultService(TPressCustomUserData) as TPressCustomUserData;
+  Result := TPressCustomUserData(PressApp.Services.DefaultServiceByBaseClass(TPressCustomUserData));
 end;
 
 { TPressCustomUser }

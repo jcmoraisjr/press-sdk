@@ -167,7 +167,7 @@ begin
   if not Assigned(FBroker) then
   begin
     FBroker :=
-     PressApp.DefaultService(CPressOPFBrokerService) as TPressOPFBroker;
+     PressApp.Services.DefaultServiceByType(CPressOPFBrokerService) as TPressOPFBroker;
     FBroker.AddRef;
   end;
   Result := FBroker;
@@ -506,13 +506,9 @@ end;
 
 function TPressOPFConnection.InternalCreateService: TPressService;
 var
-  VOPFClass: TPressServiceClass;
   VOPF: TPressOPF;
 begin
-  VOPFClass := PressApp.DefaultServiceClass(CPressSessionService);
-  if not VOPFClass.InheritsFrom(TPressOPF) then
-    VOPFClass := TPressOPF;
-  VOPF := VOPFClass.Create as TPressOPF;
+  VOPF := TPressOPF(PressApp.Services.CreateServiceByBaseClass(TPressOPF));
   VOPF.Broker := InternalBrokerClass.Create;
   FConnector := VOPF.Connector;
   Result := VOPF;
