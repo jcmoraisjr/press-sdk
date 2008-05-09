@@ -693,6 +693,7 @@ type
     procedure InitInstance(ADataAccess: IPressSession; AMetadata: TPressObjectMetadata; AIsPersistent: Boolean = False);
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; virtual;
     procedure InternalCalcAttribute(AAttribute: TPressAttribute); virtual;
+    procedure InternalChanged(AChangedWhenDisabled: Boolean); override;
     procedure InternalChangesDisabled; override;
     procedure InternalChangesEnabled; override;
     procedure InternalChanging; override;
@@ -3295,6 +3296,13 @@ end;
 
 procedure TPressObject.InternalCalcAttribute(AAttribute: TPressAttribute);
 begin
+end;
+
+procedure TPressObject.InternalChanged(AChangedWhenDisabled: Boolean);
+begin
+  inherited;
+  if not AChangedWhenDisabled and Assigned(FOwnerAttribute) then
+    FOwnerAttribute.Changed;
 end;
 
 procedure TPressObject.InternalChangesDisabled;
