@@ -30,6 +30,7 @@ type
   TPressOPFDBDataset = class(TPressOPFDataset)
   private
     function DBTypeToOPFType(AFieldType: TFieldType): TPressOPFFieldType;
+    function OPFTypeToDBType(AFieldType: TPressOPFFieldType): TFieldType;
   protected
     procedure PopulateOPFDataset(ADataSet: TDataSet);
     procedure PopulateParams(AParams: TParams);
@@ -45,8 +46,7 @@ uses
 
 { TPressOPFDBDataset }
 
-function TPressOPFDBDataset.DBTypeToOPFType(
-  AFieldType: TFieldType): TPressOPFFieldType;
+function TPressOPFDBDataset.DBTypeToOPFType(AFieldType: TFieldType): TPressOPFFieldType;
 begin
   case AFieldType of
     ftString, ftWideString:
@@ -57,13 +57,17 @@ begin
       Result := oftInt32;
     ftLargeint:
       Result := oftInt64;
-    ftBoolean:
-      Result := oftBoolean;
     ftFloat:
       Result := oftFloat;
     ftCurrency, ftBCD:
       Result := oftCurrency;
-    ftDate, ftTime, ftDateTime:
+    ftBoolean:
+      Result := oftBoolean;
+    ftDate:
+      Result := oftDate;
+    ftTime:
+      Result := oftTime;
+    ftDateTime:
       Result := oftDateTime;
     ftMemo, ftOraClob:
       Result := oftMemo;
@@ -73,6 +77,29 @@ begin
       raise EPressOPFError.CreateFmt(SUnsupportedFieldType, [
        GetEnumName(TypeInfo(TFieldType), Ord(AFieldType))]);
   end;
+end;
+
+function TPressOPFDBDataset.OPFTypeToDBType(AFieldType: TPressOPFFieldType): TFieldType;
+const
+  CFieldType: array[TPressOPFFieldType] of TFieldType = (
+   ftUnknown,   //  oftUnknown
+   ftString,    //  oftString
+   ftSmallint,  //  oftInt16
+   ftInteger,   //  oftInt32
+   ftLargeint,  //  oftInt64
+   ftFloat,     //  oftFloat
+   ftCurrency,  //  oftCurrency
+   ftBoolean,   //  oftBoolean
+   ftDate,      //  oftDate
+   ftTime,      //  oftTime
+   ftDateTime,  //  oftDateTime
+   ftMemo,      //  oftMemo
+   ftBlob);     //  oftBinary
+begin
+  Result := CFieldType[AFieldType];
+  if Result = ftUnknown then
+    raise EPressOPFError.CreateFmt(SUnsupportedFieldType, [
+     GetEnumName(TypeInfo(TPressOPFFieldType), Ord(AFieldType))]);
 end;
 
 procedure TPressOPFDBDataset.PopulateOPFDataset(ADataSet: TDataSet);
@@ -105,6 +132,7 @@ end;
 
 procedure TPressOPFDBDataset.PopulateParams(AParams: TParams);
 var
+  VDBParam: TParam;
   VParam: TPressOPFParam;
   I: Integer;
 begin
@@ -117,15 +145,15 @@ begin
         oftString:
           AParams.ParamByName(VParam.Name).AsString := VParam.AsString;
         oftInt16:
-          AParams.ParamByName(VParam.Name).AsSmallint := VParam.AsInt16;
+          AParams.ParamByName(VParam.Name).AsSmallInt := VParam.AsInt16;
         oftInt32:
           AParams.ParamByName(VParam.Name).AsInteger := VParam.AsInt32;
         oftInt64:
-          {$IFDEF FPC}
+{$ifdef fpc}
           AParams.ParamByName(VParam.Name).AsLargeInt := VParam.AsInt64;
-          {$ELSE}
+{$else}
           AParams.ParamByName(VParam.Name).AsInteger := VParam.AsInt64;
-          {$ENDIF}
+{$endif}
         oftFloat:
           AParams.ParamByName(VParam.Name).AsFloat := VParam.AsFloat;
         oftCurrency:
@@ -144,7 +172,11 @@ begin
           AParams.ParamByName(VParam.Name).AsBlob := VParam.AsBinary;
       end;
     end else if VParam.IsAssigned then
-      AParams.ParamByName(VParam.Name).Value := Null;
+    begin
+      VDBParam := AParams.ParamByName(VParam.Name);
+      VDBParam.DataType := OPFTypeToDBType(VParam.DataType);
+      VDBParam.Value := Null;
+    end;
   end;
 end;
 
