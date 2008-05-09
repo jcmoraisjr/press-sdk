@@ -1224,7 +1224,7 @@ end;
 function TPressMVPReferenceModel.GetPathChangedNotifier: TPressNotifier;
 begin
   if not Assigned(FPathChangedNotifier) then
-    FPathChangedNotifier := TPressNotifier.Create(PathChanged);
+    FPathChangedNotifier := TPressNotifier.Create({$ifdef fpc}@{$endif}PathChanged);
   Result := FPathChangedNotifier;
 end;
 
