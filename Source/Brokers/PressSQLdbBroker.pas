@@ -89,6 +89,7 @@ uses
   PressConsts,
   PressOPFClasses,
   PressIBFbBroker,
+  PressPgSQLBroker,
   PressOracleBroker;
 
 { TPressSQLdbBroker }
@@ -120,6 +121,7 @@ begin
   inherited;
   FDatabase := TSQLConnector.Create(nil);
   FTransaction := TSQLTransaction.Create(nil);
+  { TODO : ReadCommited, RecVersion, Wait, Write }
   FDatabase.Transaction := FTransaction;
 end;
 
@@ -182,10 +184,10 @@ function TPressSQLdbDataset.GetQuery: TSQLQuery;
 begin
   if not Assigned(FQuery) then
   begin
-    { TODO : Optimize }
     FQuery := TSQLQuery.Create(nil);
     FQuery.Database := Connector.Database;
     FQuery.Transaction := Connector.Transaction;
+    FQuery.ParseSQL := False;
     FQuery.ReadOnly := True;
   end;
   Result := FQuery;
@@ -201,8 +203,7 @@ begin
   end else
   begin
     Query.ExecSQL;
-    { TODO : Implement }
-    Result := 1;  // dont raise conflict exception
+    Result := Query.RowsAffected;
   end;
 end;
 
@@ -222,6 +223,8 @@ begin
    (Connector as TPressSQLdbConnector).Database.ConnectorType;
   if SameText(VConnectionTypeName, 'firebird') then
     Result := TPressIBFbDDLBuilder
+  else if SameText(VConnectionTypeName, 'postgresql') then
+    Result := TPressPgSQLDDLBuilder
   else if SameText(VConnectionTypeName, 'oracle') then
     Result := TPressOracleDDLBuilder
   else
