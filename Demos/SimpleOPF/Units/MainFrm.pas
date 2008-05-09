@@ -51,7 +51,8 @@ uses
 
 procedure TMainForm.GenerateDBMetaButtonClick(Sender: TObject);
 begin
-  OutputMemo.Lines.Text := PressOPFService.Mapper.CreateDatabaseStatement;
+  OutputMemo.Lines.Text := AdjustLineBreaks(
+   PressOPFService.Mapper.CreateDatabaseStatement);
 end;
 
 procedure TMainForm.IncludeNameButtonClick(Sender: TObject);

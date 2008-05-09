@@ -52,9 +52,9 @@ type
     procedure InternalShowConnectionManager; override;
   end;
 
-  TPhoneBookGenerator = class(TPressOIDGenerator)
+  TPhoneBookGenerator = class(TPressGenerator)
   protected
-    function InternalGenerateOID(Sender: TPressPersistence; AObjectClass: TPressObjectClass; const AAttributeName: string): string; override;
+    function InternalGenerateOID(AObjectClass: TPressObjectClass; const AAttributeName: string): string; override;
   end;
 
 implementation
@@ -78,11 +78,10 @@ end;
 { TPhoneBookGenerator }
 
 function TPhoneBookGenerator.InternalGenerateOID(
-  Sender: TPressPersistence; AObjectClass: TPressObjectClass;
-  const AAttributeName: string): string;
+  AObjectClass: TPressObjectClass; const AAttributeName: string): string;
 begin
   Result :=
-   inherited InternalGenerateOID(Sender, AObjectClass, AAttributeName);
+   inherited InternalGenerateOID(AObjectClass, AAttributeName);
 end;
 
 initialization

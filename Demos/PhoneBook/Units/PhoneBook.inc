@@ -2,7 +2,7 @@
 // the storing and retrieval of data entered into the application.
 // If no persistence is required then undefine all persistence
 // options.
-{.$DEFINE UsePressOPF}
+{$DEFINE UsePressOPF}
 {.$DEFINE UseInstantObjects}
 
 // Define the following directive to enable runtime report
