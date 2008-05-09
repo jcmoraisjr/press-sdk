@@ -29,16 +29,17 @@ type
     function InternalImplicitIndexCreation: Boolean; override;
     function InternalMaxIdentLength: Integer; override;
   public
-    function GeneratorStatement: string; override;
+    function CreateGeneratorStatement: string; override;
+    function SelectGeneratorStatement: string; override;
   end;
 
 implementation
 
 { TPressPgSQLDDLBuilder }
 
-function TPressPgSQLDDLBuilder.GeneratorStatement: string;
+function TPressPgSQLDDLBuilder.CreateGeneratorStatement: string;
 begin
-  Result := 'select nextval(''%s'')';
+  Result := 'create sequence %s';
 end;
 
 function TPressPgSQLDDLBuilder.InternalFieldTypeStr(
@@ -70,6 +71,11 @@ end;
 function TPressPgSQLDDLBuilder.InternalMaxIdentLength: Integer;
 begin
   Result := 63;
+end;
+
+function TPressPgSQLDDLBuilder.SelectGeneratorStatement: string;
+begin
+  Result := 'select nextval(''%s'')';
 end;
 
 end.

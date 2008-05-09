@@ -535,7 +535,7 @@ begin
   end;
   VGenerator := GeneratorName(AObjectClass, AAttributeName);
   if VGenerator <> '' then
-    VGenerator := Format(FMapper.GeneratorStatement, [VGenerator]);
+    VGenerator := Format(FMapper.SelectGeneratorStatement, [VGenerator]);
   if VGenerator <> '' then
   begin
     FDataset.SQL := VGenerator;

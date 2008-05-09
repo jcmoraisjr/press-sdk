@@ -29,16 +29,17 @@ type
     function InternalImplicitIndexCreation: Boolean; override;
     function InternalMaxIdentLength: Integer; override;
   public
-    function GeneratorStatement: string; override;
+    function CreateGeneratorStatement: string; override;
+    function SelectGeneratorStatement: string; override;
   end;
 
 implementation
 
 { TPressIBFbDDLBuilder }
 
-function TPressIBFbDDLBuilder.GeneratorStatement: string;
+function TPressIBFbDDLBuilder.CreateGeneratorStatement: string;
 begin
-  Result := 'select gen_id(%s, 1) from rdb$database';
+  Result := 'create generator %s';
 end;
 
 function TPressIBFbDDLBuilder.InternalFieldTypeStr(
@@ -70,6 +71,11 @@ end;
 function TPressIBFbDDLBuilder.InternalMaxIdentLength: Integer;
 begin
   Result := 31;
+end;
+
+function TPressIBFbDDLBuilder.SelectGeneratorStatement: string;
+begin
+  Result := 'select gen_id(%s, 1) from rdb$database';
 end;
 
 end.

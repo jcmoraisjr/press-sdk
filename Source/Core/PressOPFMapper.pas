@@ -57,12 +57,12 @@ type
     function CreateDatabaseStatement(ACreateClearDatabaseStatements: Boolean = False): string;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function DMLBuilderClass: TPressOPFDMLBuilderClass;
-    function GeneratorStatement: string;
     procedure Load(AObject: TPressObject; AIncludeLazyLoading: Boolean);
     procedure Refresh(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressSessionAttributes): TPressObject;
     procedure RetrieveAttribute(AAttribute: TPressAttribute);
     procedure Rollback;
+    function SelectGeneratorStatement: string;
     procedure Store(AObject: TPressObject);
     property AttributeMapper[AMap: TPressOPFStorageMap]: TPressOPFAttributeMapper read GetAttributeMapper;
     property Connector: TPressOPFConnector read FConnector;
@@ -261,11 +261,6 @@ begin
   Result := InternalDMLBuilderClass;
 end;
 
-function TPressOPFObjectMapper.GeneratorStatement: string;
-begin
-  Result := DDLBuilder.GeneratorStatement;
-end;
-
 function TPressOPFObjectMapper.GetAttributeMapper(
   AMap: TPressOPFStorageMap): TPressOPFAttributeMapper;
 var
@@ -382,6 +377,11 @@ begin
   { TODO : Remove this method as well as ResetClassList from StorageModel
     after implement object transaction control }
   StorageModel.ResetClassList;
+end;
+
+function TPressOPFObjectMapper.SelectGeneratorStatement: string;
+begin
+  Result := DDLBuilder.SelectGeneratorStatement;
 end;
 
 procedure TPressOPFObjectMapper.Store(AObject: TPressObject);

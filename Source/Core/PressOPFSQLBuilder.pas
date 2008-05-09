@@ -49,13 +49,15 @@ type
     function CreateFieldStatementList(ATableMetadata: TPressOPFTableMetadata): string; virtual;
     function CreateForeignKeyIndexStatement(ATableMetadata: TPressOPFTableMetadata; AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string; virtual;
     function CreateForeignKeyStatement(ATableMetadata: TPressOPFTableMetadata; AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string; virtual;
+    function CreateGeneratorStatement: string; virtual;
     function CreateHints(AModel: TPressOPFStorageModel): string; virtual;
     function CreateIndexStatement(ATableMetadata: TPressOPFTableMetadata; AIndexMetadata: TPressOPFIndexMetadata): string; virtual;
     function CreatePrimaryKeyStatement(ATableMetadata: TPressOPFTableMetadata): string; virtual;
     function CreateTableStatement(ATableMetadata: TPressOPFTableMetadata): string; virtual;
     function DropConstraintStatement(ATableMetadata: TPressOPFTableMetadata; AMetadata: TPressOPFMetadata): string; virtual;
     function DropTableStatement(ATableMetadata: TPressOPFTableMetadata): string; virtual;
-    function GeneratorStatement: string; virtual;
+    // Map/metadata independent DMLs
+    function SelectGeneratorStatement: string; virtual;
   end;
 
   TPressOPFFieldListType = (ftSimple, ftParams);
@@ -267,6 +269,11 @@ begin
    CReferentialAction[AForeignKeyMetadata.OnUpdateAction]]);
 end;
 
+function TPressOPFDDLBuilder.CreateGeneratorStatement: string;
+begin
+  Result := '';
+end;
+
 function TPressOPFDDLBuilder.CreateHints(
   AModel: TPressOPFStorageModel): string;
 
@@ -363,11 +370,6 @@ begin
    ATableMetadata.Name]);
 end;
 
-function TPressOPFDDLBuilder.GeneratorStatement: string;
-begin
-  Result := '';
-end;
-
 function TPressOPFDDLBuilder.InternalFieldTypeStr(
   AFieldType: TPressOPFFieldType): string;
 begin
@@ -382,6 +384,11 @@ end;
 function TPressOPFDDLBuilder.InternalMaxIdentLength: Integer;
 begin
   Result := 0;
+end;
+
+function TPressOPFDDLBuilder.SelectGeneratorStatement: string;
+begin
+  Result := '';
 end;
 
 { TPressOPFDMLBuilder }

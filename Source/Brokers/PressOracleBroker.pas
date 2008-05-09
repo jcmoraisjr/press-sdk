@@ -31,7 +31,8 @@ type
     function InternalMaxIdentLength: Integer; override;
   public
     function CreateForeignKeyStatement(ATableMetadata: TPressOPFTableMetadata; AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string; override;
-    function GeneratorStatement: string; override;             
+    function CreateGeneratorStatement: string; override;
+    function SelectGeneratorStatement: string; override;
   end;
 
 implementation
@@ -64,9 +65,9 @@ begin
   Result := Result + ';' + #10#10;
 end;
 
-function TPressOracleDDLBuilder.GeneratorStatement: string;
+function TPressOracleDDLBuilder.CreateGeneratorStatement: string;
 begin
-  Result := 'select %s.nextval from dual';
+  Result := 'create sequence %s';
 end;
 
 function TPressOracleDDLBuilder.InternalFieldTypeStr(
@@ -98,6 +99,11 @@ end;
 function TPressOracleDDLBuilder.InternalMaxIdentLength: Integer;
 begin
   Result := 30;
+end;
+
+function TPressOracleDDLBuilder.SelectGeneratorStatement: string;
+begin
+  Result := 'select %s.nextval from dual';
 end;
 
 end.
