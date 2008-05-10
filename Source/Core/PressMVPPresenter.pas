@@ -862,7 +862,7 @@ class function TPressMVPFormPresenter.CreateForm(
   AFormClass: TFormClass; AModel: TPressMVPObjectModel): TForm;
 begin
   Result := TForm(AFormClass.NewInstance);
-  AssignAccessor(Result, SPressSubjectAccessorName, AModel);
+  AssignAccessor(Result, SPressModelAccessorName, AModel);
   if AModel.HasSubject then
     AssignAccessor(Result, SPressSubjectAccessorName, AModel.Subject);
   Result.Create(nil);
