@@ -165,6 +165,8 @@ function TPressReportManager.AddReportItem(
 var
   VShortCut: TShortCut;
 begin
+  if Model.HasSubject then
+    AItem.AssignObject(Model.Subject);
   if AItem.ReportVisible then
   begin
     if APosition = 0 then

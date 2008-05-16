@@ -164,7 +164,6 @@ type
     FCurrentObject: TObject;
     FDataSources: TPressReportDataSourceList;
     FReport: TPressReport;
-    procedure AssignObject(AObject: TObject);
     function GetDataSources: TPressReportDataSourceList;
     function GetReport: TPressReport;
     procedure LoadFields;
@@ -182,6 +181,7 @@ type
     property DataSources: TPressReportDataSourceList read GetDataSources;
     property Report: TPressReport read GetReport;
   public
+    procedure AssignObject(AObject: TObject);
     procedure Design;
     procedure Execute(AObject: TObject);
     procedure LoadFromFile(const AFileName: string);
