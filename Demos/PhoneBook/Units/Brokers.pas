@@ -72,7 +72,7 @@ begin
   if PressDialog.ConfirmDlg(
    'Copy the database metadata to the clipboard?') then
     Clipboard.AsText :=
-     AdjustLineBreaks(PressOPFService.Mapper.CreateDatabaseStatement);
+     AdjustLineBreaks(PressOPFService.CreateDatabaseStatement);
 end;
 
 { TPhoneBookGenerator }

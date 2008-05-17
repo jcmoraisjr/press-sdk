@@ -52,7 +52,7 @@ uses
 procedure TMainForm.GenerateDBMetaButtonClick(Sender: TObject);
 begin
   OutputMemo.Lines.Text := AdjustLineBreaks(
-   PressOPFService.Mapper.CreateDatabaseStatement);
+   PressOPFService.CreateDatabaseStatement);
 end;
 
 procedure TMainForm.IncludeNameButtonClick(Sender: TObject);
