@@ -38,6 +38,7 @@ type
     FGeneratorDataset: TPressOPFDataset;
     FMapper: TPressOPFObjectMapper;
     FStatementDataset: TPressOPFDataset;
+    function EnsureBroker: TPressOPFBroker;
     function GetConnector: TPressOPFConnector;
     function GetGeneratorDataset: TPressOPFDataset;
     function GetMapper: TPressOPFObjectMapper;
@@ -67,13 +68,14 @@ type
     function InternalSQLQuery(AClass: TPressObjectClass; const ASQLStatement: string; AParams: TPressParamList): TPressProxyList; override;
     procedure InternalStartTransaction; override;
     procedure InternalStore(AObject: TPressObject); override;
-    property GeneratorDataset: TPressOPFDataset read GetGeneratorDataset;
-    property StatementDataset: TPressOPFDataset read GetStatementDataset;
-  public
-    function EnsureBroker: TPressOPFBroker;
     property Broker: TPressOPFBroker read FBroker write SetBroker;
     property Connector: TPressOPFConnector read GetConnector;
+    property GeneratorDataset: TPressOPFDataset read GetGeneratorDataset;
     property Mapper: TPressOPFObjectMapper read GetMapper;
+    property StatementDataset: TPressOPFDataset read GetStatementDataset;
+  public
+    function CreateDatabaseStatement: string;
+    function CreateDataset: TPressOPFDataset;
   end;
 
   TPressOPFBrokerClass = class of TPressOPFBroker;
@@ -142,6 +144,16 @@ begin
 end;
 
 { TPressOPF }
+
+function TPressOPF.CreateDatabaseStatement: string;
+begin
+  Result := Mapper.CreateDatabaseStatement;
+end;
+
+function TPressOPF.CreateDataset: TPressOPFDataset;
+begin
+  Result := Connector.CreateDataset;
+end;
 
 function TPressOPF.CreatePressObject(AClass: TPressObjectClass;
   ADataset: TPressOPFDataset; ADatasetIndex: Integer): TPressObject;
