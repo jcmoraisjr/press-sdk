@@ -155,6 +155,7 @@ type
     function DBMSName: string;
     procedure Rollback;
     procedure StartTransaction;
+    property ActiveDBTransaction: Boolean read FActiveDBTransaction;
     property SupportTransaction: Boolean read GetSupportTransaction;
   end;
 
@@ -378,22 +379,33 @@ begin
 end;
 
 function TPressOPFDataset.Execute: Integer;
-{$IFDEF PressLogDAOPersistence}
 var
+  VImplicitTrans: Boolean;
+{$ifdef PressLogDAOPersistence}
   I: Integer;
-{$ENDIF}
+{$endif}
 begin
-  Connector.StartTransaction;
-  {$IFDEF PressLogDAOPersistence}
-    PressLogMsg(Self, 'OPF: ' + FSQL);
-    for I := 0 to Pred(Params.Count) do
-      PressLogMsg(Self, Format('OPFParam: %s = %s', [
-       Params[I].Name, Params[I].AsString]));
-  {$ENDIF}
-  Result := InternalExecute;
-  {$IFDEF PressLogDAOPersistence}
-  PressLogMsg(Self, 'OPFResult: ' + InttoStr(Result) + ' row(s) affected');
-  {$ENDIF}
+  VImplicitTrans := not Connector.ActiveDBTransaction;
+  if VImplicitTrans then
+    Connector.StartTransaction;
+  try
+{$ifdef PressLogDAOPersistence}
+      PressLogMsg(Self, 'OPF: ' + FSQL);
+      for I := 0 to Pred(Params.Count) do
+        PressLogMsg(Self, Format('OPFParam: %s = %s', [
+         Params[I].Name, Params[I].AsString]));
+{$endif}
+    Result := InternalExecute;
+{$ifdef PressLogDAOPersistence}
+    PressLogMsg(Self, 'OPFResult: ' + InttoStr(Result) + ' row(s) affected');
+{$endif}
+    if VImplicitTrans then
+      Connector.Commit;
+  except
+    if VImplicitTrans then
+      Connector.Rollback;
+    raise;
+  end;
 end;
 
 function TPressOPFDataset.GetFieldDefs: TPressOPFFieldDefList;
