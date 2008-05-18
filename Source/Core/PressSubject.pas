@@ -3526,8 +3526,7 @@ function TPressSubjectExpression.InternalParseOperand(
   Reader: TPressParserReader): TPressExpressionItem;
 begin
   Result := inherited InternalParseOperand(Reader);
-  if not Assigned(Result) and
-   Assigned(Instance.FindAttribute(Reader.ReadNextToken)) then
+  if not Assigned(Result) then
     Result := TPressSubjectExpressionItem(
      Parse(Reader, [TPressSubjectExpressionItem]));
 end;
@@ -3685,14 +3684,20 @@ function TPressSubjectExpressionItem.ReadObject(
   Reader: TPressParserReader; AObject: TPressObject): Variant;
 var
   VAttr: TPressAttribute;
+  VToken: string;
 begin
-  VAttr := AObject.AttributeByName(Reader.ReadIdentifier);
-  if VAttr is TPressValue then
-    Result := ReadValue(Reader, TPressValue(VAttr))
-  else if VAttr is TPressItem then
-    Result := ReadItem(Reader, TPressItem(VAttr))
-  else
-    Result := ReadItems(Reader, TPressItems(VAttr));
+  VToken := Reader.ReadIdentifier;
+  VAttr := AObject.FindAttribute(VToken);
+  if Assigned(VAttr) then
+  begin
+    if VAttr is TPressValue then
+      Result := ReadValue(Reader, TPressValue(VAttr))
+    else if VAttr is TPressItem then
+      Result := ReadItem(Reader, TPressItem(VAttr))
+    else
+      Result := ReadItems(Reader, TPressItems(VAttr));
+  end else
+    Result := AObject.InternalReadMethod(nil, VToken, ReadParams(Reader, 0));  // friend class
 end;
 
 function TPressSubjectExpressionItem.ReadObjectMetadata(
