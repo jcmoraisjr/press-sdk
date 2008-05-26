@@ -334,6 +334,7 @@ implementation
 uses
   SysUtils,
   PressConsts,
+  PressUtils,
   PressUser,
   PressMVPFactory,
   PressMVPCommand;
@@ -822,7 +823,7 @@ begin
     else {taCenter}
       VLeft := (ARect.Left + ARect.Right - ACanvas.TextWidth(AText)) div 2;
   end;
-  ACanvas.TextRect(ARect, VLeft, VTop, AText);
+  ACanvas.TextRect(ARect, VLeft, VTop, PressEncodeString(AText));
 end;
 
 { TPressMVPDrawItemInteractor }

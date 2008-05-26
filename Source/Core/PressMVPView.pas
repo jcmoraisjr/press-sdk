@@ -589,6 +589,7 @@ uses
   SysUtils,
   Math,
   PressConsts,
+  PressUtils,
   PressPicture,
   PressMVPFactory;
 
@@ -1139,7 +1140,7 @@ end;
 
 function TPressMVPEditView.GetAsString: string;
 begin
-  Result := TPressMVPViewCustomEditFriend(Control).Text;
+  Result := PressDecodeString(TPressMVPViewCustomEditFriend(Control).Text);
 end;
 
 function TPressMVPEditView.GetControl: TCustomEdit;
@@ -1178,7 +1179,7 @@ begin
   if AccessMode = amInvisible then
     TPressMVPViewCustomEditFriend(Control).Text := ''
   else
-    TPressMVPViewCustomEditFriend(Control).Text := Model.AsString;
+    TPressMVPViewCustomEditFriend(Control).Text := PressEncodeString(Model.AsString);
   Control.Enabled := AccessMode = amWritable;
   Unchanged;
 end;
@@ -1199,7 +1200,7 @@ end;
 
 procedure TPressMVPEditView.SetText(const Value: string);
 begin
-  TPressMVPViewCustomEditFriend(Control).Text := Value;
+  TPressMVPViewCustomEditFriend(Control).Text := PressEncodeString(Value);
 end;
 
 procedure TPressMVPEditView.ViewChangeEvent(Sender: TObject);
@@ -1231,7 +1232,7 @@ end;
 
 function TPressMVPDateTimeView.GetAsString: string;
 begin
-  Result := TPressMVPViewCustomCalendarFriend(Control).Text;
+  Result := PressDecodeString(TPressMVPViewCustomCalendarFriend(Control).Text);
 end;
 
 function TPressMVPDateTimeView.GetControl: TCustomCalendar;
@@ -1383,7 +1384,7 @@ end;
 
 function TPressMVPComboBoxView.GetAsString: string;
 begin
-  Result := TPressMVPViewCustomComboBoxFriend(Control).Text;
+  Result := PressDecodeString(TPressMVPViewCustomComboBoxFriend(Control).Text);
 end;
 
 function TPressMVPComboBoxView.GetControl: TCustomComboBox;
@@ -1433,7 +1434,7 @@ end;
 
 procedure TPressMVPComboBoxView.InternalAddReference(const ACaption: string);
 begin
-  Control.Items.Add(ACaption);
+  Control.Items.Add(PressEncodeString(ACaption));
 end;
 
 procedure TPressMVPComboBoxView.InternalClear;
@@ -1454,7 +1455,7 @@ begin
   if AccessMode = amInvisible then
     TPressMVPViewCustomComboBoxFriend(Control).Text := ''
   else
-    TPressMVPViewCustomComboBoxFriend(Control).Text := Model.AsString;
+    TPressMVPViewCustomComboBoxFriend(Control).Text := PressEncodeString(Model.AsString);
   Control.Enabled := AccessMode = amWritable;
   Unchanged;
 end;
@@ -1860,7 +1861,7 @@ end;
 
 function TPressMVPCaptionView.GetAsString: string;
 begin
-  Result := TPressMVPViewControlFriend(Control).Caption;
+  Result := PressDecodeString(TPressMVPViewControlFriend(Control).Caption);
 end;
 
 procedure TPressMVPCaptionView.InternalUpdate;
@@ -1869,12 +1870,12 @@ begin
   if AccessMode = amInvisible then
     TPressMVPViewControlFriend(Control).Caption := ''
   else
-    TPressMVPViewControlFriend(Control).Caption := Model.AsString;
+    TPressMVPViewControlFriend(Control).Caption := PressEncodeString(Model.AsString);
 end;
 
 procedure TPressMVPCaptionView.SetText(const Value: string);
 begin
-  TPressMVPViewControlFriend(Control).Caption := Value;
+  TPressMVPViewControlFriend(Control).Caption := PressEncodeString(Value);
 end;
 
 { TPressMVPLabelView }
@@ -1989,7 +1990,7 @@ end;
 
 procedure TPressMVPFormView.SetText(const Value: string);
 begin
-  Control.Caption := Value;
+  Control.Caption := PressEncodeString(Value);
 end;
 
 procedure TPressMVPFormView.ViewCloseEvent(Sender: TObject; var Action: TCloseAction);

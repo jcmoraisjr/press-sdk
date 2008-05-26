@@ -318,6 +318,7 @@ uses
   Forms,
   ExtDlgs,
   PressConsts,
+  PressUtils,
   PressApplication,
   PressDialogs,
   PressMVPPresenter;
@@ -334,7 +335,7 @@ begin
   begin
     FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
     FCommand := ACommand;
-    Caption := FCommand.Caption;
+    Caption := PressEncodeString(FCommand.Caption);
     Enabled := FCommand.Enabled;
     Visible := FCommand.Visible;
     ShortCut := FCommand.ShortCut;

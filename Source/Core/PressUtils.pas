@@ -31,6 +31,8 @@ procedure PressGenerateGUID(out AGUID: TGUID);
 function PressSetPropertyValue(AObject: TPersistent; const APathName, AValue: string; AError: Boolean = False): Boolean;
 procedure PressOutputDebugString(const AStr: string);
 function PressUnquotedStr(const AStr: string): string;
+function PressDecodeString(const AStr: string): string;
+function PressEncodeString(const AStr: string): string;
 {$ifdef d5down}
 function PressD5VariantToInt64(AVariant: Variant): Int64;
 function PressD5Int64ToVariant(AInt64: Int64): Variant;
@@ -248,6 +250,24 @@ begin
     Result := AnsiExtractQuotedStr(PStr, AStr[1]);
   end else
     Result := AStr;
+end;
+
+function PressDecodeString(const AStr: string): string;
+begin
+{$ifdef lcl}
+  Result := Utf8Decode(AStr);
+{$else}
+  Result := AStr;
+{$endif}
+end;
+
+function PressEncodeString(const AStr: string): string;
+begin
+{$ifdef lcl}
+  Result := Utf8Encode(AStr);
+{$else}
+  Result := AStr;
+{$endif}
 end;
 
 {$ifdef d5down}
