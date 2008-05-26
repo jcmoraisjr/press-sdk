@@ -231,6 +231,7 @@ end;
 procedure PressOutputDebugString(const AStr: string);
 begin
   {$IFDEF FPC}
+  writeln(AStr);
   {$ELSE}
   Windows.OutputDebugString(PChar(AStr));
   {$ENDIF}
