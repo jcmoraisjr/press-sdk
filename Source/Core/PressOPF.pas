@@ -439,6 +439,7 @@ end;
 procedure TPressOPF.InternalStartTransaction;
 begin
   // do not start a db transaction; datasets will do when necessary
+  Connector.StartTransactionNotification;
 end;
 
 procedure TPressOPF.InternalStore(AObject: TPressObject);

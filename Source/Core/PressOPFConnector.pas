@@ -139,6 +139,7 @@ type
   TPressOPFConnector = class(TPersistent)
   private
     FActiveDBTransaction: Boolean;
+    FActiveOPFTransaction: Boolean;
   protected
     function GetSupportTransaction: Boolean; virtual;
     procedure InternalCommit; virtual;
@@ -155,7 +156,9 @@ type
     function DBMSName: string;
     procedure Rollback;
     procedure StartTransaction;
+    procedure StartTransactionNotification;
     property ActiveDBTransaction: Boolean read FActiveDBTransaction;
+    property ActiveOPFTransaction: Boolean read FActiveOPFTransaction;
     property SupportTransaction: Boolean read GetSupportTransaction;
   end;
 
@@ -380,14 +383,13 @@ end;
 
 function TPressOPFDataset.Execute: Integer;
 var
-  VImplicitTrans: Boolean;
+  VShortTransaction: Boolean;
 {$ifdef PressLogDAOPersistence}
   I: Integer;
 {$endif}
 begin
-  VImplicitTrans := not Connector.ActiveDBTransaction;
-  if VImplicitTrans then
-    Connector.StartTransaction;
+  VShortTransaction := not Connector.ActiveOPFTransaction;
+  Connector.StartTransaction;
   try
 {$ifdef PressLogDAOPersistence}
       PressLogMsg(Self, 'OPF: ' + FSQL);
@@ -399,10 +401,10 @@ begin
 {$ifdef PressLogDAOPersistence}
     PressLogMsg(Self, 'OPFResult: ' + InttoStr(Result) + ' row(s) affected');
 {$endif}
-    if VImplicitTrans then
+    if VShortTransaction then
       Connector.Commit;
   except
-    if VImplicitTrans then
+    if VShortTransaction then
       Connector.Rollback;
     raise;
   end;
@@ -459,6 +461,7 @@ begin
   {$ENDIF}
   InternalCommit;
   FActiveDBTransaction := False;
+  FActiveOPFTransaction := False;
 end;
 
 constructor TPressOPFConnector.Create;
@@ -520,6 +523,7 @@ begin
   {$ENDIF}
   InternalRollback;
   FActiveDBTransaction := False;
+  FActiveOPFTransaction := False;
 end;
 
 procedure TPressOPFConnector.StartTransaction;
@@ -532,6 +536,11 @@ begin
   {$ENDIF}
   InternalStartTransaction;
   FActiveDBTransaction := True;
+end;
+
+procedure TPressOPFConnector.StartTransactionNotification;
+begin
+  FActiveOPFTransaction := True;
 end;
 
 function TPressOPFConnector.UnsupportedFeatureError(
