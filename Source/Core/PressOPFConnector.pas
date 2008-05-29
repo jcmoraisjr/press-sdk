@@ -404,9 +404,15 @@ begin
     if VShortTransaction then
       Connector.Commit;
   except
-    if VShortTransaction then
-      Connector.Rollback;
-    raise;
+    on E: Exception do
+    begin
+{$ifdef PressLogDAOPersistence}
+      PressLogMsg(Self, 'OPFError: ' + E.Message);
+{$endif}
+      if VShortTransaction then
+        Connector.Rollback;
+      raise;
+    end;
   end;
 end;
 
