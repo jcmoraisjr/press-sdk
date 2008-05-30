@@ -37,6 +37,7 @@
   SMetadataNotFound := SMetadataNotFound_rst;
   SMetadataParseError := SMetadataParseError_rst;
   SNoReferenceOrDataAccess := SNoReferenceOrDataAccess_rst;
+  SParseFormulaError := SParseFormulaError_rst;
   SPathReferencesNil := SPathReferencesNil_rst;
   SSingletonClassNotFound := SSingletonClassNotFound_rst;
   SStringOverflow := SStringOverflow_rst;

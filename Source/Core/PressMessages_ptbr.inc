@@ -37,6 +37,7 @@
   SMetadataNotFound_rst = 'Metadata ''%s'' não encontrado';
   SMetadataParseError_rst = 'Erro ao interpretar metadata: "(%d,%d) %s"' + SPressLineBreak + '"%s"';
   SNoReferenceOrDataAccess_rst = 'Não existe referência ou DAO';
+  SParseFormulaError_rst = 'Erro ao interpretar fórmula:' + SPressLineBreak + '%s' + SPressLineBreak + '%s';
   SPathReferencesNil_rst = 'O caminho %s(''%s'') possui atributo(s) Reference apontando para nil';
   SSingletonClassNotFound_rst = 'Classe Singleton ''%s'' não encontrada';
   SStringOverflow_rst = 'String overflow: %s(''%s'')';

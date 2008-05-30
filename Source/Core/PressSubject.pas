@@ -3118,8 +3118,13 @@ begin
   try
     VReader := TPressExpressionReader.Create(AExpression);
     VExpression := TPressSubjectExpression.Create(Self);
-    VExpression.Read(VReader);
-    Result := VExpression.VarValue;
+    try
+      VExpression.Read(VReader);
+      Result := VExpression.VarValue;
+    except
+      on E: EPressError do
+        raise EPressError.CreateFmt(SParseFormulaError, [AExpression, E.Message]);
+    end;
   finally
     VExpression.Free;
     VReader.Free;

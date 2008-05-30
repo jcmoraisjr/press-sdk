@@ -102,6 +102,7 @@ var
   SMetadataNotFound,
   SMetadataParseError,
   SNoReferenceOrDataAccess,
+  SParseFormulaError,
   SPathReferencesNil,
   SSingletonClassNotFound,
   SStringOverflow,
