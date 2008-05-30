@@ -1512,7 +1512,8 @@ end;
 procedure TPressMVPObjectList.InsertProxy(
   Index: Integer; AProxy: TPressProxy);
 var
-  VObjItem: TPressMVPObjectItem;
+  VObjItem, VItem: TPressMVPObjectItem;
+  I: Integer;
 begin
   VObjItem := CreateObjectItem(AProxy);
   try
@@ -1520,6 +1521,15 @@ begin
   except
     VObjItem.Free;
     raise;
+  end;
+  Inc(Index);
+  VObjItem.FItemNumber := Index;  // friend class
+  for I := 0 to Pred(Count) do
+  begin
+    VItem := Items[I];
+    if (VItem.ItemNumber > Index) or
+     ((VItem.ItemNumber = Index) and (VObjItem <> VItem)) then
+      Inc(VItem.FItemNumber);  // friend class
   end;
 end;
 
@@ -1643,10 +1653,22 @@ begin
 end;
 
 function TPressMVPObjectList.RemoveProxy(AProxy: TPressProxy): Integer;
+var
+  VItem: TPressMVPObjectItem;
+  VNumber, I: Integer;
 begin
   Result := IndexOfProxy(AProxy);
   if Result >= 0 then
+  begin
+    VNumber := Items[Result].ItemNumber;
     Delete(Result);
+    for I := 0 to Pred(Count) do
+    begin
+      VItem := Items[I];
+      if VItem.ItemNumber > VNumber then
+        Dec(VItem.FItemNumber);  // friend class 
+    end;
+  end;
 end;
 
 procedure TPressMVPObjectList.SetItems(
