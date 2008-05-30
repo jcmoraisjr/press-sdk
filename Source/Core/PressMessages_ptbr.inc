@@ -33,7 +33,7 @@
   SInvalidAttributeClass_rst = 'O atributo %s(''%s'') requer objetos da classe ''%s''';
   SInvalidAttributeName_rst = 'Nome inválido para um atributo (''%s'')';
   SInvalidAttributeValue_rst = 'Valor ''%s'' inválido para %s(''%s'')';
-  SInvalidClassInheritance_rst = 'Classe ''%s'' não é decendente de ''%s''';
+  SInvalidClassInheritance_rst = 'Classe ''%s'' não é descendente de ''%s''';
   SMetadataNotFound_rst = 'Metadata ''%s'' não encontrado';
   SMetadataParseError_rst = 'Erro ao interpretar metadata: "(%d,%d) %s"' + SPressLineBreak + '"%s"';
   SNoReferenceOrDataAccess_rst = 'Não existe referência ou DAO';
