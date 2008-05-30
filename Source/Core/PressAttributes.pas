@@ -3817,8 +3817,8 @@ begin
     if InternalProxyType = ptShared then
       Result.Release;
   except
-    { TODO : Test AVs }
-    FreeAndNil(Result);
+    if InternalProxyType = ptShared then
+      FreeAndNil(Result);
     raise;
   end;
 end;
