@@ -177,8 +177,6 @@ type
     function GetMaps(AClass: TPressObjectClass): TPressOPFStorageMapList;
     function GetTableMetadatas(AIndex: Integer): TPressOPFTableMetadata;
     procedure Notify(AEvent: TPressEvent);
-  protected
-    property ClassIdMetadata: TPressObjectMetadata read GetClassIdMetadata;
   public
     constructor Create(AModel: TPressModel);
     destructor Destroy; override;
@@ -187,6 +185,7 @@ type
     function ClassNameById(const AClassId: string): string;
     procedure ResetClassList;
     function TableMetadataCount: Integer;
+    property ClassIdMetadata: TPressObjectMetadata read GetClassIdMetadata;
     property HasClassIdStorage: Boolean read FHasClassIdStorage;
     property Maps[AClass: TPressObjectClass]: TPressOPFStorageMapList read GetMaps;
     property Model: TPressModel read FModel;
