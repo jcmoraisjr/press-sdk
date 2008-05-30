@@ -667,7 +667,8 @@ procedure TPressRegistry.RegisterService(
   AServiceClass: TPressServiceClass; AIsDefault: Boolean);
 begin
   ServiceClasses.Add(AServiceClass);
-  if AIsDefault or not Assigned(FDefaultServiceClass) then
+  if AIsDefault or not Assigned(FDefaultServiceClass) or
+   AServiceClass.InheritsFrom(FDefaultServiceClass) then
     FDefaultServiceClass := AServiceClass;
 end;
 
