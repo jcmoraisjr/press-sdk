@@ -94,12 +94,11 @@ type
     procedure AddClassIdParam(ADataset: TPressOPFDataset; AObject: TPressObject);
     procedure AddRemovedIdParam(ADataset: TPressOPFDataset; AItems: TPressItems);
     procedure AddIdArrayParam(ADataset: TPressOPFDataset; AIDs: TPressStringArray);
-    procedure AddIdParam(ADataset: TPressOPFDataset; const AParamName, AValue: string);
+    procedure AddIdParam(ADataset: TPressOPFDataset; const AParamName, AValue: string; AIdType: TPressAttributeBaseType = attUnknown);
     procedure AddIntegerParam(ADataset: TPressOPFDataset; const AParamName: string; AValue: Integer);
     procedure AddLinkParams(ADataset: TPressOPFDataset; AItems: TPressItems; AProxy: TPressProxy; const AOwnerId: string; AIndex: Integer);
     procedure AddNullParam(ADataset: TPressOPFDataset; const AParamName: string; AFieldType: TPressOPFFieldType);
     procedure AddPersistentIdParam(ADataset: TPressOPFDataset; const APersistentId: string);
-    procedure AddStringParam(ADataset: TPressOPFDataset; const AParamName, AValue: string);
     procedure AddUpdateCountParam(ADataset: TPressOPFDataset; AObject: TPressObject);
     function DeleteDataset: TPressOPFDataset;
     function GetDDLBuilder: TPressOPFDDLBuilder;
@@ -456,7 +455,7 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
   begin
     VObject := APart.Value;
     ObjectMapper.Store(VObject);
-    AddStringParam(ADataset, APart.PersistentName, VObject.Id);
+    AddIdParam(ADataset, APart.PersistentName, VObject.Id, VObject.Metadata.IdType);
   end;
 
   procedure AddReferenceAttribute(AReference: TPressReference);
@@ -466,12 +465,12 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
       if AReference.Proxy.HasInstance and
        not AReference.Value.IsPersistent then
         Persistence.Store(AReference.Value);
-      AddStringParam(
-       ADataset, AReference.PersistentName, AReference.Proxy.ObjectId);
+      AddIdParam(ADataset, AReference.PersistentName,
+       AReference.Proxy.ObjectId, AReference.Proxy.Metadata.IdType);
     end else
       AddNullParam(ADataset, AReference.PersistentName,
        DDLBuilder.AttributeTypeToFieldType(
-       AReference.Metadata.ObjectClassMetadata.IdMetadata.AttributeClass.AttributeBaseType));
+        AReference.Metadata.ObjectClassMetadata.IdType));
   end;
 
 begin
@@ -496,16 +495,23 @@ begin
   if Assigned(VPartsAttribute) then
     if Assigned(AObject.Owner) and (AObject.Owner.Id <> '') then
     begin
-      AddStringParam(ADataset, VPartsAttribute.PersLinkParentName,
-       AObject.Owner.Id);
+      AddIdParam(ADataset, VPartsAttribute.PersLinkParentName,
+       AObject.Owner.Id, AObject.Owner.Metadata.IdType);
       AddIntegerParam(ADataset, VPartsAttribute.PersLinkPosName, 0);
     end else
       raise EPressOPFError.Create(SCannotStoreOrphanObject);
-  for I := 0 to Pred(Map.Count) do
+  if Map.Count > 0 then
   begin
-    VAttribute := AObject.AttributeByName(Map[I].Name);
+    VAttribute := AObject.AttributeByName(Map[0].Name);
     if not AObject.IsPersistent or VAttribute.IsChanged then
-      AddAttributeParam(ADataset, VAttribute);
+      AddIdParam(ADataset, VAttribute.PersistentName, VAttribute.AsString,
+       VAttribute.Metadata.AttributeClass.AttributeBaseType);
+    for I := 1 to Pred(Map.Count) do
+    begin
+      VAttribute := AObject.AttributeByName(Map[I].Name);
+      if not AObject.IsPersistent or VAttribute.IsChanged then
+        AddAttributeParam(ADataset, VAttribute);
+    end;
   end;
   if not AObject.IsPersistent or (Map.Metadata = AObject.Metadata) then
     AddUpdateCountParam(ADataset, AObject);
@@ -517,8 +523,9 @@ procedure TPressOPFAttributeMapper.AddClassIdParam(
   ADataset: TPressOPFDataset; AObject: TPressObject);
 begin
   if Map.Metadata.ClassIdName <> '' then
-    AddStringParam(ADataset, Map.Metadata.ClassIdName,
-     ObjectMapper.StorageModel.ClassIdByName(AObject.ClassName));
+    AddIdParam(ADataset, Map.Metadata.ClassIdName,
+     ObjectMapper.StorageModel.ClassIdByName(AObject.ClassName),
+     ObjectMapper.StorageModel.ClassIdMetadata.IdType);
 end;
 
 procedure TPressOPFAttributeMapper.AddIdArrayParam(
@@ -531,18 +538,21 @@ begin
 end;
 
 procedure TPressOPFAttributeMapper.AddIdParam(
-  ADataset: TPressOPFDataset; const AParamName, AValue: string);
+  ADataset: TPressOPFDataset; const AParamName, AValue: string;
+  AIdType: TPressAttributeBaseType);
 begin
   if AParamName <> '' then
   begin
-    case Map.IdType of
+    if AIdType = attUnknown then
+      AIdType := Map.IdType;
+    case AIdType of
       attString:
         ADataset.Params.ParamByName(AParamName).AsString := AValue;
       attInteger:
         ADataset.Params.ParamByName(AParamName).AsInt32 := StrToInt(AValue);
       else
         raise EPressOPFError.CreateFmt(SUnsupportedFieldType, [
-         GetEnumName(TypeInfo(TPressAttributeBaseType), Ord(Map.IdType))]);
+         GetEnumName(TypeInfo(TPressAttributeBaseType), Ord(AIdType))]);
     end;
   end;
 end;
@@ -559,12 +569,13 @@ procedure TPressOPFAttributeMapper.AddLinkParams(
   const AOwnerId: string; AIndex: Integer);
 begin
   if AItems.Metadata.PersLinkIdName <> '' then
-    ADataset.Params.ParamByName(AItems.Metadata.PersLinkIdName).AsString :=
-     Persistence.GenerateOID(
-     AProxy.Instance.ClassType, AItems.Metadata.PersLinkIdName);
-  AddStringParam(ADataset, AItems.Metadata.PersLinkParentName, AOwnerId);
-  AddStringParam(ADataset, AItems.Metadata.PersLinkChildName,
-   AProxy.ObjectId);
+    AddIdParam(ADataset, AItems.Metadata.PersLinkIdName,
+     Persistence.GenerateOID(AProxy.ObjectClassType, AItems.Metadata.PersLinkIdName),
+     ObjectMapper.StorageModel.Model.DefaultKeyType.AttributeBaseType);
+  AddIdParam(ADataset, AItems.Metadata.PersLinkParentName,
+   AOwnerId, AItems.Owner.Metadata.IdType);
+  AddIdParam(ADataset, AItems.Metadata.PersLinkChildName, AProxy.ObjectId,
+   AItems.Metadata.ObjectClassMetadata.IdType);
   AddIntegerParam(ADataset, AItems.Metadata.PersLinkPosName, AIndex);
 end;
 
@@ -587,15 +598,9 @@ var
   I: Integer;
 begin
   for I := 0 to Pred(AItems.RemovedProxies.Count) do
-    ADataset.Params.ParamByName(SPressIdString + InttoStr(I)).AsString :=
-     AItems.RemovedProxies[I].ObjectId;
-end;
-
-procedure TPressOPFAttributeMapper.AddStringParam(
-  ADataset: TPressOPFDataset; const AParamName, AValue: string);
-begin
-  if AParamName <> '' then
-    ADataset.Params.ParamByName(AParamName).AsString := AValue;
+    AddIdParam(ADataset, SPressIdString + InttoStr(I),
+     AItems.RemovedProxies[I].ObjectId,
+     AItems.Metadata.ObjectClassMetadata.IdType);
 end;
 
 procedure TPressOPFAttributeMapper.AddUpdateCountParam(
