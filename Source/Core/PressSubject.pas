@@ -262,6 +262,11 @@ type
     property IncludeIfEmpty: Boolean read FIncludeIfEmpty write FIncludeIfEmpty default False;
   end;
 
+  TPressAttributeBaseType = (attUnknown, attString, attInteger, attFloat,
+   attCurrency, attEnum, attBoolean, attDate, attTime, attDateTime, attVariant,
+   attMemo, attBinary, attPicture,
+   attPart, attReference, attParts, attReferences);
+
   TPressObjectMetadataClass = class of TPressObjectMetadata;
 
   TPressObjectMetadata = class(TPressStreamable)
@@ -269,6 +274,7 @@ type
     FAttributeMetadatas: TPressAttributeMetadataList;
     FClassIdName: string;
     FIdMetadata: TPressAttributeMetadata;
+    FIdType: TPressAttributeBaseType;
     FIsPersistent: Boolean;
     FKeyName: string;
     FKeySize: Integer;
@@ -285,6 +291,7 @@ type
     FUpdateCountName: string;
     function GetAttributeMetadatas: TPressAttributeMetadataList;
     function GetIdMetadata: TPressAttributeMetadata;
+    function GetIdType: TPressAttributeBaseType;
     function GetMap: TPressClassMap;
     function GetObjectClass: TPressObjectClass;
     function GetOwnerClass: string;
@@ -309,6 +316,7 @@ type
     function MetadataByName(const AName: string): TPressAttributeMetadata;
     property AttributeMetadatas: TPressAttributeMetadataList read GetAttributeMetadatas;
     property IdMetadata: TPressAttributeMetadata read GetIdMetadata;
+    property IdType: TPressAttributeBaseType read GetIdType;
     property Map: TPressClassMap read GetMap;
     property ObjectClass: TPressObjectClass read GetObjectClass;
     property ObjectClassName: string read FObjectClassName;
@@ -519,11 +527,6 @@ type
   end;
 
   { DAO Params declarations }
-
-  TPressAttributeBaseType = (attUnknown, attString, attInteger, attFloat,
-   attCurrency, attEnum, attBoolean, attDate, attTime, attDateTime, attVariant,
-   attMemo, attBinary, attPicture,
-   attPart, attReference, attParts, attReferences);
 
   TPressParam = class(TObject)
   private
@@ -872,6 +875,7 @@ type
     procedure BulkRetrieve;
     procedure Dereference;
     function GetInstance: TPressObject;
+    function GetMetadata: TPressObjectMetadata;
     function GetObjectClassName: string;
     function GetObjectClassType: TPressObjectClass;
     function GetObjectId: string;
@@ -901,6 +905,7 @@ type
     property BeforeRetrieveInstance: TPressProxyRetrieveInstanceEvent read FBeforeRetrieveInstance write FBeforeRetrieveInstance;
     property DataAccess: IPressSession read FDataAccess;
     property Instance: TPressObject read GetInstance write SetInstance;
+    property Metadata: TPressObjectMetadata read GetMetadata;
     property ObjectClassName: string read GetObjectClassName;
     property ObjectClassType: TPressObjectClass read GetObjectClassType;
     property ObjectId: string read GetObjectId;
@@ -1863,6 +1868,7 @@ begin
   FKeyName := SPressIdString;
   FKeySize := SPressDefaultStringIdSize;
   FKeyType := FModel.DefaultKeyType.AttributeName;
+  FIdType := attUnknown;
   FModel.Metadatas.Add(Self);
 end;
 
@@ -1911,6 +1917,13 @@ begin
     FIdMetadata.Size := KeySize;
   end;
   Result := FIdMetadata;
+end;
+
+function TPressObjectMetadata.GetIdType: TPressAttributeBaseType;
+begin
+  if FIdType = attUnknown then
+    FIdType := IdMetadata.AttributeClass.AttributeBaseType;
+  Result := FIdType;
 end;
 
 function TPressObjectMetadata.GetMap: TPressClassMap;
@@ -4236,6 +4249,16 @@ begin
       Dereference;
   end;
   Result := FInstance;
+end;
+
+function TPressProxy.GetMetadata: TPressObjectMetadata;
+begin
+  if Assigned(FInstance) then
+    Result := FInstance.Metadata
+  else if Assigned(FRefClass) then
+    Result := FRefClass.ClassMetadata
+  else
+    Result := nil;
 end;
 
 function TPressProxy.GetObjectClassName: string;
