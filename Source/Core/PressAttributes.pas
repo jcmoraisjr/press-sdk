@@ -674,7 +674,8 @@ type
     procedure Delete(AIndex: Integer);
     function FormatList(const AFormat, AConn: string; AParams: array of string): string;
     function IndexOf(AObject: TPressObject): Integer;
-    procedure Insert(AIndex: Integer; AObject: TPressObject);
+    function Insert(AIndex: Integer; AClass: TPressObjectClass = nil): TPressObject; overload;
+    procedure Insert(AIndex: Integer; AObject: TPressObject); overload;
     function Remove(AObject: TPressObject): Integer;
     function RemoveReference(AProxy: TPressProxy): Integer;
     property AddedProxies: TPressProxyList read GetAddedProxies;
@@ -3527,23 +3528,7 @@ end;
 
 function TPressItems.Add(AClass: TPressObjectClass): TPressObject;
 begin
-  if Assigned(AClass) then
-    ValidateObjectClass(AClass)
-  else
-    AClass := ObjectClass;
-  Result := TPressObject(AClass.NewInstance);
-  try
-    // lacks inherited Create
-    TPressObjectFriend(Result).InitInstance(PressDefaultSession, nil);
-    Add(Result);
-    TPressObjectFriend(Result).AfterCreate;
-    if InternalProxyType = ptShared then
-      Result.Release;
-  except
-    { TODO : Test AVs }
-    FreeAndNil(Result);
-    raise;
-  end;
+  Result := Insert(Count, AClass);
 end;
 
 function TPressItems.Add(AObject: TPressObject): Integer;
@@ -3814,6 +3799,28 @@ function TPressItems.IndexOf(AObject: TPressObject): Integer;
 begin
   Synchronize;
   Result := ProxyList.IndexOfInstance(AObject);
+end;
+
+function TPressItems.Insert(
+  AIndex: Integer; AClass: TPressObjectClass): TPressObject;
+begin
+  if Assigned(AClass) then
+    ValidateObjectClass(AClass)
+  else
+    AClass := ObjectClass;
+  Result := TPressObject(AClass.NewInstance);
+  try
+    // lacks inherited Create
+    TPressObjectFriend(Result).InitInstance(PressDefaultSession, nil);
+    Insert(AIndex, Result);
+    TPressObjectFriend(Result).AfterCreate;
+    if InternalProxyType = ptShared then
+      Result.Release;
+  except
+    { TODO : Test AVs }
+    FreeAndNil(Result);
+    raise;
+  end;
 end;
 
 procedure TPressItems.Insert(AIndex: Integer; AObject: TPressObject);
