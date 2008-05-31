@@ -53,6 +53,9 @@ uses
     Mask,
   {$ENDIF}
 {$ENDIF}
+{$ifdef lcl}
+  Translations,
+{$endif}
   PressClasses,
   PressConsts;
 
@@ -255,19 +258,21 @@ end;
 function PressDecodeString(const AStr: string): string;
 begin
 {$ifdef lcl}
-  Result := Utf8Decode(AStr);
-{$else}
-  Result := AStr;
+  if SystemCharSetIsUTF8 then
+    Result := Utf8Decode(AStr)
+  else
 {$endif}
+  Result := AStr;
 end;
 
 function PressEncodeString(const AStr: string): string;
 begin
 {$ifdef lcl}
-  Result := Utf8Encode(AStr);
-{$else}
-  Result := AStr;
+  if SystemCharSetIsUTF8 then
+    Result := Utf8Encode(AStr)
+  else
 {$endif}
+  Result := AStr;
 end;
 
 {$ifdef d5down}
