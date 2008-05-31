@@ -1124,10 +1124,11 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
   var
     VDataset: TPressOPFDataset;
 
-    function NeedRebuild: Boolean;
+    function NeedRebuild(AItems: TPressItems): Boolean;
     begin
-      { TODO : Implement (for embedded and external links) }
-      Result := True;
+      Result := (AItems.AddedProxies.Count > 0) or
+       (AItems.RemovedProxies.Count > 0);
+      { TODO : or Items.Inserted instead of Added }
     end;
 
     procedure UpdateEmbeddedLinks(AItems: TPressItems);
@@ -1141,7 +1142,7 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
     begin
       if not Assigned(VDataset) then
         VDataset := Connector.CreateDataset;
-      if not NeedRebuild then
+      if not NeedRebuild(AItems) then
       begin
         if AItems.RemovedProxies.Count > 0 then
         begin
