@@ -1035,7 +1035,7 @@ type
     procedure Synchronize;
     function ValidateChars(const AStr: string; const AChars: TChars): Boolean;
     procedure ValueAssigned(AUpdateIsChangedFlag: Boolean = True);
-    procedure ValueUnassigned;
+    procedure ValueUnassigned(AUpdateIsChangedFlag: Boolean = True);
     property UsePublishedGetter: Boolean read GetUsePublishedGetter;
     property UsePublishedSetter: Boolean read GetUsePublishedSetter;
     property Notifier: TPressNotifier read GetNotifier;
@@ -5003,10 +5003,10 @@ begin
   Changed(AUpdateIsChangedFlag);
 end;
 
-procedure TPressAttribute.ValueUnassigned;
+procedure TPressAttribute.ValueUnassigned(AUpdateIsChangedFlag: Boolean);
 begin
   FState := asNull;
-  Changed;
+  Changed(AUpdateIsChangedFlag);
 end;
 
 { TPressAttributeList }

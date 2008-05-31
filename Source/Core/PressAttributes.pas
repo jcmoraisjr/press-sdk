@@ -3838,9 +3838,9 @@ begin
   if AChangedWhenDisabled then
   begin
     if Count > 0 then
-      ValueAssigned
+      ValueAssigned(False)
     else
-      ValueUnassigned;
+      ValueUnassigned(False);
     NotifyRebuild;
   end;
   inherited;
