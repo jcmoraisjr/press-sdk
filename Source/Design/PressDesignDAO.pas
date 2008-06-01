@@ -20,12 +20,12 @@ interface
 
 uses
   PressSubject,
-  PressDAO,
+  PressSession,
   PressCodeUpdater,
   PressProjectModel;
 
 type
-  TPressDesignDAO = class(TPressDAO)
+  TPressDesignDAO = class(TPressSession)
   private
     FCodeUpdater: TPressCodeUpdater;
     FProject: TPressProject;

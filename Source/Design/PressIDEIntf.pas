@@ -20,7 +20,7 @@ interface
 
 uses
   Classes,
-  PressCompatibility,
+  PressUtils,
   PressClasses,
   PressNotifier;
 
