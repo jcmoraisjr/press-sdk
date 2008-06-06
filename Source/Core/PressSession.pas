@@ -111,7 +111,7 @@ type
     procedure Load(AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean);
     function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure Refresh(AObject: TPressObject);
-    procedure ReleaseObject(AObject: TPressObject);
+    procedure RemoveFromCache(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil; const AAttributes: string = ''): TPressObject;
     procedure RetrieveAttribute(AAttribute: TPressAttribute);
     function RetrieveQuery(AQuery: TPressQuery): TPressProxyList;
@@ -723,7 +723,7 @@ begin
   end;
 end;
 
-procedure TPressSession.ReleaseObject(AObject: TPressObject);
+procedure TPressSession.RemoveFromCache(AObject: TPressObject);
 begin
   Cache.RemoveObject(AObject);
 end;
