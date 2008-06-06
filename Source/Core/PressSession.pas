@@ -70,11 +70,8 @@ type
   private
     { TODO : Implement transacted object control }
     FCache: TPressSessionCache;
-    FLazyCommit: Boolean;
-    FNotifier: TPressNotifier;
     FTransactionLevel: Integer;
     procedure DisposeObject(AObject: TPressObject);
-    procedure Notify(AEvent: TPressEvent);
   protected
     procedure DoneService; override;
     procedure Finit; override;
@@ -125,7 +122,6 @@ type
     procedure StartTransaction;
     procedure Store(AObject: TPressObject);
     procedure SynchronizeProxy(AProxy: TPressProxy);
-    property LazyCommit: Boolean read FLazyCommit write FLazyCommit;
   end;
 
   TPressPersistence = class;
@@ -212,9 +208,6 @@ uses
 
 type
   TPressObjectFriend = class(TPressObject);
-
-  TPressSessionCommit = class(TPressEvent)
-  end;
 
 { TPressSessionCache }
 
@@ -398,8 +391,6 @@ begin
     Exit;
   if FTransactionLevel > 1 then
     Dec(FTransactionLevel)
-  else if LazyCommit then
-    TPressSessionCommit.Create(Self).QueueNotification
   else
   begin
     FTransactionLevel := 0;
@@ -411,8 +402,6 @@ constructor TPressSession.Create;
 begin
   inherited;
   FCache := InternalCacheClass.Create;
-  FNotifier := TPressNotifier.Create({$ifdef FPC}@{$endif}Notify);
-  FNotifier.AddNotificationItem(Self, [TPressSessionCommit]);
 end;
 
 function TPressSession.CreateObject(AClass: TPressObjectClass;
@@ -502,7 +491,6 @@ end;
 
 procedure TPressSession.Finit;
 begin
-  FNotifier.Free;
   FCache.Free;
   inherited;
 end;
@@ -695,15 +683,6 @@ begin
   except
     Rollback;
     raise;
-  end;
-end;
-
-procedure TPressSession.Notify(AEvent: TPressEvent);
-begin
-  if FTransactionLevel = 1 then
-  begin
-    FTransactionLevel := 0;
-    InternalCommit;
   end;
 end;
 
