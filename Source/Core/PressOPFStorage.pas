@@ -23,7 +23,8 @@ uses
   Contnrs,
   PressClasses,
   PressNotifier,
-  PressSubject;
+  PressSubject,
+  PressSession;
 
 type
   TPressOPFStorageMap = class;
@@ -169,6 +170,7 @@ type
     FMapsList: TObjectList;
     FModel: TPressModel;
     FNotifier: TPressNotifier;
+    FSession: TPressSession;
     FTableMetadatas: TObjectList;
     procedure BuildClassLists;
     function CreateTableMetadatas: TObjectList;
@@ -178,7 +180,7 @@ type
     function GetTableMetadatas(AIndex: Integer): TPressOPFTableMetadata;
     procedure Notify(AEvent: TPressEvent);
   public
-    constructor Create(AModel: TPressModel);
+    constructor Create(ASession: TPressSession; AModel: TPressModel);
     destructor Destroy; override;
     function ClassById(const AClassId: string): TPressObjectClass;
     function ClassIdByName(const AClassName: string): string;
@@ -189,10 +191,11 @@ type
     property HasClassIdStorage: Boolean read FHasClassIdStorage;
     property Maps[AClass: TPressObjectClass]: TPressOPFStorageMapList read GetMaps;
     property Model: TPressModel read FModel;
+    property Session: TPressSession read FSession;
     property TableMetadatas[AIndex: Integer]: TPressOPFTableMetadata read GetTableMetadatas;
   end;
 
-function PressStorageModel: TPressOPFStorageModel;
+function PressStorageModel(ASession: TPressSession): TPressOPFStorageModel;
 
 implementation
 
@@ -223,10 +226,11 @@ var
 
 { Global routines }
 
-function PressStorageModel: TPressOPFStorageModel;
+function PressStorageModel(ASession: TPressSession): TPressOPFStorageModel;
 begin
+  { TODO : Implement }
   if not Assigned(_PressStorageModel) then
-    _PressStorageModel := TPressOPFStorageModel.Create(PressModel);
+    _PressStorageModel := TPressOPFStorageModel.Create(ASession, PressModel);
   Result := _PressStorageModel;
 end;
 
@@ -567,14 +571,13 @@ var
   VInstance: TPressInstanceClass;
   I: Integer;
 begin
-  { TODO : Remove coupling with the default Session }
   if not Assigned(FClassIdList) or not Assigned(FClassNameList) then
   begin
     FreeAndNil(FClassIdList);
     FreeAndNil(FClassNameList);
     FClassIdList := TStringList.Create;
     FClassNameList := TStringList.Create;
-    VObjects := PressDefaultSession.OQLQuery(
+    VObjects := Session.OQLQuery(
      'select * from ' + TPressInstanceClass.ClassName);
     try
       for I := 0 to Pred(VObjects.Count) do
@@ -600,7 +603,6 @@ var
   VInstance: TPressInstanceClass;
   VIndex: Integer;
 begin
-  { TODO : Remove coupling with the default Session }
   if HasClassIdStorage and (AClassName <> '') then
   begin
     VIndex := FindClass(FClassNameList, AClassName);
@@ -612,7 +614,7 @@ begin
       VInstance := TPressInstanceClass.Create;
       try
         VInstance.ObjectClassName := AClassName;
-        PressDefaultSession.Store(VInstance);
+        Session.Store(VInstance);
         Result := VInstance.Id;
         FClassNameList.Add(AClassName);
         FClassIdList.Add(Result);
@@ -639,9 +641,11 @@ begin
     Result := AClassId;
 end;
 
-constructor TPressOPFStorageModel.Create(AModel: TPressModel);
+constructor TPressOPFStorageModel.Create(
+  ASession: TPressSession; AModel: TPressModel);
 begin
   inherited Create;
+  FSession := ASession;
   FModel := AModel;
   FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   FNotifier.AddNotificationItem(FModel, [TPressModelBusinessClassChangedEvent]);

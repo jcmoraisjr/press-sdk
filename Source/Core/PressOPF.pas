@@ -218,7 +218,7 @@ function TPressOPF.GetMapper: TPressOPFObjectMapper;
 begin
   if not Assigned(FMapper) then
     FMapper :=
-     EnsureBroker.MapperClass.Create(Self, PressStorageModel, Connector);
+     EnsureBroker.MapperClass.Create(Self, PressStorageModel(Self), Connector);
   Result := FMapper;
 end;
 
