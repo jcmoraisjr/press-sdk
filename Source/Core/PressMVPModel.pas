@@ -2150,8 +2150,6 @@ end;
 function TPressMVPQueryModel.GetSubject: TPressQuery;
 begin
   Result := inherited Subject as TPressQuery;
-  if not Assigned(Result) then
-    raise EPressMVPError.Create(SUnassignedSubject);
 end;
 
 procedure TPressMVPQueryModel.InitCommands;
