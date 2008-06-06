@@ -107,7 +107,8 @@ type
     procedure AssignObject(AObject: TPressObject);
     procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer; const AAttributes: string);
     procedure Commit;
-    procedure Dispose(AClass: TPressObjectClass; const AId: string);
+    procedure Dispose(AObject: TPressObject); overload;
+    procedure Dispose(AClass: TPressObjectClass; const AId: string); overload;
     function ExecuteStatement(const AStatement: string; AParams: TPressParamList = nil): Integer;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
     procedure Load(AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean);
@@ -427,6 +428,33 @@ begin
   end;
 end;
 
+procedure TPressSession.Dispose(AObject: TPressObject);
+begin
+  if Assigned(AObject) and AObject.IsPersistent then
+  begin
+    StartTransaction;
+    try
+      TPressObjectFriend(AObject).BeforeDispose;
+      AObject.DisableChanges;
+      try
+{$ifdef PressLogDAOInterface}
+        PressLogMsg(Self, 'Disposing', [AObject]);
+{$endif}
+        TPressObjectFriend(AObject).InternalDispose(
+         {$ifdef FPC}@{$endif}DisposeObject);
+        PressAssignPersistentId(AObject, '');
+      finally
+        AObject.EnableChanges;
+      end;
+      TPressObjectFriend(AObject).AfterDispose;
+      Commit;
+    except
+      Rollback;
+      raise;
+    end;
+  end;
+end;
+
 procedure TPressSession.Dispose(AClass: TPressObjectClass; const AId: string);
 var
   VObject: TPressObject;
@@ -436,22 +464,7 @@ begin
     { TODO : Improve }
     VObject := Retrieve(AClass, AId);
     try
-      if Assigned(VObject) and VObject.IsPersistent then
-      begin
-        TPressObjectFriend(VObject).BeforeDispose;
-        VObject.DisableChanges;
-        try
-{$ifdef PressLogDAOInterface}
-          PressLogMsg(Self, 'Disposing', [VObject]);
-{$endif}
-          TPressObjectFriend(VObject).InternalDispose(
-           {$ifdef FPC}@{$endif}DisposeObject);
-          PressAssignPersistentId(VObject, '');
-        finally
-          VObject.EnableChanges;
-        end;
-        TPressObjectFriend(VObject).AfterDispose;
-      end;
+      Dispose(VObject);
     finally
       VObject.Free;
     end;
