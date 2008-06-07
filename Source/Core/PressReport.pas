@@ -167,7 +167,7 @@ type
     function GetDataSources: TPressReportDataSourceList;
     function GetReport: TPressReport;
     procedure LoadFields;
-    procedure LoadMetadatas(AObject: TObject);
+    procedure LoadMetadatas;
     procedure LoadReport;
     procedure ReleaseObject(AObject: TObject);
     procedure ReportNeedValue(const ADataSetName, AFieldName: string; var AValue: Variant; AForceData: Boolean);
@@ -183,7 +183,7 @@ type
   public
     procedure AssignObject(AObject: TObject);
     procedure Design;
-    procedure Execute(AObject: TObject);
+    procedure Execute(AObject: TObject = nil);
     procedure LoadFromFile(const AFileName: string);
     procedure LoadFromStream(AStream: TStream);
     procedure SaveToFile(const AFileName: string);
@@ -481,28 +481,27 @@ begin
   if AObject <> FCurrentObject then
   begin
     FreeAndNil(FDataSources);
-    FCurrentObject := nil;
-    LoadMetadatas(AObject);
-    if Assigned(AObject) then
-    begin
-      LoadFields;
-      FCurrentObject := AObject;
-    end;
+    FCurrentObject := AObject;
   end;
 end;
 
 procedure TPressCustomReportItem.Design;
 begin
+  if not Assigned(FCurrentObject) then
+    Exit;
+  LoadReport;
   Report.Design;
   SaveReport;
 end;
 
 procedure TPressCustomReportItem.Execute(AObject: TObject);
 begin
-  if not Assigned(AObject) then
-    Exit;
   { TODO : Lock }
-  AssignObject(AObject);
+  if Assigned(AObject) then
+    AssignObject(AObject)
+  else if not Assigned(FCurrentObject) then
+    Exit;
+  LoadReport;
   Report.Execute;
 end;
 
@@ -529,7 +528,6 @@ begin
     FReport.AddRef;
     FReport.OnNeedValue := {$IFDEF FPC}@{$ENDIF}ReportNeedValue;
     FReport.OnNeedUpdateFields := {$IFDEF FPC}@{$ENDIF}LoadFields;
-    LoadReport;
   end;
   Result := FReport;
 end;
@@ -579,7 +577,7 @@ begin
   SaveReport;
 end;
 
-procedure TPressCustomReportItem.LoadMetadatas(AObject: TObject);
+procedure TPressCustomReportItem.LoadMetadatas;
 
   function CreateDataSet(const ADataSetName: string): TPressReportDataSet;
   begin
@@ -667,13 +665,13 @@ procedure TPressCustomReportItem.LoadMetadatas(AObject: TObject);
   end;
 
 begin
-  if not Assigned(AObject) then
+  if not Assigned(FCurrentObject) then
     Exit;
-  if AObject is TPressObject then
+  if FCurrentObject is TPressObject then
     LoadPressMetadata(
-     TPressObjectClass(AObject.ClassType),
-     CreateDataSource(AObject.ClassName, TPressObject(AObject)),
-     AObject.ClassName, '');
+     TPressObjectClass(FCurrentObject.ClassType),
+     CreateDataSource(FCurrentObject.ClassName, TPressObject(FCurrentObject)),
+     FCurrentObject.ClassName, '');
   { TODO : else if BO has RTTI then read published fields }
 end;
 
@@ -681,6 +679,8 @@ procedure TPressCustomReportItem.LoadReport;
 var
   VStream: TStream;
 begin
+  if Assigned(FDataSources) then
+    Exit;
   VStream := TMemoryStream.Create;
   try
     GetReportData(VStream);
@@ -688,6 +688,8 @@ begin
   finally
     VStream.Free;
   end;
+  LoadMetadatas;
+  LoadFields;
 end;
 
 procedure TPressCustomReportItem.ReleaseObject(AObject: TObject);
