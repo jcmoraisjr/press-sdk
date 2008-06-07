@@ -678,7 +678,6 @@ type
     function RemoveReference(AProxy: TPressProxy): Integer;
     property AddedProxies: TPressProxyList read GetAddedProxies;
     property Objects[AIndex: Integer]: TPressObject read GetObjects write SetObjects; default;
-//    property Proxies[AIndex: Integer]: TPressProxy read GetProxies;
     property ProxyList: TPressProxyList read GetProxyList;
     property RemovedProxies: TPressProxyList read GetRemovedProxies;
     (*
@@ -3293,7 +3292,8 @@ begin
     FProxy := TPressProxy.Create(InternalProxyType);
     BindProxy(FProxy);
   end;
-  Synchronize;
+  if not ChangesDisabled then
+    Synchronize;
   Result := FProxy;
 end;
 
@@ -3777,7 +3777,8 @@ function TPressItems.GetProxyList: TPressProxyList;
 begin
   if not Assigned(FProxyList) then
     AssignProxyList(TPressProxyList.Create(True, InternalProxyType));
-  Synchronize;
+  if not ChangesDisabled then
+    Synchronize;
   Result := FProxyList;
 end;
 
