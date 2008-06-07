@@ -261,8 +261,8 @@ type
   TPressMVPStructureModel = class(TPressMVPAttributeModel)
   private
     FColumnData: TPressMVPColumnData;
-    FStore: Boolean;
     FDisplayNames: string;
+    FPersistChange: Boolean;
     function GetColumnData: TPressMVPColumnData;
     function GetSelection: TPressMVPObjectSelection;
     function GetSubject: TPressStructure;
@@ -278,7 +278,7 @@ type
     property ColumnData: TPressMVPColumnData read GetColumnData;
     property DisplayNames: string read FDisplayNames write SetDisplayNames;
     property Selection: TPressMVPObjectSelection read GetSelection;
-    property Store: Boolean read FStore write FStore;
+    property PersistChange: Boolean read FPersistChange write FPersistChange;
     property Subject: TPressStructure read GetSubject;
   end;
 
@@ -464,7 +464,7 @@ type
     FHookedSubject: TPressStructure;
     FIsIncluding: Boolean;
     FSavePoint: TPressSavePoint;
-    FStore: Boolean;
+    FStoreObject: Boolean;
     procedure AfterChangeHookedSubject;
     procedure BeforeChangeHookedSubject;
     function GetIsChanged: Boolean;
@@ -490,7 +490,7 @@ type
     property IsChanged: Boolean read GetIsChanged;
     property IsIncluding: Boolean read FIsIncluding write FIsIncluding;
     property Selection: TPressMVPModelSelection read GetSelection;
-    property Store: Boolean read FStore write FStore;
+    property StoreObject: Boolean read FStoreObject write FStoreObject;
     property Subject: TPressObject read GetSubject;
   end;
 
@@ -1080,7 +1080,9 @@ constructor TPressMVPStructureModel.Create(AParent: TPressMVPModel;
   ASubject: TPressSubject);
 begin
   inherited Create(AParent, ASubject);
-  FStore := (ASubject is TPressReference) or (ASubject is TPressReferences);
+  FPersistChange :=
+   (ASubject is TPressReference) or (ASubject is TPressReferences) or
+   (AParent is TPressMVPQueryModel);
 end;
 
 destructor TPressMVPStructureModel.Destroy;
@@ -2020,7 +2022,7 @@ constructor TPressMVPObjectModel.Create(
   AParent: TPressMVPModel; ASubject: TPressSubject);
 begin
   inherited Create(AParent, ASubject);
-  FStore := True;
+  FStoreObject := True;
   if Assigned(ASubject) then
     FSavePoint := (ASubject as TPressObject).Memento.SavePoint;
 end;

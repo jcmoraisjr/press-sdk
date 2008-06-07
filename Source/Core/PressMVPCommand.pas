@@ -708,14 +708,26 @@ end;
 procedure TPressMVPRemoveItemsCommand.InternalExecute;
 var
   VSelection: TPressMVPObjectSelection;
+  VModel: TPressMVPItemsModel;
+  VObject: TPressObject;
+  VRemoveInstance: Boolean;
   I: Integer;
 begin
   inherited;
   VSelection := Model.Selection;
   if (VSelection.Count > 0) and
    PressDialog.ConfirmRemove(VSelection.Count) then
+  begin
+    VModel := Model;
+    VRemoveInstance := VModel.PersistChange;
     for I := Pred(VSelection.Count) downto 0 do
-      Model.Subject.UnassignObject(VSelection[I]);
+    begin
+      VObject := VSelection[I];
+      if VRemoveInstance then
+        VObject.Dispose;
+      VModel.Subject.UnassignObject(VObject);
+    end;
+  end;
 end;
 
 function TPressMVPRemoveItemsCommand.InternalIsEnabled: Boolean;
@@ -925,7 +937,7 @@ end;
 
 procedure TPressMVPSaveObjectCommand.InternalStoreObject;
 begin
-  if not Model.Store then
+  if not Model.StoreObject then
     Exit;
   Model.Subject.Store;
 end;

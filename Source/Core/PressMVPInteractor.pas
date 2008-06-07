@@ -1150,7 +1150,7 @@ begin
   VPresenter := PressDefaultMVPFactory.Forms[APresenterIndex].
    PresenterClass.Run(Owner.Parent, AObject, AIncluding);
   VPresenter.Model.HookedSubject := Model.Subject;
-  VPresenter.Model.Store := Model.Store;
+  VPresenter.Model.StoreObject := Model.PersistChange;
 end;
 
 { TPressMVPCreateIncludeFormInteractor }

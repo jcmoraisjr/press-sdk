@@ -1186,8 +1186,6 @@ type
   end;
 
   TPressQueryItems = class(TPressReferences)
-  protected
-    procedure InternalUnassignObject(AObject: TPressObject); override;
   end;
 
 var
@@ -4077,15 +4075,6 @@ begin
     FStyle := AValue;
     Clear;
   end;
-end;
-
-{ TPressQueryItems }
-
-procedure TPressQueryItems.InternalUnassignObject(AObject: TPressObject);
-begin
-  { TODO : Cache }
-  AObject.Dispose;
-  inherited;
 end;
 
 { TPressSingletonObject }
