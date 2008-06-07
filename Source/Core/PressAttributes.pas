@@ -628,14 +628,13 @@ type
 
   TPressItems = class(TPressStructure)
   private
-    { TODO : Implement added/removed proxies functionality }
+    { TODO : Move added/removed proxies to session classes }
     FAddedProxies: TPressProxyList;
     FMementos: TObjectList;
     FProxyList: TPressProxyList;
     FRemovedProxies: TPressProxyList;
     function GetAddedProxies: TPressProxyList;
     function GetObjects(AIndex: Integer): TPressObject;
-    function GetProxies(AIndex: Integer): TPressProxy;
     function GetProxyList: TPressProxyList;
     function GetRemovedProxies: TPressProxyList;
     procedure ReleaseMemento(AMemento: TPressItemsMemento);
@@ -657,7 +656,6 @@ type
     procedure InternalUnchanged; override;
     procedure NotifyMemento(AProxy: TPressProxy; AItemState: TPressItemState; AOldIndex: Integer = -1);
     procedure NotifyRebuild;
-    property ProxyList: TPressProxyList read GetProxyList;
     (*
     function InternalCreateIterator: TPressItemsIterator; override;
     *)
@@ -680,7 +678,8 @@ type
     function RemoveReference(AProxy: TPressProxy): Integer;
     property AddedProxies: TPressProxyList read GetAddedProxies;
     property Objects[AIndex: Integer]: TPressObject read GetObjects write SetObjects; default;
-    property Proxies[AIndex: Integer]: TPressProxy read GetProxies;
+//    property Proxies[AIndex: Integer]: TPressProxy read GetProxies;
+    property ProxyList: TPressProxyList read GetProxyList;
     property RemovedProxies: TPressProxyList read GetRemovedProxies;
     (*
     function Add(AClass: TPressObjectClass = nil): TPressObject; overload;
@@ -3294,6 +3293,7 @@ begin
     FProxy := TPressProxy.Create(InternalProxyType);
     BindProxy(FProxy);
   end;
+  Synchronize;
   Result := FProxy;
 end;
 
@@ -3310,10 +3310,10 @@ begin
   Synchronize;
   if Assigned(FProxy) then
   begin
-    if Proxy.HasInstance then
-      Result := Proxy.Instance.Signature
-    else if Proxy.HasReference then
-      Result := Proxy.ObjectId
+    if FProxy.HasInstance then
+      Result := FProxy.Instance.Signature
+    else if FProxy.HasReference then
+      Result := FProxy.ObjectId
     else
       Result := SPressNilString;
   end else
@@ -3322,7 +3322,6 @@ end;
 
 function TPressItem.GetValue: TPressObject;
 begin
-  Synchronize;
   Result := Proxy.Instance;
 end;
 
@@ -3364,7 +3363,6 @@ end;
 
 function TPressItem.SameReference(const ARefClass, ARefID: string): Boolean;
 begin
-  Synchronize;
   Result := Proxy.SameReference(ARefClass, ARefID);
 end;
 
@@ -3729,13 +3727,11 @@ end;
 
 function TPressItems.CreateIterator: TPressItemsIterator;
 begin
-  Synchronize;
   Result := InternalCreateIterator;
 end;
 
 function TPressItems.CreateProxyIterator: TPressProxyIterator;
 begin
-  Synchronize;
   Result := TPressProxyIterator.Create(ProxyList);
 end;
 
@@ -3774,20 +3770,14 @@ end;
 
 function TPressItems.GetObjects(AIndex: Integer): TPressObject;
 begin
-  Synchronize;
   Result := ProxyList[AIndex].Instance;
-end;
-
-function TPressItems.GetProxies(AIndex: Integer): TPressProxy;
-begin
-  Synchronize;
-  Result := ProxyList[AIndex];
 end;
 
 function TPressItems.GetProxyList: TPressProxyList;
 begin
   if not Assigned(FProxyList) then
     AssignProxyList(TPressProxyList.Create(True, InternalProxyType));
+  Synchronize;
   Result := FProxyList;
 end;
 
@@ -3800,7 +3790,6 @@ end;
 
 function TPressItems.IndexOf(AObject: TPressObject): Integer;
 begin
-  Synchronize;
   Result := ProxyList.IndexOfInstance(AObject);
 end;
 
@@ -4044,8 +4033,9 @@ begin
   inherited;
   if State <> asNotLoaded then
     for I := 0 to Pred(Count) do
-      if Proxies[I].HasInstance then
-        Proxies[I].Instance.Unchanged;
+      with ProxyList[I] do
+        if HasInstance then
+          Instance.Unchanged;
 end;
 
 procedure TPressParts.ReleaseInstance(AInstance: TPressObject);

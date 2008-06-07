@@ -901,7 +901,7 @@ var
     I: Integer;
   begin
     for I := 0 to Pred(AItems.Count) do
-      CheckProxy(AItems.Proxies[I]);
+      CheckProxy(AItems.ProxyList[I]);
   end;
 
 var
@@ -1166,7 +1166,7 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
         VDataset.SQL := DMLBuilder.InsertLinkStatement(AItems.Metadata);
         for I := 0 to Pred(AItems.Count) do
         begin
-          AddLinkParams(VDataset, AItems, AItems.Proxies[I], AObject.Id, I);
+          AddLinkParams(VDataset, AItems, AItems.ProxyList[I], AObject.Id, I);
           VDataset.Execute;
         end;
       end;
@@ -1182,7 +1182,7 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
         UpdateEmbeddedLinks(AParts);
       for I := 0 to Pred(AParts.Count) do
       begin
-        VProxy := AParts.Proxies[I];
+        VProxy := AParts.ProxyList[I];
         if VProxy.HasInstance then
         begin
           VObject := VProxy.Instance;
@@ -1205,7 +1205,7 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
     begin
       for I := 0 to Pred(AReferences.Count) do
       begin
-        VProxy := AReferences.Proxies[I];
+        VProxy := AReferences.ProxyList[I];
         if VProxy.HasInstance then
         begin
           VObject := VProxy.Instance;

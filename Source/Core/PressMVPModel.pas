@@ -1693,7 +1693,7 @@ var
   I: Integer;
 begin
   VSubject := Subject;
-  if (VSubject.Count > 0) and not VSubject.Proxies[0].HasInstance then
+  if (VSubject.Count > 0) and not VSubject.ProxyList[0].HasInstance then
   begin
     VAttrList := '';
     for I := 0 to Pred(ColumnData.ColumnCount) do
@@ -1909,7 +1909,7 @@ begin
     ObjectList.Clear;
     BulkRetrieve;
     for I := 0 to Pred(Subject.Count) do
-      ObjectList.AddProxy(Subject.Proxies[I]);
+      ObjectList.AddProxy(Subject.ProxyList[I]);
     if ObjectList.Count > 0 then
     begin
       Selection.Focus := ObjectList[0].Instance;
