@@ -2514,7 +2514,7 @@ begin
       Exit;
   end;
   Result := nil;
-  if FCreatingMetadatas or (Metadatas.Count = 0) then
+  if FCreatingMetadatas or (Metadatas.Count < FClasses.Count) then
   begin
     VClass := FindClass(AClassName);
     if Assigned(VClass) then
