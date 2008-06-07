@@ -460,6 +460,7 @@ end;
 
 procedure TPressOPFConnector.Commit;
 begin
+  FActiveOPFTransaction := False;
   if not FActiveDBTransaction then
     Exit;
   {$IFDEF PressLogDAOPersistence}
@@ -467,7 +468,6 @@ begin
   {$ENDIF}
   InternalCommit;
   FActiveDBTransaction := False;
-  FActiveOPFTransaction := False;
 end;
 
 constructor TPressOPFConnector.Create;
@@ -522,6 +522,7 @@ end;
 
 procedure TPressOPFConnector.Rollback;
 begin
+  FActiveOPFTransaction := False;
   if not FActiveDBTransaction then
     Exit;
   {$IFDEF PressLogDAOPersistence}
@@ -529,7 +530,6 @@ begin
   {$ENDIF}
   InternalRollback;
   FActiveDBTransaction := False;
-  FActiveOPFTransaction := False;
 end;
 
 procedure TPressOPFConnector.StartTransaction;
