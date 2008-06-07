@@ -2318,7 +2318,7 @@ end;
 procedure TPressDate.Initialize;
 begin
   if SameText(DefaultValue, 'now') then
-    FValue := Date
+    PubValue := Date
   else
     inherited;
 end;
@@ -2497,7 +2497,7 @@ end;
 procedure TPressTime.Initialize;
 begin
   if SameText(DefaultValue, 'now') then
-    FValue := Time
+    PubValue := Time
   else
     inherited;
 end;
@@ -2681,7 +2681,7 @@ end;
 procedure TPressDateTime.Initialize;
 begin
   if SameText(DefaultValue, 'now') then
-    FValue := Now
+    PubValue := Now
   else
     inherited;
 end;
