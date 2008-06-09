@@ -152,9 +152,12 @@ type
   TPressReportGroupClass = class of TPressCustomReportGroup;
 
   TPressCustomReportGroup = class(TPressObject)
+  private
+    FObject: TObject;
   protected
     function InternalCreateReportItemIterator: TPressItemsIterator; virtual; abstract;
   public
+    procedure AssignObject(AObject: TObject);
     function CreateReportItemIterator: TPressItemsIterator;
     class function ObjectClassAttributeName: string; virtual; abstract;
     procedure ReleaseObject(AObject: TObject);
@@ -165,6 +168,7 @@ type
     FCurrentObject: TObject;
     FDataSources: TPressReportDataSourceList;
     FReport: TPressReport;
+    procedure AssignObject(AObject: TObject);
     function GetDataSources: TPressReportDataSourceList;
     function GetReport: TPressReport;
     procedure LoadFields;
@@ -174,6 +178,7 @@ type
     procedure ReportNeedValue(const ADataSetName, AFieldName: string; var AValue: Variant; AForceData: Boolean);
     procedure SaveReport;
   protected
+    procedure AfterCreate; override;
     procedure Finit; override;
     function GetReportCaption: string; virtual;
     procedure GetReportData(AStream: TStream); virtual;
@@ -182,7 +187,6 @@ type
     property DataSources: TPressReportDataSourceList read GetDataSources;
     property Report: TPressReport read GetReport;
   public
-    procedure AssignObject(AObject: TObject);
     procedure Design;
     procedure Execute(AObject: TObject = nil);
     procedure LoadFromFile(const AFileName: string);
@@ -462,6 +466,19 @@ end;
 
 { TPressCustomReportGroup }
 
+procedure TPressCustomReportGroup.AssignObject(AObject: TObject);
+begin
+  FObject := AObject;
+  with CreateReportItemIterator do
+  try
+    BeforeFirstItem;
+    while NextItem do
+      (CurrentItem as TPressCustomReportItem).AssignObject(AObject);  // friend class
+  finally
+    Free;
+  end;
+end;
+
 function TPressCustomReportGroup.CreateReportItemIterator: TPressItemsIterator;
 begin
   Result := InternalCreateReportItemIterator;
@@ -481,9 +498,15 @@ end;
 
 { TPressCustomReportItem }
 
+procedure TPressCustomReportItem.AfterCreate;
+begin
+  inherited;
+  AssignObject((Owner as TPressCustomReportGroup).FObject);  // friend class
+end;
+
 procedure TPressCustomReportItem.AssignObject(AObject: TObject);
 begin
-  if AObject <> FCurrentObject then
+  if Assigned(AObject) and (AObject <> FCurrentObject) then
   begin
     FreeAndNil(FDataSources);
     FCurrentObject := AObject;
@@ -589,18 +612,17 @@ procedure TPressCustomReportItem.LoadMetadatas;
     Result := Report.CreateReportDataSet(ADataSetName);
   end;
 
-  function CreateDataSource(
-   const ADataSetName: string;
-   AObject: TPressObject): TPressReportDataSource; overload;
+  function CreateObjectDataSource(
+    const ADataSetName: string): TPressReportDataSource;
   begin
     Result := TPressReportObjectDataSource.Create(
-     CreateDataSet(ADataSetName), AObject);
+     CreateDataSet(ADataSetName), FCurrentObject as TPressObject);
     DataSources.Add(Result);
   end;
 
-  function CreateDataSource(
+  function CreateItemsDataSource(
     const ADataSetName, AItemsName: string;
-    AParent: TPressReportDataSource): TPressReportDataSource; overload;
+    AParent: TPressReportDataSource): TPressReportDataSource;
   begin
     Result := TPressReportItemsDataSource.Create(
      CreateDataSet(ADataSetName), AItemsName, AParent);
@@ -642,8 +664,8 @@ procedure TPressCustomReportItem.LoadMetadatas;
              ADataSetPath + SPressAttributeSeparator + AMetadata.Name;
             ACurrentDataSource.CreateField(AAttributePath + AMetadata.Name);
           end;
-          VDataSource :=
-           CreateDataSource(VDataSetName, AMetadata.Name, ACurrentDataSource);
+          VDataSource := CreateItemsDataSource(
+            VDataSetName, AMetadata.Name, ACurrentDataSource);
           LoadPressMetadata(
            AMetadata.ObjectClass, VDataSource, VDataSetName, '');
         end;
@@ -675,7 +697,7 @@ begin
   if FCurrentObject is TPressObject then
     LoadPressMetadata(
      TPressObjectClass(FCurrentObject.ClassType),
-     CreateDataSource(FCurrentObject.ClassName, TPressObject(FCurrentObject)),
+     CreateObjectDataSource(FCurrentObject.ClassName),
      FCurrentObject.ClassName, '');
   { TODO : else if BO has RTTI then read published fields }
 end;

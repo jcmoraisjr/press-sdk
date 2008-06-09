@@ -165,8 +165,6 @@ function TPressReportManager.AddReportItem(
 var
   VShortCut: TShortCut;
 begin
-  if Model.HasSubject then
-    AItem.AssignObject(Model.Subject);
   if AItem.ReportVisible then
   begin
     if APosition = 0 then
@@ -216,9 +214,13 @@ end;
 function TPressReportManager.GetReportGroup: TPressCustomReportGroup;
 begin
   if not Assigned(FReportGroup) then
+  begin
     { TODO : Implement update report list }
     FReportGroup := PressDefaultReportDataService.ReportGroupByClassName(
      Model.Subject.ClassName);
+    if Assigned(Model) then
+      FReportGroup.AssignObject(Model.Subject);
+  end;
   Result := FReportGroup;
 end;
 
