@@ -109,6 +109,7 @@ type
     procedure Dispose(AClass: TPressObjectClass; const AId: string); overload;
     function ExecuteStatement(const AStatement: string; AParams: TPressParamList = nil): Integer;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
+    function IsPersistent(AObject: TPressObject): Boolean;
     procedure Load(AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean);
     function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure Refresh(AObject: TPressObject);
@@ -437,7 +438,7 @@ end;
 
 procedure TPressSession.Dispose(AObject: TPressObject);
 begin
-  if Assigned(AObject) and AObject.IsPersistent then
+  if Assigned(AObject) and IsPersistent(AObject) then
   begin
     StartTransaction;
     try
@@ -685,6 +686,11 @@ begin
   raise UnsupportedFeatureError('Store object');
 end;
 
+function TPressSession.IsPersistent(AObject: TPressObject): Boolean;
+begin
+  Result := TPressObjectFriend(AObject).Session = Self as IPressSession;
+end;
+
 procedure TPressSession.Load(AObject: TPressObject;
   AIncludeLazyLoading, ALoadContainers: Boolean);
 begin
@@ -720,7 +726,7 @@ end;
 
 procedure TPressSession.Refresh(AObject: TPressObject);
 begin
-  if not AObject.IsPersistent then
+  if not IsPersistent(AObject) then
     Exit;
   StartTransaction;
   try

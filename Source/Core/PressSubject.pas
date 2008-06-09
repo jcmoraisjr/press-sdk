@@ -610,6 +610,7 @@ type
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function ExecuteStatement(const AStatement: string; AParams: TPressParamList = nil): Integer;
     function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
+    function IsPersistent(AObject: TPressObject): Boolean;
     procedure Load(AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean);
     function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure Refresh(AObject: TPressObject);
@@ -664,7 +665,6 @@ type
     function GetAttributes(AIndex: Integer): TPressAttribute;
     function GetId: string;
     function GetIsOwned: Boolean;
-    function GetIsPersistent: Boolean;
     function GetIsUpdated: Boolean;
     function GetIsValid: Boolean;
     function GetMap: TPressClassMap;
@@ -728,7 +728,6 @@ type
     property Attributes[AIndex: Integer]: TPressAttribute read GetAttributes;
     property Id: string read GetId write SetId;
     property IsOwned: Boolean read GetIsOwned;
-    property IsPersistent: Boolean read GetIsPersistent;
     property IsUpdated: Boolean read GetIsUpdated;
     property IsValid: Boolean read GetIsValid;
     property Map: TPressClassMap read GetMap;
@@ -3180,17 +3179,12 @@ begin
   Result := Assigned(FOwnerAttribute);
 end;
 
-function TPressObject.GetIsPersistent: Boolean;
-begin
-  Result := FPersistentId <> '';
-end;
-
 function TPressObject.GetIsUpdated: Boolean;
 var
   VAttribute: TPressAttribute;
   I: Integer;
 begin
-  if IsPersistent then
+  if Assigned(FSession) then
   begin
     Result := not IsChanged;
     if not Result then
@@ -4233,13 +4227,21 @@ begin
   Result := ARefID = '';
 end;
 
+procedure TPressProxy.RemoveSessionIntf(ASession: IPressSession);
+begin
+  if FSession = ASession then
+    FSession := nil;
+  if (FProxyType = ptOwned) and Assigned(FInstance) then
+    FInstance.RemoveSessionIntf(ASession);  // friend class
+end;
+
 function TPressProxy.SameReference(AObject: TPressObject): Boolean;
 begin
   if Assigned(AObject) then
-    if HasInstance then
+    if Assigned(FInstance) then
       Result := AObject = FInstance
     else
-      Result := AObject.IsPersistent and (AObject.PersistentId = FRefID) and
+      Result := Assigned(AObject.Session) and (AObject.PersistentId = FRefID) and
        (not Assigned(FRefClass) or (AObject is FRefClass))
   else
     Result := IsEmpty;
@@ -4250,19 +4252,11 @@ begin
   Result := SameReference(PressModel.ClassByName(ARefClass), ARefID);
 end;
 
-procedure TPressProxy.RemoveSessionIntf(ASession: IPressSession);
-begin
-  if FSession = ASession then
-    FSession := nil;
-  if (FProxyType = ptOwned) and Assigned(FInstance) then
-    FInstance.RemoveSessionIntf(ASession);  // friend class
-end;
-
 function TPressProxy.SameReference(
   ARefClass: TPressObjectClass; const ARefID: string): Boolean;
 begin
-  if HasInstance then
-    Result := FInstance.IsPersistent and (FInstance.PersistentId = ARefID) and
+  if Assigned(FInstance) then
+    Result := Assigned(FInstance.Session) and (FInstance.PersistentId = ARefID) and
      (not Assigned(ARefClass) or (FInstance is ARefClass))
   else if HasReference then
     Result := (FRefID = ARefID) and
@@ -4714,7 +4708,7 @@ end;
 function TPressAttribute.GetIsPersistent: Boolean;
 begin
   Result := Assigned(FMetadata) and (FMetadata.IsPersistent) and
-   Assigned(FOwner) and (FOwner.IsPersistent);
+   Assigned(Session);
 end;
 
 function TPressAttribute.GetName: string;

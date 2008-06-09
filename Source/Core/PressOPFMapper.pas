@@ -463,7 +463,7 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
     if not AReference.Proxy.IsEmpty then
     begin
       if AReference.Proxy.HasInstance and
-       not AReference.Value.IsPersistent then
+       not Persistence.IsPersistent(AReference.Value) then
         Persistence.Store(AReference.Value);
       AddIdParam(ADataset, AReference.PersistentName,
        AReference.Proxy.ObjectId, AReference.Proxy.Metadata.IdType);
@@ -487,9 +487,11 @@ procedure TPressOPFAttributeMapper.AddAttributeParams(
 var
   VAttribute: TPressAttribute;
   VPartsAttribute: TPressAttributeMetadata;
+  VIsPersistentObject: Boolean;
   I: Integer;
 begin
-  if not AObject.IsPersistent then
+  VIsPersistentObject := Persistence.IsPersistent(AObject);
+  if not VIsPersistentObject then
     AddClassIdParam(ADataset, AObject);
   VPartsAttribute := Map.Metadata.OwnerPartsMetadata;
   if Assigned(VPartsAttribute) then
@@ -503,19 +505,19 @@ begin
   if Map.Count > 0 then
   begin
     VAttribute := AObject.AttributeByName(Map[0].Name);
-    if not AObject.IsPersistent or VAttribute.IsChanged then
+    if not VIsPersistentObject or VAttribute.IsChanged then
       AddIdParam(ADataset, VAttribute.PersistentName, VAttribute.AsString,
        VAttribute.Metadata.AttributeClass.AttributeBaseType);
     for I := 1 to Pred(Map.Count) do
     begin
       VAttribute := AObject.AttributeByName(Map[I].Name);
-      if not AObject.IsPersistent or VAttribute.IsChanged then
+      if not VIsPersistentObject or VAttribute.IsChanged then
         AddAttributeParam(ADataset, VAttribute);
     end;
   end;
-  if not AObject.IsPersistent or (Map.Metadata = AObject.Metadata) then
+  if not VIsPersistentObject or (Map.Metadata = AObject.Metadata) then
     AddUpdateCountParam(ADataset, AObject);
-  if AObject.IsPersistent then
+  if VIsPersistentObject then
     AddPersistentIdParam(ADataset, AObject.PersistentId);
 end;
 
@@ -1187,7 +1189,7 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
         if VProxy.HasInstance then
         begin
           VObject := VProxy.Instance;
-          if not VObject.IsPersistent or VObject.IsChanged then
+          if not Persistence.IsPersistent(VObject) or VObject.IsChanged then
             ObjectMapper.Store(VObject);
         end;
       end;
@@ -1210,7 +1212,7 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
         if VProxy.HasInstance then
         begin
           VObject := VProxy.Instance;
-          if not VObject.IsPersistent then
+          if not Persistence.IsPersistent(VObject) then
             Persistence.Store(VObject);
         end;
       end;
@@ -1242,7 +1244,7 @@ procedure TPressOPFAttributeMapper.Store(AObject: TPressObject);
 var
   VDataset: TPressOPFDataset;
 begin
-  if AObject.IsPersistent then
+  if Persistence.IsPersistent(AObject) then
     VDataset := UpdateDataset(AObject)
   else
     VDataset := InsertDataset;

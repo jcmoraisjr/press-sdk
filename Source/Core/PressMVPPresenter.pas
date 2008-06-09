@@ -1077,7 +1077,7 @@ begin
   VModel.User := PressUserData.User;
   if VObjectIsMissing then
     AObject.Release
-  else if AObject.IsPersistent then
+  else if VModel.Session.IsPersistent(AObject) then
     VModel.Session.Load(AObject, True, False);
 
   if not Assigned(VViewClass) then
