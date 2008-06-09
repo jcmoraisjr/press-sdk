@@ -558,6 +558,7 @@ type
     procedure SetPubValue(AValue: TPressObject);
     procedure SetValue(AValue: TPressObject);
   protected
+    procedure AddSessionIntf(ASession: IPressSession); override;
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
     procedure Finit; override;
     function GetAsInteger: Integer; override;
@@ -570,6 +571,7 @@ type
     procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure InternalUnassignObject(AObject: TPressObject); override;
+    procedure RemoveSessionIntf(ASession: IPressSession); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -640,6 +642,7 @@ type
     procedure ReleaseMemento(AMemento: TPressItemsMemento);
     procedure SetObjects(AIndex: Integer; AValue: TPressObject);
   protected
+    procedure AddSessionIntf(ASession: IPressSession); override;
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
     procedure ChangedInstance(AInstance: TPressObject; AUpdateIsChangedFlag: Boolean = True);
     procedure ChangedList(Sender: TPressProxyList; Item: TPressProxy; Action: TListNotification);
@@ -656,6 +659,7 @@ type
     procedure InternalUnchanged; override;
     procedure NotifyMemento(AProxy: TPressProxy; AItemState: TPressItemState; AOldIndex: Integer = -1);
     procedure NotifyRebuild;
+    procedure RemoveSessionIntf(ASession: IPressSession); override;
     (*
     function InternalCreateIterator: TPressItemsIterator; override;
     *)
@@ -737,6 +741,8 @@ uses
 
 type
   TPressObjectFriend = class(TPressObject);
+  TPressProxyFriend = class(TPressProxy);
+  TPressProxyListFriend = class(TPressProxyList);
 
 { TPressValueMemento }
 
@@ -3214,6 +3220,13 @@ end;
 
 { TPressItem }
 
+procedure TPressItem.AddSessionIntf(ASession: IPressSession);
+begin
+  inherited;
+  if Assigned(FProxy) then
+    TPressProxyFriend(FProxy).AddSessionIntf(ASession);
+end;
+
 procedure TPressItem.AfterChangeInstance(
   Sender: TPressProxy; Instance: TPressObject;
   ChangeType: TPressProxyChangeType);
@@ -3357,6 +3370,13 @@ begin
   Synchronize;
   Result := (not Assigned(AObject) and not Assigned(FProxy)) or
    (Assigned(FProxy) and FProxy.SameReference(AObject));
+end;
+
+procedure TPressItem.RemoveSessionIntf(ASession: IPressSession);
+begin
+  inherited;
+  if Assigned(FProxy) then
+    TPressProxyFriend(FProxy).RemoveSessionIntf(ASession);
 end;
 
 function TPressItem.SameReference(const ARefClass, ARefID: string): Boolean;
@@ -3535,6 +3555,13 @@ end;
 function TPressItems.AddReference(const AClassName, AId: string): Integer;
 begin
   Result := ProxyList.AddReference(AClassName, AId);
+end;
+
+procedure TPressItems.AddSessionIntf(ASession: IPressSession);
+begin
+  inherited;
+  if Assigned(FProxyList) then
+    TPressProxyListFriend(FProxyList).AddSessionIntf(ASession);
 end;
 
 procedure TPressItems.AfterChangeInstance(
@@ -3794,7 +3821,7 @@ begin
   Result := TPressObject(AClass.NewInstance);
   try
     // lacks inherited Create
-    TPressObjectFriend(Result).InitInstance(nil, Session);
+    TPressObjectFriend(Result).InitInstance;
     Insert(AIndex, Result);
     TPressObjectFriend(Result).AfterCreate;
     if InternalProxyType = ptShared then
@@ -3927,6 +3954,13 @@ begin
   Result := ProxyList.IndexOfReference(AProxy.ObjectClassName, AProxy.ObjectID);
   if Result >= 0 then
     ProxyList.Delete(Result);
+end;
+
+procedure TPressItems.RemoveSessionIntf(ASession: IPressSession);
+begin
+  inherited;
+  if Assigned(FProxyList) then
+    TPressProxyListFriend(FProxyList).RemoveSessionIntf(ASession);
 end;
 
 procedure TPressItems.SetObjects(AIndex: Integer; AValue: TPressObject);

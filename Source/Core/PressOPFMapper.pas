@@ -241,7 +241,7 @@ begin
       try
         for I := Pred(VMaps.Count) downto 0 do
           AttributeMapper[VMaps[I]].DisposeObject(VObject);
-        PressAssignPersistentId(VObject, '');
+        PressAssignPersistentId(Persistence, VObject, '');
       finally
         VObject.Free;
       end;
@@ -393,7 +393,7 @@ begin
   VMaps := StorageModel.Maps[AObject.ClassType];
   for I := Pred(VMaps.Count) downto 0 do
     AttributeMapper[VMaps[I]].Store(AObject);
-  PressAssignPersistentId(AObject, AObject.Id);
+  PressAssignPersistentId(Persistence, AObject, AObject.Id);
   PressAssignPersistentUpdateCount(AObject);
 end;
 
@@ -646,7 +646,7 @@ begin
     if Result.Metadata.UpdateCountName <> '' then
       PressAssignUpdateCount(Result,
        ADataRow.FieldByName(Result.Metadata.UpdateCountName).Value);
-    PressAssignPersistentId(Result, VId);
+    PressAssignPersistentId(Persistence, Result, VId);
     Result.EnableChanges;
   except
     FreeAndNil(Result);

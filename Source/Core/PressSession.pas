@@ -424,7 +424,7 @@ begin
     Result.DisableChanges;
     try
       // lacks inherited Create
-      TPressObjectFriend(Result).InitInstance(AMetadata, Self);
+      TPressObjectFriend(Result).InitInstance(AMetadata);
       for I := 0 to Pred(Result.AttributeCount) do
         Result.Attributes[I].Unload;
     finally
@@ -450,12 +450,11 @@ begin
 {$endif}
         TPressObjectFriend(AObject).InternalDispose(
          Self, {$ifdef FPC}@{$endif}DisposeObject);
-        PressAssignPersistentId(AObject, '');
+        PressAssignPersistentId(Self, AObject, '');
       finally
         AObject.EnableChanges;
       end;
       TPressObjectFriend(AObject).AfterDispose;
-      TPressObjectFriend(AObject).RemoveSessionIntf(Self);
       Commit;
     except
       Rollback;
@@ -883,8 +882,7 @@ begin
 {$endif}
           TPressObjectFriend(AObject).InternalStore(
            Self, {$ifdef FPC}@{$endif}InternalStore);
-          PressAssignPersistentId(AObject, AObject.Id);
-          TPressObjectFriend(AObject).AddSessionIntf(Self);
+          PressAssignPersistentId(Self, AObject, AObject.Id);
         finally
           AObject.EnableChanges;
         end;
