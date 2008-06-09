@@ -1,60 +1,30 @@
 SimpleOPF
 =========
 
-Configure the Project/<IDE>/SimpleOPF.cf file before start the application.
+1. Change the uses clause of the unit MainFrm.pas to choose which
+   connection broker(s) the application will use.
 
+2. Change the Projects/<IDE>/SimpleOPF.cf file to provide:
+   a) the default service name for the OPFBroker registry,
+      and
+   b) the database component settings required for the broker used (for
+      example: database name, user, password, etc.);
 
 
 PHONEBOOK
 =========
 
-It's necessary to configure how the application will store and retrieve objects.
+1. Change the unit Units/Brokers.pas to choose which connection broker(s)
+   the application will use.
 
-Using No persistence
---------------------
-
-1. Check the comments inside the Units/PhoneBook.inc file and ensure that:
-   a) the "UsePressOPF" conditional symbol is NOT defined,
-      and
-   b) the "UseInstantObjects" conditional symbol is NOT defined;
-
-
-Using PressObjects persistence
-------------------------------
-
-1. Check the comments inside the Units/PhoneBook.inc file and ensure that:
-   a) the "UsePressOPF" conditional symbol is defined,
-      and
-   b) the "UseInstantObjects" conditional symbol is NOT defined;
-2. Change the unit Units/Brokers.pas to choose which connection broker(s)
-   the application will use. Currently PressObjects has brokers for IBX,
-   UIB, ZeosDBO, DOA and SQLdb;
-3. Change the Projects/<IDE>/PhoneBook.conf file to provide:
-   a) the default service name (IBX, UIB, Zeos, DOA or SQLdb) for the
-      OPFBroker registry,
+2. Change the Projects/<IDE>/PhoneBook.conf file to provide:
+   a) the default service name for the OPFBroker registry,
       and
    b) the database component settings required for the broker used (for
       example: database name, user, password, etc.);
-4. Run the application and call File | Connector to create the database
+
+3. Run the application and call File | Create DDL to create the database
    metadata;
-5. Create the database tables and constraints using the metadata provided by
+
+4. Create the database tables and constraints using the metadata provided by
    the application.
-
-
-Using InstantObjects persistence
---------------------------------
-
-Note: The following assumes a working copy of the InstantObjects persistence
-      framework is installed and available.
-
-1. Check the comments inside the Units/PhoneBook.inc file and ensure that:
-   a) the "UsePressOPF" conditional symbol is NOT defined,
-      and
-   b) the "UseInstantObjects" conditional symbol is defined;
-2. Change the unit Units/Brokers.pas, removing or including InstantObjects
-   brokers, as required;
-3. Add Units/IOModel.pas as an InstantObjects' model unit
-   (View menu item | InstantObjects Model Explorer | first tool bar button);
-4. Check the 'InstantObjects' section of 'Persistence.txt' doc for any other
-   required settings;
-5. Save all project files (File menu item | Save All).
