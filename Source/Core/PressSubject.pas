@@ -664,7 +664,7 @@ type
     FUpdateCount: Integer;
     procedure AttributesDisableChanges;
     procedure AttributesEnableChanges;
-    procedure CreateAttributes(AIsPersistent: Boolean);
+    procedure CreateAttributes;
     function GetAttributes(AIndex: Integer): TPressAttribute;
     function GetDataAccess: IPressSession;
     function GetId: string;
@@ -693,7 +693,7 @@ type
     procedure Finit; override;
     function GetOwner: TPersistent; override;
     procedure Init; virtual;
-    procedure InitInstance(ADataAccess: IPressSession; AMetadata: TPressObjectMetadata; AIsPersistent: Boolean = False);
+    procedure InitInstance(ADataAccess: IPressSession; AMetadata: TPressObjectMetadata);
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; virtual;
     procedure InternalCalcAttribute(AAttribute: TPressAttribute); virtual;
     procedure InternalChanged(AChangedWhenDisabled: Boolean); override;
@@ -1042,6 +1042,7 @@ type
   public
     constructor Create(AOwner: TPressObject; AMetadata: TPressAttributeMetadata); virtual;
     procedure Assign(Source: TPersistent); override;
+    procedure Assigning;
     class function AttributeBaseType: TPressAttributeBaseType; virtual; abstract;
     class function AttributeName: string; virtual; abstract;
     {$IFDEF FPC}class{$ENDIF} function ClassType: TPressAttributeClass;
@@ -3063,7 +3064,7 @@ begin
   Result := FAttributes.CreateIterator;
 end;
 
-procedure TPressObject.CreateAttributes(AIsPersistent: Boolean);
+procedure TPressObject.CreateAttributes;
 var
   VAttributePtr: PPressAttribute;
   VAttribute: TPressAttribute;
@@ -3080,8 +3081,6 @@ begin
       VMetadata := CurrentItem;
       VAttribute := VMetadata.CreateAttribute(Self);
       FAttributes.Add(VAttribute);
-      if AIsPersistent then
-        VAttribute.Unload;
       VAttributePtr := InternalAttributeAddress(VMetadata.Name);
       if Assigned(VAttributePtr) then
         VAttributePtr^ := VAttribute;
@@ -3287,15 +3286,15 @@ procedure TPressObject.Init;
 begin
 end;
 
-procedure TPressObject.InitInstance(ADataAccess: IPressSession;
-  AMetadata: TPressObjectMetadata; AIsPersistent: Boolean);
+procedure TPressObject.InitInstance(
+  ADataAccess: IPressSession; AMetadata: TPressObjectMetadata);
 begin
   FDataAccess := ADataAccess;
   FMetadata := AMetadata;
   FAttributes := TPressAttributeList.Create(True);
   DisableChanges;
   try
-    CreateAttributes(AIsPersistent);
+    CreateAttributes;
     if Assigned(FDataAccess) then
       FDataAccess.AssignObject(Self);
     Init;
@@ -4580,6 +4579,12 @@ begin
     end
   else
     inherited;
+end;
+
+procedure TPressAttribute.Assigning;
+begin
+  if FState = asNotLoaded then
+    FState := asNull;
 end;
 
 procedure TPressAttribute.BindCalcNotification(AInstance: TPressObject);

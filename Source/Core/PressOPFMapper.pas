@@ -827,6 +827,7 @@ procedure TPressOPFAttributeMapper.ReadAttribute(
   end;
 
 begin
+  AAttribute.Assigning;
   if AAttribute is TPressValue then
     LoadValue(TPressValue(AAttribute))
   else if AAttribute is TPressItem then

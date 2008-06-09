@@ -406,11 +406,20 @@ end;
 
 function TPressSession.CreateObject(AClass: TPressObjectClass;
   AMetadata: TPressObjectMetadata): TPressObject;
+var
+  I: Integer;
 begin
   Result := TPressObject(AClass.NewInstance);
   try
-    // lacks inherited Create
-    TPressObjectFriend(Result).InitInstance(Self, AMetadata, True);
+    Result.DisableChanges;
+    try
+      // lacks inherited Create
+      TPressObjectFriend(Result).InitInstance(Self, AMetadata);
+      for I := 0 to Pred(Result.AttributeCount) do
+        Result.Attributes[I].Unload;
+    finally
+      Result.EnableChanges;
+    end;
   except
     FreeAndNil(Result);
     raise;

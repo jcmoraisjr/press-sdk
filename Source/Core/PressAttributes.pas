@@ -3292,8 +3292,7 @@ begin
     FProxy := TPressProxy.Create(InternalProxyType);
     BindProxy(FProxy);
   end;
-  if not ChangesDisabled then
-    Synchronize;
+  Synchronize;
   Result := FProxy;
 end;
 
@@ -3777,8 +3776,7 @@ function TPressItems.GetProxyList: TPressProxyList;
 begin
   if not Assigned(FProxyList) then
     AssignProxyList(TPressProxyList.Create(True, InternalProxyType));
-  if not ChangesDisabled then
-    Synchronize;
+  Synchronize;
   Result := FProxyList;
 end;
 
