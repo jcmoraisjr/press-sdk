@@ -66,10 +66,13 @@ uses
 {$ELSE}
   Windows,
 {$ENDIF}
-  Menus, PressUser, MainFrm,
-{$IFDEF DontUsePersistence}
-  Populate,
-{$ENDIF}
+  SysUtils,
+  Menus,
+  Clipbrd,
+  PressUser,
+  PressDialogs,
+  PressOPF,
+  MainFrm,
   ContactBO;
 
 { TMainModel }
@@ -170,7 +173,10 @@ end;
 
 procedure TMainConnectorCommand.InternalExecute;
 begin
-  PressDefaultSession.ShowConnectionManager;
+  if PressDialog.ConfirmDlg(
+   'Copy the database metadata to the clipboard?') then
+    Clipboard.AsText :=
+     AdjustLineBreaks(PressOPFService.CreateDatabaseStatement);
 end;
 
 initialization

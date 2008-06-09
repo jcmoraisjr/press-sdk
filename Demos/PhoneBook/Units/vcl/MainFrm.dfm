@@ -98,7 +98,7 @@ object MainForm: TMainForm
     object FileMenuGroup: TMenuItem
       Caption = '&File'
       object ConnectorMenuItem: TMenuItem
-        Caption = 'Co&nnector'
+        Caption = 'Create DDL'
       end
       object N1: TMenuItem
         Caption = '-'

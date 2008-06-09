@@ -12,6 +12,7 @@ object MainForm: TMainForm
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Menu = MainMenu
+  LCLVersion = '0.9.25'
   object QueryPanel: TPanel
     Height = 73
     Width = 376
@@ -94,9 +95,7 @@ object MainForm: TMainForm
       FixedColor = clBtnFace
       Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goSmoothScroll]
       RowCount = 5
-      ScrollBars = ssAutoBoth
       TabOrder = 0
-      TabStop = True
     end
   end
   object MainMenu: TMainMenu
@@ -105,7 +104,7 @@ object MainForm: TMainForm
     object FileMenuGroup: TMenuItem
       Caption = '&File'
       object ConnectorMenuItem: TMenuItem
-        Caption = 'Co&nnector'
+        Caption = 'Create DDL'
       end
       object N1: TMenuItem
         Caption = '-'

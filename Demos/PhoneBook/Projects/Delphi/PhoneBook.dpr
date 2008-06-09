@@ -3,8 +3,6 @@ program PhoneBook;
 uses
   Forms,
   Brokers in '..\..\Units\Brokers.pas',
-  IOModel in '..\..\Units\IOModel.pas',
-  Populate in '..\..\Units\Populate.pas',
   MainMVP in '..\..\Units\MainMVP.pas',
   MainFrm in '..\..\Units\vcl\MainFrm.pas' {MainForm},
   CustomMVP in '..\..\Units\CustomMVP.pas',

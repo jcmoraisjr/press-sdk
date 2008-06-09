@@ -18,7 +18,6 @@
     </VersionInfo>
     <PublishOptions>
       <Version Value="2"/>
-      <IgnoreBinaries Value="False"/>
       <IncludeFileFilter Value="*.(pas|pp|inc|lfm|lpr|lrs|lpi|lpk|sh|xml)"/>
       <ExcludeFileFilter Value="*.(bak|ppu|ppw|o|so);*~;backup"/>
     </PublishOptions>
@@ -33,7 +32,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="17">
+    <Units Count="16">
       <Unit0>
         <Filename Value="PhoneBook.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -43,6 +42,7 @@
         <Filename Value="..\..\Units\lcl\MainFrm.pas"/>
         <ComponentName Value="MainForm"/>
         <IsPartOfProject Value="True"/>
+        <ResourceBaseClass Value="Form"/>
         <ResourceFilename Value="..\..\Units\lcl\MainFrm.lrs"/>
         <UnitName Value="MainFrm"/>
       </Unit1>
@@ -140,11 +140,6 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="MainMVP"/>
       </Unit15>
-      <Unit16>
-        <Filename Value="..\..\Units\Populate.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="Populate"/>
-      </Unit16>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -158,11 +153,9 @@
       <Generate Value="Faster"/>
     </CodeGeneration>
     <Linking>
-      <Options>
-        <Win32>
-          <GraphicApplication Value="True"/>
-        </Win32>
-      </Options>
+      <Debugging>
+        <UseHeaptrc Value="True"/>
+      </Debugging>
     </Linking>
     <Other>
       <CompilerPath Value="$(CompPath)"/>

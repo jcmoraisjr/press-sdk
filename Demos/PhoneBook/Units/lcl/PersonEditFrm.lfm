@@ -1,8 +1,13 @@
 inherited PersonEditForm: TPersonEditForm
-  Left = 296
-  Top = 228
+  Left = 415
+  Height = 228
+  Top = 182
+  VertScrollBar.Page = 227
   Caption = 'Person'
+  ClientHeight = 228
   inherited ClientPanel: TPanel
+    Height = 187
+    ClientHeight = 187
     inherited NameLabel: TLabel
     end
     inherited StreetLabel: TLabel
@@ -16,35 +21,36 @@ inherited PersonEditForm: TPersonEditForm
     end
     object NickNameLabel: TLabel[4]
       Left = 16
-      Height = 13
+      Height = 14
       Top = 48
-      Width = 53
+      Width = 51
       Caption = 'NickName:'
       FocusControl = NickNameEdit
       ParentColor = False
     end
-    inherited LinePanel: TPanel
+    inherited LinePanel: TPanel[5]
+      Top = 185
     end
-    inherited NameEdit: TEdit
+    inherited NameEdit: TEdit[6]
     end
-    inherited StreetEdit: TEdit
+    inherited StreetEdit: TEdit[7]
       Top = 104
       TabOrder = 3
     end
-    inherited ZipEdit: TEdit
+    inherited ZipEdit: TEdit[8]
       Top = 144
       TabOrder = 4
     end
-    inherited CityComboBox: TComboBox
+    inherited CityComboBox: TComboBox[9]
       Top = 144
       TabOrder = 5
     end
-    inherited PhonesGroupBox: TGroupBox
+    inherited PhonesGroupBox: TGroupBox[10]
       TabOrder = 6
       inherited PhonesStringGrid: TStringGrid
       end
     end
-    object NickNameEdit: TEdit
+    object NickNameEdit: TEdit[11]
       Left = 16
       Height = 21
       Top = 64
@@ -53,6 +59,7 @@ inherited PersonEditForm: TPersonEditForm
     end
   end
   inherited BottomPanel: TPanel
+    Top = 187
     inherited OkButton: TButton
     end
     inherited CancelButton: TButton
