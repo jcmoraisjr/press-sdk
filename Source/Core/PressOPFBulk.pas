@@ -366,7 +366,7 @@ begin
   try
     if not VPathAttributes.IsEmpty then
     begin
-      VProxyList := TPressProxyList.Create(False, ptShared);
+      VProxyList := TPressProxyList.Create(Persistence, False, ptShared);
       VEmptyAttributes := TPressSessionAttributes.Create;
       try
         for I := 0 to Pred(FProxyList.Count) do  // friend class

@@ -27,12 +27,7 @@ uses
   PressUtils,
   PressConsts,
   PressClasses,
-  PressApplication,
   PressNotifier;
-
-const
-  { TODO : Remove the Session and Persistence info from the subject unit }
-  CPressSessionService = CPressSessionServicesBase + $0001;
 
 type
   { Metadata declarations }
@@ -608,7 +603,8 @@ type
 
   IPressSession = interface(IInterface)
   ['{8B46DE54-6987-477B-8AA4-9176D66018D4}']
-    procedure AssignObject(AObject: TPressObject);
+    { TODO : Remove cache methods }
+    procedure AddToCache(AObject: TPressObject);
     procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer; const AAttributes: string);
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
@@ -620,13 +616,12 @@ type
     procedure RemoveFromCache(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata = nil; const AAttributes: string = ''): TPressObject;
     procedure RetrieveAttribute(AAttribute: TPressAttribute);
-    function RetrieveQuery(AQuery: TPressQuery): TPressProxyList;
     procedure Rollback;
-    procedure ShowConnectionManager;
     function SQLProxy(const ASQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     function SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure StartTransaction;
     procedure Store(AObject: TPressObject);
+    procedure UpdateQuery(AQuery: TPressQuery);
   end;
 
   { Business Object base-type declarations }
@@ -653,7 +648,6 @@ type
   { TODO : Remove persistence members }
   private
     FAttributes: TPressAttributeList;
-    FDataAccess: IPressSession;
     FId: TPressAttribute;
     FMap: TPressClassMap;
     FMemento: TPressObjectMemento;
@@ -661,12 +655,13 @@ type
     FOwnerAttribute: TPressStructure;
     FPersistentId: string;
     FPersUpdateCount: Integer;
+    { TODO : List of sessions? }
+    FSession: IPressSession;
     FUpdateCount: Integer;
     procedure AttributesDisableChanges;
     procedure AttributesEnableChanges;
     procedure CreateAttributes;
     function GetAttributes(AIndex: Integer): TPressAttribute;
-    function GetDataAccess: IPressSession;
     function GetId: string;
     function GetIsOwned: Boolean;
     function GetIsPersistent: Boolean;
@@ -681,6 +676,7 @@ type
     procedure SetId(const Value: string);
     procedure UnchangeAttributes;
   protected
+    procedure AddSessionIntf(ASession: IPressSession);
     procedure AfterCreate; virtual;
     procedure AfterCreateAttributes; virtual;
     procedure AfterDispose; virtual;
@@ -689,30 +685,30 @@ type
     procedure BeforeCreateAttributes; virtual;
     procedure BeforeDispose; virtual;
     procedure BeforeStore; virtual;
-    procedure ClearOwnerContext;
     procedure Finit; override;
     function GetOwner: TPersistent; override;
     procedure Init; virtual;
-    procedure InitInstance(ADataAccess: IPressSession; AMetadata: TPressObjectMetadata);
+    procedure InitInstance(AMetadata: TPressObjectMetadata; ASession: IPressSession);
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; virtual;
     procedure InternalCalcAttribute(AAttribute: TPressAttribute); virtual;
     procedure InternalChanged(AChangedWhenDisabled: Boolean); override;
     procedure InternalChangesDisabled; override;
     procedure InternalChangesEnabled; override;
     procedure InternalChanging; override;
-    procedure InternalDispose(ADisposeMethod: TPressObjectOperation); virtual;
+    procedure InternalDispose(ASession: IPressSession; ADisposeMethod: TPressObjectOperation); virtual;
     function InternalIsValid: Boolean; virtual;
     procedure InternalLock; override;
     function InternalReadMethod(AAttr: TPressAttribute; const AMethodName: string; AParams: TPressStringArray): Variant; virtual;
-    procedure InternalRefresh(ARefreshMethod: TPressObjectOperation); virtual;
-    procedure InternalStore(AStoreMethod: TPressObjectOperation); virtual;
+    procedure InternalRefresh(ASession: IPressSession; ARefreshMethod: TPressObjectOperation); virtual;
+    procedure InternalStore(ASession: IPressSession; AStoreMethod: TPressObjectOperation); virtual;
     procedure InternalUnchanged; override;
     procedure InternalUnlock; override;
     class function InternalMetadataStr: string; virtual;
+    procedure RemoveSessionIntf(ASession: IPressSession);
     procedure SetOwnerContext(AOwner: TPressStructure);
+    property Session: IPressSession read FSession;
   public
-    constructor Create(ADataAccess: IPressSession = nil; AMetadata: TPressObjectMetadata = nil);
-    constructor Retrieve(const AId: string; ADataAccess: IPressSession = nil; AMetadata: TPressObjectMetadata = nil);
+    constructor Create(AMetadata: TPressObjectMetadata = nil);
     procedure Assign(Source: TPersistent); override;
     function AttributeByName(const AAttributeName: string): TPressAttribute;
     function AttributeByPath(const APath: string): TPressAttribute;
@@ -723,18 +719,13 @@ type
     {$IFDEF FPC}class{$ENDIF} function ClassType: TPressObjectClass;
     function Clone: TPressObject;
     function CreateAttributeIterator: TPressAttributeIterator;
-    procedure Dispose;
     function Expression(const AExpression: string): Variant;
     function FindAttribute(const AAttributeName: string): TPressAttribute;
     function FindPathAttribute(const APath: string; ASilent: Boolean = True; APathChangedNotifier: TPressNotifier = nil): TPressAttribute;
-    procedure Load(AIncludeLazyLoading: Boolean = True; ALoadContainers: Boolean = False);
     class function ObjectMetadataClass: TPressObjectMetadataClass; virtual;
-    procedure Refresh;
     class procedure RegisterClass;
-    procedure Store;
     class procedure UnregisterClass;
     property Attributes[AIndex: Integer]: TPressAttribute read GetAttributes;
-    property DataAccess: IPressSession read GetDataAccess;
     property Id: string read GetId write SetId;
     property IsOwned: Boolean read GetIsOwned;
     property IsPersistent: Boolean read GetIsPersistent;
@@ -784,11 +775,9 @@ type
   TPressQuery = class(TPressObject)
   private
     FQueryItems: TPressAttribute;  // TPressReferences;
-    FItemsDataAccess: IPressSession;
     FMatchEmptyAndNull: Boolean;
     FParams: TPressParamList;
     FStyle: TPressQueryStyle;
-    function GetItemsDataAccess: IPressSession;
     function GetMetadata: TPressQueryMetadata;
     function GetObjects(AIndex: Integer): TPressObject;
     function GetParams: TPressParamList;
@@ -804,25 +793,23 @@ type
     procedure Init; override;
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     function InternalBuildStatement(AAttribute: TPressAttribute): string; virtual;
-    procedure InternalExecute; virtual;
   public
     function Add(AObject: TPressObject): Integer;
     function AddAttributeParam(AAttribute: TPressAttribute): string;
     function AddParam(AParamType: TPressAttributeBaseType; const AName: string = ''): TPressParam;
     function AddValueParam(AValue: Variant; AAttributeType: TPressAttributeBaseType): string;
+    procedure AssignList(AProxyList: TPressProxyList);
     procedure Clear;
     function Count: Integer;
     class function ClassMetadata: TPressQueryMetadata;
     function CreateIterator: TPressQueryIterator;
     procedure Delete(AIndex: Integer);
-    procedure Execute;
     class function ObjectMetadataClass: TPressObjectMetadataClass; override;
     function Remove(AObject: TPressObject): Integer;
     function RemoveReference(AProxy: TPressProxy): Integer;
     property FieldNamesClause: string read GetFieldNamesClause;
     property FromClause: string read GetFromClause;
     property GroupByClause: string read GetGroupByClause;
-    property ItemsDataAccess: IPressSession read GetItemsDataAccess;
     property MatchEmptyAndNull: Boolean read FMatchEmptyAndNull write FMatchEmptyAndNull;
     property Metadata: TPressQueryMetadata read GetMetadata;
     property Objects[AIndex: Integer]: TPressObject read GetObjects; default;
@@ -830,14 +817,6 @@ type
     property Params: TPressParamList read GetParams;
     property Style: TPressQueryStyle read FStyle write SetStyle;
     property WhereClause: string read GetWhereClause;
-  end;
-
-  TPressSingletonObject = class(TPressObject)
-  protected
-    class function SingletonOID: string; virtual;
-  public
-    constructor Instance;
-    class procedure RegisterOID(AOID: string);
   end;
 
   { Proxy declarations }
@@ -865,13 +844,12 @@ type
     FBeforeChangeInstance: TPressProxyChangeInstanceEvent;
     FBeforeChangeReference: TPressProxyChangeReferenceEvent;
     FBeforeRetrieveInstance: TPressProxyRetrieveInstanceEvent;
-    FDataAccess: IPressSession;
     FInstance: TPressObject;
     FOwner: TPressProxyList;
     FProxyType: TPressProxyType;
     FRefClass: TPressObjectClass;
-    FRefCount: Integer;
     FRefID: string;
+    FSession: IPressSession;
     procedure BulkRetrieve;
     procedure Dereference;
     function GetInstance: TPressObject;
@@ -882,12 +860,14 @@ type
     function IsEmptyReference(ARefClass: TPressObjectClass; const ARefID: string): Boolean;
     procedure SetInstance(Value: TPressObject);
   protected
+    procedure AddSessionIntf(ASession: IPressSession);
     procedure Finit; override;
+    procedure RemoveSessionIntf(ASession: IPressSession);
   public
-    constructor Create(AProxyType: TPressProxyType; AObject: TPressObject = nil);
+    constructor Create(ASession: IPressSession; AProxyType: TPressProxyType; AObject: TPressObject = nil);
     procedure Assign(Source: TPersistent); override;
-    procedure AssignReference(const ARefClass, ARefID: string; ADataAccess: IPressSession); overload;
-    procedure AssignReference(ARefClass: TPressObjectClass; const ARefID: string; ADataAccess: IPressSession); overload;
+    procedure AssignReference(const ARefClass, ARefID: string); overload;
+    procedure AssignReference(ARefClass: TPressObjectClass; const ARefID: string); overload;
     procedure Clear;
     procedure ClearInstance;
     procedure ClearReference;
@@ -903,7 +883,6 @@ type
     property BeforeChangeInstance: TPressProxyChangeInstanceEvent read FBeforeChangeInstance write FBeforeChangeInstance;
     property BeforeChangeReference: TPressProxyChangeReferenceEvent read FBeforeChangeReference write FBeforeChangeReference;
     property BeforeRetrieveInstance: TPressProxyRetrieveInstanceEvent read FBeforeRetrieveInstance write FBeforeRetrieveInstance;
-    property DataAccess: IPressSession read FDataAccess;
     property Instance: TPressObject read GetInstance write SetInstance;
     property Metadata: TPressObjectMetadata read GetMetadata;
     property ObjectClassName: string read GetObjectClassName;
@@ -921,6 +900,7 @@ type
     FDisableNotificationCount: Integer;
     FOnChangeList: TPressProxyListEvent;
     FProxyType: TPressProxyType;
+    FSession: IPressSession;
     function CreateProxy: TPressProxy;
     function GetInstances(AIndex: Integer): TPressObject;
     function GetItems(AIndex: Integer): TPressProxy;
@@ -928,13 +908,15 @@ type
     procedure SetInstances(AIndex: Integer; Value: TPressObject);
     procedure SetItems(AIndex: Integer; Value: TPressProxy);
   protected
+    procedure AddSessionIntf(ASession: IPressSession);
     function InternalCreateIterator: TPressCustomIterator; override;
     procedure Notify(Ptr: Pointer; Action: TListNotification); override;
+    procedure RemoveSessionIntf(ASession: IPressSession);
   public
-    constructor Create(AOwnsObjects: Boolean; AProxyType: TPressProxyType);
+    constructor Create(ASession: IPressSession; AOwnsObjects: Boolean; AProxyType: TPressProxyType);
     function Add(AObject: TPressProxy): Integer;
     function AddInstance(AObject: TPressObject): Integer;
-    function AddReference(const ARefClass, ARefID: string; ADataAccess: IPressSession): Integer;
+    function AddReference(const ARefClass, ARefID: string): Integer;
     function CreateIterator: TPressProxyIterator;
     procedure DisableNotification;
     procedure EnableNotification;
@@ -944,7 +926,7 @@ type
     function IndexOfReference(const ARefClass, ARefID: string): Integer;
     procedure Insert(Index: Integer; AObject: TPressProxy);
     procedure InsertInstance(Index: Integer; AObject: TPressObject);
-    procedure InsertReference(Index: Integer; const ARefClass, ARefID: string; ADataAccess: IPressSession);
+    procedure InsertReference(Index: Integer; const ARefClass, ARefID: string);
     function Remove(AObject: TPressProxy): Integer;
     function RemoveInstance(AObject: TPressObject): Integer;
     function RemoveReference(const ARefClass, ARefID: string): Integer;
@@ -980,7 +962,6 @@ type
     FUsePublishedGetter: Boolean;
     FUsePublishedSetter: Boolean;
     function CreateMemento: TPressAttributeMemento;
-    function GetDataAccess: IPressSession;
     function GetDefaultValue: string;
     function GetEditMask: string;
     function GetIsCalcAttribute: Boolean;
@@ -993,6 +974,7 @@ type
     function GetUsePublishedGetter: Boolean;
     function GetUsePublishedSetter: Boolean;
     procedure InitPropInfo;
+    function GetSession: IPressSession;
   protected
     function AccessError(const AAttributeName: string): EPressError;
     { TODO : Use exception messages from the PressDialog class }
@@ -1036,9 +1018,10 @@ type
     function ValidateChars(const AStr: string; const AChars: TChars): Boolean;
     procedure ValueAssigned(AUpdateIsChangedFlag: Boolean = True);
     procedure ValueUnassigned(AUpdateIsChangedFlag: Boolean = True);
+    property Notifier: TPressNotifier read GetNotifier;
+    property Session: IPressSession read GetSession;
     property UsePublishedGetter: Boolean read GetUsePublishedGetter;
     property UsePublishedSetter: Boolean read GetUsePublishedSetter;
-    property Notifier: TPressNotifier read GetNotifier;
   public
     constructor Create(AOwner: TPressObject; AMetadata: TPressAttributeMetadata); virtual;
     procedure Assign(Source: TPersistent); override;
@@ -1061,7 +1044,6 @@ type
     property AsString: string read GetAsString write SetAsString;
     property AsTime: TTime read GetAsTime write SetAsTime;
     property AsVariant: Variant read GetAsVariant write SetAsVariant;
-    property DataAccess: IPressSession read GetDataAccess;
     property DefaultValue: string read GetDefaultValue;
     property DisplayText: string read GetDisplayText;
     property EditMask: string read GetEditMask;
@@ -1147,12 +1129,12 @@ procedure PressAssignUpdateCount(AObject: TPressObject; ANewValue: Integer);
 procedure PressAssignPersistentUpdateCount(AObject: TPressObject);
 procedure PressEvolveUpdateCount(AObject: TPressObject);
 function PressModel: TPressModel;
-function PressDefaultSession: IPressSession;
 
 implementation
 
 uses
   {$IFDEF PressLog}PressLog,{$ENDIF}
+  PressApplication,
   PressParser,
   PressExpression,
   PressAttributes,
@@ -1190,15 +1172,7 @@ type
   end;
 
 var
-  _SingletonIDs: IPressHolder; //TStrings;
   _Model: IPressHolder; //TPressModel;
-
-function PressSingletonIDs: TStrings;
-begin
-  if not Assigned(_SingletonIDs) then
-    _SingletonIDs := TPressHolder.Create(TStringList.Create);
-  Result := TStrings(_SingletonIDs.Instance);
-end;
 
 { Global routines }
 
@@ -1236,11 +1210,6 @@ begin
     Inc(AObject.FUpdateCount)  // friend class
   else
     AObject.FUpdateCount := 1;  // friend class
-end;
-
-function PressDefaultSession: IPressSession;
-begin
-  Result := PressApp.Registry[CPressSessionService].DefaultService as IPressSession;
 end;
 
 { TPressEnumMetadata }
@@ -2920,6 +2889,27 @@ end;
 
 { TPressObject }
 
+procedure TPressObject.AddSessionIntf(ASession: IPressSession);
+var
+  VAttribute: TPressAttribute;
+  I: Integer;
+begin
+  { TODO : List of sessions? }
+  if (FSession <> ASession) and Assigned(ASession) then
+  begin
+    FSession := ASession;
+    ASession.AddToCache(Self);
+    for I := 0 to Pred(FAttributes.Count) do
+    begin
+      VAttribute := FAttributes[I];
+      if VAttribute is TPressItem then
+        TPressItem(VAttribute).Proxy.AddSessionIntf(ASession)  // friend class
+      else if VAttribute is TPressItems then
+        TPressItems(VAttribute).ProxyList.AddSessionIntf(ASession);  // friend class
+    end;
+  end;
+end;
+
 procedure TPressObject.AfterCreate;
 begin
 end;
@@ -3040,22 +3030,16 @@ begin
   Result := TPressObjectClass(inherited ClassType);
 end;
 
-procedure TPressObject.ClearOwnerContext;
-begin
-  FOwnerAttribute := nil;
-end;
-
 function TPressObject.Clone: TPressObject;
 begin
-  Result := ClassType.Create(FDataAccess, FMetadata);
+  Result := ClassType.Create(FMetadata);
   Result.Assign(Self);
 end;
 
-constructor TPressObject.Create(
-  ADataAccess: IPressSession; AMetadata: TPressObjectMetadata);
+constructor TPressObject.Create(AMetadata: TPressObjectMetadata);
 begin
   inherited Create;
-  InitInstance(ADataAccess, AMetadata);
+  InitInstance(AMetadata, nil);
   AfterCreate;
 end;
 
@@ -3097,12 +3081,6 @@ begin
     Free;
   end;
   AfterCreateAttributes;
-end;
-
-procedure TPressObject.Dispose;
-begin
-  if IsPersistent then
-    DataAccess.Dispose(ClassType, PersistentId);
 end;
 
 function TPressObject.Expression(const AExpression: string): Variant;
@@ -3180,8 +3158,8 @@ end;
 procedure TPressObject.Finit;
 begin
   DisableChanges;
-  if Assigned(FDataAccess) then
-    FDataAccess.RemoveFromCache(Self);
+  if Assigned(FSession) then
+    FSession.RemoveFromCache(Self);
   FMemento.Free;
   FAttributes.Free;
   inherited;
@@ -3190,16 +3168,6 @@ end;
 function TPressObject.GetAttributes(AIndex: Integer): TPressAttribute;
 begin
   Result := FAttributes[AIndex];
-end;
-
-function TPressObject.GetDataAccess: IPressSession;
-begin
-  if not Assigned(FDataAccess) then
-  begin
-    FDataAccess := PressDefaultSession;
-    FDataAccess.AssignObject(Self);
-  end;
-  Result := FDataAccess;
 end;
 
 function TPressObject.GetId: string;
@@ -3287,16 +3255,16 @@ begin
 end;
 
 procedure TPressObject.InitInstance(
-  ADataAccess: IPressSession; AMetadata: TPressObjectMetadata);
+  AMetadata: TPressObjectMetadata; ASession: IPressSession);
 begin
-  FDataAccess := ADataAccess;
   FMetadata := AMetadata;
+  FSession := ASession;
   FAttributes := TPressAttributeList.Create(True);
   DisableChanges;
   try
     CreateAttributes;
-    if Assigned(FDataAccess) then
-      FDataAccess.AssignObject(Self);
+    if Assigned(FSession) then
+      FSession.AddToCache(Self);
     Init;
   finally
     EnableChanges;
@@ -3339,7 +3307,8 @@ begin
     FOwnerAttribute.BeforeChangeItem(Self);  // friend class
 end;
 
-procedure TPressObject.InternalDispose(ADisposeMethod: TPressObjectOperation);
+procedure TPressObject.InternalDispose(
+  ASession: IPressSession; ADisposeMethod: TPressObjectOperation);
 begin
   ADisposeMethod(Self);
 end;
@@ -3367,12 +3336,14 @@ begin
   raise EPressError.CreateFmt(SMethodNotFound, [AMethodName]);
 end;
 
-procedure TPressObject.InternalRefresh(ARefreshMethod: TPressObjectOperation);
+procedure TPressObject.InternalRefresh(
+  ASession: IPressSession; ARefreshMethod: TPressObjectOperation);
 begin
   ARefreshMethod(Self);
 end;
 
-procedure TPressObject.InternalStore(AStoreMethod: TPressObjectOperation);
+procedure TPressObject.InternalStore(
+  ASession: IPressSession; AStoreMethod: TPressObjectOperation);
 begin
   AStoreMethod(Self);
 end;
@@ -3395,11 +3366,6 @@ begin
   TPressUnlockObjectEvent.Create(Self).Notify;
 end;
 
-procedure TPressObject.Load(AIncludeLazyLoading, ALoadContainers: Boolean);
-begin
-  DataAccess.Load(Self, AIncludeLazyLoading, ALoadContainers);
-end;
-
 procedure TPressObject.NotifyMemento(AAttribute: TPressAttribute);
 begin
   if Assigned(FOwnerAttribute) and Assigned(FOwnerAttribute.Owner) then
@@ -3413,37 +3379,28 @@ begin
   Result := TPressObjectMetadata;
 end;
 
-procedure TPressObject.Refresh;
-begin
-  DataAccess.Refresh(Self);
-end;
-
 class procedure TPressObject.RegisterClass;
 begin
   PressModel.AddClass(Self);
 end;
 
-constructor TPressObject.Retrieve(const AId: string;
-  ADataAccess: IPressSession; AMetadata: TPressObjectMetadata);
+procedure TPressObject.RemoveSessionIntf(ASession: IPressSession);
 var
-  VInstance: TPressObject;
+  VAttribute: TPressAttribute;
+  I: Integer;
 begin
-  inherited Create;
-  if not Assigned(ADataAccess) then
-    ADataAccess := PressDefaultSession;
-  VInstance := ADataAccess.Retrieve(ClassType, AId, AMetadata);
-  if Assigned(VInstance) then
+  { TODO : List of sessions? }
+  if (FSession = ASession) and Assigned(ASession) then
   begin
-    inherited FreeInstance;
-    Self := VInstance;
-  end else
-  begin
-    InitInstance(ADataAccess, AMetadata);
-    DisableChanges;
-    try
-      FId.AsString := AId;
-    finally
-      EnableChanges;
+    FSession := nil;
+    ASession.RemoveFromCache(Self);
+    for I := 0 to Pred(FAttributes.Count) do
+    begin
+      VAttribute := FAttributes[I];
+      if VAttribute is TPressItem then
+        TPressItem(VAttribute).Proxy.RemoveSessionIntf(ASession)  // friend class
+      else if VAttribute is TPressItems then
+        TPressItems(VAttribute).ProxyList.RemoveSessionIntf(ASession);  // friend class
     end;
   end;
 end;
@@ -3455,12 +3412,15 @@ end;
 
 procedure TPressObject.SetOwnerContext(AOwner: TPressStructure);
 begin
-  FOwnerAttribute := AOwner;
-end;
-
-procedure TPressObject.Store;
-begin
-  DataAccess.Store(Self);
+  { TODO : Remove the possibility of changing the owner }
+  if FOwnerAttribute <> AOwner then
+  begin
+    if Assigned(FOwnerAttribute) then
+      RemoveSessionIntf(FOwnerAttribute.Session);
+    FOwnerAttribute := AOwner;
+    if Assigned(FOwnerAttribute) then
+      AddSessionIntf(FOwnerAttribute.Session);
+  end;
 end;
 
 procedure TPressObject.UnchangeAttributes;
@@ -3848,6 +3808,12 @@ begin
   Result := VParam.Name;
 end;
 
+procedure TPressQuery.AssignList(AProxyList: TPressProxyList);
+begin
+  Params.Clear;
+  TPressReferences(FQueryItems).AssignProxyList(AProxyList);
+end;
+
 class function TPressQuery.ClassMetadata: TPressQueryMetadata;
 begin
   Result := inherited ClassMetadata as TPressQueryMetadata;
@@ -3883,12 +3849,6 @@ begin
   TPressReferences(FQueryItems).Delete(AIndex);
 end;
 
-procedure TPressQuery.Execute;
-begin
-  Params.Clear;
-  InternalExecute;
-end;
-
 procedure TPressQuery.Finit;
 begin
   FParams.Free;
@@ -3908,14 +3868,6 @@ end;
 function TPressQuery.GetGroupByClause: string;
 begin
   Result := '';
-end;
-
-function TPressQuery.GetItemsDataAccess: IPressSession;
-begin
-  { TODO : Improve Items DAO assignment }
-  if not Assigned(FItemsDataAccess) then
-    FItemsDataAccess := DataAccess;
-  Result := FItemsDataAccess;
 end;
 
 function TPressQuery.GetMetadata: TPressQueryMetadata;
@@ -4046,12 +3998,6 @@ begin
       Result := IsNullStatement;
 end;
 
-procedure TPressQuery.InternalExecute;
-begin
-  TPressReferences(FQueryItems).AssignProxyList(
-   ItemsDataAccess.RetrieveQuery(Self));
-end;
-
 class function TPressQuery.ObjectMetadataClass: TPressObjectMetadataClass;
 begin
   Result := TPressQueryMetadata;
@@ -4076,26 +4022,14 @@ begin
   end;
 end;
 
-{ TPressSingletonObject }
-
-constructor TPressSingletonObject.Instance;
-begin
-  Self := inherited Retrieve(SingletonOID) as TPressSingletonObject;
-end;
-
-class procedure TPressSingletonObject.RegisterOID(AOID: string);
-begin
-  PressSingletonIDs.Values[ClassName] := AOID;
-end;
-
-class function TPressSingletonObject.SingletonOID: string;
-begin
-  Result := PressSingletonIDs.Values[ClassName];
-  if Result = '' then
-    raise EPressError.CreateFmt(SSingletonClassNotFound, [ClassName]);
-end;
-
 { TPressProxy }
+
+procedure TPressProxy.AddSessionIntf(ASession: IPressSession);
+begin
+  FSession := ASession;
+  if (FProxyType = ptOwned) and Assigned(FInstance) then
+    FInstance.AddSessionIntf(ASession);  // friend class
+end;
 
 procedure TPressProxy.Assign(Source: TPersistent);
 var
@@ -4113,28 +4047,26 @@ begin
           FInstance.AddRef;
       end;
     end else if VSource.HasReference then
-      AssignReference(VSource.FRefClass, VSource.FRefID, VSource.FDataAccess)
+      AssignReference(VSource.FRefClass, VSource.FRefID)
     else
       Clear;
   end else
     inherited Assign(Source);
 end;
 
-procedure TPressProxy.AssignReference(
-  const ARefClass, ARefID: string; ADataAccess: IPressSession);
+procedure TPressProxy.AssignReference(const ARefClass, ARefID: string);
 begin
-  AssignReference(PressModel.ClassByName(ARefClass), ARefID, ADataAccess);
+  AssignReference(PressModel.ClassByName(ARefClass), ARefID);
 end;
 
 procedure TPressProxy.AssignReference(
-  ARefClass: TPressObjectClass; const ARefID: string; ADataAccess: IPressSession);
+  ARefClass: TPressObjectClass; const ARefID: string);
 begin
   if Assigned(FBeforeChangeReference) then
     FBeforeChangeReference(Self, ARefClass, ARefID);
   ClearInstance;
   FRefClass := ARefClass;
   FRefID := ARefID;
-  FDataAccess := ADataAccess;
   if Assigned(FAfterChangeReference) then
     FAfterChangeReference(Self, ARefClass, ARefID);
 end;
@@ -4143,11 +4075,11 @@ procedure TPressProxy.BulkRetrieve;
 var
   VIndex: Integer;
 begin
-  if Assigned(FOwner) and (FOwner.Count > 1) and Assigned(FDataAccess) then
+  if Assigned(FOwner) and Assigned(FSession) and (FOwner.Count > 1) then
   begin
     VIndex := FOwner.IndexOf(Self);
     if VIndex >= 0 then
-      FDataAccess.BulkRetrieve(FOwner, VIndex, 50, '');
+      FSession.BulkRetrieve(FOwner, VIndex, 50, '');
   end;
 end;
 
@@ -4185,15 +4117,15 @@ end;
 
 function TPressProxy.Clone: TPressProxy;
 begin
-  Result := TPressProxy.Create(ProxyType);
+  Result := TPressProxy.Create(FSession, ProxyType);
   Result.Assign(Self);
 end;
 
-constructor TPressProxy.Create(
+constructor TPressProxy.Create(ASession: IPressSession;
   AProxyType: TPressProxyType; AObject: TPressObject);
 begin
   inherited Create;
-  FRefCount := 1;
+  FSession := ASession;
   FProxyType := AProxyType;
   Instance := AObject;
 end;
@@ -4202,9 +4134,9 @@ procedure TPressProxy.Dereference;
 var
   VInstance: TPressObject;
 begin
-  if HasReference and Assigned(FDataAccess) then
+  if HasReference and Assigned(FSession) then
   begin
-    VInstance := FDataAccess.Retrieve(ObjectClassType, FRefID);
+    VInstance := FSession.Retrieve(ObjectClassType, FRefID);
     { TODO : Implement IsBroken support }
     if not Assigned(VInstance) then
       raise EPressError.CreateFmt(
@@ -4318,6 +4250,14 @@ begin
   Result := SameReference(PressModel.ClassByName(ARefClass), ARefID);
 end;
 
+procedure TPressProxy.RemoveSessionIntf(ASession: IPressSession);
+begin
+  if FSession = ASession then
+    FSession := nil;
+  if (FProxyType = ptOwned) and Assigned(FInstance) then
+    FInstance.RemoveSessionIntf(ASession);  // friend class
+end;
+
 function TPressProxy.SameReference(
   ARefClass: TPressObjectClass; const ARefID: string): Boolean;
 begin
@@ -4338,18 +4278,15 @@ var
 begin
   if FInstance <> Value then
   begin
+    { TODO : Check if Proxy and Value sessions match? }
     if SameReference(Value) then
       VChangeType := pctDereferencing
     else
       VChangeType := pctAssigning;
     if Assigned(FBeforeChangeInstance) then
       FBeforeChangeInstance(Self, Value, VChangeType);
-    if Assigned(Value) then
-    begin
-      FDataAccess := Value.FDataAccess;
-      if ProxyType = ptShared then
-        Value.AddRef;
-    end;
+    if Assigned(Value) and (ProxyType = ptShared) then
+      Value.AddRef;
     if ProxyType <> ptWeakReference then
       FreeAndNil(FInstance);
     FInstance := Value;
@@ -4382,14 +4319,13 @@ begin
   end;
 end;
 
-function TPressProxyList.AddReference(
-  const ARefClass, ARefID: string; ADataAccess: IPressSession): Integer;
+function TPressProxyList.AddReference(const ARefClass, ARefID: string): Integer;
 var
   VProxy: TPressProxy;
 begin
   VProxy := CreateProxy;
   try
-    VProxy.AssignReference(ARefClass, ARefID, ADataAccess);
+    VProxy.AssignReference(ARefClass, ARefID);
     Result := Add(VProxy);
   except
     Extract(VProxy);
@@ -4398,10 +4334,21 @@ begin
   end;
 end;
 
-constructor TPressProxyList.Create(
+procedure TPressProxyList.AddSessionIntf(ASession: IPressSession);
+var
+  I: Integer;
+begin
+  FSession := ASession;
+  if FProxyType = ptOwned then
+    for I := 0 to Pred(Count) do
+      Items[I].AddSessionIntf(ASession);  // friend class
+end;
+
+constructor TPressProxyList.Create(ASession: IPressSession;
   AOwnsObjects: Boolean; AProxyType: TPressProxyType);
 begin
   inherited Create(AOwnsObjects);
+  FSession := ASession;
   FProxyType := AProxyType;
 end;
 
@@ -4412,7 +4359,7 @@ end;
 
 function TPressProxyList.CreateProxy: TPressProxy;
 begin
-  Result := TPressProxy.Create(FProxyType, nil);
+  Result := TPressProxy.Create(FSession, FProxyType, nil);
 end;
 
 procedure TPressProxyList.DisableNotification;
@@ -4490,14 +4437,14 @@ begin
 end;
 
 procedure TPressProxyList.InsertReference(
-  Index: Integer; const ARefClass, ARefID: string; ADataAccess: IPressSession);
+  Index: Integer; const ARefClass, ARefID: string);
 var
   VProxy: TPressProxy;
 begin
   VProxy := CreateProxy;
   try
     Insert(Index, VProxy);
-    VProxy.AssignReference(ARefClass, ARefID, ADataAccess);
+    VProxy.AssignReference(ARefClass, ARefID);
   except
     Extract(VProxy);
     VProxy.Free;
@@ -4541,6 +4488,17 @@ begin
   Result := IndexOfReference(ARefClass, ARefID);
   if Result >= 0 then
     Delete(Result);
+end;
+
+procedure TPressProxyList.RemoveSessionIntf(ASession: IPressSession);
+var
+  I: Integer;
+begin
+  if FSession = ASession then
+    FSession := nil;
+  if FProxyType = ptOwned then
+    for I := 0 to Pred(Count) do
+      Items[I].RemoveSessionIntf(ASession);  // friend class
 end;
 
 procedure TPressProxyList.SetInstances(AIndex: Integer; Value: TPressObject);
@@ -4713,14 +4671,6 @@ begin
   raise AccessError(TPressVariant.AttributeName);
 end;
 
-function TPressAttribute.GetDataAccess: IPressSession;
-begin
-  if Assigned(Owner) then
-    Result := Owner.DataAccess
-  else
-    Result := nil;
-end;
-
 function TPressAttribute.GetDefaultValue: string;
 begin
   if Assigned(Metadata) then
@@ -4788,6 +4738,14 @@ begin
     Result := Metadata.PersistentName
   else
     Result := '';
+end;
+
+function TPressAttribute.GetSession: IPressSession;
+begin
+  if Assigned(FOwner) then
+    Result := FOwner.Session
+  else
+    Result := nil;
 end;
 
 function TPressAttribute.GetState: TPressAttributeState;
@@ -4944,11 +4902,11 @@ procedure TPressAttribute.Synchronize;
 begin
   if not Assigned(FOwner) or FIsSynchronizing then
     Exit;
-  if (FState = asNotLoaded) and IsPersistent then
+  if (FState = asNotLoaded) and Assigned(Session) and IsPersistent then
   begin
     FIsSynchronizing := True;
     try
-      FOwner.DataAccess.RetrieveAttribute(Self);
+      Session.RetrieveAttribute(Self);
     finally
       FIsSynchronizing := False;
     end;
@@ -5224,8 +5182,7 @@ begin
 end;
 
 initialization
-  PressApp.Registry[CPressSessionService].ServiceTypeName := SPressSessionServiceName;
-  PressModel.RegisterClasses([TPressObject, TPressQuery, TPressSingletonObject]);
+  PressModel.RegisterClasses([TPressObject, TPressQuery]);
   PressModel.RegisterAttributes([TPressString, TPressInteger, TPressFloat,
    TPressCurrency, TPressEnum, TPressBoolean, TPressDate, TPressTime,
    TPressDateTime, TPressVariant, TPressMemo, TPressBinary,
@@ -5233,7 +5190,7 @@ initialization
    TPressQueryItems]);
 
 finalization
-  PressModel.UnregisterClasses([TPressQuery, TPressSingletonObject]);
+  PressModel.UnregisterClasses([TPressQuery]);
   PressModel.UnregisterAttributes([TPressString, TPressInteger, TPressFloat,
    TPressCurrency, TPressEnum, TPressBoolean, TPressDate, TPressTime,
    TPressDateTime, TPressVariant, TPressMemo, TPressBinary,

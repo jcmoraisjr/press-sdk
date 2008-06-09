@@ -214,16 +214,11 @@ begin
 end;
 
 function TPressReportManager.GetReportGroup: TPressCustomReportGroup;
-var
-  VObject: TPressObject;
 begin
   if not Assigned(FReportGroup) then
-  begin
     { TODO : Implement update report list }
-    VObject := Model.Subject;
     FReportGroup := PressDefaultReportDataService.ReportGroupByClassName(
-     VObject.DataAccess, VObject.ClassName);
-  end;
+     Model.Subject.ClassName);
   Result := FReportGroup;
 end;
 

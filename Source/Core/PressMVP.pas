@@ -26,6 +26,7 @@ uses
   PressClasses,
   PressNotifier,
   PressSubject,
+  PressSession,
   PressUser;
 
 type
@@ -342,6 +343,7 @@ type
     FResourceIdNewObjects: Integer;
     FResourceIdObjectChanging: Integer;
     FSelection: TPressMVPSelection;
+    FSession: TPressSession;
     FSubject: TPressSubject;
     FUser: TPressCustomUser;
     function GetCommands: TPressMVPCommands;
@@ -350,6 +352,7 @@ type
     function GetNotifier: TPressNotifier;
     function GetOwnedCommands: TPressMVPCommandList;
     function GetSelection: TPressMVPSelection;
+    function GetSession: TPressSession;
     function GetSubject: TPressSubject;
     procedure SetResourceId(Value: Integer);
     procedure SetResourceIdNewObjects(Value: Integer);
@@ -359,6 +362,7 @@ type
     procedure InitCommands; virtual;
     function InternalAccessMode: TPressAccessMode; virtual;
     function InternalCreateSelection: TPressMVPSelection; virtual;
+    function InternalGetSession: TPressSession; virtual;
     function InternalIsIncluding: Boolean; virtual;
     function InternalResourceId: Integer; virtual;
     procedure Notify(AEvent: TPressEvent); virtual;
@@ -391,6 +395,7 @@ type
     property ResourceIdNewObjects: Integer read FResourceIdNewObjects write SetResourceIdNewObjects;
     property ResourceIdObjectChanging: Integer read FResourceIdObjectChanging write SetResourceIdObjectChanging;
     property Selection: TPressMVPSelection read GetSelection;
+    property Session: TPressSession read GetSession write FSession;
     property Subject: TPressSubject read GetSubject;
     property User: TPressCustomUser read FUser write SetUser;
   end;
@@ -1382,6 +1387,13 @@ begin
   Result := FSelection;
 end;
 
+function TPressMVPModel.GetSession: TPressSession;
+begin
+  if not Assigned(FSession) then
+    FSession := InternalGetSession;
+  Result := FSession;
+end;
+
 function TPressMVPModel.GetSubject: TPressSubject;
 begin
   if not Assigned(FSubject) then
@@ -1441,6 +1453,14 @@ end;
 function TPressMVPModel.InternalCreateSelection: TPressMVPSelection;
 begin
   Result := TPressMVPNullSelection.Create;
+end;
+
+function TPressMVPModel.InternalGetSession: TPressSession;
+begin
+  if Assigned(Parent) then
+    Result := Parent.InternalGetSession
+  else
+    raise EPressMVPError.CreateFmt(SUnsupportedFeature, ['MVP Session']);
 end;
 
 function TPressMVPModel.InternalIsIncluding: Boolean;

@@ -823,7 +823,7 @@ procedure TPressOPFAttributeMapper.ReadAttribute(
     AItems.Clear;
     for I := 0 to Pred(ADatasetCache.Count) do
       AItems.AddReference(AItems.ObjectClass.ClassName,
-       ADatasetCache[I][0].Value, Persistence);
+       ADatasetCache[I][0].Value);
   end;
 
 begin
@@ -887,7 +887,7 @@ var
     if AProxy.HasInstance then
     begin
       if not Assigned(VProxyList) then
-        VProxyList := TPressProxyList.Create(False, ptShared);
+        VProxyList := TPressProxyList.Create(Persistence, False, ptShared);
       VProxyList.Add(AProxy);
     end;
   end;

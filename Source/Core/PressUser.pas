@@ -22,7 +22,8 @@ uses
   PressClasses,
   PressApplication,
   PressNotifier,
-  PressSubject;
+  PressSubject,
+  PressSession;
 
 const
   CPressUserDataService = CPressUserServicesBase + $0001;
@@ -55,11 +56,11 @@ type
   TPressCustomUserData = class(TPressService)
   private
     FCurrentUser: TPressCustomUser;
-    FDataAccess: IPressSession;
+    FSession: TPressSession;
     function GetCurrentUser: TPressCustomUser;
-    function GetDataAccess: IPressSession;
     function GetHasUser: Boolean;
-    procedure SetDataAccess(AValue: IPressSession);
+    function GetSession: TPressSession;
+    procedure SetSession(Value: TPressSession);
   protected
     procedure DoneService; override;
     procedure Finit; override;
@@ -72,8 +73,8 @@ type
     function Logon(const AUserId: string = ''; const APassword: string = ''): Boolean;
     function QueryUser(const AUserId, APassword: string): TPressCustomUser;
     property CurrentUser: TPressCustomUser read GetCurrentUser;
-    property DataAccess: IPressSession read GetDataAccess write SetDataAccess;
     property HasUser: Boolean read GetHasUser;
+    property Session: TPressSession read GetSession write SetSession;
     property User: TPressCustomUser read FCurrentUser;
   end;
 
@@ -134,16 +135,16 @@ begin
   Result := FCurrentUser;
 end;
 
-function TPressCustomUserData.GetDataAccess: IPressSession;
-begin
-  if not Assigned(FDataAccess) then
-    FDataAccess := PressDefaultSession;
-  Result := FDataAccess;
-end;
-
 function TPressCustomUserData.GetHasUser: Boolean;
 begin
   Result := Assigned(FCurrentUser);
+end;
+
+function TPressCustomUserData.GetSession: TPressSession;
+begin
+  if not Assigned(FSession) then
+    FSession := PressDefaultSession;
+  Result := FSession;
 end;
 
 function TPressCustomUserData.Hash(const AEntry: string): string;
@@ -203,9 +204,9 @@ begin
   Result := InternalQueryUser(AUserId, APassword);
 end;
 
-procedure TPressCustomUserData.SetDataAccess(AValue: IPressSession);
+procedure TPressCustomUserData.SetSession(Value: TPressSession);
 begin
-  FDataAccess := AValue;
+  FSession := Value;
 end;
 
 initialization

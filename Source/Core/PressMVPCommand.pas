@@ -724,7 +724,7 @@ begin
     begin
       VObject := VSelection[I];
       if VRemoveInstance then
-        VObject.Dispose;
+        VModel.Session.Dispose(VObject);
       VModel.Subject.UnassignObject(VObject);
     end;
   end;
@@ -889,7 +889,7 @@ end;
 procedure TPressMVPRefreshObjectCommand.InternalExecute;
 begin
   inherited;
-  Model.Subject.Refresh;
+  Model.Refresh;
 end;
 
 function TPressMVPRefreshObjectCommand.InternalIsEnabled: Boolean;
@@ -939,7 +939,7 @@ procedure TPressMVPSaveObjectCommand.InternalStoreObject;
 begin
   if not Model.StoreObject then
     Exit;
-  Model.Subject.Store;
+  Model.Store;
 end;
 
 { TPressMVPSaveConfirmObjectCommand }

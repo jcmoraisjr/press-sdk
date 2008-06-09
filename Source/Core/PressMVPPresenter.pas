@@ -1056,8 +1056,7 @@ begin
   begin
     AObject := VObjectClass.Create;
     AIncluding := True;
-  end else if AObject.IsPersistent then
-    AObject.Load;
+  end;
 
   if not Assigned(AParent) then
     AParent := _PressMVPMainPresenter;
@@ -1077,7 +1076,9 @@ begin
   VModel.IsIncluding := AIncluding;
   VModel.User := PressUserData.User;
   if VObjectIsMissing then
-    AObject.Release;
+    AObject.Release
+  else if AObject.IsPersistent then
+    VModel.Session.Load(AObject, True, False);
 
   if not Assigned(VViewClass) then
     VViewClass := InternalViewClass;

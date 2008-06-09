@@ -27,6 +27,7 @@ uses
   PressSubject;
 
 const
+  CPressSessionService = CPressSessionServicesBase + $0001;
   CPressGeneratorService = CPressSessionServicesBase + $0002;
 
 type
@@ -100,8 +101,8 @@ type
     property Cache: TPressSessionCache read FCache;
   public
     constructor Create; override;
+    procedure AddToCache(AObject: TPressObject);
     function CreateObject(AClass: TPressObjectClass; AMetadata: TPressObjectMetadata): TPressObject;
-    procedure AssignObject(AObject: TPressObject);
     procedure BulkRetrieve(AProxyList: TPressProxyList; AStartingAt, AItemCount: Integer; const AAttributes: string);
     procedure Commit;
     procedure Dispose(AObject: TPressObject); overload;
@@ -122,6 +123,7 @@ type
     procedure StartTransaction;
     procedure Store(AObject: TPressObject);
     procedure SynchronizeProxy(AProxy: TPressProxy);
+    procedure UpdateQuery(AQuery: TPressQuery);
   end;
 
   TPressPersistence = class;
@@ -196,6 +198,8 @@ type
     property PersistentObject[APressObject: TPressObject]: TObject read GetPersistentObject write SetPersistentObject;
   end;
 
+function PressDefaultSession: TPressSession;
+
 implementation
 
 uses
@@ -208,6 +212,11 @@ uses
 
 type
   TPressObjectFriend = class(TPressObject);
+
+function PressDefaultSession: TPressSession;
+begin
+  Result := PressApp.Registry[CPressSessionService].DefaultService as TPressSession;
+end;
 
 { TPressSessionCache }
 
@@ -357,9 +366,9 @@ end;
 
 { TPressSession }
 
-procedure TPressSession.AssignObject(AObject: TPressObject);
+procedure TPressSession.AddToCache(AObject: TPressObject);
 begin
-  FCache.AddObject(AObject);
+  Cache.AddObject(AObject);
 end;
 
 procedure TPressSession.BulkRetrieve(
@@ -414,7 +423,7 @@ begin
     Result.DisableChanges;
     try
       // lacks inherited Create
-      TPressObjectFriend(Result).InitInstance(Self, AMetadata);
+      TPressObjectFriend(Result).InitInstance(AMetadata, Self);
       for I := 0 to Pred(Result.AttributeCount) do
         Result.Attributes[I].Unload;
     finally
@@ -439,12 +448,13 @@ begin
         PressLogMsg(Self, 'Disposing', [AObject]);
 {$endif}
         TPressObjectFriend(AObject).InternalDispose(
-         {$ifdef FPC}@{$endif}DisposeObject);
+         Self, {$ifdef FPC}@{$endif}DisposeObject);
         PressAssignPersistentId(AObject, '');
       finally
         AObject.EnableChanges;
       end;
       TPressObjectFriend(AObject).AfterDispose;
+      TPressObjectFriend(AObject).RemoveSessionIntf(Self);
       Commit;
     except
       Rollback;
@@ -720,7 +730,7 @@ begin
       PressLogMsg(Self, 'Refresh', [AObject]);
 {$endif}
       TPressObjectFriend(AObject).InternalRefresh(
-       {$ifdef FPC}@{$endif}InternalRefresh);
+       Self, {$ifdef FPC}@{$endif}InternalRefresh);
     finally
       AObject.EnableChanges;
     end;
@@ -866,8 +876,9 @@ begin
           PressLogMsg(Self, 'Storing', [AObject]);
 {$endif}
           TPressObjectFriend(AObject).InternalStore(
-           {$ifdef FPC}@{$endif}InternalStore);
+           Self, {$ifdef FPC}@{$endif}InternalStore);
           PressAssignPersistentId(AObject, AObject.Id);
+          TPressObjectFriend(AObject).AddSessionIntf(Self);
         finally
           AObject.EnableChanges;
         end;
@@ -905,6 +916,19 @@ function TPressSession.UnsupportedFeatureError(
   const AFeatureName: string): EPressError;
 begin
   Result := EPressError.CreateFmt(SUnsupportedFeature, [AFeatureName]);
+end;
+
+procedure TPressSession.UpdateQuery(AQuery: TPressQuery);
+var
+  VList: TPressProxyList;
+begin
+  VList := RetrieveQuery(AQuery);
+  try
+    AQuery.AssignList(VList);
+  except
+    VList.Free;
+    raise;
+  end;
 end;
 
 { TPressGenerator }
@@ -1108,6 +1132,7 @@ begin
 end;
 
 initialization
+  PressApp.Registry[CPressSessionService].ServiceTypeName := SPressSessionServiceName;
   PressApp.Registry[CPressGeneratorService].ServiceTypeName := SPressGeneratorServiceName;
   TPressGenerator.RegisterService;
 

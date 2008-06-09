@@ -25,6 +25,7 @@ uses
   PressNotifier,
   PressSubject,
   PressAttributes,
+  PressSession,
   PressMVP,
   PressUser;
 
@@ -477,6 +478,7 @@ type
     procedure InternalCreateRefreshCommand; virtual;
     procedure InternalCreateSaveCommand; virtual;
     function InternalCreateSelection: TPressMVPSelection; override;
+    function InternalGetSession: TPressSession; override;
     function InternalIsIncluding: Boolean; override;
     procedure Notify(AEvent: TPressEvent); override;
   public
@@ -484,7 +486,9 @@ type
     destructor Destroy; override;
     class function Apply(ASubject: TPressSubject): Boolean; override;
     function CanSaveObject: Boolean;
+    procedure Refresh;
     procedure RevertChanges;
+    procedure Store;
     procedure UpdateData;
     property HookedSubject: TPressStructure read FHookedSubject write SetHookedSubject;
     property IsChanged: Boolean read GetIsChanged;
@@ -496,7 +500,10 @@ type
 
   TPressMVPQueryModel = class(TPressMVPObjectModel)
   private
+    FItemsSession: TPressSession;
+    function GetItemsSession: TPressSession;
     function GetSubject: TPressQuery;
+    procedure SetItemsSession(Value: TPressSession);
   protected
     procedure AfterExecute; virtual;
     procedure InitCommands; override;
@@ -504,6 +511,7 @@ type
     class function Apply(ASubject: TPressSubject): Boolean; override;
     procedure Clear;
     procedure Execute;
+    property ItemsSession: TPressSession read GetItemsSession write SetItemsSession;
     property Subject: TPressQuery read GetSubject;
   end;
 
@@ -1172,7 +1180,7 @@ function TPressMVPReferenceModel.CreateQueryIterator(
   const AQueryString: string): TPressQueryIterator;
 begin
   InternalUpdateQueryMetadata(AQueryString);
-  Query.Execute;
+  Session.UpdateQuery(Query);
   if Query.Count > SPressMaxItemCount then
   begin
     PressDialog.DefaultDlg(
@@ -1184,7 +1192,7 @@ end;
 
 function TPressMVPReferenceModel.CreateReferenceQuery: TPressMVPReferenceQuery;
 begin
-  Result := TPressMVPReferenceQuery.Create(Subject.DataAccess, Metadata);
+  Result := TPressMVPReferenceQuery.Create(Metadata);
 end;
 
 destructor TPressMVPReferenceModel.Destroy;
@@ -1692,6 +1700,7 @@ procedure TPressMVPItemsModel.BulkRetrieve;
 var
   VSubject: TPressItems;
   VAttrList: string;
+  VSession: IPressSession;
   I: Integer;
 begin
   VSubject := Subject;
@@ -1701,7 +1710,13 @@ begin
     for I := 0 to Pred(ColumnData.ColumnCount) do
       VAttrList := VAttrList + ColumnData[I].AttributeName + ';';
     if VAttrList <> '' then
-      VSubject.BulkRetrieve(0, 50, VAttrList);
+    begin
+      if Parent is TPressMVPQueryModel then
+        VSession := TPressMVPQueryModel(Parent).ItemsSession
+      else
+        VSession := Session;
+      VSession.BulkRetrieve(VSubject.ProxyList, 0, 50, VAttrList);
+    end;
   end;
 end;
 
@@ -2079,6 +2094,11 @@ begin
   Result := TPressMVPModelSelection.Create;
 end;
 
+function TPressMVPObjectModel.InternalGetSession: TPressSession;
+begin
+  Result := PressDefaultSession;
+end;
+
 function TPressMVPObjectModel.InternalIsIncluding: Boolean;
 begin
   Result := IsIncluding;
@@ -2092,6 +2112,11 @@ begin
     TPressMVPModelCloseFormEvent.Create(Self).Notify;
 end;
 
+procedure TPressMVPObjectModel.Refresh;
+begin
+  Session.Refresh(Subject);
+end;
+
 procedure TPressMVPObjectModel.RevertChanges;
 begin
   if HasSubject then
@@ -2103,6 +2128,11 @@ begin
   BeforeChangeHookedSubject;
   FHookedSubject := Value;
   AfterChangeHookedSubject;
+end;
+
+procedure TPressMVPObjectModel.Store;
+begin
+  Session.Store(Subject);
 end;
 
 procedure TPressMVPObjectModel.UpdateData;
@@ -2145,8 +2175,15 @@ end;
 
 procedure TPressMVPQueryModel.Execute;
 begin
-  Subject.Execute;
+  ItemsSession.UpdateQuery(Subject);
   AfterExecute;
+end;
+
+function TPressMVPQueryModel.GetItemsSession: TPressSession;
+begin
+  if not Assigned(FItemsSession) then
+    FItemsSession := PressDefaultSession;
+  Result := FItemsSession;
 end;
 
 function TPressMVPQueryModel.GetSubject: TPressQuery;
@@ -2159,6 +2196,11 @@ begin
   //inherited;
   { TODO : inherited Save can persist all changed objects }
   AddCommand(TPressMVPExecuteQueryCommand);
+end;
+
+procedure TPressMVPQueryModel.SetItemsSession(Value: TPressSession);
+begin
+  FItemsSession := Value;
 end;
 
 initialization

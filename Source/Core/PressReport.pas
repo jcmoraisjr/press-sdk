@@ -23,7 +23,8 @@ uses
   PressApplication,
   PressClasses,
   PressSubject,
-  PressAttributes;
+  PressAttributes,
+  PressSession;
 
 const
   CPressReportDataService = CPressReportServicesBase + $0001;
@@ -195,12 +196,16 @@ type
   TPressCustomReportData = class(TPressService)
   private
     FReportGroups: TStrings;
+    FSession: TPressSession;
+    function GetSession: TPressSession;
+    procedure SetSession(Value: TPressSession);
   protected
     procedure Finit; override;
     function InternalReportGroupClass: TPressReportGroupClass; virtual; abstract;
     class function InternalServiceType: TPressServiceType; override;
   public
-    function ReportGroupByClassName(ADataAccess: IPressSession; const AObjectClassName: string): TPressCustomReportGroup;
+    function ReportGroupByClassName(const AObjectClassName: string): TPressCustomReportGroup;
+    property Session: TPressSession read GetSession write SetSession;
   end;
 
 function PressDefaultReportDataService: TPressCustomReportData;
@@ -763,12 +768,19 @@ begin
   end;
 end;
 
+function TPressCustomReportData.GetSession: TPressSession;
+begin
+  if not Assigned(FSession) then
+    FSession := PressDefaultSession;
+  Result := FSession;
+end;
+
 class function TPressCustomReportData.InternalServiceType: TPressServiceType;
 begin
   Result := CPressReportDataService;
 end;
 
-function TPressCustomReportData.ReportGroupByClassName(ADataAccess: IPressSession;
+function TPressCustomReportData.ReportGroupByClassName(
   const AObjectClassName: string): TPressCustomReportGroup;
 
   function CreateReportList: TStringList;
@@ -789,7 +801,7 @@ function TPressCustomReportData.ReportGroupByClassName(ADataAccess: IPressSessio
     VList: TPressProxyList;
   begin
     VReportClass := InternalReportGroupClass;
-    VList := ADataAccess.OQLQuery(Format('select * from %s where %s = "%s"', [
+    VList := Session.OQLQuery(Format('select * from %s where %s = "%s"', [
      VReportClass.ClassName,
      VReportClass.ObjectClassAttributeName,
      AObjectClassName]));
@@ -798,13 +810,13 @@ function TPressCustomReportData.ReportGroupByClassName(ADataAccess: IPressSessio
       begin
         Result := VList[0].Instance as TPressCustomReportGroup;
         Result.AddRef;
-        Result.Load(True, True);
+        Session.Load(Result, True, True);
       end else
       begin
         Result := VReportClass.Create;
         Result.AttributeByName(
          VReportClass.ObjectClassAttributeName).AsString := AObjectClassName;
-        Result.Store;
+        Session.Store(Result);
       end;
     finally
       VList.Free;
@@ -819,17 +831,22 @@ begin
   VIndex := FReportGroups.IndexOf(AObjectClassName);
   if VIndex = -1 then
   begin
-    ADataAccess.StartTransaction;
+    Session.StartTransaction;
     try
       Result := CreateReportGroup;
-      ADataAccess.Commit;
+      Session.Commit;
     except
-      ADataAccess.Rollback;
+      Session.Rollback;
       raise;
     end;
     FReportGroups.AddObject(AObjectClassName, Result);
   end else
     Result := TPressCustomReportGroup(FReportGroups.Objects[VIndex]);
+end;
+
+procedure TPressCustomReportData.SetSession(Value: TPressSession);
+begin
+  FSession := Value;
 end;
 
 initialization

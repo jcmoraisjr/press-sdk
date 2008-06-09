@@ -662,10 +662,9 @@ type
   public
     function Add(AClass: TPressObjectClass = nil): TPressObject; overload;
     function Add(AObject: TPressObject): Integer; overload;
-    function AddReference(const AClassName, AId: string; ADataAccess: IPressSession): Integer;
+    function AddReference(const AClassName, AId: string): Integer;
     procedure Assign(Source: TPersistent); override;
     procedure AssignProxyList(AProxyList: TPressProxyList);
-    procedure BulkRetrieve(AStartingAt, AItemCount: Integer; const AAttributes: string);
     function Count: Integer;
     function CreateIterator: TPressItemsIterator;
     function CreateProxyIterator: TPressProxyIterator;
@@ -3234,7 +3233,7 @@ end;
 
 procedure TPressItem.AssignReference(const AClassName, AId: string);
 begin
-  Proxy.AssignReference(AClassName, AId, DataAccess);
+  Proxy.AssignReference(AClassName, AId);
 end;
 
 procedure TPressItem.Finit;
@@ -3289,7 +3288,7 @@ function TPressItem.GetProxy: TPressProxy;
 begin
   if not Assigned(FProxy) then
   begin
-    FProxy := TPressProxy.Create(InternalProxyType);
+    FProxy := TPressProxy.Create(Session, InternalProxyType);
     BindProxy(FProxy);
   end;
   Synchronize;
@@ -3481,7 +3480,7 @@ end;
 procedure TPressPart.ReleaseInstance(AInstance: TPressObject);
 begin
   inherited;
-  TPressObjectFriend(AInstance).ClearOwnerContext;
+  TPressObjectFriend(AInstance).SetOwnerContext(nil);
 end;
 
 { TPressReference }
@@ -3533,10 +3532,9 @@ begin
   Result := ProxyList.AddInstance(AObject);
 end;
 
-function TPressItems.AddReference(
-  const AClassName, AId: string; ADataAccess: IPressSession): Integer;
+function TPressItems.AddReference(const AClassName, AId: string): Integer;
 begin
-  Result := ProxyList.AddReference(AClassName, AId, ADataAccess);
+  Result := ProxyList.AddReference(AClassName, AId);
 end;
 
 procedure TPressItems.AfterChangeInstance(
@@ -3596,12 +3594,6 @@ begin
   finally
     EnableChanges;
   end;
-end;
-
-procedure TPressItems.BulkRetrieve(
-  AStartingAt, AItemCount: Integer; const AAttributes: string);
-begin
-  DataAccess.BulkRetrieve(ProxyList, AStartingAt, AItemCount, AAttributes);
 end;
 
 procedure TPressItems.ChangedInstance(
@@ -3758,7 +3750,7 @@ end;
 function TPressItems.GetAddedProxies: TPressProxyList;
 begin
   if not Assigned(FAddedProxies) then
-    FAddedProxies := TPressProxyList.Create(True, ptShared);
+    FAddedProxies := TPressProxyList.Create(Session, True, ptShared);
   Result := FAddedProxies;
 end;
 
@@ -3775,7 +3767,7 @@ end;
 function TPressItems.GetProxyList: TPressProxyList;
 begin
   if not Assigned(FProxyList) then
-    AssignProxyList(TPressProxyList.Create(True, InternalProxyType));
+    AssignProxyList(TPressProxyList.Create(Session, True, InternalProxyType));
   Synchronize;
   Result := FProxyList;
 end;
@@ -3783,7 +3775,7 @@ end;
 function TPressItems.GetRemovedProxies: TPressProxyList;
 begin
   if not Assigned(FRemovedProxies) then
-    FRemovedProxies := TPressProxyList.Create(True, ptShared);
+    FRemovedProxies := TPressProxyList.Create(Session, True, ptShared);
   Result := FRemovedProxies;
 end;
 
@@ -3802,7 +3794,7 @@ begin
   Result := TPressObject(AClass.NewInstance);
   try
     // lacks inherited Create
-    TPressObjectFriend(Result).InitInstance(PressDefaultSession, nil);
+    TPressObjectFriend(Result).InitInstance(nil, Session);
     Insert(AIndex, Result);
     TPressObjectFriend(Result).AfterCreate;
     if InternalProxyType = ptShared then
@@ -3826,7 +3818,7 @@ end;
 
 procedure TPressItems.InternalChanged(AChangedWhenDisabled: Boolean);
 begin
-  if AChangedWhenDisabled then
+  if AChangedWhenDisabled and (State <> asNotLoaded) then
   begin
     if Count > 0 then
       ValueAssigned(False)
@@ -4040,7 +4032,7 @@ end;
 procedure TPressParts.ReleaseInstance(AInstance: TPressObject);
 begin
   inherited;
-  TPressObjectFriend(AInstance).ClearOwnerContext;
+  TPressObjectFriend(AInstance).SetOwnerContext(nil);
 end;
 
 { TPressReferences }

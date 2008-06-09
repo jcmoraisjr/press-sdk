@@ -19,7 +19,9 @@ unit PressUserModel;
 interface
 
 uses
-  PressSubject, PressAttributes, PressUser;
+  PressSubject,
+  PressAttributes,
+  PressUser;
 
 type
   TPressUserGroupReferences = class;
@@ -151,7 +153,7 @@ type
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
-    procedure InternalStore(AStoreMethod: TPressObjectOperation); override;
+    procedure InternalStore(ASession: IPressSession; AStoreMethod: TPressObjectOperation); override;
     property UserId: string read GetUserId;
     property Password: string read GetPassword;
   end;
@@ -168,7 +170,7 @@ type
     procedure Init; override;
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
-    procedure InternalStore(AStoreMethod: TPressObjectOperation); override;
+    procedure InternalStore(ASession: IPressSession; AStoreMethod: TPressObjectOperation); override;
   public
     property StoreUser: Boolean read FStoreUser write FStoreUser;
     property UpdatePasswordExpired: Boolean read FUpdatePasswordExpired write FUpdatePasswordExpired;
@@ -186,7 +188,8 @@ type
 implementation
 
 uses
-  SysUtils, PressConsts;
+  SysUtils,
+  PressConsts;
 
 { TPressUser }
 
@@ -562,7 +565,8 @@ begin
    ')';
 end;
 
-procedure TPressLogon.InternalStore(AStoreMethod: TPressObjectOperation);
+procedure TPressLogon.InternalStore(
+  ASession: IPressSession; AStoreMethod: TPressObjectOperation);
 begin
   if not PressUserData.Logon(FUserId.Value, FPassword.Value) then
     raise EPressUserError.Create(SInvalidLogon);
@@ -597,7 +601,7 @@ begin
 end;
 
 procedure TPressChangePassword.InternalStore(
-  AStoreMethod: TPressObjectOperation);
+  ASession: IPressSession; AStoreMethod: TPressObjectOperation);
 begin
   if Assigned(FUser) then
   begin
@@ -607,7 +611,7 @@ begin
       if UpdatePasswordExpired then
         FUser.PasswordExpired := False;
       if StoreUser then
-        FUser.Store;
+        PressUserData.Session.Store(FUser);
     end else
       raise EPressUserError.Create(SPasswordsDontMatch);
   end;
@@ -625,7 +629,7 @@ begin
   if AUserId = '' then
     Exit;
   VUserClass := InternalUserClass;
-  VList := DataAccess.OQLQuery(Format(
+  VList := Session.OQLQuery(Format(
    'select * from %s where %s = "%s" and %s = "%s"',
    [VUserClass.ClassName, 'UserId', AUserId,
    'PasswordHash', Hash(APassword)]));
@@ -658,7 +662,7 @@ end;
 function TPressUserData.IsFirstLogon: Boolean;
 begin
   { TODO : Improve, using count }
-  with DataAccess.OQLQuery('select * from ' + InternalUserClass.ClassName) do
+  with Session.OQLQuery('select * from ' + InternalUserClass.ClassName) do
   try
     Result := Count = 0;
   finally

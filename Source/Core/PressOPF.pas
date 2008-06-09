@@ -129,6 +129,9 @@ uses
   PressOPFStorage,
   PressOQL;
 
+type
+  TPressObjectFriend = class(TPressObject);
+
 var
   _PressOPFService: TPressOPF;
 
@@ -161,7 +164,8 @@ var
   VAttribute: TPressAttribute;
   I: Integer;
 begin
-  Result := AClass.Create(Self);
+  Result := AClass.Create;
+  TPressObjectFriend(Result).AddSessionIntf(Self);
   try
     for I := 0 to Pred(ADataset.FieldDefs.Count) do
     begin
@@ -302,7 +306,7 @@ begin
       else if VAttribute is TPressItems then
       begin
         if ALoadContainers then
-          TPressItems(VAttribute).BulkRetrieve(0, 50, '');
+          BulkRetrieve(TPressItems(VAttribute).ProxyList, 0, 50, '');
       end;
     end;
   finally
@@ -328,19 +332,19 @@ begin
       VDataset.SQL := VOQLParser.AsSQL;
       VDataset.AssignParams(AParams);
       VDataset.Execute;
-      Result := TPressProxyList.Create(True, ptShared);
+      Result := TPressProxyList.Create(Self, True, ptShared);
       try
         if VDataset.FieldDefs.Count > 1 then
           for I := 0 to Pred(VDataset.Count) do
           begin
             VDataRow := VDataset[I];
             Result.AddReference(Mapper.StorageModel.ClassNameById(
-             VDataRow[1].AsString), VDataRow[0].AsString, Self);
+             VDataRow[1].AsString), VDataRow[0].AsString);
           end
         else
           for I := 0 to Pred(VDataset.Count) do
             Result.AddReference(
-             VOQLParser.ObjectClassName, VDataSet[I][0].Value, Self);
+             VOQLParser.ObjectClassName, VDataSet[I][0].Value);
       except
         FreeAndNil(Result);
         raise;
@@ -390,14 +394,14 @@ var
 begin
   VDataset := Connector.CreateDataset;
   try
-    Result := TPressProxyList.Create(True, ptShared);
+    Result := TPressProxyList.Create(Self, True, ptShared);
     try
       VDataset.SQL := ASQLStatement;
       VDataset.AssignParams(AParams);
       VDataset.Execute;
       for I := 0 to Pred(VDataset.Count) do
         Result.AddReference(
-         VDataset[I][0].AsString, VDataSet[I][1].AsString, Self);
+         VDataset[I][0].AsString, VDataSet[I][1].AsString);
     except
       Result.Free;
       raise;
@@ -416,7 +420,7 @@ var
 begin
   VDataset := Connector.CreateDataset;
   try
-    Result := TPressProxyList.Create(True, ptShared);
+    Result := TPressProxyList.Create(Self, True, ptShared);
     try
       VDataset.SQL := ASQLStatement;
       VDataset.AssignParams(AParams);
