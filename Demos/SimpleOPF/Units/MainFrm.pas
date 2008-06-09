@@ -39,7 +39,7 @@ implementation
 uses
   SysUtils, PressMessages_en, PressSubject, PressOPF,
 {$IFDEF FPC}
-  PressSQLdbBroker, // include sqldb connection units here
+  PressSQLdbBroker, ibconnection,
 {$ELSE}
   PressIBXBroker,
 {$ENDIF}
@@ -64,7 +64,7 @@ begin
     VPerson := TPerson.Create;
     try
       VPerson.Name := NameEdit.Text;
-      VPerson.Store;
+      PressOPFService.Store(VPerson);
       OutputMemo.Lines.Add('One object stored');
     finally
       VPerson.Free;
@@ -110,7 +110,7 @@ begin
   if Assigned(VPerson) then
   begin
     try
-      VPerson.Dispose;
+      PressOPFService.Dispose(VPerson);
       OutputMemo.Lines.Add('One object removed');
     finally
       VPerson.Free;
