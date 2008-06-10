@@ -92,10 +92,9 @@ type
   TPressAttribute = class;
   TPressAttributeClass = class of TPressAttribute;
   TPressObjectMetadata = class;
+  TPressModel = class;
 
   TPressAttributeMetadataClass = class of TPressAttributeMetadata;
-
-  TPressModel = class;
 
   TPressAttributeMetadata = class(TPressStreamable)
   private
@@ -112,6 +111,7 @@ type
        FPersLinkName        (Items)
        FPersLinkParentName  (Items)
        FPersLinkPosName     (Items)
+       FWeakReference       (Reference(s))
 
       as well as methods and properties that use them
       }
