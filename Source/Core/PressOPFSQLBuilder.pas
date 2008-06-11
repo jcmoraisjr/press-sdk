@@ -197,7 +197,7 @@ begin
   if Assigned(AModel.GeneratorList) then
     for I := 0 to Pred(AModel.GeneratorList.Count) do
       Result := Result +
-       CreateGeneratorStatement(AModel.GeneratorList[I]) +
+       CreateGeneratorStatement(AModel.GeneratorList[I]) + ';' +
        SPressLineBreak + SPressLineBreak;
   for I := 0 to Pred(AModel.TableMetadataCount) do
   begin
