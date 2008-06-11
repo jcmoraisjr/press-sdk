@@ -29,17 +29,20 @@ type
     function InternalImplicitIndexCreation: Boolean; override;
     function InternalMaxIdentLength: Integer; override;
   public
-    function CreateGeneratorStatement: string; override;
+    function CreateGeneratorStatement(const AName: string): string; override;
     function SelectGeneratorStatement: string; override;
   end;
 
 implementation
 
+uses
+  SysUtils;
+
 { TPressPgSQLDDLBuilder }
 
-function TPressPgSQLDDLBuilder.CreateGeneratorStatement: string;
+function TPressPgSQLDDLBuilder.CreateGeneratorStatement(const AName: string): string;
 begin
-  Result := 'create sequence %s';
+  Result := Format('create sequence %s', [AName]);
 end;
 
 function TPressPgSQLDDLBuilder.InternalFieldTypeStr(

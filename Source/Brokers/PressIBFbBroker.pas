@@ -29,17 +29,20 @@ type
     function InternalImplicitIndexCreation: Boolean; override;
     function InternalMaxIdentLength: Integer; override;
   public
-    function CreateGeneratorStatement: string; override;
+    function CreateGeneratorStatement(const AName: string): string; override;
     function SelectGeneratorStatement: string; override;
   end;
 
 implementation
 
+uses
+  SysUtils;
+
 { TPressIBFbDDLBuilder }
 
-function TPressIBFbDDLBuilder.CreateGeneratorStatement: string;
+function TPressIBFbDDLBuilder.CreateGeneratorStatement(const AName: string): string;
 begin
-  Result := 'create generator %s';
+  Result := Format('create generator %s', [AName]);
 end;
 
 function TPressIBFbDDLBuilder.InternalFieldTypeStr(
