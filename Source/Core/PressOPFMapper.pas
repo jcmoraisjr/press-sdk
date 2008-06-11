@@ -19,6 +19,7 @@ unit PressOPFMapper;
 interface
 
 uses
+  Classes,
   Contnrs,
   PressClasses,
   PressSubject,
@@ -40,9 +41,12 @@ type
     FAttributeMapperList: TObjectList;
     FConnector: TPressOPFConnector;
     FDDLBuilder: TPressOPFDDLBuilder;
+    FGeneratorDatasetList: TStringList;
     FPersistence: TPressPersistence;
     FStorageModel: TPressOPFStorageModel;
-    procedure CheckId(AObject: TPressObject);
+    procedure CheckGenerators(AObject: TPressObject);
+    procedure CheckOID(AObject: TPressObject);
+    function GeneratorDataset(const AGeneratorName: string): TPressOPFDataset;
     function GetAttributeMapper(AMap: TPressOPFStorageMap): TPressOPFAttributeMapper;
     function GetDDLBuilder: TPressOPFDDLBuilder;
   protected
@@ -57,6 +61,7 @@ type
     function CreateDatabaseStatement(ACreateClearDatabaseStatements: Boolean = False): string;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function DMLBuilderClass: TPressOPFDMLBuilderClass;
+    function GenerateId(const AGeneratorName: string): Integer;
     procedure Load(AObject: TPressObject; AIncludeLazyLoading: Boolean);
     procedure Refresh(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressSessionAttributes): TPressObject;
@@ -175,11 +180,26 @@ begin
   end;
 end;
 
-procedure TPressOPFObjectMapper.CheckId(AObject: TPressObject);
+procedure TPressOPFObjectMapper.CheckGenerators(AObject: TPressObject);
+
+  procedure CheckAttr(AAttribute: TPressAttribute);
+  begin
+    if (AAttribute.Metadata.GeneratorName <> '') and AAttribute.IsNull then
+      AAttribute.AsInteger :=
+       GenerateId(AAttribute.Metadata.GeneratorName);
+  end;
+
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(AObject.AttributeCount) do
+    CheckAttr(AObject.Attributes[I]);
+end;
+
+procedure TPressOPFObjectMapper.CheckOID(AObject: TPressObject);
 begin
   if AObject.Id = '' then
-    AObject.Id := Persistence.GenerateOID(
-     AObject.ClassType, AObject.Metadata.IdMetadata.PersistentName);
+    AObject.Id := Persistence.GenerateOID(AObject.Attributes[0]);
 end;
 
 constructor TPressOPFObjectMapper.Create(APersistence: TPressPersistence;
@@ -201,7 +221,15 @@ begin
 end;
 
 destructor TPressOPFObjectMapper.Destroy;
+var
+  I: Integer;
 begin
+  if Assigned(FGeneratorDatasetList) then
+  begin
+    for I := 0 to Pred(FGeneratorDatasetList.Count) do
+      FGeneratorDatasetList.Objects[I].Free;
+    FGeneratorDatasetList.Free;
+  end;
   FDDLBuilder.Free;
   FAttributeMapperList.Free;
   inherited;
@@ -258,6 +286,42 @@ end;
 function TPressOPFObjectMapper.DMLBuilderClass: TPressOPFDMLBuilderClass;
 begin
   Result := InternalDMLBuilderClass;
+end;
+
+function TPressOPFObjectMapper.GenerateId(
+  const AGeneratorName: string): Integer;
+var
+  VDataset: TPressOPFDataset;
+begin
+  VDataset := GeneratorDataset(AGeneratorName);
+  VDataset.Execute;
+  Result := VDataset[0][0].Value;
+end;
+
+function TPressOPFObjectMapper.GeneratorDataset(
+  const AGeneratorName: string): TPressOPFDataset;
+var
+  VIndex: Integer;
+begin
+  if not Assigned(FGeneratorDatasetList) then
+  begin
+    FGeneratorDatasetList := TStringList.Create;
+    FGeneratorDatasetList.Sorted := True;
+  end;
+  VIndex := FGeneratorDatasetList.IndexOf(AGeneratorName);
+  if VIndex = -1 then
+  begin
+    Result := Connector.CreateDataset;
+    try
+      Result.SQL :=
+       Format(DDLBuilder.SelectGeneratorStatement, [AGeneratorName]);
+      FGeneratorDatasetList.AddObject(AGeneratorName, Result);
+    except
+      FreeAndNil(Result);
+      raise;
+    end;
+  end else
+    Result := TPressOPFDataset(FGeneratorDatasetList.Objects[VIndex]);
 end;
 
 function TPressOPFObjectMapper.GetAttributeMapper(
@@ -388,7 +452,8 @@ var
   VMaps: TPressOPFStorageMapList;
   I: Integer;
 begin
-  CheckId(AObject);
+  CheckGenerators(AObject);
+  CheckOID(AObject);
   PressEvolveUpdateCount(AObject);
   VMaps := StorageModel.Maps[AObject.ClassType];
   for I := Pred(VMaps.Count) downto 0 do
@@ -572,7 +637,7 @@ procedure TPressOPFAttributeMapper.AddLinkParams(
 begin
   if AItems.Metadata.PersLinkIdName <> '' then
     AddIdParam(ADataset, AItems.Metadata.PersLinkIdName,
-     Persistence.GenerateOID(AProxy.ObjectClassType, AItems.Metadata.PersLinkIdName),
+     Persistence.GenerateOID(AItems),
      ObjectMapper.StorageModel.Model.DefaultKeyType.AttributeBaseType);
   AddIdParam(ADataset, AItems.Metadata.PersLinkParentName,
    AOwnerId, AItems.Owner.Metadata.IdType);

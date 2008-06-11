@@ -114,7 +114,7 @@ type
     FMapper: TPressOPFObjectMapper;
   protected
     procedure DoneService; override;
-    function InternalGenerateOID(AObjectClass: TPressObjectClass; const AAttributeName: string): string; override;
+    function InternalGenerateOID(AAttribute: TPressAttribute): string; override;
   end;
 
 function PressOPFService: TPressOPF;
@@ -535,11 +535,12 @@ begin
 end;
 
 function TPressOPFGenerator.InternalGenerateOID(
-  AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+  AAttribute: TPressAttribute): string;
 var
   VOwner: TPressOPF;
   VGenerator: string;
 begin
+  Result := '';
   if not Assigned(FDataset) or not Assigned(FMapper) then
   begin
     if not Assigned(Owner) then
@@ -550,7 +551,7 @@ begin
     if not Assigned(FMapper) then
       FMapper := VOwner.Mapper;
   end;
-  VGenerator := GeneratorName(AObjectClass, AAttributeName);
+  VGenerator := GeneratorName(AAttribute);
   if VGenerator <> '' then
     VGenerator := Format(FMapper.SelectGeneratorStatement, [VGenerator]);
   if VGenerator <> '' then
@@ -558,8 +559,11 @@ begin
     FDataset.SQL := VGenerator;
     FDataset.Execute;
     Result := FDataset[0][0].AsString;
-  end else
-    Result := inherited InternalGenerateOID(AObjectClass, AAttributeName);
+  end else if Assigned(AAttribute.Metadata) and
+   (AAttribute.Metadata.GeneratorName <> '') then
+    Result := IntToStr(FMapper.GenerateId(AAttribute.Metadata.GeneratorName))
+  else
+    Result := inherited InternalGenerateOID(AAttribute);
 end;
 
 initialization

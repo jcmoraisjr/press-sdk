@@ -122,6 +122,7 @@ type
     FDefaultValue: string;
     FEditMask: string;
     FEnumMetadata: TPressEnumMetadata;
+    FGeneratorName: string;
     FIsPersistent: Boolean;
     FLazyLoad: Boolean;
     FModel: TPressModel;
@@ -186,6 +187,7 @@ type
   published
     property DefaultValue: string read FDefaultValue write FDefaultValue;
     property EditMask: string read FEditMask write FEditMask;
+    property GeneratorName: string read FGeneratorName write FGeneratorName;
     property IsPersistent: Boolean read FIsPersistent write FIsPersistent default True;
     property LazyLoad: Boolean read FLazyLoad write FLazyLoad stored StoreLazyLoad;
     property PersistentName: string read FPersistentName write FPersistentName stored StorePersistentName;
@@ -268,6 +270,7 @@ type
   private
     FAttributeMetadatas: TPressAttributeMetadataList;
     FClassIdName: string;
+    FGeneratorName: string;
     FIdMetadata: TPressAttributeMetadata;
     FIdType: TPressAttributeBaseType;
     FIsPersistent: Boolean;
@@ -320,6 +323,7 @@ type
     property Parent: TPressObjectMetadata read FParent;
   published
     property ClassIdName: string read FClassIdName write FClassIdName stored StoreClassIdName;
+    property GeneratorName: string read FGeneratorName write FGeneratorName;
     property KeyName: string read FKeyName write FKeyName stored StoreKeyName;
     property KeySize: Integer read FKeySize write FKeySize default SPressDefaultStringIdSize;
     property KeyType: string read FKeyType write FKeyType stored StoreKeyType;
@@ -470,6 +474,7 @@ type
     FClassIdStorageName: string;
     FClassIdType: TPressAttributeClass;
     FCreatingMetadatas: Boolean;
+    FDefaultGeneratorName: string;
     FDefaultKeyType: TPressAttributeClass;
     FEnumMetadatas: TPressEnumMetadataList;
     FMetadatas: TPressObjectMetadataList;
@@ -483,6 +488,7 @@ type
     function GetClassIdType: TPressAttributeClass;
     procedure SetClassIdStorageName(const Value: string);
     procedure SetClassIdType(Value: TPressAttributeClass);
+    procedure SetDefaultGeneratorName(const Value: string);
     procedure SetDefaultKeyType(Value: TPressAttributeClass);
   protected
     function InternalFindAttribute(const AAttributeName: string): TPressAttributeClass; virtual;
@@ -518,6 +524,7 @@ type
     procedure UnregisterMetadata(AMetadata: TPressObjectMetadata);
     property ClassIdStorageName: string read FClassIdStorageName write SetClassIdStorageName;
     property ClassIdType: TPressAttributeClass read GetClassIdType write SetClassIdType;
+    property DefaultGeneratorName: string read FDefaultGeneratorName write SetDefaultGeneratorName;
     property DefaultKeyType: TPressAttributeClass read FDefaultKeyType write SetDefaultKeyType;
   end;
 
@@ -609,7 +616,7 @@ type
     procedure Commit;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function ExecuteStatement(const AStatement: string; AParams: TPressParamList = nil): Integer;
-    function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
+    function GenerateOID(AAttribute: TPressAttribute): string;
     function IsPersistent(AObject: TPressObject): Boolean;
     procedure Load(AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean);
     function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
@@ -1889,6 +1896,10 @@ begin
     FIdMetadata.Name := KeyName;
     FIdMetadata.AttributeName := KeyType;
     FIdMetadata.Size := KeySize;
+    if GeneratorName = '' then
+      FIdMetadata.GeneratorName := Model.DefaultGeneratorName
+    else
+      FIdMetadata.GeneratorName := GeneratorName;
   end;
   Result := FIdMetadata;
 end;
@@ -2569,14 +2580,6 @@ begin
   Result := InternalParentMetadataOf(AMetadata);
 end;
 
-function TPressModel.RegisterEnumMetadata(AEnumAddress: Pointer;
-  const AEnumName: string): TPressEnumMetadata;
-begin
-  Result := TPressEnumMetadata.Create(AEnumAddress);
-  Result.Name := AEnumName;
-  FEnumMetadatas.Add(Result);
-end;
-
 procedure TPressModel.RegisterAttributes(
   AAttributes: array of TPressAttributeClass);
 var
@@ -2592,6 +2595,14 @@ var
 begin
   for I := 0 to Pred(Length(AClasses)) do
     AddClass(AClasses[I]);
+end;
+
+function TPressModel.RegisterEnumMetadata(AEnumAddress: Pointer;
+  const AEnumName: string): TPressEnumMetadata;
+begin
+  Result := TPressEnumMetadata.Create(AEnumAddress);
+  Result.Name := AEnumName;
+  FEnumMetadatas.Add(Result);
 end;
 
 function TPressModel.RegisterEnumMetadata(AEnumAddress: Pointer;
@@ -2670,6 +2681,12 @@ begin
   if not Assigned(Value) then
     raise EPressError.CreateFmt(SUnsupportedAttributeType, [SPressNilString]);
   FClassIdType := Value;
+  ClearMetadatas;
+end;
+
+procedure TPressModel.SetDefaultGeneratorName(const Value: string);
+begin
+  FDefaultGeneratorName := Value;
   ClearMetadatas;
 end;
 

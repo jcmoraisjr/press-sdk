@@ -49,7 +49,7 @@ type
     function CreateFieldStatementList(ATableMetadata: TPressOPFTableMetadata): string; virtual;
     function CreateForeignKeyIndexStatement(ATableMetadata: TPressOPFTableMetadata; AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string; virtual;
     function CreateForeignKeyStatement(ATableMetadata: TPressOPFTableMetadata; AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string; virtual;
-    function CreateGeneratorStatement: string; virtual;
+    function CreateGeneratorStatement(const AName: string): string; virtual;
     function CreateHints(AModel: TPressOPFStorageModel): string; virtual;
     function CreateIndexStatement(ATableMetadata: TPressOPFTableMetadata; AIndexMetadata: TPressOPFIndexMetadata): string; virtual;
     function CreatePrimaryKeyStatement(ATableMetadata: TPressOPFTableMetadata): string; virtual;
@@ -194,6 +194,11 @@ var
   I, J: Integer;
 begin
   Result := '';
+  if Assigned(AModel.GeneratorList) then
+    for I := 0 to Pred(AModel.GeneratorList.Count) do
+      Result := Result +
+       CreateGeneratorStatement(AModel.GeneratorList[I]) +
+       SPressLineBreak + SPressLineBreak;
   for I := 0 to Pred(AModel.TableMetadataCount) do
   begin
     VTable := AModel.TableMetadatas[I];
@@ -269,7 +274,7 @@ begin
    CReferentialAction[AForeignKeyMetadata.OnUpdateAction]]);
 end;
 
-function TPressOPFDDLBuilder.CreateGeneratorStatement: string;
+function TPressOPFDDLBuilder.CreateGeneratorStatement(const AName: string): string;
 begin
   Result := '';
 end;

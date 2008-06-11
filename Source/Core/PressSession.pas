@@ -81,7 +81,7 @@ type
     procedure InternalCommit; virtual;
     procedure InternalDispose(AClass: TPressObjectClass; const AId: string); virtual;
     function InternalExecuteStatement(const AStatement: string; AParams: TPressParamList): Integer; virtual;
-    function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; virtual;
+    function InternalGenerateOID(AAttribute: TPressAttribute): string; virtual;
     function InternalImplementsBulkRetrieve: Boolean; virtual;
     function InternalImplementsLazyLoading: Boolean; virtual;
     procedure InternalLoad(AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean); virtual;
@@ -108,7 +108,7 @@ type
     procedure Dispose(AObject: TPressObject); overload;
     procedure Dispose(AClass: TPressObjectClass; const AId: string); overload;
     function ExecuteStatement(const AStatement: string; AParams: TPressParamList = nil): Integer;
-    function GenerateOID(AClass: TPressObjectClass; const AAttributeName: string = ''): string;
+    function GenerateOID(AAttribute: TPressAttribute): string;
     function IsPersistent(AObject: TPressObject): Boolean;
     procedure Load(AObject: TPressObject; AIncludeLazyLoading, ALoadContainers: Boolean);
     function OQLQuery(const AOQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
@@ -135,14 +135,14 @@ type
   private
     FOwner: TPressPersistence;
   protected
-    function InternalGenerateOID(AObjectClass: TPressObjectClass; const AAttributeName: string): string; virtual;
-    function InternalGeneratorName(AObjectClass: TPressObjectClass; const AAttributeName: string): string; virtual;
+    function InternalGenerateOID(AAttribute: TPressAttribute): string; virtual;
+    function InternalGeneratorName(AAttribute: TPressAttribute): string; virtual;
     procedure InternalReleaseOID(AObjectClass: TPressObjectClass; const AAttributeName, AOID: string); virtual;
     class function InternalServiceType: TPressServiceType; override;
     property Owner: TPressPersistence read FOwner;
   public
-    function GenerateOID(AObjectClass: TPressObjectClass; const AAttributeName: string): string;
-    function GeneratorName(AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+    function GenerateOID(AAttribute: TPressAttribute): string;
+    function GeneratorName(AAttribute: TPressAttribute): string;
     procedure ReleaseOID(AObjectClass: TPressObjectClass; const AAttributeName, AOID: string);
   end;
 
@@ -153,7 +153,7 @@ type
   protected
     procedure Finit; override;
     function InternalDBMSName: string; virtual;
-    function InternalGenerateOID(AClass: TPressObjectClass; const AAttributeName: string): string; override;
+    function InternalGenerateOID(AAttribute: TPressAttribute): string; override;
     function InternalGeneratorClass: TPressGeneratorClass; virtual;
     property Generator: TPressGenerator read GetGenerator;
   public
@@ -514,10 +514,9 @@ begin
   inherited;
 end;
 
-function TPressSession.GenerateOID(AClass: TPressObjectClass;
-  const AAttributeName: string): string;
+function TPressSession.GenerateOID(AAttribute: TPressAttribute): string;
 begin
-  Result := InternalGenerateOID(AClass, AAttributeName);
+  Result := InternalGenerateOID(AAttribute);
 end;
 
 procedure TPressSession.InternalBulkRetrieve(
@@ -549,8 +548,7 @@ begin
   raise UnsupportedFeatureError('Execute statement');
 end;
 
-function TPressSession.InternalGenerateOID(AClass: TPressObjectClass;
-  const AAttributeName: string): string;
+function TPressSession.InternalGenerateOID(AAttribute: TPressAttribute): string;
 begin
   raise UnsupportedFeatureError('Generator');
 end;
@@ -937,20 +935,18 @@ end;
 
 { TPressGenerator }
 
-function TPressGenerator.GenerateOID(
-  AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+function TPressGenerator.GenerateOID(AAttribute: TPressAttribute): string;
 begin
-  Result := InternalGenerateOID(AObjectClass, AAttributeName);
+  Result := InternalGenerateOID(AAttribute);
 end;
 
-function TPressGenerator.GeneratorName(
-  AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+function TPressGenerator.GeneratorName(AAttribute: TPressAttribute): string;
 begin
-  Result := InternalGeneratorName(AObjectClass, AAttributeName);
+  Result := InternalGeneratorName(AAttribute);
 end;
 
 function TPressGenerator.InternalGenerateOID(
-  AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+  AAttribute: TPressAttribute): string;
 var
   VId: array[0..15] of Byte;
   I: Integer;
@@ -962,7 +958,7 @@ begin
 end;
 
 function TPressGenerator.InternalGeneratorName(
-  AObjectClass: TPressObjectClass; const AAttributeName: string): string;
+  AAttribute: TPressAttribute): string;
 begin
   Result := '';
 end;
@@ -1013,10 +1009,10 @@ begin
   raise UnsupportedFeatureError('DBMS name');
 end;
 
-function TPressPersistence.InternalGenerateOID(AClass: TPressObjectClass;
-  const AAttributeName: string): string;
+function TPressPersistence.InternalGenerateOID(
+  AAttribute: TPressAttribute): string;
 begin
-  Result := Generator.GenerateOID(AClass, AAttributeName);
+  Result := Generator.GenerateOID(AAttribute);
 end;
 
 function TPressPersistence.InternalGeneratorClass: TPressGeneratorClass;

@@ -166,12 +166,14 @@ type
     FClassIdList: TStrings;
     FClassIdMetadata: TPressObjectMetadata;
     FClassNameList: TStrings;
+    FGeneratorList: TStringList;
     FHasClassIdStorage: Boolean;
     FMapsList: TObjectList;
     FModel: TPressModel;
     FNotifier: TPressNotifier;
     FSession: TPressSession;
     FTableMetadatas: TObjectList;
+    procedure AddGeneratorName(const AName: string);
     procedure BuildClassLists;
     function CreateTableMetadatas: TObjectList;
     function FindClass(var AClassList: TStrings; const AValue: string): Integer;
@@ -188,6 +190,7 @@ type
     procedure ResetClassList;
     function TableMetadataCount: Integer;
     property ClassIdMetadata: TPressObjectMetadata read GetClassIdMetadata;
+    property GeneratorList: TStringList read FGeneratorList;
     property HasClassIdStorage: Boolean read FHasClassIdStorage;
     property Maps[AClass: TPressObjectClass]: TPressOPFStorageMapList read GetMaps;
     property Model: TPressModel read FModel;
@@ -565,6 +568,17 @@ end;
 
 { TPressOPFStorageModel }
 
+procedure TPressOPFStorageModel.AddGeneratorName(const AName: string);
+begin
+  if not Assigned(FGeneratorList) then
+  begin
+    FGeneratorList := TStringList.Create;
+    FGeneratorList.Sorted := True;
+  end;
+  if FGeneratorList.IndexOf(AName) = -1 then
+    FGeneratorList.Add(AName);
+end;
+
 procedure TPressOPFStorageModel.BuildClassLists;
 var
   VObjects: TPressProxyList;
@@ -792,6 +806,8 @@ function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
     var
       VTargetOwner: TPressObjectMetadata;
     begin
+      if AAttributeMetadata.GeneratorName <> '' then
+        AddGeneratorName(AAttributeMetadata.GeneratorName);
       if AAttributeMetadata.AttributeClass.InheritsFrom(TPressValue) then
         AddFieldMetadata
       else if AAttributeMetadata.AttributeClass.InheritsFrom(TPressStructure) then
@@ -911,6 +927,7 @@ begin
   FNotifier.Free;
   FClassIdList.Free;
   FClassNameList.Free;
+  FGeneratorList.Free;
   FMapsList.Free;
   FTableMetadatas.Free;
   inherited;
