@@ -2398,7 +2398,7 @@ end;
 
 procedure TPressDate.SetValue(AValue: TDate);
 begin
-  if (FValue <> AValue) and (State <> asValue) then
+  if (FValue <> AValue) or (State <> asValue) then
   begin
     Changing;
     if AValue = 0 then
