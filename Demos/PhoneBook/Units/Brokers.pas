@@ -5,8 +5,6 @@ unit Brokers;
 interface
 
 uses
-  PressMessages_en,
-  PressSubject, PressSession,
 {$IFDEF UseReport}
   PressFastReportBroker,
 {$ENDIF}
@@ -17,14 +15,18 @@ uses
   PressIBXBroker,
   // Add other Delphi connection brokers here
 {$ENDIF}
-  PressOPF;
+  PressMessages_en;
 
 implementation
 
 uses
-  PressApplication;
+  PressApplication,
+  PressSubject,
+  PressAttributes;
 
 initialization
   PressApp.ConfigFileName := 'PhoneBook.conf';
+  PressModel.DefaultGeneratorName := 'gen_phonebook';
+  PressModel.DefaultKeyType := TPressInteger;
 
 end.

@@ -66,7 +66,6 @@ uses
 {$ELSE}
   Windows,
 {$ENDIF}
-  SysUtils,
   Menus,
   Clipbrd,
   PressUser,
@@ -175,8 +174,7 @@ procedure TMainConnectorCommand.InternalExecute;
 begin
   if PressDialog.ConfirmDlg(
    'Copy the database metadata to the clipboard?') then
-    Clipboard.AsText :=
-     AdjustLineBreaks(PressOPFService.CreateDatabaseStatement);
+    Clipboard.AsText := PressOPFService.CreateDatabaseStatement;
 end;
 
 initialization

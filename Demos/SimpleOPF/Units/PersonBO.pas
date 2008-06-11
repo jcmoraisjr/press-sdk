@@ -40,7 +40,8 @@ end;
 
 initialization
   PressModel.ClassIdStorageName := 'ModelClass';
-  //PressModel.ClassIdType := TPressInteger;
+  PressModel.DefaultGeneratorName := 'gen_opf';
+  PressModel.DefaultKeyType := TPressInteger;
   TPerson.RegisterClass;
 
 end.
