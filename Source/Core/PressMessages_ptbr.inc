@@ -19,7 +19,7 @@
 
   // Error messages from the Data Type (Subject) framework
   SAttributeAccessError_rst = 'Não é possível acessar o atributo %s(''%s'') como ''%s''';
-  SAttributeConversionError_rst = 'Erro ao converter valor para o atributo %s(''%s''):' + #10 + '"%s"';
+  SAttributeConversionError_rst = 'Erro ao converter valor para o atributo %s(''%s''):' + SPressLineBreak + '"%s"';
   SAttributeIsNotItem_rst = 'O atributo %s(''%s'') não é Part ou Reference';
   SAttributeIsNotValue_rst = 'O atributo %s(''%s'') não é Value';
   SAttributeNotFound_rst = 'O atributo %s(''%s'') não foi encontrado';
@@ -73,7 +73,7 @@
   SCannotStoreOrphanObject_rst = 'Não é possível gravar objetos órfãos';
   SCannotUseAggregateFunctionHere_rst = 'Não é possível utilizar função de agregação aqui';
   SClassIsNotPersistent_rst = 'Classe ''%s'' não é persistente';
-  SDatabaseIdentifierTooLong_rst = 'Estes identificadores são muito grandes' + #10 + 'e causarão erro no banco de dados:';
+  SDatabaseIdentifierTooLong_rst = 'Estes identificadores são muito grandes' + SPressLineBreak + 'e causarão erro no banco de dados:';
   SFieldNotFound_rst = 'Campo ''%s'' não foi encontrado';
   SObjectChangedError_rst = 'O objeto %s(''%s'') foi alterado em outra sessão';
   STargetClassIsNotPersistent_rst = '%s(%s) aponta para ''%s'' que não é persistente';

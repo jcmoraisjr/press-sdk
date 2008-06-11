@@ -27,7 +27,11 @@ const
   SPressIdentifierSeparator = '_';
   SPressDataSeparator = ':';
   SPressFieldDelimiter = ';';
+{$ifdef unix}
   SPressLineBreak = #10;
+{$else}
+  SPressLineBreak = #13#10;
+{$endif}
   SPressTrueString = 'True';
   SPressFalseString = 'False';
   SPressNilString = 'nil';

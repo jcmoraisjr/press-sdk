@@ -19,7 +19,7 @@
 
   // Error messages from the Data Type (Subject) framework
   SAttributeAccessError_rst = 'Cannot access the attribute %s(''%s'') as ''%s''';
-  SAttributeConversionError_rst = 'Attribute value conversion error %s(''%s''):' + #10 + '"%s"';
+  SAttributeConversionError_rst = 'Attribute value conversion error %s(''%s''):' + SPressLineBreak + '"%s"';
   SAttributeIsNotItem_rst = 'Attribute %s(''%s'') is not a Part or Reference';
   SAttributeIsNotValue_rst = 'Attribute %s(''%s'') is not a Value';
   SAttributeNotFound_rst = 'Attribute %s(''%s'') not found';
@@ -73,7 +73,7 @@
   SCannotStoreOrphanObject_rst = 'Cannot store orphan object';
   SCannotUseAggregateFunctionHere_rst = 'Cannot use aggregate function here';
   SClassIsNotPersistent_rst = 'Class ''%s'' is not persistent';
-  SDatabaseIdentifierTooLong_rst = 'The identifier is too long' + #10 + 'and will cause an error in the database:';
+  SDatabaseIdentifierTooLong_rst = 'The identifier is too long' + SPressLineBreak + 'and will cause an error in the database:';
   SFieldNotFound_rst = 'Field ''%s'' not found';
   SObjectChangedError_rst = 'The object %s(''%s'') was modified in another session';
   STargetClassIsNotPersistent_rst = '%s(%s) references ''%s'' which is not persistent';

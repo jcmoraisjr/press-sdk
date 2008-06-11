@@ -171,9 +171,9 @@ var
   VTable: TPressOPFTableMetadata;
   I, J: Integer;
 begin
-  Result := '/*'#10 +
-   'The following statement(s) can be used'#10 +
-   'to drop all tables from the database'#10#10;
+  Result := '/*' + SPressLineBreak +
+   'The following statement(s) can be used' + SPressLineBreak +
+   'to drop all tables from the database' + SPressLineBreak + SPressLineBreak;
   for I := 0 to Pred(AModel.TableMetadataCount) do
   begin
     VTable := AModel.TableMetadatas[I];
@@ -184,7 +184,7 @@ begin
   for I := 0 to Pred(AModel.TableMetadataCount) do
     Result := Result + '  ' +
      DropTableStatement(AModel.TableMetadatas[I]);
-  Result := Result + '*/'#10#10;
+  Result := Result + '*/' + SPressLineBreak + SPressLineBreak;
 end;
 
 function TPressOPFDDLBuilder.CreateDatabaseStatement(
@@ -239,14 +239,17 @@ begin
   Result := '';
   for I := 0 to Pred(ATableMetadata.FieldCount) do
     ConcatStatements(
-     CreateFieldStatement(ATableMetadata.Fields[I]), ','#10'  ', Result);
+     CreateFieldStatement(
+      ATableMetadata.Fields[I]), ',' + SPressLineBreak + '  ', Result);
 end;
 
 function TPressOPFDDLBuilder.CreateForeignKeyIndexStatement(
   ATableMetadata: TPressOPFTableMetadata;
   AForeignKeyMetadata: TPressOPFForeignKeyMetadata): string;
 begin
-  Result := Format('create index %s'#10'  on %s (%s);'#10#10, [
+  Result := Format(
+   'create index %s' + SPressLineBreak +
+   '  on %s (%s);' + SPressLineBreak + SPressLineBreak, [
    AForeignKeyMetadata.Name,
    ATableMetadata.Name,
    BuildStringList(AForeignKeyMetadata.KeyFieldNames)]);
@@ -260,11 +263,11 @@ const
    'no action', 'cascade', 'set null', 'set default');
 begin
   Result := Format(
-   'alter table %s add constraint %s'#10 +
-   '  foreign key (%s)'#10 +
-   '  references %s (%s)'#10 +
-   '  on delete %s'#10 +
-   '  on update %s;'#10#10, [
+   'alter table %s add constraint %s' + SPressLineBreak +
+   '  foreign key (%s)' + SPressLineBreak +
+   '  references %s (%s)' + SPressLineBreak +
+   '  on delete %s' + SPressLineBreak +
+   '  on update %s;' + SPressLineBreak + SPressLineBreak, [
    ATableMetadata.Name,
    AForeignKeyMetadata.Name,
    BuildStringList(AForeignKeyMetadata.KeyFieldNames),
@@ -288,8 +291,9 @@ function TPressOPFDDLBuilder.CreateHints(
     if Length(AIdentName) > AMaxSize then
     begin
       if ABuffer = '' then
-        ABuffer := '/*'#10 + SDatabaseIdentifierTooLong + #10#10;
-      ABuffer := ABuffer + '  ' + AIdentName + #10;
+        ABuffer := '/*' + SPressLineBreak +
+         SDatabaseIdentifierTooLong + SPressLineBreak + SPressLineBreak;
+      ABuffer := ABuffer + '  ' + AIdentName + SPressLineBreak;
     end;
   end;
 
@@ -319,7 +323,7 @@ begin
         CheckIdentLength(VTable.ForeignKeys[J].Name, VMaxIdentLength, Result);
     end;
     if Result <> '' then
-      Result := Result + '*/' + #10#10;
+      Result := Result + '*/' + SPressLineBreak + SPressLineBreak;
   end;
 end;
 
@@ -329,7 +333,9 @@ const
   CUnique: array[Boolean] of string = ('', 'unique ');
   CDescending: array[Boolean] of string = ('', 'descending ');
 begin
-  Result := Format('create %s%sindex %s'#10'  on %s (%s);'#10#10, [
+  Result := Format(
+   'create %s%sindex %s' + SPressLineBreak +
+   '  on %s (%s);' + SPressLineBreak + SPressLineBreak, [
    CUnique[ioUnique in AIndexMetadata.Options],
    CDescending[ioDescending in AIndexMetadata.Options],
    AIndexMetadata.Name,
@@ -342,8 +348,8 @@ function TPressOPFDDLBuilder.CreatePrimaryKeyStatement(
 begin
   if Assigned(ATableMetadata.PrimaryKey) then
     Result := Format(
-     'alter table %s add constraint %s'#10 +
-     '  primary key (%s);'#10#10, [
+     'alter table %s add constraint %s' + SPressLineBreak +
+     '  primary key (%s);' + SPressLineBreak + SPressLineBreak, [
      ATableMetadata.Name,
      ATableMetadata.PrimaryKey.Name,
      BuildStringList(ATableMetadata.PrimaryKey.FieldNames)])
@@ -354,7 +360,9 @@ end;
 function TPressOPFDDLBuilder.CreateTableStatement(
   ATableMetadata: TPressOPFTableMetadata): string;
 begin
-  Result := Format('create table %s ('#10'  %s);'#10#10, [
+  Result := Format(
+   'create table %s (' + SPressLineBreak +
+   '  %s);' + SPressLineBreak + SPressLineBreak, [
    ATableMetadata.Name,
    CreateFieldStatementList(ATableMetadata)]);
 end;
@@ -363,7 +371,7 @@ function TPressOPFDDLBuilder.DropConstraintStatement(
   ATableMetadata: TPressOPFTableMetadata;
   AMetadata: TPressOPFMetadata): string;
 begin
-  Result := Format('alter table %s drop constraint %s;'#10, [
+  Result := Format('alter table %s drop constraint %s;' + SPressLineBreak, [
    ATableMetadata.Name,
    AMetadata.Name]);
 end;
@@ -371,7 +379,7 @@ end;
 function TPressOPFDDLBuilder.DropTableStatement(
   ATableMetadata: TPressOPFTableMetadata): string;
 begin
-  Result := Format('drop table %s;'#10, [
+  Result := Format('drop table %s;' + SPressLineBreak, [
    ATableMetadata.Name]);
 end;
 
