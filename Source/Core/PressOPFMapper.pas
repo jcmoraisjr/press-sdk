@@ -184,7 +184,8 @@ procedure TPressOPFObjectMapper.CheckGenerators(AObject: TPressObject);
 
   procedure CheckAttr(AAttribute: TPressAttribute);
   begin
-    if (AAttribute.Metadata.GeneratorName <> '') and AAttribute.IsNull then
+    if (AAttribute.Metadata.GeneratorName <> '') and AAttribute.IsNull and
+     (AAttribute is TPressValue) then
       AAttribute.AsInteger :=
        GenerateId(AAttribute.Metadata.GeneratorName);
   end;
