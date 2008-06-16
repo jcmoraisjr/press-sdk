@@ -1524,6 +1524,8 @@ begin
   begin
     FAttributeClass := Value;
     FLazyLoad := DefaultLazyLoadState;
+    if (FGeneratorName = '') and FAttributeClass.InheritsFrom(TPressItems) then
+      FGeneratorName := Model.DefaultGeneratorName;
 
     { TODO : Improve }
     { TODO : Implement estimated size per-attribute type after
