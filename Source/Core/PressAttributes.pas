@@ -3602,9 +3602,10 @@ var
 begin
   DisableChanges;
   try
-    if Assigned(FProxyList) and (FProxyList.Count > 0) then
+    if Assigned(FProxyList) then
     begin
-      Clear;
+      if FProxyList.Count > 0 then
+        Clear;
       FProxyList.Free;
     end;
     FProxyList := AProxyList;
