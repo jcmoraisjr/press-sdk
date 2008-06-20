@@ -449,7 +449,7 @@ end;
 procedure TPressMVPTodayCommand.InternalExecute;
 begin
   inherited;
-  Subject.AsDate := Date;
+  Subject.AsDateTime := Now;
 end;
 
 { TPressMVPPictureCommand }
