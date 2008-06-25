@@ -106,13 +106,13 @@ type
     procedure UpdateCommandMenu;
   protected
     procedure AfterInitInteractors; virtual;
+    procedure Finit; override;
     procedure InitPresenter; virtual;
     function InternalCreateCommandMenu: TPressMVPCommandMenu; virtual;
     property CommandMenu: TPressMVPCommandMenu read FCommandMenu write SetCommandMenu;
     property Interactors: TPressMVPInteractorList read GetInteractors;
   public
     constructor Create(AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; AView: TPressMVPView); virtual;
-    destructor Destroy; override;
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; virtual; abstract;
     function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; virtual;
     function BindPresenter(APresenterClass: TPressMVPFormPresenterClass; const AComponentName: ShortString): TPressMVPCommand; virtual;
@@ -233,6 +233,7 @@ type
     function AttributeByName(const AAttributeName: ShortString): TPressAttribute;
     class function CreateForm(AFormClass: TFormClass; AModel: TPressMVPObjectModel): TForm;
     function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; AViewClass: TPressMVPViewClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
+    procedure Finit; override;
     procedure InitPresenter; override;
     function InternalCreateSubModel(ASubject: TPressSubject): TPressMVPModel; virtual;
     function InternalCreateSubPresenter(AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter; virtual;
@@ -242,7 +243,6 @@ type
     procedure Running; virtual;
     property SubPresenters: TPressMVPPresenterList read GetSubPresenters;
   public
-    destructor Destroy; override;
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
     function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; override;
     function BindPresenter(APresenterClass: TPressMVPFormPresenterClass; const AComponentName: ShortString): TPressMVPCommand; override;
@@ -277,9 +277,10 @@ type
   private
     FNotifier: TPressNotifier;
     procedure Notify(AEvent: TPressEvent);
+  protected
+    procedure Finit; override;
   public
     constructor Create; reintroduce; virtual;
-    destructor Destroy; override;
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
     class procedure Initialize;
     class procedure Run;
@@ -518,20 +519,6 @@ begin
    PressDefaultMVPFactory.MVPPresenterFactory(AParent, AModel, AView);
 end;
 
-destructor TPressMVPPresenter.Destroy;
-begin
-  { TODO : Avoid events (specially View events) when destroying MVP objects
-    Create CanNotify property or Destroying status }
-  if Assigned(FParent) then
-    FParent.SubPresenters.Extract(Self);
-  BeforeChangeCommandMenu;
-  BeforeChangeModel;
-  BeforeChangeView;
-  FCommandMenu.Free;
-  FInteractors.Free;
-  inherited;
-end;
-
 procedure TPressMVPPresenter.DoInitInteractors;
 var
   VClasses: TPressMVPInteractorClasses;
@@ -546,6 +533,20 @@ end;
 procedure TPressMVPPresenter.DoInitPresenter;
 begin
   InitPresenter;
+end;
+
+procedure TPressMVPPresenter.Finit;
+begin
+  { TODO : Avoid events (specially View events) when destroying MVP objects
+    Create CanNotify property or Destroying status }
+  if Assigned(FParent) then
+    FParent.SubPresenters.Extract(Self);
+  BeforeChangeCommandMenu;
+  BeforeChangeModel;
+  BeforeChangeView;
+  FCommandMenu.Free;
+  FInteractors.Free;
+  inherited;
 end;
 
 function TPressMVPPresenter.GetInteractors: TPressMVPInteractorList;
@@ -916,7 +917,7 @@ begin
     the compiler will destroy these instances }
 end;
 
-destructor TPressMVPFormPresenter.Destroy;
+procedure TPressMVPFormPresenter.Finit;
 begin
   FSubPresenters.Free;
   inherited;
@@ -1217,7 +1218,7 @@ begin
   FNotifier.AddNotificationItem(PressApp, [TPressApplicationEvent]);
 end;
 
-destructor TPressMVPMainFormPresenter.Destroy;
+procedure TPressMVPMainFormPresenter.Finit;
 begin
   FNotifier.Free;
   inherited;

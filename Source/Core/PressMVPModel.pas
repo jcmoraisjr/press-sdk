@@ -145,8 +145,9 @@ type
   TPressMVPEnumModel = class(TPressMVPValueModel)
   private
     FEnumValues: TPressMVPEnumValueList;
+  protected
+    procedure Finit; override;
   public
-    destructor Destroy; override;
     class function Apply(ASubject: TPressSubject): Boolean; override;
     function CreateEnumValueIterator(AEnumQuery: string): TPressMVPEnumValueIterator;
     function EnumOf(AIndex: Integer): Integer;
@@ -270,12 +271,12 @@ type
     procedure SetDisplayNames(const Value: string);
   protected
     procedure AssignColumnData(const AColumnData: string);
+    procedure Finit; override;
     function HasForm(ANewObjectForm: Boolean; AObjectClass: TPressObjectClass = nil): Boolean;
     procedure InternalAssignDisplayNames(const ADisplayNames: string); virtual; abstract;
     function InternalCreateSelection: TPressMVPSelection; override;
   public
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
-    destructor Destroy; override;
     property ColumnData: TPressMVPColumnData read GetColumnData;
     property DisplayNames: string read FDisplayNames write SetDisplayNames;
     property Selection: TPressMVPObjectSelection read GetSelection;
@@ -314,6 +315,7 @@ type
     procedure PathChanged(AEvent: TPressEvent);
   protected
     function CreateReferenceQuery: TPressMVPReferenceQuery; virtual;
+    procedure Finit; override;
     function GetAsString: string; override;
     procedure InitCommands; override;
     procedure InternalAssignDisplayNames(const ADisplayNames: string); override;
@@ -325,7 +327,6 @@ type
     property PathChangedNotifier: TPressNotifier read GetPathChangedNotifier;
   public
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
-    destructor Destroy; override;
     class function Apply(ASubject: TPressSubject): Boolean; override;
     function CreateQueryIterator(const AQueryString: string): TPressQueryIterator;
     function DisplayText(ACol, ARow: Integer): string;
@@ -416,6 +417,7 @@ type
     procedure ItemsChanged(AEvent: TPressItemsChangedEvent);
     procedure RebuildObjectList;
   protected
+    procedure Finit; override;
     procedure InitCommands; override;
     procedure InternalAssignDisplayNames(const ADisplayNames: string); override;
     procedure InternalCreateAddCommands; virtual;
@@ -426,7 +428,6 @@ type
     procedure Notify(AEvent: TPressEvent); override;
     property ObjectList: TPressMVPObjectList read GetObjectList;
   public
-    destructor Destroy; override;
     function Count: Integer;
     function DisplayText(ACol, ARow: Integer): string;
     function IndexOf(AObject: TPressObject): Integer;
@@ -473,6 +474,7 @@ type
     function GetSubject: TPressObject;
     procedure SetHookedSubject(Value: TPressStructure);
   protected
+    procedure Finit; override;
     procedure InitCommands; override;
     procedure InternalCreateCancelCommand; virtual;
     procedure InternalCreateRefreshCommand; virtual;
@@ -483,7 +485,6 @@ type
     procedure Notify(AEvent: TPressEvent); override;
   public
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
-    destructor Destroy; override;
     class function Apply(ASubject: TPressSubject): Boolean; override;
     function CanSaveObject: Boolean;
     procedure Refresh;
@@ -713,12 +714,6 @@ begin
   Result := FEnumValues.CreateIterator;
 end;
 
-destructor TPressMVPEnumModel.Destroy;
-begin
-  FEnumValues.Free;
-  inherited;
-end;
-
 function TPressMVPEnumModel.EnumOf(AIndex: Integer): Integer;
 begin
   if Assigned(FEnumValues) then
@@ -733,6 +728,12 @@ begin
     Result := FEnumValues.Count
   else
     Result := 0;
+end;
+
+procedure TPressMVPEnumModel.Finit;
+begin
+  FEnumValues.Free;
+  inherited;
 end;
 
 { TPressMVPDateModel }
@@ -1093,7 +1094,7 @@ begin
    (AParent is TPressMVPQueryModel);
 end;
 
-destructor TPressMVPStructureModel.Destroy;
+procedure TPressMVPStructureModel.Finit;
 begin
   FColumnData.Free;
   inherited;
@@ -1195,17 +1196,17 @@ begin
   Result := TPressMVPReferenceQuery.Create(Metadata);
 end;
 
-destructor TPressMVPReferenceModel.Destroy;
+function TPressMVPReferenceModel.DisplayText(ACol, ARow: Integer): string;
+begin
+  Result := InternalObjectAsString(Query[ARow], ACol);
+end;
+
+procedure TPressMVPReferenceModel.Finit;
 begin
   FPathChangedNotifier.Free;
   FQuery.Free;
   PressModel.UnregisterMetadata(FMetadata);
   inherited;
-end;
-
-function TPressMVPReferenceModel.DisplayText(ACol, ARow: Integer): string;
-begin
-  Result := InternalObjectAsString(Query[ARow], ACol);
 end;
 
 function TPressMVPReferenceModel.GetAsString: string;
@@ -1728,15 +1729,15 @@ begin
     Result := 0;
 end;
 
-destructor TPressMVPItemsModel.Destroy;
-begin
-  FObjectList.Free;
-  inherited;
-end;
-
 function TPressMVPItemsModel.DisplayText(ACol, ARow: Integer): string;
 begin
   Result := ObjectList[ARow].DisplayText[ACol];
+end;
+
+procedure TPressMVPItemsModel.Finit;
+begin
+  FObjectList.Free;
+  inherited;
 end;
 
 function TPressMVPItemsModel.GetObjectList: TPressMVPObjectList;
@@ -2042,7 +2043,7 @@ begin
     FSavePoint := (ASubject as TPressObject).Memento.SavePoint;
 end;
 
-destructor TPressMVPObjectModel.Destroy;
+procedure TPressMVPObjectModel.Finit;
 begin
   FHookedSubject.Free;
   inherited;

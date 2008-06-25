@@ -236,6 +236,7 @@ type
     procedure ViewMouseUpEvent(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer); virtual;
   protected
     procedure Changed;
+    procedure Finit; override;
     function GetText: string; virtual;
     procedure InitView; virtual;
     procedure InternalAccessModeUpdated; virtual;
@@ -249,7 +250,6 @@ type
     property Model: TPressMVPModel read GetModel;
   public
     constructor Create(AControl: TControl; AOwnsControl: Boolean = False);
-    destructor Destroy; override;
     class function Apply(AControl: TControl): Boolean; virtual; abstract;
     { TODO : Remove this factory method }
     class function CreateFromControl(AControl: TControl; AOwnsControl: Boolean = False): TPressMVPView;
@@ -267,6 +267,7 @@ type
   private
     function GetModel: TPressMVPAttributeModel;
   protected
+    procedure Finit; override;
     function GetAsBoolean: Boolean; virtual;
     function GetAsDateTime: TDateTime; virtual;
     function GetAsInteger: Integer; virtual;
@@ -276,7 +277,6 @@ type
     procedure InternalClear; virtual;
     procedure SetSize(Value: Integer); virtual;
   public
-    destructor Destroy; override;
     procedure Clear;
     property AsBoolean: Boolean read GetAsBoolean;
     property AsDateTime: TDateTime read GetAsDateTime;
@@ -777,7 +777,7 @@ begin
   Result := PressDefaultMVPFactory.MVPViewFactory(AControl, AOwnsControl);
 end;
 
-destructor TPressMVPView.Destroy;
+procedure TPressMVPView.Finit;
 begin
   if FOwnsControl then
     FControl.Free;
@@ -947,7 +947,7 @@ begin
   InternalClear;
 end;
 
-destructor TPressMVPAttributeView.Destroy;
+procedure TPressMVPAttributeView.Finit;
 begin
   if Assigned(FControl) and not OwnsControl then
     ReleaseControl;

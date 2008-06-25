@@ -260,15 +260,15 @@ type
 
   TPressMVPObjectClass = class of TPressMVPObject;
 
-  TPressMVPObject = class(TPersistent)
+  TPressMVPObject = class(TPressManagedObject)
   private
     FDisableCount: Integer;
     FNotifierList: TObjectList;
     function GetEventsDisabled: Boolean;
   protected
     class procedure CheckClass(AApplyClass: Boolean);
+    procedure Finit; override;
   public
-    destructor Destroy; override;
     procedure AddNotification(AEventClasses: array of TPressEventClass; AMethod: TPressNotificationEvent);
     procedure DisableEvents;
     procedure EnableEvents;
@@ -359,6 +359,7 @@ type
     procedure SetResourceIdObjectChanging(Value: Integer);
     procedure SetUser(Value: TPressCustomUser);
   protected
+    procedure Finit; override;
     procedure InitCommands; virtual;
     function InternalAccessMode: TPressAccessMode; virtual;
     function InternalCreateSelection: TPressMVPSelection; virtual;
@@ -371,7 +372,6 @@ type
     property OwnedCommands: TPressMVPCommandList read GetOwnedCommands;
   public
     constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); virtual;
-    destructor Destroy; override;
     function AccessMode: TPressAccessMode;
     function AddCommand(ACommandClass: TPressMVPCommandClass): Integer;
     function AddCommandInstance(ACommand: TPressMVPCommand): Integer;
@@ -1068,12 +1068,6 @@ begin
     raise EPressMVPError.CreateFmt(SUnexpectedMVPClassParam, [ClassName]);
 end;
 
-destructor TPressMVPObject.Destroy;
-begin
-  FNotifierList.Free;
-  inherited;
-end;
-
 procedure TPressMVPObject.DisableEvents;
 begin
   Inc(FDisableCount);
@@ -1083,6 +1077,12 @@ procedure TPressMVPObject.EnableEvents;
 begin
   if FDisableCount > 0 then
     Dec(FDisableCount);
+end;
+
+procedure TPressMVPObject.Finit;
+begin
+  FNotifierList.Free;
+  inherited;
 end;
 
 function TPressMVPObject.GetEventsDisabled: Boolean;
@@ -1327,17 +1327,6 @@ begin
   Result := PressDefaultMVPFactory.MVPModelFactory(AParent, ASubject);
 end;
 
-destructor TPressMVPModel.Destroy;
-begin
-  FNotifier.Free;
-  FCommands.Free;
-  FUser.Free;
-  FSubject.Free;
-  FSelection.Free;
-  FOwnedCommands.Free;
-  inherited;
-end;
-
 function TPressMVPModel.FindCommand(
   ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
 begin
@@ -1347,6 +1336,17 @@ begin
     Result := nil;
   if not Assigned(Result) then
     Result := OwnedCommands.FindCommand(ACommandClass);
+end;
+
+procedure TPressMVPModel.Finit;
+begin
+  FNotifier.Free;
+  FCommands.Free;
+  FUser.Free;
+  FSubject.Free;
+  FSelection.Free;
+  FOwnedCommands.Free;
+  inherited;
 end;
 
 function TPressMVPModel.GetCommands: TPressMVPCommands;
