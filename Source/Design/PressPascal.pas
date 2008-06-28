@@ -49,16 +49,19 @@ type
 
   TPressPascalInterfaceSection = class;
   TPressPascalImplementationSection = class;
+  TPressPascalInitializationSection = class;
 
   TPressPascalUnit = class(TPressPascalObject)
   private
     FInterface: TPressPascalInterfaceSection;
     FImplementation: TPressPascalImplementationSection;
+    FInitialization: TPressPascalInitializationSection;
   protected
     procedure InternalRead(Reader: TPressParserReader); override;
   public
     property InterfaceSection: TPressPascalInterfaceSection read FInterface;
     property ImplementationSection: TPressPascalImplementationSection read FImplementation;
+    property InitializationSection: TPressPascalInitializationSection read FInitialization;
   end;
 
   TPressPascalSection = class(TPressPascalObject)
@@ -408,7 +411,8 @@ begin
   FImplementation := TPressPascalImplementationSection(Parse(Reader, [
    TPressPascalImplementationSection],
    Self, True, TPressPascalImplementationSection.Identifier));
-  Parse(Reader, [TPressPascalInitializationSection]);
+  FInitialization := TPressPascalInitializationSection(Parse(Reader, [
+   TPressPascalInitializationSection]));
   Parse(Reader, [TPressPascalFinalizationSection]);
   Reader.ReadMatchText('end');
   Reader.ReadMatch('.');
@@ -453,8 +457,9 @@ procedure TPressPascalBlockSection.InternalRead(
   Reader: TPressParserReader);
 begin
   inherited;
-  while not IsFinished(Reader) do
-    Reader.ReadToken;
+  repeat
+  until Parse(Reader, [
+   TPressPascalBlockStatement, TPressPascalPlainStatement]) = nil;
 end;
 
 { TPressPascalInterfaceSection }
@@ -945,7 +950,8 @@ end;
 class function TPressPascalPlainStatement.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := not SameText(Reader.ReadToken, 'end');
+  Result := not SameText(Reader.ReadToken, 'end') and
+   not SameText(Reader.ReadToken, 'finalization'); 
 end;
 
 procedure TPressPascalPlainStatement.InternalRead(
