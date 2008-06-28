@@ -130,7 +130,7 @@ type
   private
     FRuntimeMetadata: TPressObjectMetadata;
   private
-    FMetadataStr: TPressString;
+    FMetadataStr: TPressMemo;
     FKeyName: TPressString;
     FIsPersistent: TPressBoolean;
     FPersistentName: TPressString;
@@ -140,6 +140,7 @@ type
     function GetMetadataStr: string;
     function GetParentClass: TPressObjectMetadataRegistry;
     function GetPersistentName: string;
+    function InsertLineBreak(const AStr: string): string;
     procedure SetIsPersistent(Value: Boolean);
     procedure SetKeyName(const Value: string);
     procedure SetMetadataStr(const Value: string);
@@ -149,6 +150,7 @@ type
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
   public
+    procedure UpdateRuntimeMetadata;
     property AttributeList: TPressAttributeMetadataRegistryParts read FAttributeList;
     property RuntimeMetadata: TPressObjectMetadata read FRuntimeMetadata write FRuntimeMetadata;
   published
@@ -362,6 +364,8 @@ implementation
 
 uses
   SysUtils,
+  PressConsts,
+  PressParser,
   PressDesignClasses,
   PressDesignConsts;
 
@@ -642,6 +646,33 @@ begin
   Result := FPersistentName.Value;
 end;
 
+function TPressObjectMetadataRegistry.InsertLineBreak(const AStr: string): string;
+var
+  VReader: TPressParserReader;
+  VDelta, VPos: Integer;
+begin
+  VReader := TPressParserReader.Create(AStr);
+  try
+    while not VReader.Eof and (VReader.ReadToken <> '(') do
+      ;
+    VDelta := 0;
+    Result := AStr;
+    while not VReader.Eof do
+    begin
+      VPos := VReader.Position.Position + VDelta;
+      if Copy(Result, VPos, Length(SPressLineBreak)) <> SPressLineBreak then
+      begin
+        Insert(SPressLineBreak, Result, VPos);
+        Inc(VDelta, Length(SPressLineBreak));
+      end;
+      while not VReader.Eof and (VReader.ReadToken <> ';') do
+        ;
+    end;
+  finally
+    VReader.Free;
+  end;
+end;
+
 function TPressObjectMetadataRegistry.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
@@ -664,7 +695,7 @@ begin
   Result := 'TPressObjectMetadataRegistry (' +
    'ChildItems: TPressProjectClassReferences(TPressObjectMetadataRegistry);' +
    'ParentClass: Reference(TPressObjectMetadataRegistry) WeakReference;' +
-   'MetadataStr: String;' +
+   'MetadataStr: Memo;' +
    'KeyName: String;' +
    'IsPersistent: Boolean;' +
    'PersistentName: String;' +
@@ -683,7 +714,7 @@ end;
 
 procedure TPressObjectMetadataRegistry.SetMetadataStr(const Value: string);
 begin
-  FMetadataStr.Value := Value;
+  FMetadataStr.Value := InsertLineBreak(Value);
 end;
 
 procedure TPressObjectMetadataRegistry.SetParentClass(
@@ -695,6 +726,12 @@ end;
 procedure TPressObjectMetadataRegistry.SetPersistentName(const Value: string);
 begin
   FPersistentName.Value := Value;
+end;
+
+procedure TPressObjectMetadataRegistry.UpdateRuntimeMetadata;
+begin
+  { TODO : Implement }
+  MetadataStr := InsertLineBreak(MetadataStr);
 end;
 
 { TPressAttributeMetadataRegistry }
