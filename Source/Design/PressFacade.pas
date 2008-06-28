@@ -382,6 +382,8 @@ procedure TPressFacade.ParseProject;
          Project.RootUserAttributes.ChildItems.FindItem(
          VMeta.AttributeName, TPressAttributeTypeRegistry));
       VReg.AttributeType := VType;
+      if VMeta.Size > 0 then
+        VReg.Size := VMeta.Size;
       VReg.DefaultValue.Value := VMeta.DefaultValue;
       VReg.EditMask.Value := VMeta.EditMask;
       VReg.IsPersistent.Value := VMeta.IsPersistent;
@@ -406,7 +408,8 @@ procedure TPressFacade.ParseProject;
       VReg.PersLinkName.Value := VMeta.PersLinkName;
       VReg.PersLinkParentName.Value := VMeta.PersLinkParentName;
       VReg.PersLinkPosName.Value := VMeta.PersLinkPosName;
-      VReg.Size := VMeta.Size;
+      if VMeta.Size > 0 then
+        VReg.Size := VMeta.Size;
     end;
 
   var
