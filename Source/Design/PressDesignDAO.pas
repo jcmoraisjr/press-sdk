@@ -79,7 +79,7 @@ var
   I: Integer;
 begin
   { TODO : Sort }
-  Result := TPressProxyList.Create(True, ptShared);
+  Result := TPressProxyList.Create(Self, True, ptShared);
   try
     AddProjectItems(Result, Project.PressAttributeRegistry);
     for I := 0 to Pred(Project.RootUserAttributes.ChildItems.Count) do
@@ -94,7 +94,7 @@ end;
 function TPressDesignDAO.CreateObjectMetadataList: TPressProxyList;
 begin
   { TODO : Sort }
-  Result := TPressProxyList.Create(True, ptShared);
+  Result := TPressProxyList.Create(Self, True, ptShared);
   try
     AddProjectItems(Result, Project.RootBusinessClasses.ChildItems);
   except
@@ -108,7 +108,7 @@ var
   I: Integer;
 begin
   { TODO : Sort }
-  Result := TPressProxyList.Create(True, ptShared);
+  Result := TPressProxyList.Create(Self, True, ptShared);
   try
     for I := 0 to Pred(Project.Modules.Count) do
       Result.AddInstance(Project.Modules[I]);
