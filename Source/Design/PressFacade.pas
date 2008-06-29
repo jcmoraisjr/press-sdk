@@ -84,6 +84,8 @@ type
   TPressRuntimeBOModel = class(TPressModel)
   private
     FProject: TPressProject;
+    FUnregisteredClassList: TStringList;
+    function FindUnregisteredClass(const AClassName: string): TPressObjectClass;
   protected
     function InternalFindAttribute(const AAttributeName: string): TPressAttributeClass; override;
     function InternalFindClass(const AClassName: string): TPressObjectClass; override;
@@ -91,6 +93,7 @@ type
     property Project: TPressProject read FProject;
   public
     constructor Create(AProject: TPressProject); reintroduce;
+    destructor Destroy; override;
     procedure ClearMetadatas;
   end;
 
@@ -245,6 +248,27 @@ begin
   FProject := AProject;
 end;
 
+destructor TPressRuntimeBOModel.Destroy;
+begin
+  FUnregisteredClassList.Free;
+  inherited;
+end;
+
+function TPressRuntimeBOModel.FindUnregisteredClass(
+  const AClassName: string): TPressObjectClass;
+begin
+  if not Assigned(FUnregisteredClassList) then
+  begin
+    FUnregisteredClassList := TStringList.Create;
+    FUnregisteredClassList.Sorted := True;
+    FUnregisteredClassList.Add('TPressUser');
+  end;
+  if FUnregisteredClassList.IndexOf(AClassName) >= 0 then
+    Result := TPressRuntimeObject
+  else
+    Result := nil;
+end;
+
 function TPressRuntimeBOModel.InternalFindAttribute(
   const AAttributeName: string): TPressAttributeClass;
 var
@@ -293,6 +317,8 @@ begin
         Result := PressModel.FindClass(VClass.ObjectClassName);
     end;
   end;
+  if not Assigned(Result) then
+    Result := FindUnregisteredClass(AClassName);
 end;
 
 function TPressRuntimeBOModel.InternalParentMetadataOf(
