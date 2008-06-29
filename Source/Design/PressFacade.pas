@@ -24,7 +24,7 @@ uses
   PressAttributes,
   PressProjectModel,
   PressCodeUpdater,
-  PressDesignDAO;
+  PressDesignSession;
 
 type
   TPressRuntimeEnum = (reRuntime);
@@ -111,7 +111,7 @@ type
   private
     FBOModel: TPressRuntimeBOModel;
     FCodeUpdater: TPressCodeUpdater;
-    FDesignDAO: TPressDesignDAO;
+    FDesignSession: TPressDesignSession;
     FMVPModel: TPressRuntimeMVPModel;
     FProject: TPressProject;
   protected
@@ -355,8 +355,8 @@ begin
   FBOModel := TPressRuntimeBOModel.Create(FProject);
   FMVPModel := TPressRuntimeMVPModel.Create(FProject);
   FCodeUpdater := TPressCodeUpdater.Create(FProject);
-  FDesignDAO := TPressDesignDAO.Create(FProject, FCodeUpdater);
-  FDesignDAO.IsDefault := True;
+  FDesignSession := TPressDesignSession.Create(FProject, FCodeUpdater);
+  FDesignSession.IsDefault := True;
 end;
 
 destructor TPressFacade.Destroy;
@@ -364,7 +364,7 @@ begin
   FCodeUpdater.Free;
   FMVPModel.Free;
   FBOModel.Free;
-  FDesignDAO.Free;
+  FDesignSession.Free;
   FProject.Free;
   inherited;
 end;

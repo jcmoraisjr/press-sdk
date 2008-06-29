@@ -1,5 +1,5 @@
 (*
-  PressObjects, Design Data Access Class
+  PressObjects, Design Session Class
   Copyright (C) 2007 Laserpress Ltda.
 
   http://www.pressobjects.org
@@ -12,7 +12,7 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 *)
 
-unit PressDesignDAO;
+unit PressDesignSession;
 
 {$I Press.inc}
 
@@ -25,7 +25,7 @@ uses
   PressProjectModel;
 
 type
-  TPressDesignDAO = class(TPressSession)
+  TPressDesignSession = class(TPressSession)
   private
     FCodeUpdater: TPressCodeUpdater;
     FProject: TPressProject;
@@ -52,9 +52,9 @@ uses
   PressDesignClasses,
   PressDesignConsts;
 
-{ TPressDesignDAO }
+{ TPressDesignSession }
 
-procedure TPressDesignDAO.AddProjectItems(AProxyList: TPressProxyList;
+procedure TPressDesignSession.AddProjectItems(AProxyList: TPressProxyList;
   AItems: TPressProjectItemReferences);
 var
   I: Integer;
@@ -66,7 +66,7 @@ begin
   end;
 end;
 
-constructor TPressDesignDAO.Create(
+constructor TPressDesignSession.Create(
   AProject: TPressProject; ACodeUpdater: TPressCodeUpdater);
 begin
   inherited Create;
@@ -74,7 +74,7 @@ begin
   FCodeUpdater := ACodeUpdater;
 end;
 
-function TPressDesignDAO.CreateAttributeTypeList: TPressProxyList;
+function TPressDesignSession.CreateAttributeTypeList: TPressProxyList;
 var
   I: Integer;
 begin
@@ -91,7 +91,7 @@ begin
   end;
 end;
 
-function TPressDesignDAO.CreateObjectMetadataList: TPressProxyList;
+function TPressDesignSession.CreateObjectMetadataList: TPressProxyList;
 begin
   { TODO : Sort }
   Result := TPressProxyList.Create(Self, True, ptShared);
@@ -103,7 +103,7 @@ begin
   end;
 end;
 
-function TPressDesignDAO.CreateProjectModuleList: TPressProxyList;
+function TPressDesignSession.CreateProjectModuleList: TPressProxyList;
 var
   I: Integer;
 begin
@@ -118,11 +118,11 @@ begin
   end;
 end;
 
-procedure TPressDesignDAO.InternalCommit;
+procedure TPressDesignSession.InternalCommit;
 begin
 end;
 
-function TPressDesignDAO.InternalRetrieveQuery(
+function TPressDesignSession.InternalRetrieveQuery(
   AQuery: TPressQuery): TPressProxyList;
 var
   VTarget: TPressObjectClass;
@@ -138,15 +138,15 @@ begin
     Result := nil;
 end;
 
-procedure TPressDesignDAO.InternalRollback;
+procedure TPressDesignSession.InternalRollback;
 begin
 end;
 
-procedure TPressDesignDAO.InternalStartTransaction;
+procedure TPressDesignSession.InternalStartTransaction;
 begin
 end;
 
-procedure TPressDesignDAO.InternalStore(AObject: TPressObject);
+procedure TPressDesignSession.InternalStore(AObject: TPressObject);
 begin
   if AObject is TPressProjectItem then
     CodeUpdater.StoreProjectItem(TPressProjectItem(AObject))
