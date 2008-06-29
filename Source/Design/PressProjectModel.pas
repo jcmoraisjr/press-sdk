@@ -365,6 +365,7 @@ implementation
 uses
   SysUtils,
   PressConsts,
+  PressPicture,
   PressParser,
   PressDesignClasses,
   PressDesignConsts;
@@ -1204,8 +1205,7 @@ begin
   FName.Value := Value;
 end;
 
-procedure RegisterClasses;
-begin
+initialization
   TPressProject.RegisterClass;
   TPressProjectItem.RegisterClass;
   TPressProjectClass.RegisterClass;
@@ -1214,18 +1214,9 @@ begin
   TPressAttributeTypeRegistry.RegisterClass;
   TPressEnumerationRegistry.RegisterClass;
   TPressProjectModule.RegisterClass;
-end;
-
-procedure RegisterAttributes;
-begin
   TPressProjectItemReferences.RegisterAttribute;
   TPressProjectClassReferences.RegisterAttribute;
   TPressAttributeMetadataRegistryParts.RegisterAttribute;
   TPressProjectModuleReferences.RegisterAttribute;
-end;
-
-initialization
-  RegisterClasses;
-  RegisterAttributes;
 
 end.
