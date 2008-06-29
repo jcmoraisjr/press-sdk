@@ -241,15 +241,8 @@ type
   end;
 
   TPressEnumerationRegistry = class(TPressProjectItem)
-  private
-    FName: TPressString;
-    function GetName: string;
-    procedure SetName(const Value: string);
   protected
-    function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
-  published
-    property Name: string read GetName write SetName;
   end;
 
   TPressProjectModuleArray = array of TPressProjectModule;
@@ -905,30 +898,11 @@ end;
 
 { TPressEnumerationRegistry }
 
-function TPressEnumerationRegistry.GetName: string;
-begin
-  Result := FName.Value;
-end;
-
-function TPressEnumerationRegistry.InternalAttributeAddress(
-  const AAttributeName: string): PPressAttribute;
-begin
-  if SameText(AAttributeName, 'Name') then
-    Result := Addr(FName)
-  else
-    Result := inherited InternalAttributeAddress(AAttributeName);
-end;
-
 class function TPressEnumerationRegistry.InternalMetadataStr: string;
 begin
   Result := 'TPressEnumerationRegistry (' +
    'ChildItems: TPressProjectItemReferences(TPressEnumerationRegistry);' +
-   'Name: String)';
-end;
-
-procedure TPressEnumerationRegistry.SetName(const Value: string);
-begin
-  FName.Value := Value;
+   ')';
 end;
 
 { TPressProjectModule }
