@@ -97,6 +97,7 @@ type
   protected
     procedure ExtractBODeclarations(AModule: TPressProjectModule; Reader: TPressPascalReader; AProc: TPressPascalProcDeclaration);
     procedure ExtractClassDeclarations(AModule: TPressProjectModule; Reader: TPressPascalReader; ATypes: TPressPascalTypesDeclaration);
+    procedure ExtractEnumDeclarations(AModule: TPressProjectModule; Reader: TPressPascalReader; AItems: TPressPascalObject);
     procedure ExtractMVPDeclarations(AModule: TPressProjectModule; Reader: TPressPascalReader; AProc: TPressPascalProcDeclaration);
     property ParsedModules: TInterfaceList read FParsedModules;
     property Project: TPressProject read FProject;
@@ -329,23 +330,10 @@ procedure TPressCodeUpdater.ExtractBODeclarations(AModule: TPressProjectModule;
       AType.Name := VAttrName;
   end;
 
-  procedure CheckEnumRegistration(AStatement: TPressPascalPlainStatement);
-  begin
-    Reader.Position := AStatement.StartPos;
-    if (Reader.ReadToken <> '') and (Reader.ReadToken = '.') and
-     SameText(Reader.ReadToken, SPressRegisterEnumMethodName) and
-     (Reader.ReadToken = '(') and SameText(Reader.ReadToken, 'typeinfo') and
-     (Reader.ReadToken = '(') and (Reader.ReadToken <> '') and
-     (Reader.ReadToken = ')') and (Reader.ReadToken = ',') then
-      Project.RootUserEnumerations.ChildItems.Add.Name :=
-       Reader.ReadUnquotedString;
-  end;
-
 var
   VBlock: TPressPascalBlockStatement;
   VProjectClass: TPressProjectItem;
   VClassMethodName: string;
-  I: Integer;
 begin
   VBlock := AProc.Body.Block;
   VProjectClass := AModule.FindClass(AProc.Header.ClassTypeName);
@@ -366,9 +354,7 @@ begin
   end;
 
   { TODO : Improve }
-  for I := 0 to Pred(VBlock.ItemCount) do
-    if VBlock[I] is TPressPascalPlainStatement then
-      CheckEnumRegistration(TPressPascalPlainStatement(VBlock[I]));
+  ExtractEnumDeclarations(AModule, Reader, VBlock);
 
 end;
 
@@ -529,6 +515,30 @@ begin
     end;
 end;
 
+procedure TPressCodeUpdater.ExtractEnumDeclarations(
+  AModule: TPressProjectModule; Reader: TPressPascalReader;
+  AItems: TPressPascalObject);
+
+  procedure CheckEnumRegistration(AStatement: TPressPascalPlainStatement);
+  begin
+    Reader.Position := AStatement.StartPos;
+    if (Reader.ReadToken <> '') and (Reader.ReadToken = '.') and
+     SameText(Reader.ReadToken, SPressRegisterEnumMethodName) and
+     (Reader.ReadToken = '(') and SameText(Reader.ReadToken, 'typeinfo') and
+     (Reader.ReadToken = '(') and (Reader.ReadToken <> '') and
+     (Reader.ReadToken = ')') and (Reader.ReadToken = ',') then
+      Project.RootUserEnumerations.ChildItems.Add.Name :=
+       Reader.ReadUnquotedString;
+  end;
+
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(AItems.ItemCount) do
+    if AItems[I] is TPressPascalPlainStatement then
+      CheckEnumRegistration(TPressPascalPlainStatement(AItems[I]));
+end;
+
 procedure TPressCodeUpdater.ExtractMVPDeclarations(AModule: TPressProjectModule;
   Reader: TPressPascalReader; AProc: TPressPascalProcDeclaration);
 begin
@@ -599,6 +609,13 @@ function TPressCodeUpdater.ParseModule(
          AModule, Reader, TPressPascalTypesDeclaration(ASection[I]));
   end;
 
+  procedure ReadInitializationSection(AModule: TPressProjectModule;
+    Reader: TPressPascalReader; ASection: TPressPascalInitializationSection);
+  begin
+    if Assigned(ASection) then
+      ExtractEnumDeclarations(AModule, Reader, ASection);
+  end;
+
 var
   VReader: TPressPascalReader;
   VUnit: TPressPascalUnit;
@@ -628,6 +645,7 @@ begin
         VImplUses := ReadUnitList(VUnit.ImplementationSection.UsesDeclaration);
         VModule.ImplUses := VImplUses;
         ReadImplementationSection(VModule, VReader, VUnit.ImplementationSection);
+        ReadInitializationSection(VModule, VReader, VUnit.InitializationSection);
       finally
         VUnit.Free;
         VReader.Free;
