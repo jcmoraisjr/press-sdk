@@ -33,7 +33,7 @@ type
     FInsertText: string;
     FPosition: TPressTextPos;
   public
-    constructor Create(ADeleteCount: Integer; const AInsertText: string; APosition: TPressTextPos);
+    constructor Create(APosition: TPressTextPos; ADeleteCount: Integer; const AInsertText: string);
     property DeleteCount: Integer read FDeleteCount;
     property InsertText: string read FInsertText;
     property Position: TPressTextPos read FPosition;
@@ -47,6 +47,7 @@ type
     function GetCodeUpdate(AIndex: Integer): TPressCodeUpdate;
     function GetCount: Integer;
   protected
+    procedure AddCodeUpdate(APosition: TPressTextPos; ADeleteCount: Integer; const AInsertText: string);
     function InternalGetItem: TPressProjectItem; virtual; abstract;
     procedure InternalProcessItem; virtual;
     property UnitParser: TPressPascalUnit read FUnitParser;
@@ -59,14 +60,47 @@ type
     property Count: Integer read GetCount;
   end;
 
+  TPressCodeObjectBuilder = class(TObject)
+  private
+    FAttributeList: TStringList;
+    FItem: TPressObjectMetadataRegistry;
+    FHasContainerAttr: Boolean;
+    FHasPlainAttr: Boolean;
+    function BuildAttributeReferenceDeclaration(AAttr: TPressAttributeMetadataRegistry): string;
+    function BuildCollectionPropertyDeclaration(AAttr: TPressAttributeMetadataRegistry): string;
+    function BuildGetterDeclaration(AAttr: TPressAttributeMetadataRegistry): string;
+    function BuildGetterImplementation(AAttr: TPressAttributeMetadataRegistry): string;
+    function BuildMetadataStr: string;
+    function BuildPlainPropertyDeclaration(AAttr: TPressAttributeMetadataRegistry): string;
+    function BuildSetterDeclaration(AAttr: TPressAttributeMetadataRegistry): string;
+    function BuildSetterImplementation(AAttr: TPressAttributeMetadataRegistry): string;
+    procedure CheckAttributeList;
+    function GetAttributeList(AIndex: Integer): TPressAttributeMetadataRegistry;
+    function PressTypeToNativeType(AAttribute: TPressAttributeMetadataRegistry): string;
+  public
+    constructor Create(AItem: TPressObjectMetadataRegistry);
+    destructor Destroy; override;
+    function AttributeListCount: Integer;
+    function BuildFinalizationSection: string;
+    function BuildImplementationSection: string;
+    function BuildInitializationSection: string;
+    function BuildInterfaceSection: string;
+    property AttributeList[AIndex: Integer]: TPressAttributeMetadataRegistry read GetAttributeList;
+    property Item: TPressObjectMetadataRegistry read FItem;
+  end;
+
   TPressCodeObjectUpdates = class(TPressCodeUpdates)
   private
+    FBuilder: TPressCodeObjectBuilder;
     FItem: TPressObjectMetadataRegistry;
+    function GetBuilder: TPressCodeObjectBuilder;
   protected
     function InternalGetItem: TPressProjectItem; override;
     procedure InternalProcessItem; override;
+    property Builder: TPressCodeObjectBuilder read GetBuilder;
   public
     constructor Create(AItem: TPressObjectMetadataRegistry);
+    destructor Destroy; override;
   end;
 
   TPressCodeAttributeTypeUpdates = class(TPressCodeUpdates)
@@ -113,19 +147,31 @@ implementation
 
 uses
   SysUtils,
+  PressConsts,
   PressSubject,
+  PressAttributes,
   PressDesignClasses,
   PressDesignConsts;
 
 { TPressCodeUpdate }
 
-constructor TPressCodeUpdate.Create(ADeleteCount: Integer;
-  const AInsertText: string; APosition: TPressTextPos);
+constructor TPressCodeUpdate.Create(APosition: TPressTextPos;
+  ADeleteCount: Integer; const AInsertText: string);
 begin
-
+  inherited Create;
+  FPosition := APosition;
+  FDeleteCount := ADeleteCount;
+  FInsertText := AInsertText;
 end;
 
 { TPressCodeUpdates }
+
+procedure TPressCodeUpdates.AddCodeUpdate(APosition: TPressTextPos;
+  ADeleteCount: Integer; const AInsertText: string);
+begin
+  FCodeUpdates.Add(
+   TPressCodeUpdate.Create(APosition, ADeleteCount, AInsertText));
+end;
 
 constructor TPressCodeUpdates.Create;
 begin
@@ -166,6 +212,275 @@ begin
   InternalProcessItem;
 end;
 
+{ TPressCodeObjectBuilder }
+
+function TPressCodeObjectBuilder.AttributeListCount: Integer;
+begin
+  CheckAttributeList;
+  Result := FAttributeList.Count;
+end;
+
+function TPressCodeObjectBuilder.BuildAttributeReferenceDeclaration(
+  AAttr: TPressAttributeMetadataRegistry): string;
+begin
+  Result := Format('  %s%s: %s;' + SPressLineBreak, [
+   SPressAttributePrefix, AAttr.Name, AAttr.AttributeType.ObjectClassName]);
+end;
+
+function TPressCodeObjectBuilder.BuildCollectionPropertyDeclaration(
+  AAttr: TPressAttributeMetadataRegistry): string;
+begin
+  if AAttr.RuntimeMetadata.AttributeClass.InheritsFrom(TPressItems) then
+    Result := Format('  property %0:s: %1:s read _%0:s;' + SPressLineBreak, [
+     AAttr.Name, AAttr.AttributeType.ObjectClassName])
+  else
+    Result := '';
+end;
+
+function TPressCodeObjectBuilder.BuildFinalizationSection: string;
+begin
+  Result := Format('  %s.UnregisterClass;' + SPressLineBreak, [Item.ObjectClassName]);
+end;
+
+function TPressCodeObjectBuilder.BuildGetterDeclaration(
+  AAttr: TPressAttributeMetadataRegistry): string;
+begin
+  if not AAttr.RuntimeMetadata.AttributeClass.InheritsFrom(TPressItems) then
+    Result := Format('  function Get%s: %s;' + SPressLineBreak, [
+     AAttr.Name, PressTypeToNativeType(AAttr)])
+  else
+    Result := '';
+end;
+
+function TPressCodeObjectBuilder.BuildGetterImplementation(
+  AAttr: TPressAttributeMetadataRegistry): string;
+var
+  VAttrClass: TPressAttributeClass;
+  VNativeType: string;
+begin
+  VAttrClass := AAttr.RuntimeMetadata.AttributeClass;
+  if not VAttrClass.InheritsFrom(TPressItems) then
+  begin
+    VNativeType := PressTypeToNativeType(AAttr);
+    Result := Format('function %s.Get%s: %s;' + SPressLineBreak, [
+     Item.ObjectClassName, AAttr.Name, VNativeType]);
+    Result := Result + 'begin' + SPressLineBreak + '  Result := ';
+    if VAttrClass.InheritsFrom(TPressEnum) then
+      Result := Result + VNativeType + '(';
+    Result := Result + Format('%s%s.Value', [
+     SPressAttributePrefix, AAttr.Name]);
+    if VAttrClass.InheritsFrom(TPressEnum) then
+      Result := Result + ')'
+    else if VAttrClass.InheritsFrom(TPressItem) then
+      Result := Result + ' as ' + VNativeType;
+    Result := Result + ';' + SPressLineBreak + 'end;' + SPressLineBreak + SPressLineBreak;
+  end else
+    Result := '';
+end;
+
+function TPressCodeObjectBuilder.BuildImplementationSection: string;
+var
+  I: Integer;
+begin
+  Result := Format('{ %s }' + SPressLineBreak + SPressLineBreak, [Item.ObjectClassName]);
+  for I := 0 to Pred(AttributeListCount) do
+    Result := Result + BuildGetterImplementation(AttributeList[I]);
+  { TODO : Alphabetical order }
+  Result := Result + BuildMetadataStr;
+  for I := 0 to Pred(AttributeListCount) do
+    Result := Result + BuildSetterImplementation(AttributeList[I]);
+end;
+
+function TPressCodeObjectBuilder.BuildInitializationSection: string;
+begin
+  Result := Format('  %s.RegisterClass;' + SPressLineBreak, [Item.ObjectClassName]);
+end;
+
+function TPressCodeObjectBuilder.BuildInterfaceSection: string;
+var
+  I: Integer;
+begin
+  CheckAttributeList;
+  Result := Format('{ %s }' + SPressLineBreak + SPressLineBreak, [Item.ObjectClassName]);
+  Result := Result + Format('%s = class(%s)' + SPressLineBreak, [
+   Item.ObjectClassName, Item.ParentClass.ObjectClassName]);
+  for I := 0 to Pred(Item.AttributeList.Count) do
+    Result := Result + BuildAttributeReferenceDeclaration(Item.AttributeList[I]);
+  if FHasPlainAttr then
+  begin
+    Result := Result + 'private' + SPressLineBreak;
+    for I := 0 to Pred(AttributeListCount) do
+      Result := Result + BuildGetterDeclaration(AttributeList[I]);
+    for I := 0 to Pred(AttributeListCount) do
+      Result := Result + BuildSetterDeclaration(AttributeList[I]);
+  end;
+  Result := Result + 'protected' + SPressLineBreak;
+  Result := Result + Format('  class function %s: string; override;' + SPressLineBreak, [
+   SPressMetadataMethodName]);
+  if FHasContainerAttr then
+  begin
+    Result := Result + 'public' + SPressLineBreak;
+    for I := 0 to Pred(Item.AttributeList.Count) do
+      Result := Result + BuildCollectionPropertyDeclaration(Item.AttributeList[I]);
+  end;
+  if FHasPlainAttr then
+  begin
+    Result := Result + 'published' + SPressLineBreak;
+    for I := 0 to Pred(Item.AttributeList.Count) do
+      Result := Result + BuildPlainPropertyDeclaration(Item.AttributeList[I]);
+  end;
+  Result := Result + 'end;' + SPressLineBreak + SPressLineBreak;
+end;
+
+function TPressCodeObjectBuilder.BuildMetadataStr: string;
+
+  function FormatMetadataStr: string;
+  var
+    VMetadataList: TStrings;
+    I: Integer;
+  begin
+    Item.UpdateRuntimeMetadata;
+    VMetadataList := TStringList.Create;
+    try
+      VMetadataList.Text := Item.MetadataStr;
+      Result := '';
+      for I := 0 to Pred(VMetadataList.Count) do
+        Result := Result +
+         AnsiQuotedStr(Trim(VMetadataList[I]), '''') + ' +' + SPressLineBreak + '   ';
+      if Result <> '' then
+        SetLength(Result, Length(Result) - Length(SPressLineBreak) - 5);
+    finally
+      VMetadataList.Free;
+    end;
+  end;
+
+begin
+  Result := Format('class function %s.%s: string;' + SPressLineBreak, [
+   Item.ObjectClassName, SPressMetadataMethodName]);
+  Result := Result + 'begin' + SPressLineBreak;
+  Result := Result + Format('  Result := %s;' + SPressLineBreak, [
+   FormatMetadataStr]);
+  Result := Result + 'end;' + SPressLineBreak + SPressLineBreak;
+end;
+
+function TPressCodeObjectBuilder.BuildPlainPropertyDeclaration(
+  AAttr: TPressAttributeMetadataRegistry): string;
+begin
+  if not AAttr.RuntimeMetadata.AttributeClass.InheritsFrom(TPressItems) then
+    Result := Format(
+     '  property %0:s: %1:s read Get%0:s write Set%0:s;' + SPressLineBreak, [
+     AAttr.Name, PressTypeToNativeType(AAttr)])
+  else
+    Result := '';
+end;
+
+function TPressCodeObjectBuilder.BuildSetterDeclaration(
+  AAttr: TPressAttributeMetadataRegistry): string;
+begin
+  if not AAttr.RuntimeMetadata.AttributeClass.InheritsFrom(TPressItems) then
+    Result := Format('  procedure Set%s(const AValue: %s);' + SPressLineBreak, [
+     AAttr.Name, PressTypeToNativeType(AAttr)])
+  else
+    Result := '';
+end;
+
+function TPressCodeObjectBuilder.BuildSetterImplementation(
+  AAttr: TPressAttributeMetadataRegistry): string;
+var
+  VAttrClass: TPressAttributeClass;
+begin
+  VAttrClass := AAttr.RuntimeMetadata.AttributeClass;
+  if not VAttrClass.InheritsFrom(TPressItems) then
+  begin
+    Result := Format('procedure %s.Set%s(const AValue: %s);' + SPressLineBreak, [
+     Item.ObjectClassName, AAttr.Name, PressTypeToNativeType(AAttr)]);
+    Result := Result + 'begin' + SPressLineBreak +
+     Format('  %s%s.Value := ', [SPressAttributePrefix, AAttr.Name]);
+    if VAttrClass.InheritsFrom(TPressEnum) then
+      Result := Result + 'Ord(AValue)'
+    else
+      Result := Result + 'AValue';
+    Result := Result + ';' + SPressLineBreak + 'end;' + SPressLineBreak + SPressLineBreak;
+  end else
+    Result := '';
+end;
+
+procedure TPressCodeObjectBuilder.CheckAttributeList;
+var
+  VAttr: TPressAttributeMetadataRegistry;
+  VIsContainer: Boolean;
+  I: Integer;
+begin
+  if Assigned(FAttributeList) then
+    Exit;
+  FAttributeList := TStringList.Create;
+  FAttributeList.Sorted := True;
+  FHasPlainAttr := False;
+  FHasContainerAttr := False;
+  for I := 0 to Pred(Item.AttributeList.Count) do
+  begin
+    VAttr := Item.AttributeList[I];
+    VIsContainer := VAttr.RuntimeMetadata.AttributeClass.InheritsFrom(TPressItems);
+    if VIsContainer then
+      FHasContainerAttr := True
+    else
+      FHasPlainAttr := True;
+    FAttributeList.AddObject(VAttr.Name, VAttr);
+  end;
+end;
+
+constructor TPressCodeObjectBuilder.Create(
+  AItem: TPressObjectMetadataRegistry);
+begin
+  inherited Create;
+  FItem := AItem;
+end;
+
+destructor TPressCodeObjectBuilder.Destroy;
+begin
+  FAttributeList.Free;
+  inherited;
+end;
+
+function TPressCodeObjectBuilder.GetAttributeList(
+  AIndex: Integer): TPressAttributeMetadataRegistry;
+begin
+  if not Assigned(FAttributeList) then
+    CheckAttributeList;
+  Result := TPressAttributeMetadataRegistry(FAttributeList.Objects[AIndex]);
+end;
+
+function TPressCodeObjectBuilder.PressTypeToNativeType(
+  AAttribute: TPressAttributeMetadataRegistry): string;
+begin
+  case AAttribute.RuntimeMetadata.AttributeClass.AttributeBaseType of
+    attString, attMemo, attBinary, attPicture:
+      Result := 'string';
+    attInteger:
+      Result := 'Integer';
+    attFloat:
+      Result := 'Double';
+    attCurrency:
+      Result := 'Currency';
+    attEnum: { TODO : Improve }
+      Result := AAttribute.RuntimeMetadata.EnumMetadata.Name;
+    attBoolean:
+      Result := 'Boolean';
+    attDate:
+      Result := 'TDate';
+    attTime:
+      Result := 'TTime';
+    attDateTime:
+      Result := 'TDateTime';
+    attVariant:
+      Result := 'Variant';
+    attPart, attReference:
+      Result := AAttribute.RuntimeMetadata.ObjectClassName;
+    else
+      Result := '';
+  end;
+end;
+
 { TPressCodeObjectUpdates }
 
 constructor TPressCodeObjectUpdates.Create(
@@ -173,6 +488,19 @@ constructor TPressCodeObjectUpdates.Create(
 begin
   inherited Create;
   FItem := AItem;
+end;
+
+destructor TPressCodeObjectUpdates.Destroy;
+begin
+  FBuilder.Free;
+  inherited;
+end;
+
+function TPressCodeObjectUpdates.GetBuilder: TPressCodeObjectBuilder;
+begin
+  if not Assigned(FBuilder) then
+    FBuilder := TPressCodeObjectBuilder.Create(FItem);
+  Result := FBuilder;
 end;
 
 function TPressCodeObjectUpdates.InternalGetItem: TPressProjectItem;
@@ -184,6 +512,11 @@ procedure TPressCodeObjectUpdates.InternalProcessItem;
 begin
   inherited;
   { TODO : Implement }
+  AddCodeUpdate(UnitReader.Position, 0,
+   Builder.BuildInterfaceSection + '***' + SPressLineBreak + SPressLineBreak +
+   Builder.BuildImplementationSection + '***' + SPressLineBreak + SPressLineBreak +
+   Builder.BuildInitializationSection + SPressLineBreak + '***' + SPressLineBreak + SPressLineBreak +
+   Builder.BuildFinalizationSection);
 end;
 
 { TPressCodeAttributeTypeUpdates }
