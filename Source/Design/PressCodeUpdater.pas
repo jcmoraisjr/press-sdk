@@ -667,22 +667,25 @@ begin
   VUpdates := CreateCodeUpdates(AItem);
   try
     VUpdates.ProcessItem;
-    VModuleIntf := AItem.Module.ModuleIntf;
-    VModuleIntf.StartEdition;
-    try
-      for I := 0 to Pred(VUpdates.Count) do
-      begin
-        VUpdate := VUpdates[I];
-        VModuleIntf.SetPosition(VUpdate.Position);
-        if VUpdate.DeleteCount > 0 then
-          VModuleIntf.DeleteText(VUpdate.DeleteCount);
-        if VUpdate.InsertText <> '' then
-          VModuleIntf.InsertText(VUpdate.InsertText);
+    if VUpdates.Count > 0 then
+    begin
+      VModuleIntf := AItem.Module.ModuleIntf;
+      VModuleIntf.StartEdition;
+      try
+        for I := 0 to Pred(VUpdates.Count) do
+        begin
+          VUpdate := VUpdates[I];
+          VModuleIntf.SetPosition(VUpdate.Position);
+          if VUpdate.DeleteCount > 0 then
+            VModuleIntf.DeleteText(VUpdate.DeleteCount);
+          if VUpdate.InsertText <> '' then
+            VModuleIntf.InsertText(VUpdate.InsertText);
+        end;
+        VModuleIntf.FinishEdition(True);
+      except
+        VModuleIntf.FinishEdition(False);
+        raise;
       end;
-      VModuleIntf.FinishEdition(True);
-    except
-      VModuleIntf.FinishEdition(False);
-      raise;
     end;
   finally
     VUpdates.Free;
