@@ -33,6 +33,9 @@
 // Generate units with cross-reference information (only Delphi)
 {$DEFINE PressCrossReferenceInfo}
 
+// Enable multi threaded environment (only base class atm)
+{.$DEFINE PressMultiThread}
+
 
 (************ Do not change directives below this line ************)
 

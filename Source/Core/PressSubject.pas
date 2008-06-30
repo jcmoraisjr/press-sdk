@@ -634,13 +634,13 @@ type
 
   { Business Object base-type declarations }
 
-  TPressLockingEvent = class(TPressSubjectEvent)
+  TPressControlEvent = class(TPressSubjectEvent)
   end;
 
-  TPressLockObjectEvent = class(TPressLockingEvent)
+  TPressEnableControlsEvent = class(TPressControlEvent)
   end;
 
-  TPressUnlockObjectEvent = class(TPressLockingEvent)
+  TPressDisableControlsEvent = class(TPressControlEvent)
   end;
 
   TDate = TDateTime;
@@ -656,6 +656,7 @@ type
   { TODO : Remove persistence members }
   private
     FAttributes: TPressAttributeList;
+    FDisableControlCount: Integer;
     FId: TPressAttribute;
     FMap: TPressClassMap;
     FMemento: TPressObjectMemento;
@@ -670,6 +671,7 @@ type
     procedure AttributesEnableChanges;
     procedure CreateAttributes;
     function GetAttributes(AIndex: Integer): TPressAttribute;
+    function GetControlsDisabled: Boolean;
     function GetId: string;
     function GetIsOwned: Boolean;
     function GetIsUpdated: Boolean;
@@ -704,12 +706,10 @@ type
     procedure InternalChanging; override;
     procedure InternalDispose(ASession: IPressSession; ADisposeMethod: TPressObjectOperation); virtual;
     function InternalIsValid: Boolean; virtual;
-    procedure InternalLock; override;
     function InternalReadMethod(AAttr: TPressAttribute; const AMethodName: string; AParams: TPressStringArray): Variant; virtual;
     procedure InternalRefresh(ASession: IPressSession; ARefreshMethod: TPressObjectOperation); virtual;
     procedure InternalStore(ASession: IPressSession; AStoreMethod: TPressObjectOperation); virtual;
     procedure InternalUnchanged; override;
-    procedure InternalUnlock; override;
     class function InternalMetadataStr: string; virtual;
     procedure RemoveSessionIntf(ASession: IPressSession);
     procedure SetOwnerContext(AOwner: TPressStructure);
@@ -726,6 +726,8 @@ type
     {$IFDEF FPC}class{$ENDIF} function ClassType: TPressObjectClass;
     function Clone: TPressObject;
     function CreateAttributeIterator: TPressAttributeIterator;
+    procedure DisableControls;
+    procedure EnableControls;
     function Expression(const AExpression: string): Variant;
     function FindAttribute(const AAttributeName: string): TPressAttribute;
     function FindPathAttribute(const APath: string; ASilent: Boolean = True; APathChangedNotifier: TPressNotifier = nil): TPressAttribute;
@@ -733,6 +735,7 @@ type
     class procedure RegisterClass;
     class procedure UnregisterClass;
     property Attributes[AIndex: Integer]: TPressAttribute read GetAttributes;
+    property ControlsDisabled: Boolean read GetControlsDisabled;
     property Id: string read GetId write SetId;
     property IsOwned: Boolean read GetIsOwned;
     property IsUpdated: Boolean read GetIsUpdated;
@@ -3101,6 +3104,21 @@ begin
   AfterCreateAttributes;
 end;
 
+procedure TPressObject.DisableControls;
+begin
+  Inc(FDisableControlCount);
+  if FDisableControlCount = 1 then
+    TPressDisableControlsEvent.Create(Self).Notify;
+end;
+
+procedure TPressObject.EnableControls;
+begin
+  if FDisableControlCount > 0 then
+    Dec(FDisableControlCount);
+  if FDisableControlCount = 0 then
+    TPressEnableControlsEvent.Create(Self).Notify;
+end;
+
 function TPressObject.Expression(const AExpression: string): Variant;
 var
   VReader: TPressExpressionReader;
@@ -3186,6 +3204,11 @@ end;
 function TPressObject.GetAttributes(AIndex: Integer): TPressAttribute;
 begin
   Result := FAttributes[AIndex];
+end;
+
+function TPressObject.GetControlsDisabled: Boolean;
+begin
+  Result := FDisableControlCount > 0;
 end;
 
 function TPressObject.GetId: string;
@@ -3327,13 +3350,6 @@ begin
   Result := True;
 end;
 
-procedure TPressObject.InternalLock;
-begin
-  inherited;
-  { TODO : Implement lock attributes }
-  TPressLockObjectEvent.Create(Self).Notify;
-end;
-
 class function TPressObject.InternalMetadataStr: string;
 begin
   Result := '';
@@ -3366,13 +3382,6 @@ begin
     FMemento.Unchange;
   end;
   UnchangeAttributes;
-end;
-
-procedure TPressObject.InternalUnlock;
-begin
-  inherited;
-  { TODO : Implement lock attributes }
-  TPressUnlockObjectEvent.Create(Self).Notify;
 end;
 
 procedure TPressObject.NotifyMemento(AAttribute: TPressAttribute);

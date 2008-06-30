@@ -860,7 +860,7 @@ procedure TPressMVPObjectCommand.InitNotifier;
 begin
   inherited;
   if Model.HasSubject then
-    Notifier.AddNotificationItem(Model.Subject, [TPressLockingEvent]);
+    Notifier.AddNotificationItem(Model.Subject, [TPressControlEvent]);
 end;
 
 procedure TPressMVPObjectCommand.InternalExecute;
@@ -871,7 +871,7 @@ end;
 
 function TPressMVPObjectCommand.InternalIsEnabled: Boolean;
 begin
-  Result := not Model.HasSubject or not Model.Subject.IsLocked;
+  Result := not Model.HasSubject or not Model.Subject.ControlsDisabled;
 end;
 
 { TPressMVPRefreshObjectCommand }

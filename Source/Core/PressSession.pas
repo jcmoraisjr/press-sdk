@@ -868,7 +868,7 @@ procedure TPressSession.Store(AObject: TPressObject);
 begin
   if Assigned(AObject) and not AObject.IsOwned and not AObject.IsUpdated then
   begin
-    AObject.Lock;
+    AObject.DisableControls;
     try
       TPressObjectFriend(AObject).BeforeStore;
       StartTransaction;
@@ -892,7 +892,7 @@ begin
       end;
       TPressObjectFriend(AObject).AfterStore;
     finally
-      AObject.Unlock;
+      AObject.EnableControls;
     end;
   end;
 end;

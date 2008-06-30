@@ -62,14 +62,12 @@ type
 
   TPressManagedObject = class(TPersistent, IInterface)
   private
+{$ifdef PressMultiThread}
     FCriticalSection: TCriticalSection;
-    FLockCount: Integer;
+{$endif}
     FRefCount: Integer;
-    function GetIsLocked: Boolean;
   protected
     procedure Finit; virtual;
-    procedure InternalLock; virtual;
-    procedure InternalUnlock; virtual;
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
@@ -82,7 +80,6 @@ type
     class function NewInstance: TObject; override;
     function Release: Integer; virtual;
     procedure Unlock;
-    property IsLocked: Boolean read GetIsLocked;
     property RefCount: Integer read FRefCount;
   end;
 
@@ -335,7 +332,9 @@ end;
 
 procedure TPressManagedObject.Finit;
 begin
+{$ifdef PressMultiThread}
   FreeAndNil(FCriticalSection);
+{$endif}
 end;
 
 procedure TPressManagedObject.FreeInstance;
@@ -349,27 +348,11 @@ begin
     end;
 end;
 
-function TPressManagedObject.GetIsLocked: Boolean;
-begin
-  Result := FLockCount > 0;
-end;
-
-procedure TPressManagedObject.InternalLock;
-begin
-end;
-
-procedure TPressManagedObject.InternalUnlock;
-begin
-end;
-
 procedure TPressManagedObject.Lock;
 begin
-  Inc(FLockCount);
-  if FLockCount = 1 then
-  begin
-    FCriticalSection.Acquire;
-    InternalLock;
-  end;
+{$ifdef PressMultiThread}
+  FCriticalSection.Acquire;
+{$endif}
 end;
 
 class function TPressManagedObject.NewInstance: TObject;
@@ -377,9 +360,10 @@ begin
   Result := inherited NewInstance;
   with TPressManagedObject(Result) do
   begin
-    FLockCount := 0;
     FRefCount := 1;
+{$ifdef PressMultiThread}
     FCriticalSection := TCriticalSection.Create;
+{$endif}
   end;
 end;
 
@@ -401,13 +385,9 @@ end;
 
 procedure TPressManagedObject.Unlock;
 begin
-  if FLockCount >= 1 then
-    Dec(FLockCount);
-  if FLockCount = 0 then
-  begin
-    InternalUnlock;
-    FCriticalSection.Release;
-  end;
+{$ifdef PressMultiThread}
+  FCriticalSection.Release;
+{$endif}
 end;
 
 function TPressManagedObject._AddRef: Integer; stdcall;
