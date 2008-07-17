@@ -17,9 +17,8 @@ type
     FReportManager: TPressReportManager;
 {$ENDIF}
   protected
+    procedure Finit; override;
     procedure InitCommands; override;
-  public
-    destructor Destroy; override;
   end;
 
   TCustomEditPresenter = class(TPressMVPFormPresenter)
@@ -35,7 +34,7 @@ uses
 
 { TCustomEditModel }
 
-destructor TCustomEditModel.Destroy;
+procedure TCustomEditModel.Finit;
 begin
 {$IFDEF UseReport}
   FReportManager.Free;

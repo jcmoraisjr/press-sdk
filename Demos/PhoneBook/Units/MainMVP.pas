@@ -18,9 +18,8 @@ type
     FReportManager: TPressReportManager;
 {$ENDIF}
   protected
+    procedure Finit; override;
     procedure InitCommands; override;
-  public
-    destructor Destroy; override;
   end;
 
   TMainGridModel = class(TPressMVPReferencesModel)
@@ -32,11 +31,10 @@ type
   private
     FInternalCache: TPressObjectList;
   protected
+    procedure Finit; override;
     procedure InitPresenter; override;
     class function InternalModelClass: TPressMVPObjectModelClass; override;
     procedure Running; override;
-  public
-    destructor Destroy; override;
   end;
 
   TMainAddPersonCommand = class(TPressMVPCustomAddItemsCommand)
@@ -76,7 +74,7 @@ uses
 
 { TMainModel }
 
-destructor TMainModel.Destroy;
+procedure TMainModel.Finit;
 begin
 {$IFDEF UseReport}
   FReportManager.Free;
@@ -102,7 +100,7 @@ end;
 
 { TMainPresenter }
 
-destructor TMainPresenter.Destroy;
+procedure TMainPresenter.Finit;
 begin
   FInternalCache.Free;
   inherited;
