@@ -258,21 +258,34 @@ type
     procedure UnassignCommands;
   end;
 
+  TPressMVPObject = class;
   TPressMVPObjectClass = class of TPressMVPObject;
 
-  TPressMVPObject = class(TPressManagedObject)
+  IPressMVPObject = interface(IPressInterface)
+  ['{FD85A06B-E95E-4BD2-BE8E-BB5B7D5565A2}']
+    function GetEventsDisabled: Boolean;
+    function GetInstance: TPressMVPObject;
+    procedure DisableEvents;
+    procedure EnableEvents;
+    property EventsDisabled: Boolean read GetEventsDisabled;
+    property Instance: TPressMVPObject read GetInstance;
+  end;
+
+  TPressMVPObject = class(TPressManagedObject, IPressMVPObject)
   private
     FDisableCount: Integer;
     FNotifierList: TObjectList;
-    function GetEventsDisabled: Boolean;
   protected
     class procedure CheckClass(AApplyClass: Boolean);
     procedure Finit; override;
+    function GetEventsDisabled: Boolean;
+    function GetInstance: TPressMVPObject;
   public
     procedure AddNotification(AEventClasses: array of TPressEventClass; AMethod: TPressNotificationEvent);
     procedure DisableEvents;
     procedure EnableEvents;
     property EventsDisabled: Boolean read GetEventsDisabled;
+    property Instance: TPressMVPObject read GetInstance;
   end;
 
   TPressMVPSelectionChangedEvent = class(TPressEvent)
@@ -1086,6 +1099,11 @@ end;
 function TPressMVPObject.GetEventsDisabled: Boolean;
 begin
   Result := FDisableCount > 0;
+end;
+
+function TPressMVPObject.GetInstance: TPressMVPObject;
+begin
+  Result := Self;
 end;
 
 { TPressMVPSelection }

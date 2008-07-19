@@ -207,11 +207,117 @@ type
   TPressMVPViewCloseFormEvent = class(TPressMVPViewFormEvent)
   end;
 
+  IPressMVPView = interface(IPressMVPObject)
+  ['{F975801E-32A0-4242-9943-11EB5A5D551F}']
+    function AccessError(const ADataType: string): EPressMVPError;
+    function GetAccessMode: TPressAccessMode;
+    function GetHandle: TControl;
+    function GetIsChanged: Boolean;
+    function GetReadOnly: Boolean;
+    function GetText: string;
+    procedure SetAccessMode(Value: TPressAccessMode);
+    procedure SetModel(AModel: TPressMVPModel);
+    procedure SetReadOnly(Value: Boolean);
+    procedure SetText(const Value: string);
+    procedure Update;
+    property AccessMode: TPressAccessMode read GetAccessMode write SetAccessMode;
+    property Handle: TControl read GetHandle;
+    property IsChanged: Boolean read GetIsChanged;
+    property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
+    property Text: string read GetText write SetText;
+  end;
+
+  IPressMVPAttributeView = interface(IPressMVPView)
+  ['{DDC41086-5263-4DD4-912A-5A37AF19A7D7}']
+    procedure Clear;
+    function GetAsBoolean: Boolean;
+    function GetAsDateTime: TDateTime;
+    function GetAsInteger: Integer;
+    function GetAsString: string;
+    function GetIsClear: Boolean;
+    procedure SetSize(Value: Integer);
+    property AsBoolean: Boolean read GetAsBoolean;
+    property AsDateTime: TDateTime read GetAsDateTime;
+    property AsInteger: Integer read GetAsInteger;
+    property AsString: string read GetAsString;
+    property IsClear: Boolean read GetIsClear;
+    property Size: Integer write SetSize;
+  end;
+
+  IPressMVPWinView = interface(IPressMVPAttributeView)
+  ['{19A408D3-7A3E-45ED-8E85-E729983BA05D}']
+    function Focused: Boolean;
+    procedure SelectNext;
+    procedure SetFocus;
+  end;
+
+  IPressMVPEditView = interface(IPressMVPWinView)
+  ['{14F49736-6CE1-41D9-BBD7-307ADEDFCC4D}']
+    function GetSelectedText: string;
+    property SelectedText: string read GetSelectedText;
+  end;
+
+  IPressMVPDateTimeView = interface(IPressMVPWinView)
+  ['{EAA17B8D-43D4-43A5-8B45-D1EC7709AB72}']
+  end;
+
+  IPressMVPBooleanView = interface(IPressMVPWinView)
+  ['{58E7C9D0-BEF6-4388-B410-23F24314C769}']
+  end;
+
+  IPressMVPCheckBoxView = interface(IPressMVPWinView)
+  ['{0E7A51E2-16E5-4236-A945-E94CBF1B09F0}']
+  end;
+
+  IPressMVPItemView = interface(IPressMVPWinView)
+  ['{5FEB1007-8A9B-464A-8FDD-66D7B298911F}']
+    function GetReferencesVisible: Boolean;
+    function GetSelectedText: string;
+    procedure AddReference(const ACaption: string);
+    procedure AssignReferences(AItems: TStrings);
+    procedure ClearReferences;
+    property ReferencesVisible: Boolean read GetReferencesVisible;
+    property SelectedText: string read GetSelectedText;
+  end;
+
+  IPressMVPComboBoxView = interface(IPressMVPItemView)
+  ['{79AADC39-AE08-47A1-BC2F-E57E0579A02D}']
+    procedure HideReferences;
+    procedure SelectAll;
+    procedure ShowReferences;
+  end;
+
+  IPressMVPItemsView = interface(IPressMVPWinView)
+  ['{815259A4-885D-43F3-B1BD-F8AE41D24552}']
+    function CurrentItem: Integer;
+    procedure SelectItem(AIndex: Integer);
+  end;
+
+  IPressMVPListBoxView = interface(IPressMVPItemsView)
+  ['{828260F5-696F-4DC1-AB41-6CFC3846D20C}']
+  end;
+
+  IPressMVPGridView = interface(IPressMVPItemsView)
+  ['{FFA3C130-4D0C-41A2-A1C6-98FFD91DFE6E}']
+    procedure AlignColumns;
+  end;
+
+  IPressMVPCustomFormView = interface(IPressMVPView)
+  ['{31405E15-E086-4997-A2A0-BE96A986FF15}']
+    function ComponentByName(const AComponentName: ShortString): TComponent;
+    function ControlByName(const AControlName: ShortString): TControl;
+  end;
+
+  IPressMVPFormView = interface(IPressMVPCustomFormView)
+  ['{254033B2-A5D7-436A-BF2D-83835040F8CE}']
+    procedure Close;
+  end;
+
   { TPressMVPView }
 
   TPressMVPViewClass = class of TPressMVPView;
 
-  TPressMVPView = class(TPressMVPObject)
+  TPressMVPView = class(TPressMVPObject, IPressMVPView)
   private
     FAccessMode: TPressAccessMode;
     FControl: TControl;
@@ -223,6 +329,9 @@ type
     FViewMouseDownEvent: TMouseEvent;
     FViewMouseUpEvent: TMouseEvent;
     function AccessError(const ADataType: string): EPressMVPError;
+    function GetAccessMode: TPressAccessMode;
+    function GetHandle: TControl;
+    function GetIsChanged: Boolean;
     function GetModel: TPressMVPModel;
     function GetReadOnly: Boolean;
     procedure SetAccessMode(Value: TPressAccessMode);
@@ -253,13 +362,14 @@ type
     procedure Update;
     property AccessMode: TPressAccessMode read FAccessMode write SetAccessMode;
     property Control: TControl read FControl;
+    property Handle: TControl read GetHandle;
     property IsChanged: Boolean read FIsChanged;
     property OwnsControl: Boolean read FOwnsControl write FOwnsControl;
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
     property Text: string read GetText write SetText;
   end;
 
-  TPressMVPAttributeView = class(TPressMVPView)
+  TPressMVPAttributeView = class(TPressMVPView, IPressMVPAttributeView)
   private
     function GetModel: TPressMVPAttributeModel;
   protected
@@ -283,7 +393,7 @@ type
     property Size: Integer write SetSize;
   end;
 
-  TPressMVPWinView = class(TPressMVPAttributeView)
+  TPressMVPWinView = class(TPressMVPAttributeView, IPressMVPWinView)
   private
     FViewEnterEvent: TNotifyEvent;
     FViewExitEvent: TNotifyEvent;
@@ -310,7 +420,7 @@ type
     property Control: TWinControl read GetControl;
   end;
 
-  TPressMVPEditView = class(TPressMVPWinView)
+  TPressMVPEditView = class(TPressMVPWinView, IPressMVPEditView)
   private
     FViewChangeEvent: TNotifyEvent;
     function GetControl: TCustomEdit;
@@ -333,7 +443,7 @@ type
     property SelectedText: string read GetSelectedText;
   end;
 
-  TPressMVPDateTimeView = class(TPressMVPWinView)
+  TPressMVPDateTimeView = class(TPressMVPWinView, IPressMVPDateTimeView)
   private
     function GetControl: TCustomCalendar;
   protected
@@ -349,12 +459,12 @@ type
     property Control: TCustomCalendar read GetControl;
   end;
 
-  TPressMVPBooleanView = class(TPressMVPWinView)
+  TPressMVPBooleanView = class(TPressMVPWinView, IPressMVPBooleanView)
   protected
     procedure ViewClickEvent(Sender: TObject); override;
   end;
 
-  TPressMVPCheckBoxView = class(TPressMVPBooleanView)
+  TPressMVPCheckBoxView = class(TPressMVPBooleanView, IPressMVPCheckBoxView)
   private
     function GetControl: TCustomCheckBox;
   protected
@@ -367,7 +477,7 @@ type
     property Control: TCustomCheckBox read GetControl;
   end;
 
-  TPressMVPItemView = class(TPressMVPWinView)
+  TPressMVPItemView = class(TPressMVPWinView, IPressMVPItemView)
   protected
     procedure ViewEnterEvent(Sender: TObject); override;
     procedure ViewExitEvent(Sender: TObject); override;
@@ -384,7 +494,7 @@ type
     property SelectedText: string read GetSelectedText;
   end;
 
-  TPressMVPComboBoxView = class(TPressMVPItemView)
+  TPressMVPComboBoxView = class(TPressMVPItemView, IPressMVPComboBoxView)
   private
     FViewChangeEvent: TNotifyEvent;
     FViewDrawItemEvent: TDrawItemEvent;
@@ -424,7 +534,7 @@ type
     property Control: TCustomComboBox read GetControl;
   end;
 
-  TPressMVPItemsView = class(TPressMVPWinView)
+  TPressMVPItemsView = class(TPressMVPWinView, IPressMVPItemsView)
   private
     function GetModel: TPressMVPItemsModel;
     function GetRowCount: Integer;
@@ -444,7 +554,7 @@ type
     property Model: TPressMVPItemsModel read GetModel;
   end;
 
-  TPressMVPListBoxView = class(TPressMVPItemsView)
+  TPressMVPListBoxView = class(TPressMVPItemsView, IPressMVPListBoxView)
   private
     FViewDrawItemEvent: TDrawItemEvent;
     procedure ViewDrawItemEvent(AControl: TWinControl; AIndex: Integer; ARect: TRect; AState: TOwnerDrawState); virtual;
@@ -461,7 +571,7 @@ type
     property Control: TCustomListBox read GetControl;
   end;
 
-  TPressMVPGridView = class(TPressMVPItemsView)
+  TPressMVPGridView = class(TPressMVPItemsView, IPressMVPGridView)
   private
     FViewDrawCellEvent: TDrawCellEvent;
     function GetControl: TCustomDrawGrid;
@@ -512,7 +622,7 @@ type
     property Control: TImage read GetControl;
   end;
 
-  TPressMVPCustomFormView = class(TPressMVPView)
+  TPressMVPCustomFormView = class(TPressMVPView, IPressMVPCustomFormView)
   public
     function ComponentByName(const AComponentName: ShortString): TComponent;
     function ControlByName(const AControlName: ShortString): TControl;
@@ -520,7 +630,7 @@ type
 
   TPressMVPFormViewClass = class of TPressMVPFormView;
 
-  TPressMVPFormView = class(TPressMVPCustomFormView)
+  TPressMVPFormView = class(TPressMVPCustomFormView, IPressMVPFormView)
   private
     FViewCloseEvent: TCloseEvent;
     function GetControl: TCustomForm;
@@ -734,6 +844,21 @@ begin
   if FOwnsControl then
     FControl.Free;
   inherited;
+end;
+
+function TPressMVPView.GetAccessMode: TPressAccessMode;
+begin
+  Result := FAccessMode;
+end;
+
+function TPressMVPView.GetHandle: TControl;
+begin
+  Result := FControl;
+end;
+
+function TPressMVPView.GetIsChanged: Boolean;
+begin
+  Result := FIsChanged;
 end;
 
 function TPressMVPView.GetModel: TPressMVPModel;
