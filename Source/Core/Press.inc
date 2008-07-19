@@ -21,15 +21,6 @@
 
 {.$DEFINE PressDebugBaseUnits}
 
-// Define how 1::1 View x Interactor relationship (like
-// OnDrawCell event) must implement the View's notifications.
-// Note--defining both options will create Notification classes
-// (TPressEvent decendants) as well as event fields (Direct
-// Event), but only the Notification will be used by default
-// PressObjects' Interactors.
-{.$DEFINE PressViewNotification}
-{$DEFINE PressViewDirectEvent}
-
 // Generate units with cross-reference information (only Delphi)
 {$DEFINE PressCrossReferenceInfo}
 

@@ -141,7 +141,6 @@ type
 
   TPressMVPGridView = class;
 
-  {$IFDEF PressViewNotification}
   TPressMVPViewDrawItemEvent = class(TPressMVPViewEvent)
   private
     FCanvas: TCanvas;
@@ -201,7 +200,6 @@ type
     property Row: Integer read FRow;
     property ShiftState: TShiftState read FShiftState;
   end;
-  {$ENDIF}
 
   TPressMVPViewFormEvent = class(TPressMVPViewEvent)
   end;
@@ -393,9 +391,6 @@ type
 
   TPressMVPComboBoxView = class(TPressMVPItemView)
   private
-    {$IFDEF PressViewDirectEvent}
-    FOnDrawItem: TPressDrawItemEvent;
-    {$ENDIF}
     FViewChangeEvent: TNotifyEvent;
     FViewDrawItemEvent: TDrawItemEvent;
     FViewDropDownEvent: TNotifyEvent;
@@ -432,9 +427,6 @@ type
     procedure SelectAll;
     procedure ShowReferences;
     property Control: TCustomComboBox read GetControl;
-    {$IFDEF PressViewDirectEvent}
-    property OnDrawItem: TPressDrawItemEvent read FOnDrawItem write FOnDrawItem;
-    {$ENDIF}
   end;
 
   TPressMVPItemsView = class(TPressMVPWinView)
@@ -459,9 +451,6 @@ type
 
   TPressMVPListBoxView = class(TPressMVPItemsView)
   private
-    {$IFDEF PressViewDirectEvent}
-    FOnDrawItem: TPressDrawItemEvent;
-    {$ENDIF}
     FViewDrawItemEvent: TDrawItemEvent;
     procedure ViewDrawItemEvent(AControl: TWinControl; AIndex: Integer; ARect: TRect; AState: TOwnerDrawState); virtual;
     function GetControl: TCustomListBox;
@@ -475,27 +464,10 @@ type
   public
     class function Apply(AControl: TControl): Boolean; override;
     property Control: TCustomListBox read GetControl;
-    {$IFDEF PressViewDirectEvent}
-    property OnDrawItem: TPressDrawItemEvent read FOnDrawItem write FOnDrawItem;
-    {$ENDIF}
   end;
-
-  TPressClickCellEvent = procedure(AOwner: TPressMVPView;
-   AButton: TMouseButton; AShiftState: TShiftState; ACol, ARow: Integer) of object;
-
-  TPressClickHeaderEvent = procedure(AOwner: TPressMVPView;
-   AButton: TMouseButton; AShiftState: TShiftState; ACol: Integer) of object;
-
-  TPressDrawCellEvent = procedure(Sender: TPressMVPGridView; ACanvas: TCanvas;
-   ACol, ARow: Longint; ARect: TRect; State: TGridDrawState) of object;
 
   TPressMVPGridView = class(TPressMVPItemsView)
   private
-    {$IFDEF PressViewDirectEvent}
-    FOnClickCell: TPressClickCellEvent;
-    FOnClickHeader: TPressClickHeaderEvent;
-    FOnDrawCell: TPressDrawCellEvent;
-    {$ENDIF}
     FViewDrawCellEvent: TDrawCellEvent;
     function GetControl: TCustomDrawGrid;
   protected
@@ -516,11 +488,6 @@ type
     procedure AlignColumns;
     class function Apply(AControl: TControl): Boolean; override;
     property Control: TCustomDrawGrid read GetControl;
-    {$IFDEF PressViewDirectEvent}
-    property OnClickCell: TPressClickCellEvent read FOnClickCell write FOnClickCell;
-    property OnClickHeader: TPressClickHeaderEvent read FOnClickHeader write FOnClickHeader;
-    property OnDrawCell: TPressDrawCellEvent read FOnDrawCell write FOnDrawCell;
-    {$ENDIF}
   end;
 
   TPressMVPCaptionView = class(TPressMVPAttributeView)
@@ -684,8 +651,6 @@ begin
   FKey^ := Value;
 end;
 
-{$IFDEF PressViewNotification}
-
 { TPressMVPViewDrawItemEvent }
 
 constructor TPressMVPViewDrawItemEvent.Create(
@@ -745,8 +710,6 @@ begin
   FCol := ACol;
   FRow := ARow;
 end;
-
-{$ENDIF}
 
 { TPressMVPView }
 
@@ -1518,14 +1481,8 @@ procedure TPressMVPComboBoxView.ViewDrawItemEvent(AControl: TWinControl;
 begin
   if EventsDisabled then
     Exit;
-  {$IFDEF PressViewNotification}
   TPressMVPViewDrawItemEvent.Create(
    Self, Control.Canvas, AIndex, ARect, AState).Notify;
-  {$ENDIF}
-  {$IFDEF PressViewDirectEvent}
-  if Assigned(FOnDrawItem) then
-    FOnDrawItem(Self, Control.Canvas, AIndex, ARect, AState);
-  {$ENDIF}
   if Assigned(FViewDrawItemEvent) then
     FViewDrawItemEvent(Control, AIndex, ARect, AState);
 end;
@@ -1671,14 +1628,8 @@ procedure TPressMVPListBoxView.ViewDrawItemEvent(AControl: TWinControl;
 begin
   if EventsDisabled then
     Exit;
-  {$IFDEF PressViewNotification}
   TPressMVPViewDrawItemEvent.Create(
    Self, Control.Canvas, AIndex, ARect, AState).Notify;
-  {$ENDIF}
-  {$IFDEF PressViewDirectEvent}
-  if Assigned(FOnDrawItem) then
-    FOnDrawItem(Self, Control.Canvas, AIndex, ARect, AState);
-  {$ENDIF}
   if Assigned(FViewDrawItemEvent) then
     FViewDrawItemEvent(Control, AIndex, ARect, AState);
 end;
@@ -1813,14 +1764,8 @@ procedure TPressMVPGridView.ViewDrawCellEvent(
 begin
   if EventsDisabled then
     Exit;
-  {$IFDEF PressViewNotification}
   TPressMVPViewDrawCellEvent.Create(
    Self, Control.Canvas, ACol - 1, ARow - 1, ARect, State).Notify;
-  {$ENDIF}
-  {$IFDEF PressViewDirectEvent}
-  if Assigned(FOnDrawCell) then
-    FOnDrawCell(Self, Control.Canvas, ACol - 1, ARow - 1, ARect, State);
-  {$ENDIF}
   if Assigned(FViewDrawCellEvent) then
     FViewDrawCellEvent(Sender, ACol, ARow, ARect, State);
 end;
@@ -1837,24 +1782,9 @@ begin
   Dec(VCol);
   Dec(VRow);
   if VRow < 0 then
-  begin
-    {$IFDEF PressViewNotification}
-    TPressMVPViewClickHeaderEvent.Create(Self, Button, Shift, VCol).Notify;
-    {$ENDIF}
-    {$IFDEF PressViewDirectEvent}
-    if Assigned(FOnClickHeader) then
-      FOnClickHeader(Self, Button, Shift, VCol);
-    {$ENDIF}
-  end else
-  begin
-    {$IFDEF PressViewNotification}
+    TPressMVPViewClickHeaderEvent.Create(Self, Button, Shift, VCol).Notify
+  else
     TPressMVPViewClickCellEvent.Create(Self, Button, Shift, VCol, VRow).Notify;
-    {$ENDIF}
-    {$IFDEF PressViewDirectEvent}
-    if Assigned(FOnClickCell) then
-      FOnClickCell(Self, Button, Shift, VCol, VRow);
-    {$ENDIF}
-  end;
 end;
 
 { TPressMVPCaptionView }
