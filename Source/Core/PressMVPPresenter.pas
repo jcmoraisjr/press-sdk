@@ -116,8 +116,6 @@ type
     class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; virtual; abstract;
     function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; virtual;
     function BindPresenter(APresenterClass: TPressMVPFormPresenterClass; const AComponentName: ShortString): TPressMVPCommand; virtual;
-    { TODO : Remove this factory method }
-    class function CreateFromControllers(AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
     class procedure RegisterPresenter;
     property Model: TPressMVPModel read FModel;
     property Parent: TPressMVPFormPresenter read FParent;
@@ -508,14 +506,6 @@ begin
   DoInitInteractors;
   DoInitPresenter;
   FIsInitializing := False;
-end;
-
-class function TPressMVPPresenter.CreateFromControllers(
-  AParent: TPressMVPFormPresenter;
-  AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
-begin
-  Result :=
-   PressDefaultMVPFactory.MVPPresenterFactory(AParent, AModel, AView);
 end;
 
 procedure TPressMVPPresenter.DoInitInteractors;
@@ -948,19 +938,19 @@ end;
 function TPressMVPFormPresenter.InternalCreateSubModel(
   ASubject: TPressSubject): TPressMVPModel;
 begin
-  Result := TPressMVPModel.CreateFromSubject(Model, ASubject);
+  Result := PressDefaultMVPFactory.MVPModelFactory(Model, ASubject);
 end;
 
 function TPressMVPFormPresenter.InternalCreateSubPresenter(
   AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
 begin
-  Result := TPressMVPPresenter.CreateFromControllers(Self, AModel, AView);
+  Result := PressDefaultMVPFactory.MVPPresenterFactory(Self, AModel, AView);
 end;
 
 function TPressMVPFormPresenter.InternalCreateSubView(
   AControl: TControl): TPressMVPView;
 begin
-  Result := TPressMVPView.CreateFromControl(AControl);
+  Result := PressDefaultMVPFactory.MVPViewFactory(AControl, False);
 end;
 
 class function TPressMVPFormPresenter.InternalModelClass: TPressMVPObjectModelClass;
@@ -1061,7 +1051,7 @@ begin
   if Assigned(VModelClass) then
     VModel := VModelClass.Create(VParentModel, AObject)
   else
-    VModel := TPressMVPModel.CreateFromSubject(
+    VModel := PressDefaultMVPFactory.MVPModelFactory(
      VParentModel, AObject) as TPressMVPObjectModel;
   VModel.IsIncluding := AIncluding;
   VModel.User := PressUserData.User;
@@ -1075,7 +1065,7 @@ begin
   if Assigned(VViewClass) then
     VView := VViewClass.Create(VFormClass.Create(nil), True)
   else
-    VView := TPressMVPView.CreateFromControl(
+    VView := PressDefaultMVPFactory.MVPViewFactory(
      CreateForm(VFormClass, VModel), True) as TPressMVPFormView;
   AssignAccessor(VView.Control, SPressViewAccessorName, VView);
 
@@ -1196,7 +1186,7 @@ begin
     VView := VViewClass.Create(Application.MainForm)
   else
     VView :=
-     TPressMVPView.CreateFromControl(Application.MainForm) as TPressMVPFormView;
+     PressDefaultMVPFactory.MVPViewFactory(Application.MainForm) as TPressMVPFormView;
 
   inherited Create(nil, VModel, VView);
   AssignAccessor(Application.MainForm, SPressPresenterAccessorName, Self);

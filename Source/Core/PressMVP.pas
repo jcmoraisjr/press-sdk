@@ -378,8 +378,6 @@ type
     procedure AddCommands(ACommandClasses: array of TPressMVPCommandClass);
     class function Apply(ASubject: TPressSubject): Boolean; virtual; abstract;
     procedure Changed(AChangeType: TPressMVPChangeType);
-    { TODO : Remove this factory method }
-    class function CreateFromSubject(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
     function FindCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     function HasCommands: Boolean;
     procedure InsertCommand(AIndex: Integer; ACommandClass: TPressMVPCommandClass);
@@ -1319,12 +1317,6 @@ begin
     Notifier.AddNotificationItem(FSubject, [TPressSubjectEvent]);
     InitCommands;
   end;
-end;
-
-class function TPressMVPModel.CreateFromSubject(
-  AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
-begin
-  Result := PressDefaultMVPFactory.MVPModelFactory(AParent, ASubject);
 end;
 
 function TPressMVPModel.FindCommand(

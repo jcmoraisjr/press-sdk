@@ -249,8 +249,6 @@ type
   public
     constructor Create(AControl: TControl; AOwnsControl: Boolean = False);
     class function Apply(AControl: TControl): Boolean; virtual; abstract;
-    { TODO : Remove this factory method }
-    class function CreateFromControl(AControl: TControl; AOwnsControl: Boolean = False): TPressMVPView;
     class procedure RegisterView;
     procedure Update;
     property AccessMode: TPressAccessMode read FAccessMode write SetAccessMode;
@@ -368,9 +366,6 @@ type
     class function Apply(AControl: TControl): Boolean; override;
     property Control: TCustomCheckBox read GetControl;
   end;
-
-  TPressDrawItemEvent = procedure(Sender: TPressMVPView;
-   ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState) of object;
 
   TPressMVPItemView = class(TPressMVPWinView)
   protected
@@ -732,12 +727,6 @@ begin
   FControl := AControl;
   FOwnsControl := AOwnsControl;
   InitView;
-end;
-
-class function TPressMVPView.CreateFromControl(AControl: TControl;
-  AOwnsControl: Boolean): TPressMVPView;
-begin
-  Result := PressDefaultMVPFactory.MVPViewFactory(AControl, AOwnsControl);
 end;
 
 procedure TPressMVPView.Finit;
