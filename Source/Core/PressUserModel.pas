@@ -153,7 +153,7 @@ type
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
-    procedure InternalStore(ASession: IPressSession; AStoreMethod: TPressObjectOperation); override;
+    procedure InternalStore(const ASession: IPressSession; AStoreMethod: TPressObjectOperation); override;
     property UserId: string read GetUserId;
     property Password: string read GetPassword;
   end;
@@ -170,7 +170,7 @@ type
     procedure Init; override;
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
-    procedure InternalStore(ASession: IPressSession; AStoreMethod: TPressObjectOperation); override;
+    procedure InternalStore(const ASession: IPressSession; AStoreMethod: TPressObjectOperation); override;
   public
     property StoreUser: Boolean read FStoreUser write FStoreUser;
     property UpdatePasswordExpired: Boolean read FUpdatePasswordExpired write FUpdatePasswordExpired;
@@ -566,7 +566,7 @@ begin
 end;
 
 procedure TPressLogon.InternalStore(
-  ASession: IPressSession; AStoreMethod: TPressObjectOperation);
+  const ASession: IPressSession; AStoreMethod: TPressObjectOperation);
 begin
   if not PressUserData.Logon(FUserId.Value, FPassword.Value) then
     raise EPressUserError.Create(SInvalidLogon);
@@ -601,7 +601,7 @@ begin
 end;
 
 procedure TPressChangePassword.InternalStore(
-  ASession: IPressSession; AStoreMethod: TPressObjectOperation);
+  const ASession: IPressSession; AStoreMethod: TPressObjectOperation);
 begin
   if Assigned(FUser) then
   begin
