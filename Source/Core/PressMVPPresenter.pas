@@ -249,7 +249,6 @@ type
     function CreatePresenterIterator: TPressMVPPresenterIterator;
     procedure Refresh;
     class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil; AViewClass: TPressMVPFormViewClass = nil);
-    class procedure RegisterFormPresenter(AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil; AViewClass: TPressMVPFormViewClass = nil);
     class procedure RegisterLCLForm(AFormClass: TFormClass);
     class procedure RegisterVCLForm(AFormClass: TFormClass);
     class function Run(AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
@@ -996,16 +995,6 @@ class procedure TPressMVPFormPresenter.RegisterBO(
 begin
   PressDefaultMVPFactory.RegisterBO(Self, AObjectClass, AFormPresenterTypes,
    AModelClass, AViewClass);
-end;
-
-class procedure TPressMVPFormPresenter.RegisterFormPresenter(
-  AObjectClass: TPressObjectClass; AFormClass: TFormClass;
-  AFormPresenterTypes: TPressMVPFormPresenterTypes;
-  AModelClass: TPressMVPObjectModelClass;
-  AViewClass: TPressMVPFormViewClass);
-begin
-  PressDefaultMVPFactory.RegisterForm(Self, AObjectClass, AFormClass,
-   AFormPresenterTypes, AModelClass, AViewClass);
 end;
 
 class procedure TPressMVPFormPresenter.RegisterLCLForm(AFormClass: TFormClass);

@@ -99,7 +99,6 @@ type
     function MVPViewFactory(AControl: TControl; AOwnsControl: Boolean = False): TPressMVPView;
     procedure RegisterBO(APresenterClass: TPressMVPFormPresenterClass; AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes; AModelClass: TPressMVPObjectModelClass; AViewClass: TPressMVPFormViewClass);
     procedure RegisterInteractor(AInteractorClass: TPressMVPInteractorClass);
-    procedure RegisterForm(APresenterClass: TPressMVPFormPresenterClass; AObjectClass: TPressObjectClass; AFormClass: TFormClass; AFormPresenterTypes: TPressMVPFormPresenterTypes; AModelClass: TPressMVPObjectModelClass; AViewClass: TPressMVPFormViewClass);
     procedure RegisterXCLForm(APresenterClass: TPressMVPFormPresenterClass; AFormClass: TFormClass);
     procedure RegisterModel(AModelClass: TPressMVPModelClass);
     procedure RegisterPresenter(APresenterClass: TPressMVPPresenterClass);
@@ -429,24 +428,6 @@ var
 begin
   VForm := Forms.FormOfPresenter(APresenterClass);
   VForm.FObjectClass := AObjectClass;
-  VForm.FFormPresenterTypes := AFormPresenterTypes;
-  VForm.FModelClass := AModelClass;
-  VForm.FViewClass := AViewClass;
-end;
-
-procedure TPressMVPFactory.RegisterForm(
-  APresenterClass: TPressMVPFormPresenterClass;
-  AObjectClass: TPressObjectClass; AFormClass: TFormClass;
-  AFormPresenterTypes: TPressMVPFormPresenterTypes;
-  AModelClass: TPressMVPObjectModelClass;
-  AViewClass: TPressMVPFormViewClass);
-var
-  VForm: TPressMVPRegisteredForm;
-begin
-  { TODO : Deprecated }
-  VForm := Forms.FormOfPresenter(APresenterClass);
-  VForm.FObjectClass := AObjectClass;
-  VForm.FFormClass := AFormClass;
   VForm.FFormPresenterTypes := AFormPresenterTypes;
   VForm.FModelClass := AModelClass;
   VForm.FViewClass := AViewClass;
