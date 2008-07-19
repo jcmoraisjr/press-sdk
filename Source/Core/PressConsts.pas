@@ -71,6 +71,7 @@ var
   SCannotReleaseInstance,
   SEnumItemNotFound,
   SInvalidIdentifier,
+  SInvalidInterfaceTypecast,
   SInvalidLogon,
   SMethodNotFound,
   SNoLoggedUser,

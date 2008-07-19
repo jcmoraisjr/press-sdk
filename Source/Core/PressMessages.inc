@@ -2,6 +2,7 @@
   SCannotReleaseInstance := SCannotReleaseInstance_rst;
   SEnumItemNotFound := SEnumItemNotFound_rst;
   SInvalidIdentifier := SInvalidIdentifier_rst;
+  SInvalidInterfaceTypecast := SInvalidInterfaceTypecast_rst;
   SInvalidLogon := SInvalidLogon_rst;
   SMethodNotFound := SMethodNotFound_rst;
   SNoLoggedUser := SNoLoggedUser_rst;

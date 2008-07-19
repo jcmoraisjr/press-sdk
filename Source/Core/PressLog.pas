@@ -110,7 +110,7 @@ begin
    FormatDateTime('mmm/dd hh:nn:ss', Now),
    FormatClassName(AMsg, Sender),
    ArrayToString(AParams)]);
-  PressOutputDebugString(Result);
+  PressDebug(Result);
 end;
 
 class function TPressLog.InternalServiceType: TPressServiceType;

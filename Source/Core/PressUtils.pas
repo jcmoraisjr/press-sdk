@@ -20,16 +20,19 @@ unit PressUtils;
 interface
 
 uses
+  Classes,
 {$ifndef d5down}
   Variants,
 {$endif}
-  Classes;
+  PressClasses;
 
 function PressFormatMaskText(const EditMask: string; const Value: string): string;
 function PressVarFormat(const AFormat: string; const AArgs: array of Variant): string;
 procedure PressGenerateGUID(out AGUID: TGUID);
+procedure PressAsIntf(const AInstance: IInterface; const AIntf: TGUID; out AInst);
+function PressSupports(const AInstance: IPressInterface; const AIntf: TGUID): Boolean;
 function PressSetPropertyValue(AObject: TPersistent; const APathName, AValue: string; AError: Boolean = False): Boolean;
-procedure PressOutputDebugString(const AStr: string);
+procedure PressDebug(const AStr: string);
 function PressUnquotedStr(const AStr: string): string;
 function PressDecodeString(const AStr: string): string;
 function PressEncodeString(const AStr: string): string;
@@ -56,7 +59,6 @@ uses
 {$ifdef lcl}
   Translations,
 {$endif}
-  PressClasses,
   PressConsts;
 
 function PressFormatMaskText(const EditMask: string; const Value: string): string;
@@ -164,6 +166,17 @@ begin
   {$ENDIF}
 end;
 
+procedure PressAsIntf(const AInstance: IInterface; const AIntf: TGUID; out AInst);
+begin
+  if not Supports(AInstance, AIntf, AInst) then
+    raise EPressError.Create(SInvalidInterfaceTypecast);
+end;
+
+function PressSupports(const AInstance: IPressInterface; const AIntf: TGUID): Boolean;
+begin
+  Result := Assigned(AInstance) and AInstance.SupportsIntf(AIntf);
+end;
+
 function PressSetPropertyValue(AObject: TPersistent;
   const APathName, AValue: string; AError: Boolean): Boolean;
 var
@@ -233,7 +246,7 @@ begin
   end;
 end;
 
-procedure PressOutputDebugString(const AStr: string);
+procedure PressDebug(const AStr: string);
 begin
   {$IFDEF FPC}
   writeln(AStr);

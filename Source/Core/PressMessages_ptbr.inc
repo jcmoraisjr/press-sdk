@@ -2,6 +2,7 @@
   SCannotReleaseInstance_rst = 'Não é possível liberar a instância ''%s''';
   SEnumItemNotFound_rst = 'Enumeration ''%s'' não encontrado';
   SInvalidIdentifier_rst = 'Identificador inválido ''%s''';
+  SInvalidInterfaceTypecast_rst = 'Typecast de interface inválido';
   SInvalidLogon_rst = 'Nome de usuário ou senha incorretos';
   SMethodNotFound_rst = 'Método ''%s'' não encontrado';
   SNoLoggedUser_rst = 'Não existe usuário logado';

@@ -608,7 +608,7 @@ type
   TPressQuery = class;
   TPressProxyList = class;
 
-  IPressSession = interface(IInterface)
+  IPressSession = interface(IPressInterface)
   ['{8B46DE54-6987-477B-8AA4-9176D66018D4}']
     { TODO : Remove cache methods }
     procedure AddToCache(AObject: TPressObject);

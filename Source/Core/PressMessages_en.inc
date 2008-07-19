@@ -2,6 +2,7 @@
   SCannotReleaseInstance_rst = 'Cannot release instance ''%s''';
   SEnumItemNotFound_rst = 'Enumeration ''%s'' not found';
   SInvalidIdentifier_rst = 'Invalid identifier ''%s''';
+  SInvalidInterfaceTypecast_rst = 'Invalid interface typecast';
   SInvalidLogon_rst = 'Invalid username or password';
   SMethodNotFound_rst = 'Method ''%s'' not found';
   SNoLoggedUser_rst = 'No user logged in';

@@ -60,7 +60,12 @@ type
   IInterface = IUnknown;
 {$endif}
 
-  TPressManagedObject = class(TPersistent, IInterface)
+  IPressInterface = interface(IInterface)
+  ['{CB83C7A1-B07E-40C4-B70B-964C14A8F94E}']
+    function SupportsIntf(const IID: TGUID): Boolean;
+  end;
+
+  TPressManagedObject = class(TPersistent, IInterface, IPressInterface)
   private
 {$ifdef PressMultiThread}
     FCriticalSection: TCriticalSection;
@@ -69,6 +74,7 @@ type
   protected
     procedure Finit; virtual;
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function SupportsIntf(const IID: TGUID): Boolean;
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
   public
@@ -381,6 +387,11 @@ begin
   Result := InterLockedDecrement(FRefCount);
   if FRefCount < 0 then
     raise EPressError.CreateFmt(SCannotReleaseInstance, [ClassName]);
+end;
+
+function TPressManagedObject.SupportsIntf(const IID: TGUID): Boolean;
+begin
+  Result := Assigned(GetInterfaceEntry(IID));
 end;
 
 procedure TPressManagedObject.Unlock;
