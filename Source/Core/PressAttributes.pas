@@ -558,7 +558,7 @@ type
     procedure SetPubValue(AValue: TPressObject);
     procedure SetValue(AValue: TPressObject);
   protected
-    procedure AddSessionIntf(ASession: IPressSession); override;
+    procedure AddSessionIntf(const ASession: IPressSession); override;
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
     procedure Finit; override;
     function GetAsInteger: Integer; override;
@@ -571,7 +571,7 @@ type
     procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure InternalUnassignObject(AObject: TPressObject); override;
-    procedure RemoveSessionIntf(ASession: IPressSession); override;
+    procedure RemoveSessionIntf(const ASession: IPressSession); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -642,7 +642,7 @@ type
     procedure ReleaseMemento(AMemento: TPressItemsMemento);
     procedure SetObjects(AIndex: Integer; AValue: TPressObject);
   protected
-    procedure AddSessionIntf(ASession: IPressSession); override;
+    procedure AddSessionIntf(const ASession: IPressSession); override;
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
     procedure ChangedInstance(AInstance: TPressObject; AUpdateIsChangedFlag: Boolean = True);
     procedure ChangedList(Sender: TPressProxyList; Item: TPressProxy; Action: TListNotification);
@@ -659,7 +659,7 @@ type
     procedure InternalUnchanged; override;
     procedure NotifyMemento(AProxy: TPressProxy; AItemState: TPressItemState; AOldIndex: Integer = -1);
     procedure NotifyRebuild;
-    procedure RemoveSessionIntf(ASession: IPressSession); override;
+    procedure RemoveSessionIntf(const ASession: IPressSession); override;
     (*
     function InternalCreateIterator: TPressItemsIterator; override;
     *)
@@ -3220,7 +3220,7 @@ end;
 
 { TPressItem }
 
-procedure TPressItem.AddSessionIntf(ASession: IPressSession);
+procedure TPressItem.AddSessionIntf(const ASession: IPressSession);
 begin
   inherited;
   if Assigned(FProxy) then
@@ -3372,7 +3372,7 @@ begin
    (Assigned(FProxy) and FProxy.SameReference(AObject));
 end;
 
-procedure TPressItem.RemoveSessionIntf(ASession: IPressSession);
+procedure TPressItem.RemoveSessionIntf(const ASession: IPressSession);
 begin
   inherited;
   if Assigned(FProxy) then
@@ -3557,7 +3557,7 @@ begin
   Result := ProxyList.AddReference(AClassName, AId);
 end;
 
-procedure TPressItems.AddSessionIntf(ASession: IPressSession);
+procedure TPressItems.AddSessionIntf(const ASession: IPressSession);
 begin
   inherited;
   if Assigned(FProxyList) then
@@ -3957,7 +3957,7 @@ begin
     ProxyList.Delete(Result);
 end;
 
-procedure TPressItems.RemoveSessionIntf(ASession: IPressSession);
+procedure TPressItems.RemoveSessionIntf(const ASession: IPressSession);
 begin
   inherited;
   if Assigned(FProxyList) then

@@ -685,7 +685,7 @@ type
     procedure SetId(const Value: string);
     procedure UnchangeAttributes;
   protected
-    procedure AddSessionIntf(ASession: IPressSession);
+    procedure AddSessionIntf(const ASession: IPressSession);
     procedure AfterCreate; virtual;
     procedure AfterCreateAttributes; virtual;
     procedure AfterDispose; virtual;
@@ -704,14 +704,14 @@ type
     procedure InternalChangesDisabled; override;
     procedure InternalChangesEnabled; override;
     procedure InternalChanging; override;
-    procedure InternalDispose(ASession: IPressSession; ADisposeMethod: TPressObjectOperation); virtual;
+    procedure InternalDispose(const ASession: IPressSession; ADisposeMethod: TPressObjectOperation); virtual;
     function InternalIsValid: Boolean; virtual;
     function InternalReadMethod(AAttr: TPressAttribute; const AMethodName: string; AParams: TPressStringArray): Variant; virtual;
-    procedure InternalRefresh(ASession: IPressSession; ARefreshMethod: TPressObjectOperation); virtual;
-    procedure InternalStore(ASession: IPressSession; AStoreMethod: TPressObjectOperation); virtual;
+    procedure InternalRefresh(const ASession: IPressSession; ARefreshMethod: TPressObjectOperation); virtual;
+    procedure InternalStore(const ASession: IPressSession; AStoreMethod: TPressObjectOperation); virtual;
     procedure InternalUnchanged; override;
     class function InternalMetadataStr: string; virtual;
-    procedure RemoveSessionIntf(ASession: IPressSession);
+    procedure RemoveSessionIntf(const ASession: IPressSession);
     procedure SetOwnerContext(AOwner: TPressStructure);
     property Session: IPressSession read FSession;
   public
@@ -869,11 +869,11 @@ type
     function IsEmptyReference(ARefClass: TPressObjectClass; const ARefID: string): Boolean;
     procedure SetInstance(Value: TPressObject);
   protected
-    procedure AddSessionIntf(ASession: IPressSession);
+    procedure AddSessionIntf(const ASession: IPressSession);
     procedure Finit; override;
-    procedure RemoveSessionIntf(ASession: IPressSession);
+    procedure RemoveSessionIntf(const ASession: IPressSession);
   public
-    constructor Create(ASession: IPressSession; AProxyType: TPressProxyType; AObject: TPressObject = nil);
+    constructor Create(const ASession: IPressSession; AProxyType: TPressProxyType; AObject: TPressObject = nil);
     procedure Assign(Source: TPersistent); override;
     procedure AssignReference(const ARefClass, ARefID: string); overload;
     procedure AssignReference(ARefClass: TPressObjectClass; const ARefID: string); overload;
@@ -917,12 +917,12 @@ type
     procedure SetInstances(AIndex: Integer; Value: TPressObject);
     procedure SetItems(AIndex: Integer; Value: TPressProxy);
   protected
-    procedure AddSessionIntf(ASession: IPressSession);
+    procedure AddSessionIntf(const ASession: IPressSession);
     function InternalCreateIterator: TPressCustomIterator; override;
     procedure Notify(Ptr: Pointer; Action: TListNotification); override;
-    procedure RemoveSessionIntf(ASession: IPressSession);
+    procedure RemoveSessionIntf(const ASession: IPressSession);
   public
-    constructor Create(ASession: IPressSession; AOwnsObjects: Boolean; AProxyType: TPressProxyType);
+    constructor Create(const ASession: IPressSession; AOwnsObjects: Boolean; AProxyType: TPressProxyType);
     function Add(AObject: TPressProxy): Integer;
     function AddInstance(AObject: TPressObject): Integer;
     function AddReference(const ARefClass, ARefID: string): Integer;
@@ -985,7 +985,7 @@ type
     procedure InitPropInfo;
     function GetSession: IPressSession;
   protected
-    procedure AddSessionIntf(ASession: IPressSession); virtual;
+    procedure AddSessionIntf(const ASession: IPressSession); virtual;
     function AccessError(const AAttributeName: string): EPressError;
     { TODO : Use exception messages from the PressDialog class }
     function ConversionError(E: EConvertError): EPressConversionError;
@@ -1015,7 +1015,7 @@ type
     procedure Notify(AEvent: TPressEvent); virtual;
     procedure NotifyChange;
     procedure ReleaseCalcNotification(AInstance: TPressObject);
-    procedure RemoveSessionIntf(ASession: IPressSession); virtual;
+    procedure RemoveSessionIntf(const ASession: IPressSession); virtual;
     procedure SetAsBoolean(AValue: Boolean); virtual;
     procedure SetAsCurrency(AValue: Currency); virtual;
     procedure SetAsDate(AValue: TDate); virtual;
@@ -1135,7 +1135,7 @@ type
     property ObjectClass: TPressObjectClass read GetObjectClass;
   end;
 
-procedure PressAssignPersistentId(ASession: IPressSession; AObject: TPressObject; const AId: string);
+procedure PressAssignPersistentId(const ASession: IPressSession; AObject: TPressObject; const AId: string);
 procedure PressAssignUpdateCount(AObject: TPressObject; ANewValue: Integer);
 procedure PressAssignPersistentUpdateCount(AObject: TPressObject);
 procedure PressEvolveUpdateCount(AObject: TPressObject);
@@ -1195,7 +1195,7 @@ begin
 end;
 
 procedure PressAssignPersistentId(
-  ASession: IPressSession; AObject: TPressObject; const AId: string);
+  const ASession: IPressSession; AObject: TPressObject; const AId: string);
 begin
   if AObject.FPersistentId <> AId then
   begin
@@ -2917,7 +2917,7 @@ end;
 
 { TPressObject }
 
-procedure TPressObject.AddSessionIntf(ASession: IPressSession);
+procedure TPressObject.AddSessionIntf(const ASession: IPressSession);
 var
   I: Integer;
 begin
@@ -3340,7 +3340,7 @@ begin
 end;
 
 procedure TPressObject.InternalDispose(
-  ASession: IPressSession; ADisposeMethod: TPressObjectOperation);
+  const ASession: IPressSession; ADisposeMethod: TPressObjectOperation);
 begin
   ADisposeMethod(Self);
 end;
@@ -3362,13 +3362,13 @@ begin
 end;
 
 procedure TPressObject.InternalRefresh(
-  ASession: IPressSession; ARefreshMethod: TPressObjectOperation);
+  const ASession: IPressSession; ARefreshMethod: TPressObjectOperation);
 begin
   ARefreshMethod(Self);
 end;
 
 procedure TPressObject.InternalStore(
-  ASession: IPressSession; AStoreMethod: TPressObjectOperation);
+  const ASession: IPressSession; AStoreMethod: TPressObjectOperation);
 begin
   AStoreMethod(Self);
 end;
@@ -3402,7 +3402,7 @@ begin
   PressModel.AddClass(Self);
 end;
 
-procedure TPressObject.RemoveSessionIntf(ASession: IPressSession);
+procedure TPressObject.RemoveSessionIntf(const ASession: IPressSession);
 var
   I: Integer;
 begin
@@ -4033,7 +4033,7 @@ end;
 
 { TPressProxy }
 
-procedure TPressProxy.AddSessionIntf(ASession: IPressSession);
+procedure TPressProxy.AddSessionIntf(const ASession: IPressSession);
 begin
   FSession := ASession;
 end;
@@ -4128,7 +4128,7 @@ begin
   Result.Assign(Self);
 end;
 
-constructor TPressProxy.Create(ASession: IPressSession;
+constructor TPressProxy.Create(const ASession: IPressSession;
   AProxyType: TPressProxyType; AObject: TPressObject);
 begin
   inherited Create;
@@ -4240,7 +4240,7 @@ begin
   Result := ARefID = '';
 end;
 
-procedure TPressProxy.RemoveSessionIntf(ASession: IPressSession);
+procedure TPressProxy.RemoveSessionIntf(const ASession: IPressSession);
 begin
   if FSession = ASession then
     FSession := nil;
@@ -4339,7 +4339,7 @@ begin
   end;
 end;
 
-procedure TPressProxyList.AddSessionIntf(ASession: IPressSession);
+procedure TPressProxyList.AddSessionIntf(const ASession: IPressSession);
 var
   I: Integer;
 begin
@@ -4348,7 +4348,7 @@ begin
     Items[I].AddSessionIntf(ASession);  // friend class
 end;
 
-constructor TPressProxyList.Create(ASession: IPressSession;
+constructor TPressProxyList.Create(const ASession: IPressSession;
   AOwnsObjects: Boolean; AProxyType: TPressProxyType);
 begin
   inherited Create(AOwnsObjects);
@@ -4494,7 +4494,7 @@ begin
     Delete(Result);
 end;
 
-procedure TPressProxyList.RemoveSessionIntf(ASession: IPressSession);
+procedure TPressProxyList.RemoveSessionIntf(const ASession: IPressSession);
 var
   I: Integer;
 begin
@@ -4530,7 +4530,7 @@ begin
    SAttributeAccessError, [ClassName, Name, AAttributeName]);
 end;
 
-procedure TPressAttribute.AddSessionIntf(ASession: IPressSession);
+procedure TPressAttribute.AddSessionIntf(const ASession: IPressSession);
 begin
 end;
 
@@ -4860,7 +4860,7 @@ begin
     Metadata.CalcMetadata.ReleaseCalcNotification(AInstance, Notifier);
 end;
 
-procedure TPressAttribute.RemoveSessionIntf(ASession: IPressSession);
+procedure TPressAttribute.RemoveSessionIntf(const ASession: IPressSession);
 begin
 end;
 
