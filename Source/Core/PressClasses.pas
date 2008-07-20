@@ -21,8 +21,10 @@ interface
 
 uses
   SysUtils,
-  Classes,
-  SyncObjs;
+{$ifdef PressMultiThread}
+  SyncObjs,
+{$endif}
+  Classes;
 
 type
   EPressError = class(Exception);
