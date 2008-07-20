@@ -37,6 +37,8 @@ uses
 
 type
   TPressMVPNextControlInteractor = class(TPressMVPInteractor)
+  private
+    FWinView: IPressMVPWinView;
   protected
     procedure DoSelectNextControl; virtual;
     procedure DoPressEnter; virtual;
@@ -48,25 +50,22 @@ type
 
   TPressMVPUpdateComboInteractor = class(TPressMVPNextControlInteractor)
   private
-    function GetOwner: TPressMVPPointerPresenter;
-    function GetView: TPressMVPComboBoxView;
+    FComboBoxView: IPressMVPComboBoxView;
   protected
     procedure DoPressEnter; override;
+    procedure InitInteractor; override;
   public
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
-    property Owner: TPressMVPPointerPresenter read GetOwner;
-    property View: TPressMVPComboBoxView read GetView;
   end;
 
   TPressMVPOpenComboInteractor = class(TPressMVPInteractor)
   private
-    function GetOwner: TPressMVPPointerPresenter;
+    FItemView: IPressMVPItemView;
   protected
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
   public
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
-    property Owner: TPressMVPPointerPresenter read GetOwner;
   end;
 
   TPressMVPChangeModelInteractor = class(TPressMVPInteractor)
@@ -79,15 +78,12 @@ type
 
   TPressMVPUpdaterInteractor = class(TPressMVPInteractor)
   private
-    function GetModel: TPressMVPAttributeModel;
-    function GetView: TPressMVPAttributeView;
+    FWinView: IPressMVPWinView;
   protected
     procedure DoUpdateModel;
+    procedure InitInteractor; override;
     procedure InternalUpdateModel; virtual; abstract;
     procedure Notify(AEvent: TPressEvent); override;
-  public
-    property Model: TPressMVPAttributeModel read GetModel;
-    property View: TPressMVPAttributeView read GetView;
   end;
 
   TPressMVPExitUpdaterInteractor = class(TPressMVPUpdaterInteractor)
@@ -96,14 +92,20 @@ type
   end;
 
   TPressMVPEditUpdaterInteractor = class(TPressMVPExitUpdaterInteractor)
+  private
+    FEditView: IPressMVPEditView;
   protected
+    procedure InitInteractor; override;
     procedure InternalUpdateModel; override;
   public
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
   end;
 
   TPressMVPDateTimeUpdaterInteractor = class(TPressMVPExitUpdaterInteractor)
+  private
+    FDateTimeView: IPressMVPDateTimeView;
   protected
+    procedure InitInteractor; override;
     procedure InternalUpdateModel; override;
   public
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
@@ -111,36 +113,28 @@ type
 
   TPressMVPPointerUpdaterInteractor = class(TPressMVPExitUpdaterInteractor)
   private
-    function GetOwner: TPressMVPPointerPresenter;
+    FAttrView: IPressMVPAttributeView;
   protected
     procedure InitInteractor; override;
     procedure InternalAssignSubject(VIndex: Integer); virtual; abstract;
     function InternalReferenceCount: Integer; virtual; abstract;
     procedure InternalUpdateModel; override;
-  public
-    property Owner: TPressMVPPointerPresenter read GetOwner;
   end;
 
   TPressMVPEnumUpdaterInteractor = class(TPressMVPPointerUpdaterInteractor)
-  private
-    function GetOwner: TPressMVPEnumPresenter;
   protected
     procedure InternalAssignSubject(VIndex: Integer); override;
     function InternalReferenceCount: Integer; override;
   public
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
-    property Owner: TPressMVPEnumPresenter read GetOwner;
   end;
 
   TPressMVPReferenceUpdaterInteractor = class(TPressMVPPointerUpdaterInteractor)
-  private
-    function GetOwner: TPressMVPReferencePresenter;
   protected
     procedure InternalAssignSubject(VIndex: Integer); override;
     function InternalReferenceCount: Integer; override;
   public
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
-    property Owner: TPressMVPReferencePresenter read GetOwner;
   end;
 
   TPressMVPClickUpdaterInteractor = class(TPressMVPUpdaterInteractor)
@@ -149,7 +143,10 @@ type
   end;
 
   TPressMVPBooleanUpdaterInteractor = class(TPressMVPClickUpdaterInteractor)
+  private
+    FBooleanView: IPressMVPBooleanView;
   protected
+    procedure InitInteractor; override;
     procedure InternalUpdateModel; override;
   public
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
@@ -166,19 +163,17 @@ type
   end;
 
   TPressMVPEditableInteractor = class(TPressMVPInteractor)
-  private
-    function GetOwner: TPressMVPValuePresenter;
   protected
     procedure InitInteractor; override;
   public
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
-    property Owner: TPressMVPValuePresenter read GetOwner;
   end;
 
   TPressMVPNumericInteractor = class(TPressMVPEditableInteractor)
   private
     FAcceptDecimal: Boolean;
     FAcceptNegative: Boolean;
+    FAttrView: IPressMVPAttributeView;
   protected
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
@@ -219,7 +214,7 @@ type
 
   TPressMVPDrawComboBoxInteractor = class(TPressMVPDrawItemInteractor)
   protected
-    procedure DrawItem(Sender: TPressMVPView; ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState); virtual;
+    procedure DrawItem(ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState); virtual;
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
   public
@@ -237,7 +232,7 @@ type
 
   TPressMVPDrawListBoxInteractor = class(TPressMVPDrawItemsInteractor)
   protected
-    procedure DrawItem(Sender: TPressMVPView; ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState); virtual;
+    procedure DrawItem(ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState); virtual;
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
   public
@@ -245,8 +240,10 @@ type
   end;
 
   TPressMVPDrawGridInteractor = class(TPressMVPDrawItemsInteractor)
+  private
+    FGridView: IPressMVPGridView;
   protected
-    procedure DrawCell(Sender: TPressMVPGridView; ACanvas: TCanvas; ACol, ARow: Longint; ARect: TRect; State: TGridDrawState); virtual;
+    procedure DrawCell(ACanvas: TCanvas; ACol, ARow: Longint; ARect: TRect; State: TGridDrawState); virtual;
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
   public
@@ -255,7 +252,7 @@ type
 
   TPressMVPSelectItemInteractor = class(TPressMVPInteractor)
   private
-    function GetOwner: TPressMVPItemsPresenter;
+    FItemsView: IPressMVPItemsView;
   protected
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
@@ -263,12 +260,11 @@ type
     procedure UpdateSelectedItem; virtual;
   public
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
-    property Owner: TPressMVPItemsPresenter read GetOwner;
   end;
 
   TPressMVPSortItemsInteractor = class(TPressMVPInteractor)
   protected
-    procedure ClickHeader(AOwner: TPressMVPView; AButton: TMouseButton; AShiftState: TShiftState; ACol: Integer); virtual;
+    procedure ClickHeader(AButton: TMouseButton; AShiftState: TShiftState; ACol: Integer); virtual;
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
   public
@@ -286,6 +282,8 @@ type
   end;
 
   TPressMVPCreateIncludeFormInteractor = class(TPressMVPCreateFormInteractor)
+  private
+    FAttrView: IPressMVPAttributeView;
   protected
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
@@ -344,7 +342,7 @@ uses
 class function TPressMVPNextControlInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
-  Result := APresenter.View is TPressMVPWinView;
+  Result := PressSupports(APresenter.View, IPressMVPWinView);
 end;
 
 procedure TPressMVPNextControlInteractor.DoPressEnter;
@@ -368,14 +366,14 @@ end;
 
 procedure TPressMVPNextControlInteractor.DoSelectNextControl;
 begin
-  if Owner.View is TPressMVPWinView then
-    TPressMVPWinView(Owner.View).SelectNext;
+  FWinView.SelectNext;
 end;
 
 procedure TPressMVPNextControlInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewKeyPressEvent]);
+  PressAsIntf(Owner.View, IPressMVPWinView, FWinView);
+  Notifier.AddNotificationItem(FWinView.Instance, [TPressMVPViewKeyPressEvent]);
 end;
 
 procedure TPressMVPNextControlInteractor.Notify(AEvent: TPressEvent);
@@ -395,45 +393,38 @@ class function TPressMVPUpdateComboInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
   Result := (APresenter is TPressMVPPointerPresenter) and
-   (APresenter.View is TPressMVPComboBoxView);
+   PressSupports(APresenter.View, IPressMVPComboBoxView);
 end;
 
 procedure TPressMVPUpdateComboInteractor.DoPressEnter;
-var
-  VView: TPressMVPComboBoxView;
 
   procedure UpdateData;
   begin
-    VView.HideReferences;
+    FComboBoxView.HideReferences;
     Owner.Model.UpdateData;
     inherited;
   end;
 
 begin
-  VView := View;
-  if VView.AsString = '' then
+  if FComboBoxView.AsString = '' then
     inherited
-  else if VView.IsChanged and (VView.AsInteger = -1) then
+  else if FComboBoxView.IsChanged and (FComboBoxView.AsInteger = -1) then
   begin
-    case Owner.UpdateReferences(VView.AsString) of
-      0: VView.SelectAll;
+    case (Owner as TPressMVPPointerPresenter).UpdateReferences(FComboBoxView.AsString) of
+      0: FComboBoxView.SelectAll;
       1: UpdateData;
-      else VView.ShowReferences;
+      else FComboBoxView.ShowReferences;
     end;
-  end else if VView.ReferencesVisible then
+  end else if FComboBoxView.ReferencesVisible then
     UpdateData
   else
     inherited;
 end;
 
-function TPressMVPUpdateComboInteractor.GetOwner: TPressMVPPointerPresenter;
+procedure TPressMVPUpdateComboInteractor.InitInteractor;
 begin
-  Result := inherited Owner as TPressMVPPointerPresenter;
-end;
-
-function TPressMVPUpdateComboInteractor.GetView: TPressMVPComboBoxView;
-begin
-  Result := inherited Owner.View as TPressMVPComboBoxView;
+  inherited;
+  PressAsIntf(Owner.View, IPressMVPComboBoxView, FComboBoxView);
 end;
 
 { TPressMVPOpenComboInteractor }
@@ -442,34 +433,28 @@ class function TPressMVPOpenComboInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
   Result := (APresenter is TPressMVPPointerPresenter) and
-   (APresenter.View is TPressMVPComboBoxView);
-end;
-
-function TPressMVPOpenComboInteractor.GetOwner: TPressMVPPointerPresenter;
-begin
-  Result := inherited Owner as TPressMVPPointerPresenter;
+   PressSupports(APresenter.View, IPressMVPComboBoxView);
 end;
 
 procedure TPressMVPOpenComboInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewDropDownEvent]);
+  PressAsIntf(Owner.View, IPressMVPItemView, FItemView);
+  Notifier.AddNotificationItem(FItemView.Instance, [TPressMVPViewDropDownEvent]);
 end;
 
 procedure TPressMVPOpenComboInteractor.Notify(AEvent: TPressEvent);
 var
-  VView: TPressMVPItemView;
   VQueryString: string;
 begin
   inherited;
   if AEvent is TPressMVPViewDropDownEvent then
   begin
-    VView := Owner.View;
-    if VView.SelectedText = '' then
-      VQueryString := VView.AsString
+    if FItemView.SelectedText = '' then
+      VQueryString := FItemView.AsString
     else
       VQueryString := '';
-    Owner.UpdateReferences(VQueryString);
+    (Owner as TPressMVPPointerPresenter).UpdateReferences(VQueryString);
   end;
 end;
 
@@ -478,13 +463,13 @@ end;
 class function TPressMVPChangeModelInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
-  Result := APresenter.View is TPressMVPWinView;
+  Result := PressSupports(APresenter.View, IPressMVPWinView);
 end;
 
 procedure TPressMVPChangeModelInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View,
+  Notifier.AddNotificationItem(Owner.View.Instance,
    [TPressMVPViewEnterEvent, TPressMVPViewExitEvent]);
 end;
 
@@ -513,7 +498,7 @@ begin
   try
     { TODO : Test behavior with exceptions from ModelUpdate event }
     //try
-    if View.IsChanged then
+    if Owner.View.IsChanged then
       InternalUpdateModel;
     //except
     //  on E: Exception do
@@ -522,27 +507,23 @@ begin
     //end;
     Owner.View.Update;
   except
-    if Owner.View is TPressMVPWinView then
+    if Assigned(FWinView) then
     begin
-      Owner.View.DisableEvents;
+      FWinView.DisableEvents;
       try
-        TPressMVPWinView(Owner.View).SetFocus;
+        FWinView.SetFocus;
       finally
-        Owner.View.EnableEvents;
+        FWinView.EnableEvents;
       end;
     end;
     raise;
   end;
 end;
 
-function TPressMVPUpdaterInteractor.GetModel: TPressMVPAttributeModel;
+procedure TPressMVPUpdaterInteractor.InitInteractor;
 begin
-  Result := Owner.Model as TPressMVPAttributeModel;
-end;
-
-function TPressMVPUpdaterInteractor.GetView: TPressMVPAttributeView;
-begin
-  Result := Owner.View as TPressMVPAttributeView;
+  inherited;
+  Supports(Owner.View, IPressMVPWinView, FWinView);
 end;
 
 procedure TPressMVPUpdaterInteractor.Notify(AEvent: TPressEvent);
@@ -557,7 +538,7 @@ end;
 procedure TPressMVPExitUpdaterInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewExitEvent]);
+  Notifier.AddNotificationItem(Owner.View.Instance, [TPressMVPViewExitEvent]);
   Notifier.AddNotificationItem(Owner.Model, [TPressMVPModelUpdateDataEvent]);
 end;
 
@@ -566,12 +547,18 @@ end;
 class function TPressMVPEditUpdaterInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
-  Result := APresenter.View is TPressMVPEditView;
+  Result := PressSupports(APresenter.View, IPressMVPEditView);
+end;
+
+procedure TPressMVPEditUpdaterInteractor.InitInteractor;
+begin
+  inherited;
+  PressAsIntf(Owner.View, IPressMVPEditView, FEditView);
 end;
 
 procedure TPressMVPEditUpdaterInteractor.InternalUpdateModel;
 begin
-  Model.Subject.AsString := View.AsString;
+  (Owner.Model.Subject as TPressAttribute).AsString := FEditView.AsString;
 end;
 
 { TPressMVPDateTimeUpdaterInteractor }
@@ -579,36 +566,38 @@ end;
 class function TPressMVPDateTimeUpdaterInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
-  Result := APresenter.View is TPressMVPDateTimeView;
+  Result := PressSupports(APresenter.View, IPressMVPDateTimeView);
+end;
+
+procedure TPressMVPDateTimeUpdaterInteractor.InitInteractor;
+begin
+  inherited;
+  PressAsIntf(Owner.View, IPressMVPDateTimeView, FDateTimeView);
 end;
 
 procedure TPressMVPDateTimeUpdaterInteractor.InternalUpdateModel;
 begin
-  Model.Subject.AsDateTime := (View as TPressMVPDateTimeView).AsDateTime;
+  (Owner.Model.Subject as TPressAttribute).AsDateTime := FDateTimeView.AsDateTime;
 end;
 
 { TPressMVPPointerUpdaterInteractor }
 
-function TPressMVPPointerUpdaterInteractor.GetOwner: TPressMVPPointerPresenter;
-begin
-  Result := inherited Owner as TPressMVPPointerPresenter;
-end;
-
 procedure TPressMVPPointerUpdaterInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewSelectEvent]);
+  PressAsIntf(Owner.View, IPressMVPAttributeView, FAttrView);
+  Notifier.AddNotificationItem(FAttrView.Instance, [TPressMVPViewSelectEvent]);
 end;
 
 procedure TPressMVPPointerUpdaterInteractor.InternalUpdateModel;
 var
   VIndex: Integer;
 begin
-  if View.AsString = '' then
-    Model.Subject.Clear
+  if FAttrView.AsString = '' then
+    (Owner.Model.Subject as TPressAttribute).Clear
   else
   begin
-    VIndex := View.AsInteger;
+    VIndex := FAttrView.AsInteger;
     if (VIndex = -1) and (InternalReferenceCount = 1) then
       VIndex := 0;
     if VIndex >= 0 then
@@ -621,24 +610,21 @@ end;
 class function TPressMVPEnumUpdaterInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
-  Result := APresenter is TPressMVPEnumPresenter and
-   (APresenter.View is TPressMVPItemView);
+  Result := (APresenter is TPressMVPEnumPresenter) and
+   PressSupports(APresenter.View, IPressMVPItemView);
 end;
 
-function TPressMVPEnumUpdaterInteractor.GetOwner: TPressMVPEnumPresenter;
+procedure TPressMVPEnumUpdaterInteractor.InternalAssignSubject(VIndex: Integer);
+var
+  VModel: TPressMVPEnumModel;
 begin
-  Result := inherited Owner as TPressMVPEnumPresenter;
-end;
-
-procedure TPressMVPEnumUpdaterInteractor.InternalAssignSubject(
-  VIndex: Integer);
-begin
-  Model.Subject.AsInteger := Owner.Model.EnumOf(VIndex);
+  VModel := Owner.Model as TPressMVPEnumModel;
+  VModel.Subject.AsInteger := VModel.EnumOf(VIndex);
 end;
 
 function TPressMVPEnumUpdaterInteractor.InternalReferenceCount: Integer;
 begin
-  Result := Owner.Model.EnumValueCount;
+  Result := (Owner.Model as TPressMVPEnumModel).EnumValueCount;
 end;
 
 { TPressMVPReferenceUpdaterInteractor }
@@ -646,24 +632,22 @@ end;
 class function TPressMVPReferenceUpdaterInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
-  Result := APresenter is TPressMVPReferencePresenter and
-   (APresenter.View is TPressMVPItemView);
-end;
-
-function TPressMVPReferenceUpdaterInteractor.GetOwner: TPressMVPReferencePresenter;
-begin
-  Result := inherited Owner as TPressMVPReferencePresenter;
+  Result := (APresenter is TPressMVPReferencePresenter) and
+   PressSupports(APresenter.View, IPressMVPItemView);
 end;
 
 procedure TPressMVPReferenceUpdaterInteractor.InternalAssignSubject(
   VIndex: Integer);
+var
+  VModel: TPressMVPReferenceModel;
 begin
-  (Model.Subject as TPressReference).PubValue := Owner.Model.ObjectOf(VIndex);
+  VModel := Owner.Model as TPressMVPReferenceModel;
+  VModel.Subject.PubValue := VModel.ObjectOf(VIndex);
 end;
 
 function TPressMVPReferenceUpdaterInteractor.InternalReferenceCount: Integer;
 begin
-  Result := Owner.Model.Query.Count;
+  Result := (Owner.Model as TPressMVPReferenceModel).Query.Count;
 end;
 
 { TPressMVPClickUpdaterInteractor }
@@ -671,7 +655,7 @@ end;
 procedure TPressMVPClickUpdaterInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewClickEvent]);
+  Notifier.AddNotificationItem(Owner.View.Instance, [TPressMVPViewClickEvent]);
 end;
 
 { TPressMVPBooleanUpdaterInteractor }
@@ -679,15 +663,21 @@ end;
 class function TPressMVPBooleanUpdaterInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
-  Result := APresenter.View is TPressMVPBooleanView;
+  Result := PressSupports(APresenter.View, IPressMVPBooleanView);
+end;
+
+procedure TPressMVPBooleanUpdaterInteractor.InitInteractor;
+begin
+  inherited;
+  PressAsIntf(Owner.View, IPressMVPBooleanView, FBooleanView);
 end;
 
 procedure TPressMVPBooleanUpdaterInteractor.InternalUpdateModel;
 begin
-  if View.IsClear then
-    Model.Subject.Clear
+  if FBooleanView.IsClear then
+    (Owner.Model.Subject as TPressAttribute).Clear
   else
-    Model.Subject.AsBoolean := View.AsBoolean;
+    (Owner.Model.Subject as TPressAttribute).AsBoolean := FBooleanView.AsBoolean;
 end;
 
 { TPressMVPDblClickSelectableInteractor }
@@ -704,14 +694,14 @@ begin
   FCommand := Owner.Model.FindCommand(TPressMVPAssignSelectionCommand);
   if not Assigned(FCommand) then
     FCommand := Owner.Model.RegisterCommand(TPressMVPEditItemCommand);
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewDblClickEvent]);
+  Notifier.AddNotificationItem(Owner.View.Instance, [TPressMVPViewDblClickEvent]);
 end;
 
 procedure TPressMVPDblClickSelectableInteractor.Notify(AEvent: TPressEvent);
 begin
   inherited;
   if not (Owner.Model is TPressMVPReferencesModel) or
-   TPressMVPReferencesModel(Owner.Model).CanEditObject then  
+   TPressMVPReferencesModel(Owner.Model).CanEditObject then
     FCommand.Execute;
 end;
 
@@ -723,15 +713,10 @@ begin
   Result := APresenter is TPressMVPValuePresenter;
 end;
 
-function TPressMVPEditableInteractor.GetOwner: TPressMVPValuePresenter;
-begin
-  Result := inherited Owner as TPressMVPValuePresenter;
-end;
-
 procedure TPressMVPEditableInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewKeyPressEvent]);
+  Notifier.AddNotificationItem(Owner.View.Instance, [TPressMVPViewKeyPressEvent]);
 end;
 
 { TPressMVPNumericInteractor }
@@ -739,6 +724,7 @@ end;
 procedure TPressMVPNumericInteractor.InitInteractor;
 begin
   inherited;
+  PressAsIntf(Owner.View, IPressMVPAttributeView, FAttrView);
   AcceptDecimal := True;
   AcceptNegative := True;
 end;
@@ -753,12 +739,12 @@ begin
     VKey := TPressMVPViewKeyPressEvent(AEvent).Key;
     if VKey = DecimalSeparator then
     begin
-      if not AcceptDecimal or (Pos(DecimalSeparator, Owner.View.AsString) > 0) then
+      if not AcceptDecimal or (Pos(DecimalSeparator, FAttrView.AsString) > 0) then
         VKey := #0;
     end else if VKey = '-' then
     begin
       { TODO : Fix "-" interaction }
-      if not AcceptNegative or (Pos('-', Owner.View.AsString) > 0) then
+      if not AcceptNegative or (Pos('-', FAttrView.AsString) > 0) then
         VKey := #0;
     end else if not (VKey in [#8, '0'..'9']) then
       VKey := #0;
@@ -842,8 +828,7 @@ begin
 end;
 
 procedure TPressMVPDrawComboBoxInteractor.DrawItem(
-  Sender: TPressMVPView; ACanvas: TCanvas; AIndex: Integer;
-  ARect: TRect; State: TOwnerDrawState);
+  ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState);
 begin
   DrawTextRect(ACanvas, ARect, 2,
    Owner.Model.DisplayText(0, AIndex), Owner.Model.TextAlignment(0));
@@ -852,7 +837,7 @@ end;
 procedure TPressMVPDrawComboBoxInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewDrawItemEvent]);
+  Notifier.AddNotificationItem(Owner.View.Instance, [TPressMVPViewDrawItemEvent]);
 end;
 
 procedure TPressMVPDrawComboBoxInteractor.Notify(AEvent: TPressEvent);
@@ -860,7 +845,7 @@ begin
   inherited;
   if AEvent is TPressMVPViewDrawItemEvent then
     with TPressMVPViewDrawItemEvent(AEvent) do
-      DrawItem(Owner, Canvas, ItemIndex, Rect, State);
+      DrawItem(Canvas, ItemIndex, Rect, State);
 end;
 
 { TPressMVPDrawItemsInteractor }
@@ -893,12 +878,11 @@ end;
 class function TPressMVPDrawListBoxInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
-  Result := APresenter.View is TPressMVPListBoxView;
+  Result := PressSupports(APresenter.View, IPressMVPListBoxView);
 end;
 
 procedure TPressMVPDrawListBoxInteractor.DrawItem(
-  Sender: TPressMVPView; ACanvas: TCanvas; AIndex: Integer;
-  ARect: TRect; State: TOwnerDrawState);
+  ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState);
 var
   VModel: TPressMVPItemsModel;
 begin
@@ -918,7 +902,7 @@ end;
 procedure TPressMVPDrawListBoxInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewDrawItemEvent]);
+  Notifier.AddNotificationItem(Owner.View.Instance, [TPressMVPViewDrawItemEvent]);
 end;
 
 procedure TPressMVPDrawListBoxInteractor.Notify(AEvent: TPressEvent);
@@ -926,7 +910,7 @@ begin
   inherited;
   if AEvent is TPressMVPViewDrawItemEvent then
     with TPressMVPViewDrawItemEvent(AEvent) do
-      DrawItem(Owner, Canvas, ItemIndex, Rect, State);
+      DrawItem(Canvas, ItemIndex, Rect, State);
 end;
 
 { TPressMVPDrawGridInteractor }
@@ -934,11 +918,10 @@ end;
 class function TPressMVPDrawGridInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
-  Result := APresenter.View is TPressMVPGridView;
+  Result := PressSupports(APresenter.View, IPressMVPGridView);
 end;
 
-procedure TPressMVPDrawGridInteractor.DrawCell(
-  Sender: TPressMVPGridView; ACanvas: TCanvas;
+procedure TPressMVPDrawGridInteractor.DrawCell(ACanvas: TCanvas;
   ACol, ARow: Integer; ARect: TRect; State: TGridDrawState);
 var
   VModel: TPressMVPItemsModel;
@@ -951,12 +934,12 @@ begin
     if (ARow = -1) or (VModel.Count = 0) then
       VText := ''
     else
-      VText := InttoStr(VModel.ItemNumber(ARow));
+      VText := IntToStr(VModel.ItemNumber(ARow));
     VAlignment := taRightJustify;
   end else if ARow = -1 then
     with VModel.ColumnData[ACol] do
     begin
-      if Owner.View.AccessMode <> amInvisible then
+      if FGridView.AccessMode <> amInvisible then
         VText := HeaderCaption
       else
         VText := '';
@@ -964,7 +947,7 @@ begin
     end
   else
   begin
-    if (Owner.View.AccessMode <> amInvisible) and (ARow < VModel.Count) then
+    if (FGridView.AccessMode <> amInvisible) and (ARow < VModel.Count) then
       VText := VModel.DisplayText(ACol, ARow)
     else
       VText := '';
@@ -980,7 +963,8 @@ end;
 procedure TPressMVPDrawGridInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewDrawCellEvent]);
+  PressAsIntf(Owner.View, IPressMVPGridView, FGridView);
+  Notifier.AddNotificationItem(FGridView.Instance, [TPressMVPViewDrawCellEvent]);
 end;
 
 procedure TPressMVPDrawGridInteractor.Notify(AEvent: TPressEvent);
@@ -988,7 +972,7 @@ begin
   inherited;
   if AEvent is TPressMVPViewDrawCellEvent then
     with TPressMVPViewDrawCellEvent(AEvent) do
-      DrawCell(Owner, Canvas, Col, Row, Rect, State);
+      DrawCell(Canvas, Col, Row, Rect, State);
 end;
 
 { TPressMVPSelectItemInteractor }
@@ -996,21 +980,17 @@ end;
 class function TPressMVPSelectItemInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
-  Result := APresenter.View is TPressMVPItemsView;
-end;
-
-function TPressMVPSelectItemInteractor.GetOwner: TPressMVPItemsPresenter;
-begin
-  Result := inherited Owner as TPressMVPItemsPresenter;
+  Result := PressSupports(APresenter.View, IPressMVPItemsView);
 end;
 
 procedure TPressMVPSelectItemInteractor.InitInteractor;
 begin
   inherited;
+  PressAsIntf(Owner.View, IPressMVPItemsView, FItemsView);
   Notifier.AddNotificationItem(
    Owner.Model.Selection, [TPressMVPSelectionChangedEvent]);
   Notifier.AddNotificationItem(
-   Owner.View, [TPressMVPViewClickEvent]);
+   FItemsView.Instance, [TPressMVPViewClickEvent]);
 end;
 
 procedure TPressMVPSelectItemInteractor.Notify(AEvent: TPressEvent);
@@ -1019,18 +999,21 @@ begin
   if AEvent is TPressMVPSelectionChangedEvent then
   begin
     UpdateSelectedItem;
-    Owner.View.Update;
+    FItemsView.Update;
   end else if AEvent is TPressMVPViewClickEvent then
-    SelectItem(Owner.View.CurrentItem);
+    SelectItem(FItemsView.CurrentItem);
 end;
 
 procedure TPressMVPSelectItemInteractor.SelectItem(AIndex: Integer);
+var
+  VModel: TPressMVPItemsModel;
 begin
-  if Owner.Model.Count > 0 then
+  VModel := Owner.Model as TPressMVPItemsModel;
+  if VModel.Count > 0 then
   begin
     Notifier.DisableEvents;
     try
-      Owner.Model.Selection.Focus := Owner.Model[AIndex];
+      VModel.Selection.Focus := VModel[AIndex];
     finally
       Notifier.EnableEvents;
     end;
@@ -1044,8 +1027,8 @@ var
   VCurrentItem: Integer;
   VIndex: Integer;
 begin
-  VModel := Owner.Model;
-  VCurrentItem := Owner.View.CurrentItem;
+  VModel := Owner.Model as TPressMVPItemsModel;
+  VCurrentItem := FItemsView.CurrentItem;
   Notifier.DisableEvents;
   try
     if VCurrentItem < VModel.Count then
@@ -1057,7 +1040,7 @@ begin
     else
       VIndex := Pred(VModel.Count);
     if VIndex >= 0 then
-      Owner.View.SelectItem(VIndex);
+      FItemsView.SelectItem(VIndex);
   finally
     Notifier.EnableEvents;
   end;
@@ -1069,10 +1052,10 @@ class function TPressMVPSortItemsInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
   Result := (APresenter.Model is TPressMVPItemsModel) and
-   (APresenter.View is TPressMVPGridView);
+   PressSupports(APresenter.View, IPressMVPGridView);
 end;
 
-procedure TPressMVPSortItemsInteractor.ClickHeader(AOwner: TPressMVPView;
+procedure TPressMVPSortItemsInteractor.ClickHeader(
   AButton: TMouseButton; AShiftState: TShiftState; ACol: Integer);
 begin
   (Owner.Model as TPressMVPItemsModel).Reindex(ACol);
@@ -1081,7 +1064,7 @@ end;
 procedure TPressMVPSortItemsInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewClickHeaderEvent]);
+  Notifier.AddNotificationItem(Owner.View.Instance, [TPressMVPViewClickHeaderEvent]);
 end;
 
 procedure TPressMVPSortItemsInteractor.Notify(AEvent: TPressEvent);
@@ -1089,7 +1072,7 @@ begin
   inherited;
   if AEvent is TPressMVPViewClickHeaderEvent then
     with TPressMVPViewClickHeaderEvent(AEvent) do
-      ClickHeader(Owner, Button, ShiftState, Col);
+      ClickHeader(Button, ShiftState, Col);
 end;
 
 { TPressMVPCreateFormInteractor }
@@ -1137,6 +1120,7 @@ end;
 procedure TPressMVPCreateIncludeFormInteractor.InitInteractor;
 begin
   inherited;
+  PressAsIntf(Owner.View, IPressMVPAttributeView, FAttrView);
   Notifier.AddNotificationItem(Owner.Model,
    [TPressMVPModelCreateIncludeFormEvent]);
 end;
@@ -1156,7 +1140,7 @@ begin
       VModel := Model;
       VAttribute := VObject.FindAttribute(VModel.DisplayNames);
       if VAttribute is TPressString then
-        VAttribute.AsString := (Owner.View as TPressMVPAttributeView).AsString;
+        VAttribute.AsString := FAttrView.AsString;
       VModel.Subject.AssignObject(VObject);
     end;
   end;
@@ -1233,7 +1217,7 @@ end;
 procedure TPressMVPCloseFormInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.View, [TPressMVPViewCloseFormEvent]);
+  Notifier.AddNotificationItem(Owner.View.Instance, [TPressMVPViewCloseFormEvent]);
   Notifier.AddNotificationItem(Owner.Model, [TPressMVPModelCloseFormEvent]);
 end;
 

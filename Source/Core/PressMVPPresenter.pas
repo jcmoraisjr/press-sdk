@@ -90,7 +90,8 @@ type
     FIsInitializing: Boolean;
     FModel: TPressMVPModel;
     FParent: TPressMVPFormPresenter;
-    FView: TPressMVPView;
+    FParentView: IPressMVPFormView;
+    FView: IPressMVPView;
     procedure AfterChangeCommandMenu;
     procedure AfterChangeModel;
     procedure AfterChangeView;
@@ -102,7 +103,7 @@ type
     function GetInteractors: TPressMVPInteractorList;
     procedure SetCommandMenu(Value: TPressMVPCommandMenu);
     procedure SetModel(Value: TPressMVPModel);
-    procedure SetView(Value: TPressMVPView);
+    procedure SetView(const Value: IPressMVPView);
     procedure UpdateCommandMenu;
   protected
     procedure AfterInitInteractors; virtual;
@@ -112,14 +113,14 @@ type
     property CommandMenu: TPressMVPCommandMenu read FCommandMenu write SetCommandMenu;
     property Interactors: TPressMVPInteractorList read GetInteractors;
   public
-    constructor Create(AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; AView: TPressMVPView); virtual;
-    class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; virtual; abstract;
+    constructor Create(AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; const AView: IPressMVPView); virtual;
+    class function Apply(AModel: TPressMVPModel; const AView: IPressMVPView): Boolean; virtual; abstract;
     function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; virtual;
     function BindPresenter(APresenterClass: TPressMVPFormPresenterClass; const AComponentName: ShortString): TPressMVPCommand; virtual;
     class procedure RegisterPresenter;
     property Model: TPressMVPModel read FModel;
     property Parent: TPressMVPFormPresenter read FParent;
-    property View: TPressMVPView read FView;
+    property View: IPressMVPView read FView;
   end;
 
   TPressMVPPresenterIterator = class;
@@ -147,7 +148,7 @@ type
 
   TPressMVPNullPresenter = class(TPressMVPPresenter)
   public
-    class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
+    class function Apply(AModel: TPressMVPModel; const AView: IPressMVPView): Boolean; override;
   end;
 
   TPressMVPRunPresenterCommand = class(TPressMVPCommand)
@@ -163,25 +164,22 @@ type
   TPressMVPValuePresenter = class(TPressMVPPresenter)
   private
     function GetModel: TPressMVPValueModel;
-    function GetView: TPressMVPAttributeView;
   protected
     procedure InitPresenter; override;
   public
-    class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
+    class function Apply(AModel: TPressMVPModel; const AView: IPressMVPView): Boolean; override;
     property Model: TPressMVPValueModel read GetModel;
-    property View: TPressMVPAttributeView read GetView;
   end;
 
   TPressMVPPointerPresenter = class(TPressMVPPresenter)
-  { TODO : Rename? }
   private
-    function GetView: TPressMVPItemView;
+    FItemView: IPressMVPItemView;
   protected
+    procedure InitPresenter; override;
     function InternalCreateIterator(const ASearchString: string): TPressIterator; virtual; abstract;
     function InternalCurrentItem(AIterator: TPressIterator): string; virtual; abstract;
   public
     function UpdateReferences(const ASearchString: string): Integer;
-    property View: TPressMVPItemView read GetView;
   end;
 
   TPressMVPEnumPresenter = class(TPressMVPPointerPresenter)
@@ -191,7 +189,7 @@ type
     function InternalCreateIterator(const ASearchString: string): TPressIterator; override;
     function InternalCurrentItem(AIterator: TPressIterator): string; override;
   public
-    class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
+    class function Apply(AModel: TPressMVPModel; const AView: IPressMVPView): Boolean; override;
     property Model: TPressMVPEnumModel read GetModel;
   end;
 
@@ -202,18 +200,16 @@ type
     function InternalCreateIterator(const ASearchString: string): TPressIterator; override;
     function InternalCurrentItem(AIterator: TPressIterator): string; override;
   public
-    class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
+    class function Apply(AModel: TPressMVPModel; const AView: IPressMVPView): Boolean; override;
     property Model: TPressMVPReferenceModel read GetModel;
   end;
 
   TPressMVPItemsPresenter = class(TPressMVPPresenter)
   private
     function GetModel: TPressMVPItemsModel;
-    function GetView: TPressMVPItemsView;
   public
-    class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
+    class function Apply(AModel: TPressMVPModel; const AView: IPressMVPView): Boolean; override;
     property Model: TPressMVPItemsModel read GetModel;
-    property View: TPressMVPItemsView read GetView;
   end;
 
   TPressMVPFormPresenterType = (fpNew, fpExisting, fpQuery);
@@ -223,50 +219,46 @@ type
   private
     FAutoDestroy: Boolean;
     FSubPresenters: TPressMVPPresenterList;
+    FFormView: IPressMVPFormView;
     function GetModel: TPressMVPObjectModel;
     function GetSubPresenters: TPressMVPPresenterList;
-    function GetView: TPressMVPFormView;
   protected
     class procedure AssignAccessor(AForm: TCustomForm; const AAccessorName: ShortString; AInstance: Pointer);
     function AttributeByName(const AAttributeName: ShortString): TPressAttribute;
     class function CreateForm(AFormClass: TFormClass; AModel: TPressMVPObjectModel): TForm;
-    function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; AViewClass: TPressMVPViewClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
+    function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
     procedure Finit; override;
     procedure InitPresenter; override;
     function InternalCreateSubModel(ASubject: TPressSubject): TPressMVPModel; virtual;
-    function InternalCreateSubPresenter(AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter; virtual;
-    function InternalCreateSubView(AControl: TControl): TPressMVPView; virtual;
+    function InternalCreateSubPresenter(AModel: TPressMVPModel; const AView: IPressMVPView): TPressMVPPresenter; virtual;
     class function InternalModelClass: TPressMVPObjectModelClass; virtual;
-    class function InternalViewClass: TPressMVPFormViewClass; virtual;
     procedure Running; virtual;
     property SubPresenters: TPressMVPPresenterList read GetSubPresenters;
   public
-    class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
+    class function Apply(AModel: TPressMVPModel; const AView: IPressMVPView): Boolean; override;
     function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; override;
     function BindPresenter(APresenterClass: TPressMVPFormPresenterClass; const AComponentName: ShortString): TPressMVPCommand; override;
     function CreatePresenterIterator: TPressMVPPresenterIterator;
     procedure Refresh;
-    class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil; AViewClass: TPressMVPFormViewClass = nil);
+    class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil);
     class procedure RegisterLCLForm(AFormClass: TFormClass);
     class procedure RegisterVCLForm(AFormClass: TFormClass);
     class function Run(AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
     class function Run(AParent: TPressMVPFormPresenter; AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
     property AutoDestroy: Boolean read FAutoDestroy;
     property Model: TPressMVPObjectModel read GetModel;
-    property View: TPressMVPFormView read GetView;
   end;
 
   TPressMVPQueryPresenter = class(TPressMVPFormPresenter)
   private
     function GetModel: TPressMVPQueryModel;
   protected
-    function CreateQueryItemsPresenter(const AControlName: ShortString; ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; AViewClass: TPressMVPViewClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
+    function CreateQueryItemsPresenter(const AControlName: ShortString; ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
     function InternalQueryItemsDisplayNames: string; virtual;
     function InternalQueryItemsModelClass: TPressMVPModelClass; virtual;
     function InternalQueryItemsPresenterClass: TPressMVPPresenterClass; virtual;
-    function InternalQueryItemsViewClass: TPressMVPViewClass; virtual;
   public
-    class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
+    class function Apply(AModel: TPressMVPModel; const AView: IPressMVPView): Boolean; override;
     property Model: TPressMVPQueryModel read GetModel;
   end;
 
@@ -278,7 +270,7 @@ type
     procedure Finit; override;
   public
     constructor Create; reintroduce; virtual;
-    class function Apply(AModel: TPressMVPModel; AView: TPressMVPView): Boolean; override;
+    class function Apply(AModel: TPressMVPModel; const AView: IPressMVPView): Boolean; override;
     class procedure Initialize;
     class procedure Run;
   end;
@@ -291,13 +283,13 @@ uses
   PressApplication,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressConsts,
+  PressUtils,
   PressMVPFactory,
   PressMVPCommand,
   PressMVPInteractor;  // initializing default interactors
 
 type
   TPressMVPPresenterModelFriend = class(TPressMVPModel);
-  TPressMVPPresenterViewFriend = class(TPressMVPView);
 
 var
   _PressMVPMainPresenter: TPressMVPMainFormPresenter;
@@ -388,7 +380,7 @@ begin
   if Assigned(FCommandMenu) then
   begin
     if Assigned(FView) then
-      FCommandMenu.AssignMenu(FView.Control);
+      FCommandMenu.AssignMenu(FView.Handle);
     if not FIsInitializing then
       UpdateCommandMenu;
   end;
@@ -400,7 +392,7 @@ begin
   begin
     if Assigned(FView) then
     begin
-      TPressMVPPresenterViewFriend(FView).SetModel(FModel);
+      FView.SetModel(FModel);
       FModel.Changed(ctDisplay);
     end;
     if not FIsInitializing then
@@ -413,10 +405,10 @@ begin
   if Assigned(FView) then
   begin
     if Assigned(FCommandMenu) then
-      FCommandMenu.AssignMenu(FView.Control);
+      FCommandMenu.AssignMenu(FView.Handle);
     if Assigned(FModel) then
     begin
-      TPressMVPPresenterViewFriend(FView).SetModel(FModel);
+      FView.SetModel(FModel);
       FModel.Changed(ctDisplay);
     end;
   end;
@@ -442,7 +434,7 @@ begin
   if Assigned(FModel) then
   begin
     if Assigned(FView) then
-      TPressMVPPresenterViewFriend(FView).SetModel(nil);
+      FView.SetModel(nil);
     if Assigned(FCommandMenu) then
       FCommandMenu.UnassignCommands;
     FreeAndNil(FModel);
@@ -456,8 +448,8 @@ begin
     if Assigned(FCommandMenu) then
       FCommandMenu.AssignMenu(nil);
     if Assigned(FModel) then
-      TPressMVPPresenterViewFriend(FView).SetModel(nil);
-    FreeAndNil(FView);
+      FView.SetModel(nil);
+    FView := nil;
   end;
 end;
 
@@ -466,9 +458,9 @@ function TPressMVPPresenter.BindCommand(ACommandClass: TPressMVPCommandClass;
 var
   VComponent: TComponent;
 begin
-  if not Assigned(FParent) then
+  if not Assigned(FParentView) then
     raise EPressMVPError.CreateFmt(SUnassignedPresenterParent, [ClassName]);
-  VComponent := FParent.View.ComponentByName(AComponentName);
+  VComponent := FParentView.ComponentByName(AComponentName);
   if not Assigned(ACommandClass) then
     ACommandClass := TPressMVPNullCommand;
   Result := Model.RegisterCommand(ACommandClass);
@@ -481,17 +473,17 @@ function TPressMVPPresenter.BindPresenter(
 var
   VComponent: TComponent;
 begin
-  if not Assigned(FParent) then
+  if not Assigned(FParentView) then
     raise EPressMVPError.CreateFmt(SUnassignedPresenterParent, [ClassName]);
-  VComponent := FParent.View.ComponentByName(AComponentName);
+  VComponent := FParentView.ComponentByName(AComponentName);
   Result := TPressMVPRunPresenterCommand.Create(Model, APresenterClass);
   Model.AddCommandInstance(Result);
   Result.AddComponent(VComponent);
   Result.EnabledIfNoUser := True;
 end;
 
-constructor TPressMVPPresenter.Create(
-  AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; AView: TPressMVPView);
+constructor TPressMVPPresenter.Create(AParent: TPressMVPFormPresenter;
+  AModel: TPressMVPModel; const AView: IPressMVPView);
 begin
   CheckClass(Apply(AModel, AView));
   FIsInitializing := True;
@@ -547,6 +539,8 @@ end;
 
 procedure TPressMVPPresenter.InitPresenter;
 begin
+  if Assigned(FParent) then
+    PressAsIntf(FParent.View, IPressMVPFormView, FParentView);
 end;
 
 function TPressMVPPresenter.InternalCreateCommandMenu: TPressMVPCommandMenu;
@@ -579,7 +573,7 @@ begin
   end;
 end;
 
-procedure TPressMVPPresenter.SetView(Value: TPressMVPView);
+procedure TPressMVPPresenter.SetView(const Value: IPressMVPView);
 begin
   if FView <> Value then
   begin
@@ -642,7 +636,7 @@ end;
 { TPressMVPNullPresenter }
 
 class function TPressMVPNullPresenter.Apply(AModel: TPressMVPModel;
-  AView: TPressMVPView): Boolean;
+  const AView: IPressMVPView): Boolean;
 begin
   Result := AModel is TPressMVPNullModel;
 end;
@@ -671,12 +665,12 @@ end;
 { TPressMVPValuePresenter }
 
 class function TPressMVPValuePresenter.Apply(AModel: TPressMVPModel;
-  AView: TPressMVPView): Boolean;
+  const AView: IPressMVPView): Boolean;
 begin
   { TODO : Improve factory - asap! }
   Result := (AModel is TPressMVPValueModel) and
-   (AView is TPressMVPAttributeView) and
-   not (AView is TPressMVPItemView);
+   PressSupports(AView,  IPressMVPAttributeView) and
+   not PressSupports(AView, IPressMVPItemView);
 end;
 
 function TPressMVPValuePresenter.GetModel: TPressMVPValueModel;
@@ -684,23 +678,21 @@ begin
   Result := inherited Model as TPressMVPValueModel;
 end;
 
-function TPressMVPValuePresenter.GetView: TPressMVPAttributeView;
-begin
-  Result := inherited View as TPressMVPAttributeView;
-end;
-
 procedure TPressMVPValuePresenter.InitPresenter;
+var
+  VView: IPressMVPAttributeView;
 begin
   inherited;
-  if Model.HasSubject then
-    View.Size := Model.Subject.Metadata.Size;
+  if Model.HasSubject and Supports(View, IPressMVPAttributeView, VView) then
+    VView.Size := Model.Subject.Metadata.Size;
 end;
 
 { TPressMVPPointerPresenter }
 
-function TPressMVPPointerPresenter.GetView: TPressMVPItemView;
+procedure TPressMVPPointerPresenter.InitPresenter;
 begin
-  Result := inherited View as TPressMVPItemView;
+  inherited;
+  PressAsIntf(View, IPressMVPItemView, FItemView);
 end;
 
 function TPressMVPPointerPresenter.UpdateReferences(
@@ -708,14 +700,14 @@ function TPressMVPPointerPresenter.UpdateReferences(
 var
   VIterator: TPressIterator;
 begin
-  View.ClearReferences;
+  FItemView.ClearReferences;
   VIterator := InternalCreateIterator(ASearchString);
   with VIterator do
   try
     Result := Count;
     BeforeFirstItem;
     while NextItem do
-      View.AddReference(InternalCurrentItem(VIterator));
+      FItemView.AddReference(InternalCurrentItem(VIterator));
   finally
     Free;
   end;
@@ -724,10 +716,10 @@ end;
 { TPressMVPEnumPresenter }
 
 class function TPressMVPEnumPresenter.Apply(AModel: TPressMVPModel;
-  AView: TPressMVPView): Boolean;
+  const AView: IPressMVPView): Boolean;
 begin
   Result := (AModel is TPressMVPEnumModel) and
-   (AView is TPressMVPItemView);
+   PressSupports(AView, IPressMVPItemView);
 end;
 
 function TPressMVPEnumPresenter.GetModel: TPressMVPEnumModel;
@@ -750,10 +742,10 @@ end;
 { TPressMVPReferencePresenter }
 
 class function TPressMVPReferencePresenter.Apply(AModel: TPressMVPModel;
-  AView: TPressMVPView): Boolean;
+  const AView: IPressMVPView): Boolean;
 begin
   Result := (AModel is TPressMVPReferenceModel) and
-   (AView is TPressMVPItemView);
+   PressSupports(AView, IPressMVPItemView);
 end;
 
 function TPressMVPReferencePresenter.GetModel: TPressMVPReferenceModel;
@@ -776,9 +768,10 @@ end;
 { TPressMVPItemsPresenter }
 
 class function TPressMVPItemsPresenter.Apply(AModel: TPressMVPModel;
-  AView: TPressMVPView): Boolean;
+  const AView: IPressMVPView): Boolean;
 begin
-  Result := (AModel is TPressMVPItemsModel) and (AView is TPressMVPItemsView);
+  Result := (AModel is TPressMVPItemsModel) and
+   PressSupports(AView, IPressMVPItemsView);
 end;
 
 function TPressMVPItemsPresenter.GetModel: TPressMVPItemsModel;
@@ -786,18 +779,14 @@ begin
   Result := inherited Model as TPressMVPItemsModel;
 end;
 
-function TPressMVPItemsPresenter.GetView: TPressMVPItemsView;
-begin
-  Result := inherited View as TPressMVPItemsView;
-end;
-
 { TPressMVPFormPresenter }
 
 class function TPressMVPFormPresenter.Apply(
-  AModel: TPressMVPModel; AView: TPressMVPView): Boolean;
+  AModel: TPressMVPModel; const AView: IPressMVPView): Boolean;
 begin
   Result := (AModel is TPressMVPObjectModel) and
-   not (AModel is TPressMVPQueryModel) and (AView is TPressMVPFormView);
+   not (AModel is TPressMVPQueryModel) and
+   PressSupports(AView, IPressMVPFormView);
 end;
 
 class procedure TPressMVPFormPresenter.AssignAccessor(
@@ -828,7 +817,7 @@ function TPressMVPFormPresenter.BindCommand(
 var
   VComponent: TComponent;
 begin
-  VComponent := View.ComponentByName(AComponentName);
+  VComponent := FFormView.ComponentByName(AComponentName);
   if not Assigned(ACommandClass) then
     ACommandClass := TPressMVPNullCommand;
   Result := Model.RegisterCommand(ACommandClass);
@@ -841,7 +830,7 @@ function TPressMVPFormPresenter.BindPresenter(
 var
   VComponent: TComponent;
 begin
-  VComponent := View.ComponentByName(AComponentName);
+  VComponent := FFormView.ComponentByName(AComponentName);
   Result := TPressMVPRunPresenterCommand.Create(Model, APresenterClass);
   Model.AddCommandInstance(Result);
   Result.AddComponent(VComponent);
@@ -867,19 +856,18 @@ function TPressMVPFormPresenter.CreateSubPresenter(
   const AAttributeName, AControlName: ShortString;
   const ADisplayNames: string;
   AModelClass: TPressMVPModelClass;
-  AViewClass: TPressMVPViewClass;
   APresenterClass: TPressMVPPresenterClass): TPressMVPPresenter;
 var
   VAttribute: TPressAttribute;
   VControl: TControl;
   VModel: TPressMVPModel;
-  VView: TPressMVPView;
+  VView: IPressMVPView;
 begin
   if AAttributeName <> '' then
     VAttribute := AttributeByName(AAttributeName)
   else
     VAttribute := nil;
-  VControl := View.ControlByName(AControlName);
+  VControl := FFormView.ControlByName(AControlName);
   if Assigned(AModelClass) then
     VModel := AModelClass.Create(Model, VAttribute)
   else
@@ -893,10 +881,7 @@ begin
     raise EPressMVPError.CreateFmt(SUnsupportedDisplayNames,
      [VAttribute.ClassName, VAttribute.Owner.ClassName, VAttribute.Name]);
   end;
-  if Assigned(AViewClass) then
-    VView := AViewClass.Create(VControl)
-  else
-    VView := InternalCreateSubView(VControl);
+  VView := PressDefaultMVPFactory.MVPViewFactory(VControl, False);
   if Assigned(APresenterClass) then
     Result := APresenterClass.Create(Self, VModel, VView)
   else
@@ -924,14 +909,10 @@ begin
   Result := FSubPresenters;
 end;
 
-function TPressMVPFormPresenter.GetView: TPressMVPFormView;
-begin
-  Result := inherited View as TPressMVPFormView;
-end;
-
 procedure TPressMVPFormPresenter.InitPresenter;
 begin
   inherited;
+  PressAsIntf(View, IPressMVPFormView, FFormView);
   FAutoDestroy := True;
 end;
 
@@ -942,23 +923,12 @@ begin
 end;
 
 function TPressMVPFormPresenter.InternalCreateSubPresenter(
-  AModel: TPressMVPModel; AView: TPressMVPView): TPressMVPPresenter;
+  AModel: TPressMVPModel; const AView: IPressMVPView): TPressMVPPresenter;
 begin
   Result := PressDefaultMVPFactory.MVPPresenterFactory(Self, AModel, AView);
 end;
 
-function TPressMVPFormPresenter.InternalCreateSubView(
-  AControl: TControl): TPressMVPView;
-begin
-  Result := PressDefaultMVPFactory.MVPViewFactory(AControl, False);
-end;
-
 class function TPressMVPFormPresenter.InternalModelClass: TPressMVPObjectModelClass;
-begin
-  Result := nil;
-end;
-
-class function TPressMVPFormPresenter.InternalViewClass: TPressMVPFormViewClass;
 begin
   Result := nil;
 end;
@@ -980,11 +950,10 @@ end;
 class procedure TPressMVPFormPresenter.RegisterBO(
   AObjectClass: TPressObjectClass;
   AFormPresenterTypes: TPressMVPFormPresenterTypes;
-  AModelClass: TPressMVPObjectModelClass;
-  AViewClass: TPressMVPFormViewClass);
+  AModelClass: TPressMVPObjectModelClass);
 begin
   PressDefaultMVPFactory.RegisterBO(Self, AObjectClass, AFormPresenterTypes,
-   AModelClass, AViewClass);
+   AModelClass);
 end;
 
 class procedure TPressMVPFormPresenter.RegisterLCLForm(AFormClass: TFormClass);
@@ -1011,8 +980,7 @@ var
   VModelClass: TPressMVPObjectModelClass;
   VModel: TPressMVPObjectModel;
   VParentModel: TPressMVPObjectModel;
-  VViewClass: TPressMVPFormViewClass;
-  VView: TPressMVPFormView;
+  VView: IPressMVPFormView;
   VFormClass: TFormClass;
   VObjectClass: TPressObjectClass;
   VIndex: Integer;
@@ -1030,7 +998,6 @@ begin
 
   VObjectClass := VRegForms[VIndex].ObjectClass;
   VModelClass := VRegForms[VIndex].ModelClass;
-  VViewClass := VRegForms[VIndex].ViewClass;
   VObjectIsMissing := not Assigned(AObject);
   if VObjectIsMissing then
   begin
@@ -1060,20 +1027,15 @@ begin
   else if VModel.Session.IsPersistent(AObject) then
     VModel.Session.Load(AObject, True, False);
 
-  if not Assigned(VViewClass) then
-    VViewClass := InternalViewClass;
-  if Assigned(VViewClass) then
-    VView := VViewClass.Create(VFormClass.Create(nil), True)
-  else
-    VView := PressDefaultMVPFactory.MVPViewFactory(
-     CreateForm(VFormClass, VModel), True) as TPressMVPFormView;
-  AssignAccessor(VView.Control, SPressViewAccessorName, VView);
+  PressAsIntf(
+   PressDefaultMVPFactory.MVPViewFactory(CreateForm(VFormClass, VModel), True),
+   IPressMVPFormView, VView);
 
   Result := Create(AParent, VModel, VView);
-  AssignAccessor(VView.Control, SPressPresenterAccessorName, Result);
+  AssignAccessor(VView.Handle as TCustomForm, SPressPresenterAccessorName, Result);
   Result.FAutoDestroy := AAutoDestroy;
   Result.Refresh;
-  Result.View.Control.Show;
+  Result.View.Handle.Show;
   Result.Running;
 end;
 
@@ -1084,28 +1046,26 @@ end;
 { TPressMVPQueryPresenter }
 
 class function TPressMVPQueryPresenter.Apply(
-  AModel: TPressMVPModel; AView: TPressMVPView): Boolean;
+  AModel: TPressMVPModel; const AView: IPressMVPView): Boolean;
 begin
-  Result := (AModel is TPressMVPQueryModel) and (AView is TPressMVPFormView);
+  Result := (AModel is TPressMVPQueryModel) and
+   PressSupports(AView, IPressMVPFormView);
 end;
 
 function TPressMVPQueryPresenter.CreateQueryItemsPresenter(
   const AControlName: ShortString; ADisplayNames: string;
   AModelClass: TPressMVPModelClass;
-  AViewClass: TPressMVPViewClass;
   APresenterClass: TPressMVPPresenterClass): TPressMVPPresenter;
 begin
   if ADisplayNames = '' then
     ADisplayNames := InternalQueryItemsDisplayNames;
   if not Assigned(AModelClass) then
     AModelClass := InternalQueryItemsModelClass;
-  if not Assigned(AViewClass) then
-    AViewClass := InternalQueryItemsViewClass;
   if not Assigned(APresenterClass) then
     APresenterClass := InternalQueryItemsPresenterClass;
   Result := CreateSubPresenter(
    SPressQueryItemsString, AControlName, ADisplayNames,
-   AModelClass, AViewClass, APresenterClass);
+   AModelClass, APresenterClass);
 end;
 
 function TPressMVPQueryPresenter.GetModel: TPressMVPQueryModel;
@@ -1128,15 +1088,10 @@ begin
   Result := nil;
 end;
 
-function TPressMVPQueryPresenter.InternalQueryItemsViewClass: TPressMVPViewClass;
-begin
-  Result := nil;
-end;
-
 { TPressMVPMainFormPresenter }
 
 class function TPressMVPMainFormPresenter.Apply(AModel: TPressMVPModel;
-  AView: TPressMVPView): Boolean;
+  const AView: IPressMVPView): Boolean;
 begin
   Result := True;
 end;
@@ -1145,8 +1100,7 @@ constructor TPressMVPMainFormPresenter.Create;
 var
   VModelClass: TPressMVPObjectModelClass;
   VModel: TPressMVPObjectModel;
-  VViewClass: TPressMVPFormViewClass;
-  VView: TPressMVPFormView;
+  VView: IPressMVPFormView;
   VSubject: TPressObject;
   VIndex: Integer;
   VRegForms: TPressMVPRegisteredFormList;
@@ -1156,7 +1110,6 @@ begin
 
   VSubject := nil;
   VModelClass := nil;
-  VViewClass := nil;
 
   VRegForms := PressDefaultMVPFactory.Forms;
   VIndex := VRegForms.IndexOfPresenterClass(
@@ -1166,7 +1119,6 @@ begin
     if Assigned(VRegForms[VIndex].ObjectClass) then
       VSubject := VRegForms[VIndex].ObjectClass.Create;
     VModelClass := VRegForms[VIndex].ModelClass;
-    VViewClass := VRegForms[VIndex].ViewClass;
   end;
 
   if not Assigned(VModelClass) then
@@ -1179,19 +1131,12 @@ begin
   VModel := VModelClass.Create(nil, VSubject);
   if Assigned(VSubject) then
     VSubject.Release;
-
-  if not Assigned(VViewClass) then
-    VViewClass := InternalViewClass;
-  if Assigned(VViewClass) then
-    VView := VViewClass.Create(Application.MainForm)
-  else
-    VView :=
-     PressDefaultMVPFactory.MVPViewFactory(Application.MainForm) as TPressMVPFormView;
-
+  PressAsIntf(
+   PressDefaultMVPFactory.MVPViewFactory(Application.MainForm),
+   IPressMVPFormView, VView);
   inherited Create(nil, VModel, VView);
   AssignAccessor(Application.MainForm, SPressPresenterAccessorName, Self);
   AssignAccessor(Application.MainForm, SPressModelAccessorName, VModel);
-  AssignAccessor(Application.MainForm, SPressViewAccessorName, VView);
   AssignAccessor(Application.MainForm, SPressSubjectAccessorName, VSubject);
   FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   FNotifier.AddNotificationItem(PressApp, [TPressApplicationEvent]);

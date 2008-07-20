@@ -56,7 +56,6 @@ const
   SPressQueryItemsString = 'QueryItems';
   SPressPresenterAccessorName = '_Presenter';
   SPressModelAccessorName = '_Model';
-  SPressViewAccessorName = '_View';
   SPressSubjectAccessorName = '_Subject';
   SPressUserAdminId = 'admin';
   SPressSessionServiceName = 'Session';
