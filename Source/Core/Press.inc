@@ -30,9 +30,6 @@
 
 (************ Do not change directives below this line ************)
 
-
-{.$DEFINE PressReleaseManagedObjects}
-
 {$IFDEF FPC}
   {$MODE OBJFPC}
   {$DEFINE LCL}  // under fpc, PressMVP supports only lcl framework atm

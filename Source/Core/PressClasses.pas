@@ -82,7 +82,6 @@ type
   public
     destructor Destroy; reintroduce;
     function AddRef: Integer; virtual;
-    procedure AfterConstruction; override;
     procedure FreeInstance; override;
     procedure Lock;
     class function NewInstance: TObject; override;
@@ -91,13 +90,18 @@ type
     property RefCount: Integer read FRefCount;
   end;
 
+  TPressManagedIObject = class(TPressManagedObject)
+  public
+    procedure AfterConstruction; override;
+  end;
+
   IPressHolder = interface(IInterface)
   ['{ADF93AAB-E963-462F-ACE7-D56CCF582C2D}']
     function GetInstance: TObject;
     property Instance: TObject read GetInstance;
   end;
 
-  TPressHolder = class(TPressManagedObject, IPressHolder)
+  TPressHolder = class(TPressManagedIObject, IPressHolder)
   private
     FInstance: TObject;
     function GetInstance: TObject;
@@ -105,7 +109,6 @@ type
     procedure Finit; override;
   public
     constructor Create(AInstance: TObject);
-    procedure AfterConstruction; override;
     property Instance: TObject read FInstance;
   end;
 
@@ -326,14 +329,6 @@ begin
   Result := InterLockedIncrement(FRefCount);
 end;
 
-procedure TPressManagedObject.AfterConstruction;
-begin
-  inherited;
-{$IFDEF PressReleaseManagedObjects}
-  DecLock(FRefCount);
-{$ENDIF PressReleaseManagedObjects}
-end;
-
 destructor TPressManagedObject.Destroy;
 begin
 end;
@@ -419,15 +414,15 @@ begin
     end;
 end;
 
-{ TPressHolder }
+{ TPressManagedIObject }
 
-procedure TPressHolder.AfterConstruction;
+procedure TPressManagedIObject.AfterConstruction;
 begin
   inherited;
-{$IFNDEF PressReleaseManagedObjects}
   InterLockedDecrement(FRefCount);  // friend class
-{$ENDIF PressReleaseManagedObjects}
 end;
+
+{ TPressHolder }
 
 constructor TPressHolder.Create(AInstance: TObject);
 begin
