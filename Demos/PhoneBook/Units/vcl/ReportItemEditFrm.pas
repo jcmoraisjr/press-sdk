@@ -16,11 +16,11 @@ type
 implementation
 
 uses
-  ReportMVP;
+  PressVCLBroker, ReportMVP;
 
 {$R *.DFM}
 
 initialization
-  TReportItemEditPresenter.RegisterVCLForm(TReportItemEditForm);
+  PressVCLForm(TReportItemEditPresenter, TReportItemEditForm);
 
 end.

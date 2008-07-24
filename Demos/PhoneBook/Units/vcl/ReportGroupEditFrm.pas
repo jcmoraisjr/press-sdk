@@ -14,11 +14,11 @@ type
 implementation
 
 uses
-  ReportMVP;
+  PressVCLBroker, ReportMVP;
 
 {$R *.DFM}
 
 initialization
-  TReportGroupEditPresenter.RegisterVCLForm(TReportGroupEditForm);
+  PressVCLForm(TReportGroupEditPresenter, TReportGroupEditForm);
 
 end.

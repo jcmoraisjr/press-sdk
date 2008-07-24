@@ -14,11 +14,11 @@ type
 implementation
 
 uses
-  ContactMVP;
+  PressVCLBroker, ContactMVP;
 
 {$R *.DFM}
 
 initialization
-  TPersonEditPresenter.RegisterVCLForm(TPersonEditForm);
+  PressVCLForm(TPersonEditPresenter, TPersonEditForm);
 
 end.

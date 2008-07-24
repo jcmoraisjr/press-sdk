@@ -16,10 +16,10 @@ type
 implementation
 
 uses
-  ContactMVP;
+  PressLCLBroker, ContactMVP;
 
 initialization
   {$i PersonEditFrm.lrs}
-  TPersonEditPresenter.RegisterLCLForm(TPersonEditForm);
+  PressLCLForm(TPersonEditPresenter, TPersonEditForm);
 
 end.

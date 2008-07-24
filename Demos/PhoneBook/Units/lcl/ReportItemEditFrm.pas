@@ -18,10 +18,10 @@ type
 implementation
 
 uses
-  ReportMVP;
+  PressLCLBroker, ReportMVP;
 
 initialization
   {$i ReportItemEditFrm.lrs}
-  TReportItemEditPresenter.RegisterLCLForm(TReportItemEditForm);
+  PressLCLForm(TReportItemEditPresenter, TReportItemEditForm);
 
 end.

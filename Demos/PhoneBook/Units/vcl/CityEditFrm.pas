@@ -16,11 +16,11 @@ type
 implementation
 
 uses
-  ContactMVP;
+  PressVCLBroker, ContactMVP;
 
 {$R *.DFM}
 
 initialization
-  TCityEditPresenter.RegisterVCLForm(TCityEditForm);
+  PressVCLForm(TCityEditPresenter, TCityEditForm);
 
 end.

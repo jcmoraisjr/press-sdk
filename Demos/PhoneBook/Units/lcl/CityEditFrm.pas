@@ -18,10 +18,10 @@ type
 implementation
 
 uses
-  ContactMVP;
+  PressLCLBroker, ContactMVP;
 
 initialization
   {$i CityEditFrm.lrs}
-  TCityEditPresenter.RegisterLCLForm(TCityEditForm);
+  PressLCLForm(TCityEditPresenter, TCityEditForm);
 
 end.
