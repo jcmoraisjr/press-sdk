@@ -19,9 +19,7 @@ unit PressMVPFactory;
 interface
 
 uses
-  Controls,
   Contnrs,
-  Forms,
   PressClasses,
   PressNotifier,
   PressSubject,
@@ -33,15 +31,15 @@ uses
 type
   TPressMVPRegisteredForm = class(TObject)
   private
-    FFormClass: TFormClass;
+    FFormClass: TClass;
     FFormPresenterTypes: TPressMVPFormPresenterTypes;
     FModelClass: TPressMVPObjectModelClass;
     FObjectClass: TPressObjectClass;
     FPresenterClass: TPressMVPFormPresenterClass;
   public
     constructor Create(APresenterClass: TPressMVPFormPresenterClass);
-    procedure AssignForm(AFormClass: TFormClass);
-    property FormClass: TFormClass read FFormClass;
+    procedure AssignForm(AFormClass: TClass);
+    property FormClass: TClass read FFormClass;
     property FormPresenterTypes: TPressMVPFormPresenterTypes read FFormPresenterTypes;
     property ModelClass: TPressMVPObjectModelClass read FModelClass;
     property ObjectClass: TPressObjectClass read FObjectClass;
@@ -79,12 +77,12 @@ type
   TPressMVPFactory = class(TObject)
   { TODO : Refactor }
   private
+    FForms: TPressMVPRegisteredFormList;
     FInteractors: TClassList;
     FModels: TClassList;
     FNotifier: TPressNotifier;
     FPresenters: TClassList;
     FViews: TClassList;
-    FForms: TPressMVPRegisteredFormList;
     function ChooseConcreteClass(ACandidateClass1, ACandidateClass2: TClass): TClass;
     function ExistSubClasses(AClasses: TClassList; AClass: TClass): Boolean;
     procedure Notify(AEvent: TPressEvent);
@@ -95,13 +93,12 @@ type
     function MVPInteractorFactory(APresenter: TPressMVPPresenter): TPressMVPInteractorClasses;
     function MVPModelFactory(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
     function MVPPresenterFactory(AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; const AView: IPressMVPView): TPressMVPPresenter;
-    function MVPViewFactory(AControl: TControl; AOwnsControl: Boolean = False): IPressMVPView;
+    function MVPViewFactory(AControl: TObject; AOwnsControl: Boolean = False): IPressMVPView;
     procedure RegisterBO(APresenterClass: TPressMVPFormPresenterClass; AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes; AModelClass: TPressMVPObjectModelClass);
     procedure RegisterInteractor(AInteractorClass: TPressMVPInteractorClass);
-    procedure RegisterXCLForm(APresenterClass: TPressMVPFormPresenterClass; AFormClass: TFormClass);
     procedure RegisterModel(AModelClass: TPressMVPModelClass);
     procedure RegisterPresenter(APresenterClass: TPressMVPPresenterClass);
-    procedure RegisterView(AViewClass: TPressMVPViewClass);
+    procedure RegisterView(AViewClass: TPressMVPBaseViewClass);
     property Forms: TPressMVPRegisteredFormList read FForms;
   end;
 
@@ -110,7 +107,8 @@ function PressDefaultMVPFactory: TPressMVPFactory;
 implementation
 
 uses
-  PressConsts;
+  PressConsts,
+  PressMVPWidget;
 
 var
   _MVPFactory: TPressMVPFactory;
@@ -124,7 +122,7 @@ end;
 
 { TPressMVPRegisteredForm }
 
-procedure TPressMVPRegisteredForm.AssignForm(AFormClass: TFormClass);
+procedure TPressMVPRegisteredForm.AssignForm(AFormClass: TClass);
 begin
   FFormClass := AFormClass;
 end;
@@ -385,27 +383,25 @@ begin
   Result := VCandidateClass.Create(AParent, AModel, AView);
 end;
 
-function TPressMVPFactory.MVPViewFactory(AControl: TControl;
+function TPressMVPFactory.MVPViewFactory(AControl: TObject;
   AOwnsControl: Boolean): IPressMVPView;
 var
-  VViewClass, VCandidateClass: TPressMVPViewClass;
+  VViewClass, VCandidateClass: TPressMVPBaseViewClass;
   I: Integer;
 begin
   VCandidateClass := nil;
   for I := 0 to Pred(FViews.Count) do
   begin
-    VViewClass := TPressMVPViewClass(FViews[I]);
+    VViewClass := TPressMVPBaseViewClass(FViews[I]);
     if VViewClass.Apply(AControl) then
-      VCandidateClass := TPressMVPViewClass(
+      VCandidateClass := TPressMVPBaseViewClass(
        ChooseConcreteClass(VCandidateClass, VViewClass));
   end;
   if not Assigned(VCandidateClass) then
     raise EPressMVPError.CreateFmt(SUnsupportedControl,
-     [AControl.ClassName, AControl.Name]);
+     [AControl.ClassName, PressWidget.ControlName(AControl)]);
   Result := VCandidateClass.Create(AControl, AOwnsControl) as IPressMVPView;
-{$ifndef PressReleaseManagedObjects}
   Result._Release;
-{$endif}
 end;
 
 procedure TPressMVPFactory.Notify(AEvent: TPressEvent);
@@ -455,15 +451,9 @@ begin
   FPresenters.Add(APresenterClass);
 end;
 
-procedure TPressMVPFactory.RegisterView(AViewClass: TPressMVPViewClass);
+procedure TPressMVPFactory.RegisterView(AViewClass: TPressMVPBaseViewClass);
 begin
   FViews.Add(AViewClass);
-end;
-
-procedure TPressMVPFactory.RegisterXCLForm(
-  APresenterClass: TPressMVPFormPresenterClass; AFormClass: TFormClass);
-begin
-  Forms.FormOfPresenter(APresenterClass).AssignForm(AFormClass);
 end;
 
 procedure TPressMVPFactory.RemoveSuperClasses(

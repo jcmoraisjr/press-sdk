@@ -19,8 +19,6 @@ unit PressMVPPresenter;
 interface
 
 uses
-  Controls,
-  Forms,
   PressClasses,
   PressNotifier,
   PressSubject,
@@ -223,9 +221,8 @@ type
     function GetModel: TPressMVPObjectModel;
     function GetSubPresenters: TPressMVPPresenterList;
   protected
-    class procedure AssignAccessor(AForm: TCustomForm; const AAccessorName: ShortString; AInstance: Pointer);
+    class procedure AssignAccessor(AFormHandle: TObject; const AAccessorName: ShortString; AInstance: Pointer);
     function AttributeByName(const AAttributeName: ShortString): TPressAttribute;
-    class function CreateForm(AFormClass: TFormClass; AModel: TPressMVPObjectModel): TForm;
     function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
     procedure Finit; override;
     procedure InitPresenter; override;
@@ -241,8 +238,6 @@ type
     function CreatePresenterIterator: TPressMVPPresenterIterator;
     procedure Refresh;
     class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil);
-    class procedure RegisterLCLForm(AFormClass: TFormClass);
-    class procedure RegisterVCLForm(AFormClass: TFormClass);
     class function Run(AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
     class function Run(AParent: TPressMVPFormPresenter; AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
     property AutoDestroy: Boolean read FAutoDestroy;
@@ -279,11 +274,11 @@ implementation
 
 uses
   SysUtils,
-  Classes,
   PressApplication,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressConsts,
   PressUtils,
+  PressMVPWidget,
   PressMVPFactory,
   PressMVPCommand,
   PressMVPInteractor;  // initializing default interactors
@@ -380,7 +375,7 @@ begin
   if Assigned(FCommandMenu) then
   begin
     if Assigned(FView) then
-      FCommandMenu.AssignMenu(FView.Handle);
+      FCommandMenu.AssignMenu(FView.GetHandle);
     if not FIsInitializing then
       UpdateCommandMenu;
   end;
@@ -405,7 +400,7 @@ begin
   if Assigned(FView) then
   begin
     if Assigned(FCommandMenu) then
-      FCommandMenu.AssignMenu(FView.Handle);
+      FCommandMenu.AssignMenu(FView.GetHandle);
     if Assigned(FModel) then
     begin
       FView.SetModel(FModel);
@@ -456,7 +451,7 @@ end;
 function TPressMVPPresenter.BindCommand(ACommandClass: TPressMVPCommandClass;
   const AComponentName: ShortString): TPressMVPCommand;
 var
-  VComponent: TComponent;
+  VComponent: TObject;
 begin
   if not Assigned(FParentView) then
     raise EPressMVPError.CreateFmt(SUnassignedPresenterParent, [ClassName]);
@@ -471,7 +466,7 @@ function TPressMVPPresenter.BindPresenter(
   APresenterClass: TPressMVPFormPresenterClass;
   const AComponentName: ShortString): TPressMVPCommand;
 var
-  VComponent: TComponent;
+  VComponent: TObject;
 begin
   if not Assigned(FParentView) then
     raise EPressMVPError.CreateFmt(SUnassignedPresenterParent, [ClassName]);
@@ -790,11 +785,11 @@ begin
 end;
 
 class procedure TPressMVPFormPresenter.AssignAccessor(
-  AForm: TCustomForm; const AAccessorName: ShortString; AInstance: Pointer);
+  AFormHandle: TObject; const AAccessorName: ShortString; AInstance: Pointer);
 var
   VAccessor: Pointer;
 begin
-  VAccessor := AForm.FieldAddress(AAccessorName);
+  VAccessor := AFormHandle.FieldAddress(AAccessorName);
   if Assigned(VAccessor) then
     Pointer(VAccessor^) := AInstance;
 end;
@@ -815,7 +810,7 @@ function TPressMVPFormPresenter.BindCommand(
   ACommandClass: TPressMVPCommandClass;
   const AComponentName: ShortString): TPressMVPCommand;
 var
-  VComponent: TComponent;
+  VComponent: TObject;
 begin
   VComponent := FFormView.ComponentByName(AComponentName);
   if not Assigned(ACommandClass) then
@@ -828,23 +823,13 @@ function TPressMVPFormPresenter.BindPresenter(
   APresenterClass: TPressMVPFormPresenterClass;
   const AComponentName: ShortString): TPressMVPCommand;
 var
-  VComponent: TComponent;
+  VComponent: TObject;
 begin
   VComponent := FFormView.ComponentByName(AComponentName);
   Result := TPressMVPRunPresenterCommand.Create(Model, APresenterClass);
   Model.AddCommandInstance(Result);
   Result.AddComponent(VComponent);
   Result.EnabledIfNoUser := True;
-end;
-
-class function TPressMVPFormPresenter.CreateForm(
-  AFormClass: TFormClass; AModel: TPressMVPObjectModel): TForm;
-begin
-  Result := TForm(AFormClass.NewInstance);
-  AssignAccessor(Result, SPressModelAccessorName, AModel);
-  if AModel.HasSubject then
-    AssignAccessor(Result, SPressSubjectAccessorName, AModel.Subject);
-  Result.Create(nil);
 end;
 
 function TPressMVPFormPresenter.CreatePresenterIterator: TPressMVPPresenterIterator;
@@ -859,7 +844,7 @@ function TPressMVPFormPresenter.CreateSubPresenter(
   APresenterClass: TPressMVPPresenterClass): TPressMVPPresenter;
 var
   VAttribute: TPressAttribute;
-  VControl: TControl;
+  VComponent: TObject;
   VModel: TPressMVPModel;
   VView: IPressMVPView;
 begin
@@ -867,7 +852,7 @@ begin
     VAttribute := AttributeByName(AAttributeName)
   else
     VAttribute := nil;
-  VControl := FFormView.ControlByName(AControlName);
+  VComponent := FFormView.ComponentByName(AControlName);
   if Assigned(AModelClass) then
     VModel := AModelClass.Create(Model, VAttribute)
   else
@@ -881,7 +866,7 @@ begin
     raise EPressMVPError.CreateFmt(SUnsupportedDisplayNames,
      [VAttribute.ClassName, VAttribute.Owner.ClassName, VAttribute.Name]);
   end;
-  VView := PressDefaultMVPFactory.MVPViewFactory(VControl, False);
+  VView := PressDefaultMVPFactory.MVPViewFactory(VComponent, False);
   if Assigned(APresenterClass) then
     Result := APresenterClass.Create(Self, VModel, VView)
   else
@@ -956,16 +941,6 @@ begin
    AModelClass);
 end;
 
-class procedure TPressMVPFormPresenter.RegisterLCLForm(AFormClass: TFormClass);
-begin
-  PressDefaultMVPFactory.RegisterXCLForm(Self, AFormClass);
-end;
-
-class procedure TPressMVPFormPresenter.RegisterVCLForm(AFormClass: TFormClass);
-begin
-  PressDefaultMVPFactory.RegisterXCLForm(Self, AFormClass);
-end;
-
 class function TPressMVPFormPresenter.Run(
   AObject: TPressObject; AIncluding: Boolean;
   AAutoDestroy: Boolean): TPressMVPFormPresenter;
@@ -981,7 +956,8 @@ var
   VModel: TPressMVPObjectModel;
   VParentModel: TPressMVPObjectModel;
   VView: IPressMVPFormView;
-  VFormClass: TFormClass;
+  VFormClass: TClass;
+  VForm: TObject;
   VObjectClass: TPressObjectClass;
   VIndex: Integer;
   VObjectIsMissing: Boolean;
@@ -1026,16 +1002,18 @@ begin
     AObject.Release
   else if VModel.Session.IsPersistent(AObject) then
     VModel.Session.Load(AObject, True, False);
-
+  VForm := PressWidget.CreateForm(VFormClass);
   PressAsIntf(
-   PressDefaultMVPFactory.MVPViewFactory(CreateForm(VFormClass, VModel), True),
+   PressDefaultMVPFactory.MVPViewFactory(VForm, True),
    IPressMVPFormView, VView);
-
   Result := Create(AParent, VModel, VView);
-  AssignAccessor(VView.Handle as TCustomForm, SPressPresenterAccessorName, Result);
+  AssignAccessor(VForm, SPressModelAccessorName, VModel);
+  if VModel.HasSubject then
+    AssignAccessor(VForm, SPressSubjectAccessorName, VModel.Subject);
+  AssignAccessor(VForm, SPressPresenterAccessorName, Result);
   Result.FAutoDestroy := AAutoDestroy;
   Result.Refresh;
-  Result.View.Handle.Show;
+  PressWidget.ShowForm(VForm, False);
   Result.Running;
 end;
 
@@ -1102,12 +1080,11 @@ var
   VModel: TPressMVPObjectModel;
   VView: IPressMVPFormView;
   VSubject: TPressObject;
+  VMainForm: TObject;
   VIndex: Integer;
   VRegForms: TPressMVPRegisteredFormList;
 begin
-  if not Assigned(Application) or not Assigned(Application.MainForm) then
-    raise EPressError.Create(SUnassignedMainForm);
-
+  VMainForm := PressApp.MainForm;
   VSubject := nil;
   VModelClass := nil;
 
@@ -1132,12 +1109,13 @@ begin
   if Assigned(VSubject) then
     VSubject.Release;
   PressAsIntf(
-   PressDefaultMVPFactory.MVPViewFactory(Application.MainForm),
+   PressDefaultMVPFactory.MVPViewFactory(VMainForm),
    IPressMVPFormView, VView);
   inherited Create(nil, VModel, VView);
-  AssignAccessor(Application.MainForm, SPressPresenterAccessorName, Self);
-  AssignAccessor(Application.MainForm, SPressModelAccessorName, VModel);
-  AssignAccessor(Application.MainForm, SPressSubjectAccessorName, VSubject);
+  AssignAccessor(VMainForm, SPressPresenterAccessorName, Self);
+  AssignAccessor(VMainForm, SPressModelAccessorName, VModel);
+  if Assigned(VSubject) then
+    AssignAccessor(VMainForm, SPressSubjectAccessorName, VSubject);
   FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   FNotifier.AddNotificationItem(PressApp, [TPressApplicationEvent]);
 end;
@@ -1151,15 +1129,14 @@ end;
 class procedure TPressMVPMainFormPresenter.Initialize;
 var
   VIndex: Integer;
-  VRef: TForm;
   VRegForms: TPressMVPRegisteredFormList;
 begin
-  if not Assigned(Application.MainForm) then
+  if not PressApp.HasMainForm then
   begin
     VRegForms := PressDefaultMVPFactory.Forms;
     VIndex := VRegForms.IndexOfPresenterClass(Self);
     if VIndex >= 0 then
-      Application.CreateForm(VRegForms[VIndex].FormClass, VRef)
+      PressWidget.CreateForm(VRegForms[VIndex].FormClass)
     else
       raise EPressError.CreateFmt(SClassNotFound, [ClassName]);
   end;

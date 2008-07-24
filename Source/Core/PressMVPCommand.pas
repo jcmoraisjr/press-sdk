@@ -48,14 +48,14 @@ type
 
   TPressMVPPopupCommandMenu = class(TPressMVPCommandMenu)
   private
-    FControl: TControl;
+    FControl: TObject;
     FMenu: TPopupMenu;
     procedure BindMenu;
     function GetMenu: TPopupMenu;
     procedure ReleaseMenu;
   protected
     procedure InternalAddItem(ACommand: TPressMVPCommand); override;
-    procedure InternalAssignMenu(AControl: TControl); override;
+    procedure InternalAssignMenu(AControl: TObject); override;
     procedure InternalClearMenuItems; override;
   public
     destructor Destroy; override;
@@ -393,7 +393,7 @@ begin
   Menu.Items.Add(TPressMVPMenuItem.Create(Menu, ACommand));
 end;
 
-procedure TPressMVPPopupCommandMenu.InternalAssignMenu(AControl: TControl);
+procedure TPressMVPPopupCommandMenu.InternalAssignMenu(AControl: TObject);
 begin
   if FControl <> AControl then
   begin

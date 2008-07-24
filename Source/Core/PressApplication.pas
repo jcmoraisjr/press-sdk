@@ -256,9 +256,11 @@ type
     procedure ApplicationIdle(Sender: TObject; var Done: Boolean);
     procedure DestroyConfigFile;
     procedure DoneApplication;
+    function GetMainForm: TObject;
     function GetRegistry(AServiceType: TPressServiceType): TPressRegistry;
     procedure Init(AIsStatic: Boolean);
     procedure SetConfigFileName(const Value: string);
+    function GetHasMainForm: Boolean;
   public
     constructor Create;
     destructor Destroy; override;
@@ -271,6 +273,8 @@ type
     procedure Run;
     procedure UnregisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass);
     property ConfigFileName: string read FConfigFileName write SetConfigFileName;
+    property HasMainForm: Boolean read GetHasMainForm;
+    property MainForm: TObject read GetMainForm;
     property Registry[AServiceType: TPressServiceType]: TPressRegistry read GetRegistry;
     property Running: Boolean read FRunning;
     property Services: TPressAppServices read FServices;
@@ -1030,6 +1034,19 @@ end;
 procedure TPressApplication.Finalize;
 begin
   Application.MainForm.Close;
+end;
+
+function TPressApplication.GetHasMainForm: Boolean;
+begin
+  Result := Assigned(Application) and Assigned(Application.MainForm);
+end;
+
+function TPressApplication.GetMainForm: TObject;
+begin
+  { TODO : fix message initialization }
+  if not HasMainForm then
+    raise EPressError.Create(SUnassignedMainForm);
+  Result := Application.MainForm;
 end;
 
 function TPressApplication.GetRegistry(

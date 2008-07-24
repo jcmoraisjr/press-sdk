@@ -60,6 +60,7 @@
   SUnassignedPresenterForm_rst = 'A classe ''%s'' não possui form';
   SUnassignedPresenterParent_rst = 'A classe ''%s'' não possui parent';
   SUnassignedSubject_rst = 'Subject não foi associado';
+  SUnassignedWidgetManager_rst = 'Nenhum widget manager foi registrado';
   SUnexpectedMVPClassParam_rst = 'Classe MVP ''%s'' inicializada com parâmetros inesperados';
   SUnsupportedComponent_rst = 'O componente ''%s'' não é suportado';
   SUnsupportedControl_rst = 'O controle %s(''%s'') não é suportado';
@@ -67,6 +68,7 @@
   SUnsupportedModel_rst = 'Model ''%s'' não é suportado por ''%s''';
   SUnsupportedObject_rst = 'Nenhuma classe ''%s'' suporta objetos ''%s''';
   SViewAccessError_rst = 'Não é possível acessar a view %s(''%s'') como ''%s''';
+  SWidgetManagerAlreadyAssigned_rst = 'Widget manager já foi associado';
 
   // Error messages from the OPF framework
   SAttributeReferencesOwnedClass_rst = '%s(%s) faz referência a ''%s'' que pertence a ''%s''';

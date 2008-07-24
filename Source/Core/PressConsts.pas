@@ -128,13 +128,15 @@ var
   SUnassignedPresenterForm,
   SUnassignedPresenterParent,
   SUnassignedSubject,
+  SUnassignedWidgetManager,
   SUnexpectedMVPClassParam,
   SUnsupportedComponent,
   SUnsupportedControl,
   SUnsupportedDisplayNames,
   SUnsupportedModel,
   SUnsupportedObject,
-  SViewAccessError: string;
+  SViewAccessError,
+  SWidgetManagerAlreadyAssigned: string;
 
   // Error messages from the OPF framework
   SAttributeReferencesOwnedClass,

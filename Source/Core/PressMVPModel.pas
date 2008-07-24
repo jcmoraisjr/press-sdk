@@ -19,8 +19,9 @@ unit PressMVPModel;
 interface
 
 uses
-  Classes,
-  {$IFDEF D6Up}Variants,{$ENDIF}
+{$ifdef d6up}
+  Variants,
+{$endif}
   PressClasses,
   PressNotifier,
   PressSubject,
@@ -196,8 +197,8 @@ type
   { TODO : Collection item }
   private
     FAttributeName: string;
-    FAttributeAlignment: TAlignment;
-    FHeaderAlignment: TAlignment;
+    FAttributeAlignment: TPressAlignment;
+    FHeaderAlignment: TPressAlignment;
     FHeaderCaption: string;
     FOwner: TPressMVPColumnData;
     FWidth: Integer;
@@ -209,8 +210,8 @@ type
     procedure ReadColumnItem(const AColumnItem: string);
   published
     property AttributeName: string read FAttributeName write SetAttributeName;
-    property AttributeAlignment: TAlignment read FAttributeAlignment write FAttributeAlignment;
-    property HeaderAlignment: TAlignment read FHeaderAlignment write FHeaderAlignment;
+    property AttributeAlignment: TPressAlignment read FAttributeAlignment write FAttributeAlignment;
+    property HeaderAlignment: TPressAlignment read FHeaderAlignment write FHeaderAlignment;
     property HeaderCaption: string read FHeaderCaption write FHeaderCaption;
     property Width: Integer read FWidth write SetWidth;
   end;
@@ -332,7 +333,7 @@ type
     function DisplayText(ACol, ARow: Integer): string;
     function ObjectOf(AIndex: Integer): TPressObject;
     function ReferencedValue(AObject: TPressObject): TPressValue;
-    function TextAlignment(ACol: Integer): TAlignment;
+    function TextAlignment(ACol: Integer): TPressAlignment;
     property ObjectClass: TPressObjectClass read GetObjectClass;
     property Query: TPressMVPReferenceQuery read GetQuery;
     property Subject: TPressReference read GetSubject;
@@ -433,7 +434,7 @@ type
     function IndexOf(AObject: TPressObject): Integer;
     function ItemNumber(ARow: Integer): Integer;
     procedure Reindex(AColumn: Integer);
-    function TextAlignment(ACol: Integer): TAlignment;
+    function TextAlignment(ACol: Integer): TPressAlignment;
     property Objects[AIndex: Integer]: TPressObject read GetObjects; default;
     property Subject: TPressItems read GetSubject;
   end;
@@ -519,9 +520,7 @@ type
 implementation
 
 uses
-{$IFDEF BORLAND_CG}{$IFDEF MSWINDOWS}
-  Windows,
-{$ENDIF}{$ENDIF}
+  Classes,
   SysUtils,
   Menus,
   PressConsts,
@@ -879,13 +878,13 @@ begin
     FHeaderCaption := AAttributeName;
   VMetadata := FOwner.Map.MetadataByPath(AAttributeName);
   if VMetadata.AttributeClass.InheritsFrom(TPressBoolean) then
-    FAttributeAlignment := taCenter
+    FAttributeAlignment := alCenter
   else if VMetadata.AttributeClass.InheritsFrom(TPressNumeric) then
-    FAttributeAlignment := taRightJustify
+    FAttributeAlignment := alRight
   else
-    FAttributeAlignment := taLeftJustify;
+    FAttributeAlignment := alLeft;
   Width := 8 * VMetadata.Size;
-  FHeaderAlignment := taCenter;
+  FHeaderAlignment := alCenter;
 end;
 
 procedure TPressMVPColumnItem.ReadColumnItem(const AColumnItem: string);
@@ -1340,7 +1339,7 @@ begin
   Result := TPressValue(VAttribute);
 end;
 
-function TPressMVPReferenceModel.TextAlignment(ACol: Integer): TAlignment;
+function TPressMVPReferenceModel.TextAlignment(ACol: Integer): TPressAlignment;
 begin
   Result := ColumnData[ACol].AttributeAlignment;
 end;
@@ -1954,7 +1953,7 @@ begin
   Changed(ctSubject);
 end;
 
-function TPressMVPItemsModel.TextAlignment(ACol: Integer): TAlignment;
+function TPressMVPItemsModel.TextAlignment(ACol: Integer): TPressAlignment;
 begin
   Result := ColumnData[ACol].AttributeAlignment;
 end;

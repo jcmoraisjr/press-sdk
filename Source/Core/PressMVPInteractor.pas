@@ -19,14 +19,6 @@ unit PressMVPInteractor;
 interface
 
 uses
-{$IFDEF BORLAND_CG}
-  Windows,
-{$ENDIF}
-  Classes,
-  Controls,
-  Graphics,
-  StdCtrls,
-  Grids,
   PressNotifier,
   PressSubject,
   PressAttributes,
@@ -202,7 +194,7 @@ type
 
   TPressMVPCustomDrawInteractor = class(TPressMVPInteractor)
   protected
-    procedure DrawTextRect(ACanvas: TCanvas; ARect: TRect; AMargin: Integer; const AText: string; AAlignment: TAlignment);
+    procedure DrawTextRect(ACanvasHandle: TObject; ARect: TPressRect; AMargin: Integer; const AText: string; AAlignment: TPressAlignment);
   end;
 
   TPressMVPDrawItemInteractor = class(TPressMVPCustomDrawInteractor)
@@ -214,7 +206,7 @@ type
 
   TPressMVPDrawComboBoxInteractor = class(TPressMVPDrawItemInteractor)
   protected
-    procedure DrawItem(ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState); virtual;
+    procedure DrawItem(ACanvasHandle: TObject; AIndex: Integer; ARect: TPressRect); virtual;
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
   public
@@ -223,7 +215,7 @@ type
 
   TPressMVPDrawItemsInteractor = class(TPressMVPCustomDrawInteractor)
   private
-    procedure DrawSelection(ACanvas: TCanvas; ARect: TRect; AStrongSelection: Boolean);
+    procedure DrawSelection(ACanvasHandle: TObject; ARect: TPressRect; AStrongSelection: Boolean);
   private
     function GetOwner: TPressMVPItemsPresenter;
   public
@@ -232,7 +224,7 @@ type
 
   TPressMVPDrawListBoxInteractor = class(TPressMVPDrawItemsInteractor)
   protected
-    procedure DrawItem(ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState); virtual;
+    procedure DrawItem(ACanvasHandle: TObject; AIndex: Integer; ARect: TPressRect); virtual;
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
   public
@@ -243,7 +235,7 @@ type
   private
     FGridView: IPressMVPGridView;
   protected
-    procedure DrawCell(ACanvas: TCanvas; ACol, ARow: Longint; ARect: TRect; State: TGridDrawState); virtual;
+    procedure DrawCell(ACanvasHandle: TObject; ACol, ARow: Longint; ARect: TPressRect); virtual;
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
   public
@@ -264,7 +256,7 @@ type
 
   TPressMVPSortItemsInteractor = class(TPressMVPInteractor)
   protected
-    procedure ClickHeader(AButton: TMouseButton; AShiftState: TShiftState; ACol: Integer); virtual;
+    procedure ClickHeader(ACol: Integer); virtual;
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
   public
@@ -335,6 +327,7 @@ uses
   PressUtils,
   PressUser,
   PressMVPFactory,
+  PressMVPWidget,
   PressMVPCommand;
 
 { TPressMVPNextControlInteractor }
@@ -794,22 +787,22 @@ end;
 
 { TPressMVPCustomDrawInteractor }
 
-procedure TPressMVPCustomDrawInteractor.DrawTextRect(ACanvas: TCanvas;
-  ARect: TRect; AMargin: Integer; const AText: string; AAlignment: TAlignment);
+procedure TPressMVPCustomDrawInteractor.DrawTextRect(ACanvasHandle: TObject;
+  ARect: TPressRect; AMargin: Integer; const AText: string; AAlignment: TPressAlignment);
 var
   VTop: Integer;
   VLeft: Integer;
 begin
-  VTop := (ARect.Top + ARect.Bottom - ACanvas.TextHeight(AText)) div 2;
+  VTop := (ARect.Top + ARect.Bottom - PressWidget.TextHeight(ACanvasHandle, AText)) div 2;
   case AAlignment of
-    taLeftJustify:
+    alLeft:
       VLeft := ARect.Left + AMargin;
-    taRightJustify:
-      VLeft := ARect.Right - ACanvas.TextWidth(AText) - AMargin - 1;
-    else {taCenter}
-      VLeft := (ARect.Left + ARect.Right - ACanvas.TextWidth(AText)) div 2;
+    alRight:
+      VLeft := ARect.Right - PressWidget.TextWidth(ACanvasHandle, AText) - AMargin - 1;
+    else {alCenter}
+      VLeft := (ARect.Left + ARect.Right - PressWidget.TextWidth(ACanvasHandle, AText)) div 2;
   end;
-  ACanvas.TextRect(ARect, VLeft, VTop, PressEncodeString(AText));
+  PressWidget.TextRect(ACanvasHandle, ARect, VLeft, VTop, PressEncodeString(AText));
 end;
 
 { TPressMVPDrawItemInteractor }
@@ -828,9 +821,9 @@ begin
 end;
 
 procedure TPressMVPDrawComboBoxInteractor.DrawItem(
-  ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState);
+  ACanvasHandle: TObject; AIndex: Integer; ARect: TPressRect);
 begin
-  DrawTextRect(ACanvas, ARect, 2,
+  DrawTextRect(ACanvasHandle, ARect, 2,
    Owner.Model.DisplayText(0, AIndex), Owner.Model.TextAlignment(0));
 end;
 
@@ -845,27 +838,23 @@ begin
   inherited;
   if AEvent is TPressMVPViewDrawItemEvent then
     with TPressMVPViewDrawItemEvent(AEvent) do
-      DrawItem(Canvas, ItemIndex, Rect, State);
+      DrawItem(CanvasHandle, ItemIndex, Rect);
 end;
 
 { TPressMVPDrawItemsInteractor }
 
 procedure TPressMVPDrawItemsInteractor.DrawSelection(
-  ACanvas: TCanvas; ARect: TRect; AStrongSelection: Boolean);
+  ACanvasHandle: TObject; ARect: TPressRect; AStrongSelection: Boolean);
 const
   CPointSize = 4;
 var
-  VPointPos: TRect;
+  VLeft, VTop: Integer;
 begin
-  { TODO : Save and restore Brush and Pen status }
-  ACanvas.Pen.Color := ACanvas.Font.Color;
-  if AStrongSelection then
-    ACanvas.Brush.Color := ACanvas.Font.Color;
-  VPointPos.Left := ARect.Left + 1;
-  VPointPos.Top := (ARect.Top + ARect.Bottom - CPointSize) div 2;
-  VPointPos.Right := VPointPos.Left + CPointSize;
-  VPointPos.Bottom := VPointPos.Top + CPointSize;
-  ACanvas.Ellipse(VPointPos);
+  VLeft := ARect.Left + 1;
+  VTop := (ARect.Top + ARect.Bottom - CPointSize) div 2;
+  PressWidget.Draw(
+   ACanvasHandle, shEllipse,
+   VLeft, VTop, VLeft + CPointSize, VTop + CPointSize, AStrongSelection);
 end;
 
 function TPressMVPDrawItemsInteractor.GetOwner: TPressMVPItemsPresenter;
@@ -882,7 +871,7 @@ begin
 end;
 
 procedure TPressMVPDrawListBoxInteractor.DrawItem(
-  ACanvas: TCanvas; AIndex: Integer; ARect: TRect; State: TOwnerDrawState);
+  ACanvasHandle: TObject; AIndex: Integer; ARect: TPressRect);
 var
   VModel: TPressMVPItemsModel;
 begin
@@ -891,10 +880,10 @@ begin
   // the listbox size is adjusted
   if AIndex >= VModel.Count then
     Exit;
-  DrawTextRect(ACanvas, ARect, 8,
+  DrawTextRect(ACanvasHandle, ARect, 8,
    VModel.DisplayText(0, AIndex), VModel.TextAlignment(0));
   if VModel.Selection.IsSelected(VModel[AIndex]) then
-    DrawSelection(ACanvas, ARect,
+    DrawSelection(ACanvasHandle, ARect,
      VModel.Selection.HasStrongSelection(VModel[AIndex]));
   ARect.Left := ARect.Left + 12;
 end;
@@ -910,7 +899,7 @@ begin
   inherited;
   if AEvent is TPressMVPViewDrawItemEvent then
     with TPressMVPViewDrawItemEvent(AEvent) do
-      DrawItem(Canvas, ItemIndex, Rect, State);
+      DrawItem(CanvasHandle, ItemIndex, Rect);
 end;
 
 { TPressMVPDrawGridInteractor }
@@ -921,11 +910,11 @@ begin
   Result := PressSupports(APresenter.View, IPressMVPGridView);
 end;
 
-procedure TPressMVPDrawGridInteractor.DrawCell(ACanvas: TCanvas;
-  ACol, ARow: Integer; ARect: TRect; State: TGridDrawState);
+procedure TPressMVPDrawGridInteractor.DrawCell(ACanvasHandle: TObject;
+  ACol, ARow: Integer; ARect: TPressRect);
 var
   VModel: TPressMVPItemsModel;
-  VAlignment: TAlignment;
+  VAlignment: TPressAlignment;
   VText: string;
 begin
   VModel := Owner.Model;
@@ -935,7 +924,7 @@ begin
       VText := ''
     else
       VText := IntToStr(VModel.ItemNumber(ARow));
-    VAlignment := taRightJustify;
+    VAlignment := alRight;
   end else if ARow = -1 then
     with VModel.ColumnData[ACol] do
     begin
@@ -953,10 +942,10 @@ begin
       VText := '';
     VAlignment := VModel.TextAlignment(ACol);
   end;
-  DrawTextRect(ACanvas, ARect, 2, VText, VAlignment);
+  DrawTextRect(ACanvasHandle, ARect, 2, VText, VAlignment);
   if (ACol = -1) and (ARow >= 0) and (ARow < VModel.Count) and
    VModel.Selection.IsSelected(VModel[ARow]) then
-    DrawSelection(ACanvas, ARect,
+    DrawSelection(ACanvasHandle, ARect,
      VModel.Selection.HasStrongSelection(VModel[ARow]));
 end;
 
@@ -972,7 +961,7 @@ begin
   inherited;
   if AEvent is TPressMVPViewDrawCellEvent then
     with TPressMVPViewDrawCellEvent(AEvent) do
-      DrawCell(Canvas, Col, Row, Rect, State);
+      DrawCell(CanvasHandle, Col, Row, Rect);
 end;
 
 { TPressMVPSelectItemInteractor }
@@ -1055,8 +1044,7 @@ begin
    PressSupports(APresenter.View, IPressMVPGridView);
 end;
 
-procedure TPressMVPSortItemsInteractor.ClickHeader(
-  AButton: TMouseButton; AShiftState: TShiftState; ACol: Integer);
+procedure TPressMVPSortItemsInteractor.ClickHeader(ACol: Integer);
 begin
   (Owner.Model as TPressMVPItemsModel).Reindex(ACol);
 end;
@@ -1071,8 +1059,7 @@ procedure TPressMVPSortItemsInteractor.Notify(AEvent: TPressEvent);
 begin
   inherited;
   if AEvent is TPressMVPViewClickHeaderEvent then
-    with TPressMVPViewClickHeaderEvent(AEvent) do
-      ClickHeader(Button, ShiftState, Col);
+    ClickHeader(TPressMVPViewClickHeaderEvent(AEvent).Col);
 end;
 
 { TPressMVPCreateFormInteractor }

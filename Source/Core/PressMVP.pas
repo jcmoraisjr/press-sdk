@@ -149,7 +149,7 @@ type
   public
     constructor Create(AModel: TPressMVPModel; const ACaption: string = ''; AShortCut: TShortCut = 0); virtual;
     destructor Destroy; override;
-    procedure AddComponent(AComponent: TComponent);
+    procedure AddComponent(AComponent: TObject);
     class function Apply(AModel: TPressMVPModel): Boolean; virtual;
     procedure Execute;
     class function RegisterCommand: TPressMVPCommandRegistry;
@@ -250,13 +250,15 @@ type
   TPressMVPCommandMenu = class(TObject)
   protected
     procedure InternalAddItem(ACommand: TPressMVPCommand); virtual; abstract;
-    procedure InternalAssignMenu(AControl: TControl); virtual; abstract;
+    procedure InternalAssignMenu(AControl: TObject); virtual; abstract;
     procedure InternalClearMenuItems; virtual; abstract;
   public
     procedure AssignCommands(ACommands: TPressMVPCommands);
-    procedure AssignMenu(AControl: TControl);
+    procedure AssignMenu(AControl: TObject);
     procedure UnassignCommands;
   end;
+
+  TPressAlignment = (alLeft, alRight, alCenter);
 
   TPressMVPObject = class;
   TPressMVPObjectClass = class of TPressMVPObject;
@@ -618,7 +620,7 @@ end;
 
 { TPressMVPCommand }
 
-procedure TPressMVPCommand.AddComponent(AComponent: TComponent);
+procedure TPressMVPCommand.AddComponent(AComponent: TObject);
 var
   VCommandComponent: TPressMVPCommandComponent;
 begin
@@ -1043,7 +1045,7 @@ begin
     InternalAddItem(ACommands[I]);
 end;
 
-procedure TPressMVPCommandMenu.AssignMenu(AControl: TControl);
+procedure TPressMVPCommandMenu.AssignMenu(AControl: TObject);
 begin
   InternalAssignMenu(AControl);
 end;

@@ -60,6 +60,7 @@
   SUnassignedPresenterForm := SUnassignedPresenterForm_rst;
   SUnassignedPresenterParent := SUnassignedPresenterParent_rst;
   SUnassignedSubject := SUnassignedSubject_rst;
+  SUnassignedWidgetManager := SUnassignedWidgetManager_rst;
   SUnexpectedMVPClassParam := SUnexpectedMVPClassParam_rst;
   SUnsupportedComponent := SUnsupportedComponent_rst;
   SUnsupportedControl := SUnsupportedControl_rst;
@@ -67,6 +68,7 @@
   SUnsupportedModel := SUnsupportedModel_rst;
   SUnsupportedObject := SUnsupportedObject_rst;
   SViewAccessError := SViewAccessError_rst;
+  SWidgetManagerAlreadyAssigned := SWidgetManagerAlreadyAssigned_rst;
 
   // Error messages from the OPF framework
   SAttributeReferencesOwnedClass := SAttributeReferencesOwnedClass_rst;
