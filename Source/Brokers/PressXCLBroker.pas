@@ -394,15 +394,15 @@ uses
 type
   { Friend classes }
 
-  TPressMVPViewControlFriend = class(TControl);
-  TPressMVPViewWinControlFriend = class(TWinControl);
-  TPressMVPViewCustomEditFriend = class(TCustomEdit);
-  TPressMVPViewCustomCalendarFriend = class(TCustomCalendar);
-  TPressMVPViewCustomCheckBoxFriend = class(TCustomCheckBox);
-  TPressMVPViewCustomComboBoxFriend = class(TCustomComboBox);
-  TPressMVPViewCustomListBoxFriend = class(TCustomListBox);
-  TPressMVPViewCustomLabelFriend = class(TCustomLabel);
-  TPressMVPViewCustomFormFriend = class(TCustomForm);
+  TPressXCLControlFriend = class(TControl);
+  TPressXCLWinControlFriend = class(TWinControl);
+  TPressXCLCustomEditFriend = class(TCustomEdit);
+  TPressXCLCustomCalendarFriend = class(TCustomCalendar);
+  TPressXCLCustomCheckBoxFriend = class(TCustomCheckBox);
+  TPressXCLCustomComboBoxFriend = class(TCustomComboBox);
+  TPressXCLCustomListBoxFriend = class(TCustomListBox);
+  TPressXCLCustomLabelFriend = class(TCustomLabel);
+  TPressXCLCustomFormFriend = class(TCustomForm);
 
 procedure PressXCLForm(
   APresenter: TPressMVPFormPresenterClass; AForm: TFormClass);
@@ -506,7 +506,7 @@ procedure TPressMVPView.InitView;
 begin
   inherited;
   FAccessMode := amWritable;
-  with TPressMVPViewControlFriend(Control) do
+  with TPressXCLControlFriend(Control) do
   begin
     FViewClickEvent := OnClick;
     FViewDblClickEvent := OnDblClick;
@@ -544,7 +544,7 @@ end;
 
 procedure TPressMVPView.ReleaseControl;
 begin
-  with TPressMVPViewControlFriend(Control) do
+  with TPressXCLControlFriend(Control) do
   begin
     OnClick := FViewClickEvent;
     OnDblClick := FViewDblClickEvent;
@@ -702,7 +702,7 @@ end;
 procedure TPressMVPWinView.InitView;
 begin
   inherited;
-  with TPressMVPViewWinControlFriend(Control) do
+  with TPressXCLWinControlFriend(Control) do
   begin
     FViewEnterEvent := OnEnter;
     FViewExitEvent := OnExit;
@@ -725,7 +725,7 @@ end;
 
 procedure TPressMVPWinView.ReleaseControl;
 begin
-  with TPressMVPViewWinControlFriend(Control) do
+  with TPressXCLWinControlFriend(Control) do
   begin
     OnEnter := FViewEnterEvent;
     OnExit := FViewExitEvent;
@@ -745,7 +745,7 @@ begin
   begin
     while Assigned(VWinControl.Parent) do
       VWinControl := VWinControl.Parent;
-    TPressMVPViewWinControlFriend(VWinControl).SelectNext(
+    TPressXCLWinControlFriend(VWinControl).SelectNext(
      Control as TWinControl, True, True);
   end;
 end;
@@ -767,7 +767,7 @@ begin
       if (VOwner.Components[I] is TCustomLabel) then
       begin
         VLabel := TCustomLabel(VOwner.Components[I]);
-        if TPressMVPViewCustomLabelFriend(VLabel).FocusControl = Control then
+        if TPressXCLCustomLabelFriend(VLabel).FocusControl = Control then
         begin
           VLabel.Enabled := AccessMode = amWritable;
           Exit;
@@ -830,7 +830,7 @@ end;
 
 function TPressMVPEditView.GetAsString: string;
 begin
-  Result := PressDecodeString(TPressMVPViewCustomEditFriend(Control).Text);
+  Result := PressDecodeString(TPressXCLCustomEditFriend(Control).Text);
 end;
 
 function TPressMVPEditView.GetControl: TCustomEdit;
@@ -851,7 +851,7 @@ end;
 procedure TPressMVPEditView.InitView;
 begin
   inherited;
-  with TPressMVPViewCustomEditFriend(Control) do
+  with TPressXCLCustomEditFriend(Control) do
   begin
     FViewChangeEvent := OnChange;
     OnChange := {$IFDEF FPC}@{$ENDIF}ViewChangeEvent;
@@ -860,23 +860,23 @@ end;
 
 procedure TPressMVPEditView.InternalClear;
 begin
-  TPressMVPViewCustomEditFriend(Control).Text := '';
+  TPressXCLCustomEditFriend(Control).Text := '';
 end;
 
 procedure TPressMVPEditView.InternalUpdate;
 begin
   inherited;
   if AccessMode = amInvisible then
-    TPressMVPViewCustomEditFriend(Control).Text := ''
+    TPressXCLCustomEditFriend(Control).Text := ''
   else
-    TPressMVPViewCustomEditFriend(Control).Text := PressEncodeString(Model.AsString);
+    TPressXCLCustomEditFriend(Control).Text := PressEncodeString(Model.AsString);
   Control.Enabled := AccessMode = amWritable;
   Unchanged;
 end;
 
 procedure TPressMVPEditView.ReleaseControl;
 begin
-  with TPressMVPViewCustomEditFriend(Control) do
+  with TPressXCLCustomEditFriend(Control) do
   begin
     OnChange := FViewChangeEvent;
   end;
@@ -885,12 +885,12 @@ end;
 
 procedure TPressMVPEditView.SetSize(Value: Integer);
 begin
-  TPressMVPViewCustomEditFriend(Control).MaxLength := Value;
+  TPressXCLCustomEditFriend(Control).MaxLength := Value;
 end;
 
 procedure TPressMVPEditView.SetText(const Value: string);
 begin
-  TPressMVPViewCustomEditFriend(Control).Text := PressEncodeString(Value);
+  TPressXCLCustomEditFriend(Control).Text := PressEncodeString(Value);
 end;
 
 procedure TPressMVPEditView.ViewChangeEvent(Sender: TObject);
@@ -917,12 +917,12 @@ end;
 
 function TPressMVPDateTimeView.GetAsDateTime: TDateTime;
 begin
-  Result := TPressMVPViewCustomCalendarFriend(Control).DateTime;
+  Result := TPressXCLCustomCalendarFriend(Control).DateTime;
 end;
 
 function TPressMVPDateTimeView.GetAsString: string;
 begin
-  Result := PressDecodeString(TPressMVPViewCustomCalendarFriend(Control).Text);
+  Result := PressDecodeString(TPressXCLCustomCalendarFriend(Control).Text);
 end;
 
 function TPressMVPDateTimeView.GetControl: TCustomCalendar;
@@ -932,21 +932,21 @@ end;
 
 function TPressMVPDateTimeView.GetIsClear: Boolean;
 begin
-  Result := TPressMVPViewCustomCalendarFriend(Control).DateTime = 0;
+  Result := TPressXCLCustomCalendarFriend(Control).DateTime = 0;
 end;
 
 procedure TPressMVPDateTimeView.InternalClear;
 begin
-  TPressMVPViewCustomCalendarFriend(Control).DateTime := 0;
+  TPressXCLCustomCalendarFriend(Control).DateTime := 0;
 end;
 
 procedure TPressMVPDateTimeView.InternalUpdate;
 begin
   inherited;
   if AccessMode = amInvisible then
-    TPressMVPViewCustomCalendarFriend(Control).DateTime := 0
+    TPressXCLCustomCalendarFriend(Control).DateTime := 0
   else
-    TPressMVPViewCustomCalendarFriend(Control).DateTime :=
+    TPressXCLCustomCalendarFriend(Control).DateTime :=
      Model.Subject.AsDateTime;
   Control.Enabled := AccessMode = amWritable;
   Unchanged;
@@ -979,7 +979,7 @@ end;
 
 function TPressMVPCheckBoxView.GetAsBoolean: Boolean;
 begin
-  Result := TPressMVPViewCustomCheckBoxFriend(Control).Checked;
+  Result := TPressXCLCustomCheckBoxFriend(Control).Checked;
 end;
 
 function TPressMVPCheckBoxView.GetControl: TCustomCheckBox;
@@ -989,12 +989,12 @@ end;
 
 function TPressMVPCheckBoxView.GetIsClear: Boolean;
 begin
-  Result := TPressMVPViewCustomCheckBoxFriend(Control).State = cbGrayed;
+  Result := TPressXCLCustomCheckBoxFriend(Control).State = cbGrayed;
 end;
 
 procedure TPressMVPCheckBoxView.InternalClear;
 begin
-  TPressMVPViewCustomCheckBoxFriend(Control).State := cbUnchecked;
+  TPressXCLCustomCheckBoxFriend(Control).State := cbUnchecked;
 end;
 
 procedure TPressMVPCheckBoxView.InternalUpdate;
@@ -1005,11 +1005,11 @@ begin
   VAttribute := Model.Subject;
   { TODO : Implement invisibility }
   if VAttribute.IsNull then
-    TPressMVPViewCustomCheckBoxFriend(Control).State := cbGrayed
+    TPressXCLCustomCheckBoxFriend(Control).State := cbGrayed
   else if VAttribute.AsBoolean then
-    TPressMVPViewCustomCheckBoxFriend(Control).State := cbChecked
+    TPressXCLCustomCheckBoxFriend(Control).State := cbChecked
   else
-    TPressMVPViewCustomCheckBoxFriend(Control).State := cbUnchecked;
+    TPressXCLCustomCheckBoxFriend(Control).State := cbUnchecked;
   Control.Enabled := AccessMode = amWritable;
   Unchanged;
 end;
@@ -1074,7 +1074,7 @@ end;
 
 function TPressMVPComboBoxView.GetAsString: string;
 begin
-  Result := PressDecodeString(TPressMVPViewCustomComboBoxFriend(Control).Text);
+  Result := PressDecodeString(TPressXCLCustomComboBoxFriend(Control).Text);
 end;
 
 function TPressMVPComboBoxView.GetControl: TCustomComboBox;
@@ -1105,7 +1105,7 @@ end;
 procedure TPressMVPComboBoxView.InitView;
 begin
   inherited;
-  with TPressMVPViewCustomComboBoxFriend(Control) do
+  with TPressXCLCustomComboBoxFriend(Control) do
   begin
     FViewChangeEvent := OnChange;
     FViewDrawItemEvent := OnDrawItem;
@@ -1130,7 +1130,7 @@ end;
 procedure TPressMVPComboBoxView.InternalClear;
 begin
   ClearReferences;
-  TPressMVPViewCustomComboBoxFriend(Control).Text := '';
+  TPressXCLCustomComboBoxFriend(Control).Text := '';
   Changed;
 end;
 
@@ -1143,16 +1143,16 @@ procedure TPressMVPComboBoxView.InternalUpdate;
 begin
   inherited;
   if AccessMode = amInvisible then
-    TPressMVPViewCustomComboBoxFriend(Control).Text := ''
+    TPressXCLCustomComboBoxFriend(Control).Text := ''
   else
-    TPressMVPViewCustomComboBoxFriend(Control).Text := PressEncodeString(Model.AsString);
+    TPressXCLCustomComboBoxFriend(Control).Text := PressEncodeString(Model.AsString);
   Control.Enabled := AccessMode = amWritable;
   Unchanged;
 end;
 
 procedure TPressMVPComboBoxView.ReleaseControl;
 begin
-  with TPressMVPViewCustomComboBoxFriend(Control) do
+  with TPressXCLCustomComboBoxFriend(Control) do
   begin
     OnChange := FViewChangeEvent;
     OnDrawItem := FViewDrawItemEvent;
@@ -1168,7 +1168,7 @@ end;
 
 procedure TPressMVPComboBoxView.SetSize(Value: Integer);
 begin
-  TPressMVPViewCustomComboBoxFriend(Control).MaxLength := Value;
+  TPressXCLCustomComboBoxFriend(Control).MaxLength := Value;
 end;
 
 procedure TPressMVPComboBoxView.ShowReferences;
@@ -1300,7 +1300,7 @@ end;
 procedure TPressMVPListBoxView.InitView;
 begin
   inherited;
-  with TPressMVPViewCustomListBoxFriend(Control) do
+  with TPressXCLCustomListBoxFriend(Control) do
   begin
     FViewDrawItemEvent := OnDrawItem;
     OnDrawItem := {$IFDEF FPC}@{$ENDIF}ViewDrawItemEvent;
@@ -1343,7 +1343,7 @@ end;
 
 procedure TPressMVPListBoxView.ReleaseControl;
 begin
-  with TPressMVPViewCustomListBoxFriend(Control) do
+  with TPressXCLCustomListBoxFriend(Control) do
   begin
     OnDrawItem := FViewDrawItemEvent;
   end;
@@ -1518,21 +1518,21 @@ end;
 
 function TPressMVPCaptionView.GetAsString: string;
 begin
-  Result := PressDecodeString(TPressMVPViewControlFriend(Control).Caption);
+  Result := PressDecodeString(TPressXCLControlFriend(Control).Caption);
 end;
 
 procedure TPressMVPCaptionView.InternalUpdate;
 begin
   inherited;
   if AccessMode = amInvisible then
-    TPressMVPViewControlFriend(Control).Caption := ''
+    TPressXCLControlFriend(Control).Caption := ''
   else
-    TPressMVPViewControlFriend(Control).Caption := PressEncodeString(Model.AsString);
+    TPressXCLControlFriend(Control).Caption := PressEncodeString(Model.AsString);
 end;
 
 procedure TPressMVPCaptionView.SetText(const Value: string);
 begin
-  TPressMVPViewControlFriend(Control).Caption := PressEncodeString(Value);
+  TPressXCLControlFriend(Control).Caption := PressEncodeString(Value);
 end;
 
 { TPressMVPLabelView }
@@ -1609,7 +1609,7 @@ var
   VRect: TRect;
 begin
   inherited;
-  with TPressMVPViewCustomFormFriend(Control) do
+  with TPressXCLCustomFormFriend(Control) do
   begin
     FViewCloseEvent := OnClose;
     OnClose := {$IFDEF FPC}@{$ENDIF}ViewCloseEvent;
@@ -1627,7 +1627,7 @@ end;
 
 procedure TPressMVPFormView.ReleaseControl;
 begin
-  with TPressMVPViewCustomFormFriend(Control) do
+  with TPressXCLCustomFormFriend(Control) do
   begin
     OnClose := FViewCloseEvent;
   end;
