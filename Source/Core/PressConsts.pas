@@ -45,6 +45,9 @@ const
   SPressUpdateCountString = 'UpdateCount';
   SPressConfigFileExt = '.cf';
   SPressSubjectParamPrefix = 'par';
+  SPressCalcString = 'Calc';
+  SPressQueryItemsString = 'QueryItems';
+// opf related
   SPressPrimaryKeyNamePrefix = 'PK_';
   SPressForeignKeyNamePrefix = 'FK_';
   SPressUniqueKeyNamePrefix = 'UK_';
@@ -52,12 +55,22 @@ const
   SPressTableAliasPrefix = 't_';
   SPressSubSelectTableAliasPrefix = 'ts%d_';
   SPressPersistentIdParamString = 'PressPersistId';
-  SPressCalcString = 'Calc';
-  SPressQueryItemsString = 'QueryItems';
+// MVP accessor names
   SPressPresenterAccessorName = '_Presenter';
   SPressModelAccessorName = '_Model';
   SPressSubjectAccessorName = '_Subject';
+// user related
   SPressUserAdminId = 'admin';
+// short cuts
+  SPressAddCommandShortCut = 'F2';
+  SPressChangeCommandShortCut = 'F3';
+  SPressRemoveCommandShortCut = 'Ctrl+F8';
+  SPressTodayCommandShortCut = 'Ctrl+D';
+  SPressSelectAllCommandShortCut = 'Ctrl+A';
+  SPressSelectNoneCommandShortCut = 'Ctrl+W';
+  SPressSaveCommandShortCut = 'F12';
+  SPressExecuteCommandShortCut = 'F11';
+// service names
   SPressSessionServiceName = 'Session';
   SPressGeneratorServiceName = 'Generator';
   SPressOPFBrokerServiceName = 'OPFBroker';

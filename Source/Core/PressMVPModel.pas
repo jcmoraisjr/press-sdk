@@ -520,13 +520,13 @@ type
 implementation
 
 uses
-  Classes,
   SysUtils,
-  Menus,
+  Classes,
   PressConsts,
   PressDialogs,
   PressPicture,
-  PressMVPCommand;
+  PressMVPCommand,
+  PressMVPWidget;
 
 { TPressMVPModelFindFormEvent }
 
@@ -1818,7 +1818,7 @@ procedure TPressMVPItemsModel.InternalCreateSortCommands;
      Format(SPressSortByCommand, [ColumnData[AColumn].HeaderCaption]);
     if VChar <> #0 then
     begin
-      VShortCut := Menus.ShortCut(Ord(VChar), [ssShift, ssCtrl]);
+      VShortCut := PressWidget.ShortCut('Shift+Ctrl+' + VChar);
       VCaption := '&' + VChar + ' ' + VCaption;
     end else
       VShortCut := 0;

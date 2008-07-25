@@ -20,8 +20,6 @@ interface
 
 uses
   Classes,
-  Controls,
-  Menus,
   PressNotifier,
   PressSubject,
   PressAttributes,
@@ -30,38 +28,6 @@ uses
   PressMVPModel;
 
 type
-  { TPressMVPMenuItem }
-
-  TPressMVPMenuItem = class(TMenuItem)
-  private
-    FNotifier: TPressNotifier;
-    FCommand: TPressMVPCommand;
-    procedure Notify(AEvent: TPressEvent);
-  public
-    constructor Create(AOwner: TComponent; ACommand: TPressMVPCommand); reintroduce; virtual;
-    destructor Destroy; override;
-    procedure Click; override;
-    property Command: TPressMVPCommand read FCommand write FCommand;
-  end;
-
-  { TPressMVPCommandMenu }
-
-  TPressMVPPopupCommandMenu = class(TPressMVPCommandMenu)
-  private
-    FControl: TObject;
-    FMenu: TPopupMenu;
-    procedure BindMenu;
-    function GetMenu: TPopupMenu;
-    procedure ReleaseMenu;
-  protected
-    procedure InternalAddItem(ACommand: TPressMVPCommand); override;
-    procedure InternalAssignMenu(AControl: TObject); override;
-    procedure InternalClearMenuItems; override;
-  public
-    destructor Destroy; override;
-    property Menu: TPopupMenu read GetMenu;
-  end;
-
   { TPressMVPCommand }
 
   TPressMVPNullCommand = class(TPressMVPCommand)
@@ -309,111 +275,14 @@ type
 implementation
 
 uses
-  {$IFDEF FPC}
-  LCLType,
-  {$ELSE}
-  Windows, { TODO : Move to Compatibility }
-  {$ENDIF}
   SysUtils,
-  Forms,
   ExtDlgs,
   PressConsts,
   PressUtils,
   PressApplication,
   PressDialogs,
-  PressMVPPresenter;
-
-type
-  TPressMVPPopupCommandControlFriend = class(TControl);
-
-{ TPressMVPMenuItem }
-
-constructor TPressMVPMenuItem.Create(AOwner: TComponent; ACommand: TPressMVPCommand);
-begin
-  inherited Create(AOwner);
-  if Assigned(ACommand) then
-  begin
-    FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
-    FCommand := ACommand;
-    Caption := PressEncodeString(FCommand.Caption);
-    Enabled := FCommand.Enabled;
-    Visible := FCommand.Visible;
-    ShortCut := FCommand.ShortCut;
-    FNotifier.AddNotificationItem(FCommand, [TPressMVPCommandChangedEvent]);
-  end else
-    Caption := '-';
-end;
-
-procedure TPressMVPMenuItem.Click;
-begin
-  inherited;
-  if Assigned(FCommand) then
-    FCommand.Execute;
-end;
-
-destructor TPressMVPMenuItem.Destroy;
-begin
-  FNotifier.Free;
-  inherited;
-end;
-
-procedure TPressMVPMenuItem.Notify(AEvent: TPressEvent);
-begin
-  if Assigned(FCommand) then
-    Enabled := FCommand.Enabled;
-end;
-
-{ TPressMVPPopupCommandMenu }
-
-procedure TPressMVPPopupCommandMenu.BindMenu;
-begin
-  if Assigned(FControl) then
-    TPressMVPPopupCommandControlFriend(FControl).PopupMenu := FMenu;
-end;
-
-destructor TPressMVPPopupCommandMenu.Destroy;
-begin
-  ReleaseMenu;
-  FMenu.Free;
-  inherited;
-end;
-
-function TPressMVPPopupCommandMenu.GetMenu: TPopupMenu;
-begin
-  if not Assigned(FMenu) then
-  begin
-    FMenu := TPopupMenu.Create(nil);
-    BindMenu;
-  end;
-  Result := FMenu;
-end;
-
-procedure TPressMVPPopupCommandMenu.InternalAddItem(ACommand: TPressMVPCommand);
-begin
-  Menu.Items.Add(TPressMVPMenuItem.Create(Menu, ACommand));
-end;
-
-procedure TPressMVPPopupCommandMenu.InternalAssignMenu(AControl: TObject);
-begin
-  if FControl <> AControl then
-  begin
-    ReleaseMenu;
-    FControl := AControl;
-    BindMenu;
-  end;
-end;
-
-procedure TPressMVPPopupCommandMenu.InternalClearMenuItems;
-begin
-  if Assigned(FMenu) then
-    FMenu.Items.Clear;
-end;
-
-procedure TPressMVPPopupCommandMenu.ReleaseMenu;
-begin
-  if Assigned(FControl) then
-    TPressMVPPopupCommandControlFriend(FControl).PopupMenu := nil;
-end;
+  PressMVPPresenter,
+  PressMVPWidget;
 
 { TPressMVPNullCommand }
 
@@ -443,7 +312,7 @@ end;
 
 function TPressMVPTodayCommand.GetShortCut: TShortCut;
 begin
-  Result := Menus.ShortCut(Ord('D'), [ssCtrl]);
+  Result := PressWidget.ShortCut(SPressTodayCommandShortCut);
 end;
 
 procedure TPressMVPTodayCommand.InternalExecute;
@@ -474,7 +343,7 @@ end;
 
 function TPressMVPLoadPictureCommand.GetShortCut: TShortCut;
 begin
-  Result := VK_F2;
+  Result := PressWidget.ShortCut(SPressAddCommandShortCut);
 end;
 
 procedure TPressMVPLoadPictureCommand.InternalExecute;
@@ -498,7 +367,7 @@ end;
 
 function TPressMVPRemovePictureCommand.GetShortCut: TShortCut;
 begin
-  Result := Menus.ShortCut(VK_F8, [ssCtrl]);
+  Result := PressWidget.ShortCut(SPressRemoveCommandShortCut);
 end;
 
 procedure TPressMVPRemovePictureCommand.InitNotifier;
@@ -541,7 +410,7 @@ end;
 
 function TPressMVPEditItemCommand.GetShortCut: TShortCut;
 begin
-  Result := VK_F3;
+  Result := PressWidget.ShortCut(SPressChangeCommandShortCut);
 end;
 
 procedure TPressMVPEditItemCommand.InternalExecute;
@@ -577,7 +446,7 @@ end;
 
 function TPressMVPIncludeObjectCommand.GetShortCut: TShortCut;
 begin
-  Result := VK_F2;
+  Result := PressWidget.ShortCut(SPressAddCommandShortCut);
 end;
 
 procedure TPressMVPIncludeObjectCommand.InternalExecute;
@@ -672,7 +541,7 @@ end;
 
 function TPressMVPAddItemsCommand.GetShortCut: TShortCut;
 begin
-  Result := VK_F2;
+  Result := PressWidget.ShortCut(SPressAddCommandShortCut);
 end;
 
 { TPressMVPAddReferencesCommand }
@@ -684,7 +553,7 @@ end;
 
 function TPressMVPAddReferencesCommand.GetShortCut: TShortCut;
 begin
-  Result := VK_F2;
+  Result := PressWidget.ShortCut(SPressAddCommandShortCut);
 end;
 
 procedure TPressMVPAddReferencesCommand.InternalExecute;
@@ -702,7 +571,7 @@ end;
 
 function TPressMVPRemoveItemsCommand.GetShortCut: TShortCut;
 begin
-  Result := Menus.ShortCut(VK_F8, [ssCtrl]);
+  Result := PressWidget.ShortCut(SPressRemoveCommandShortCut);
 end;
 
 procedure TPressMVPRemoveItemsCommand.InternalExecute;
@@ -751,7 +620,7 @@ end;
 
 function TPressMVPSelectAllCommand.GetShortCut: TShortCut;
 begin
-  Result := Menus.ShortCut(Ord('A'), [ssCtrl]);
+  Result := PressWidget.ShortCut(SPressSelectAllCommandShortCut);
 end;
 
 procedure TPressMVPSelectAllCommand.InternalExecute;
@@ -773,7 +642,7 @@ end;
 
 function TPressMVPSelectNoneCommand.GetShortCut: TShortCut;
 begin
-  Result := Menus.ShortCut(Ord('W'), [ssCtrl]);
+  Result := PressWidget.ShortCut(SPressSelectNoneCommandShortCut);
 end;
 
 procedure TPressMVPSelectNoneCommand.InternalExecute;
@@ -906,7 +775,7 @@ end;
 
 function TPressMVPSaveObjectCommand.GetShortCut: TShortCut;
 begin
-  Result := VK_F12;
+  Result := PressWidget.ShortCut(SPressSaveCommandShortCut);
 end;
 
 function TPressMVPSaveObjectCommand.InternalConfirm: Boolean;
@@ -1035,7 +904,7 @@ end;
 
 function TPressMVPExecuteQueryCommand.GetShortCut: TShortCut;
 begin
-  Result := VK_F11;
+  Result := PressWidget.ShortCut(SPressExecuteCommandShortCut);
 end;
 
 procedure TPressMVPExecuteQueryCommand.InternalExecute;

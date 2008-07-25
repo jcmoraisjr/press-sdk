@@ -27,6 +27,7 @@ uses
   StdCtrls,
   ComCtrls,
   ExtCtrls,
+  Menus,
   Grids,
 {$IFDEF FPC}
   Calendar,
@@ -46,12 +47,67 @@ type
   TPressMVPWidgetManager = class(TPressManagedIObject, IPressMVPWidgetManager)
   protected
     function ControlName(AControl: TObject): string;
+    function CreateCommandComponent(ACommand: TPressMVPCommand; AComponent: TObject): TPressMVPCommandComponent;
+    function CreateCommandMenu: TPressMVPCommandMenu;
     function CreateForm(AFormClass: TClass): TObject;
     procedure Draw(ACanvasHandle: TObject; AShape: TPressShapeType; X1, Y1, X2, Y2: Integer; ASolid: Boolean);
+    function ShortCut(const AShortCutText: string): TShortCut;
     procedure ShowForm(AForm: TObject; AModal: Boolean);
     function TextHeight(ACanvasHandle: TObject; const AStr: string): Integer;
     procedure TextRect(ACanvasHandle: TObject; ARect: TPressRect; ALeft, ATop: Integer; const AStr: string);
     function TextWidth(ACanvasHandle: TObject; const AStr: string): Integer;
+  end;
+
+  TPressXCLCommandMenuItem = class(TPressMVPCommandComponent)
+  private
+    FMenuItem: TMenuItem;
+  protected
+    procedure BindComponent; override;
+    procedure ReleaseComponent; override;
+    procedure SetEnabled(Value: Boolean); override;
+    procedure SetVisible(Value: Boolean); override;
+  public
+    constructor Create(ACommand: TPressMVPCommand; AMenuItem: TMenuItem);
+  end;
+
+  TPressXCLCommandControl = class(TPressMVPCommandComponent)
+  private
+    FControl: TControl;
+  protected
+    procedure BindComponent; override;
+    procedure ReleaseComponent; override;
+    procedure SetEnabled(Value: Boolean); override;
+    procedure SetVisible(Value: Boolean); override;
+  public
+    constructor Create(ACommand: TPressMVPCommand; AControl: TControl);
+  end;
+
+  TPressXCLMenuItem = class(TMenuItem)
+  private
+    FNotifier: TPressNotifier;
+    FCommand: TPressMVPCommand;
+    procedure Notify(AEvent: TPressEvent);
+  public
+    constructor Create(AOwner: TComponent; ACommand: TPressMVPCommand); reintroduce; virtual;
+    destructor Destroy; override;
+    procedure Click; override;
+    property Command: TPressMVPCommand read FCommand write FCommand;
+  end;
+
+  TPressXCLCommandMenu = class(TPressMVPCommandMenu)
+  private
+    FControl: TControl;
+    FMenu: TPopupMenu;
+    procedure BindMenu;
+    function GetMenu: TPopupMenu;
+    procedure ReleaseMenu;
+  protected
+    procedure InternalAddItem(ACommand: TPressMVPCommand); override;
+    procedure InternalAssignMenu(AControl: TObject); override;
+    procedure InternalClearMenuItems; override;
+  public
+    destructor Destroy; override;
+    property Menu: TPopupMenu read GetMenu;
   end;
 
 {$IFDEF BORLAND_CG}
@@ -417,6 +473,22 @@ begin
   Result := (AControl as TControl).Name;
 end;
 
+function TPressMVPWidgetManager.CreateCommandComponent(
+  ACommand: TPressMVPCommand; AComponent: TObject): TPressMVPCommandComponent;
+begin
+  if AComponent is TMenuItem then
+    Result := TPressXCLCommandMenuItem.Create(ACommand, TMenuItem(AComponent))
+  else if AComponent is TControl then
+    Result := TPressXCLCommandControl.Create(ACommand, TControl(AComponent))
+  else
+    Result := nil;
+end;
+
+function TPressMVPWidgetManager.CreateCommandMenu: TPressMVPCommandMenu;
+begin
+  Result := TPressXCLCommandMenu.Create;
+end;
+
 function TPressMVPWidgetManager.CreateForm(AFormClass: TClass): TObject;
 begin
   Result := TCustomFormClass(AFormClass).Create(nil);
@@ -433,6 +505,11 @@ begin
     shRectangle: TCanvas(ACanvasHandle).Rectangle(X1, Y1, X2, Y2);
     shEllipse: TCanvas(ACanvasHandle).Ellipse(X1, Y1, X2, Y2);
   end;
+end;
+
+function TPressMVPWidgetManager.ShortCut(const AShortCutText: string): TShortCut;
+begin
+  Result := Menus.TextToShortCut(AShortCutText);
 end;
 
 procedure TPressMVPWidgetManager.ShowForm(AForm: TObject; AModal: Boolean);
@@ -459,6 +536,182 @@ function TPressMVPWidgetManager.TextWidth(
   ACanvasHandle: TObject; const AStr: string): Integer;
 begin
   Result := TCanvas(ACanvasHandle).TextWidth(AStr);
+end;
+
+{ TPressXCLCommandMenuItem }
+
+procedure TPressXCLCommandMenuItem.BindComponent;
+begin
+  if Assigned(FMenuItem) then
+  begin
+    OnClickEvent := FMenuItem.OnClick;
+    FMenuItem.OnClick := {$IFDEF FPC}@{$ENDIF}ComponentClick;
+    FMenuItem.Enabled := Command.Enabled;
+    FMenuItem.Visible := Command.Visible;
+  end;
+end;
+
+constructor TPressXCLCommandMenuItem.Create(
+  ACommand: TPressMVPCommand; AMenuItem: TMenuItem);
+begin
+  inherited Create(ACommand);
+  FMenuItem := AMenuItem;
+  BindComponent;
+end;
+
+procedure TPressXCLCommandMenuItem.ReleaseComponent;
+begin
+  if Assigned(FMenuItem) then
+  begin
+    FMenuItem.OnClick := OnClickEvent;
+    FMenuItem := nil;
+    OnClickEvent := nil;
+  end;
+end;
+
+procedure TPressXCLCommandMenuItem.SetEnabled(Value: Boolean);
+begin
+  if Assigned(FMenuItem) then
+    FMenuItem.Enabled := Value;
+end;
+
+procedure TPressXCLCommandMenuItem.SetVisible(Value: Boolean);
+begin
+  if Assigned(FMenuItem) then
+    FMenuItem.Visible := Value;
+end;
+
+{ TPressXCLCommandControl }
+
+procedure TPressXCLCommandControl.BindComponent;
+begin
+  if Assigned(FControl) then
+  begin
+    OnClickEvent := TPressXCLControlFriend(FControl).OnClick;
+    TPressXCLControlFriend(FControl).OnClick :=
+     {$IFDEF FPC}@{$ENDIF}ComponentClick;
+    FControl.Enabled := Command.Enabled;
+    FControl.Visible := Command.Visible;
+  end;
+end;
+
+constructor TPressXCLCommandControl.Create(ACommand: TPressMVPCommand;
+  AControl: TControl);
+begin
+  inherited Create(ACommand);
+  FControl := AControl;
+  BindComponent;
+end;
+
+procedure TPressXCLCommandControl.ReleaseComponent;
+begin
+  if Assigned(FControl) then
+  begin
+    TPressXCLControlFriend(FControl).OnClick := OnClickEvent;
+    FControl := nil;
+    OnClickEvent := nil;
+  end;
+end;
+
+procedure TPressXCLCommandControl.SetEnabled(Value: Boolean);
+begin
+  if Assigned(FControl) then
+    FControl.Enabled := Value;
+end;
+
+procedure TPressXCLCommandControl.SetVisible(Value: Boolean);
+begin
+  if Assigned(FControl) then
+    FControl.Visible := Value;
+end;
+
+{ TPressXCLMenuItem }
+
+constructor TPressXCLMenuItem.Create(AOwner: TComponent; ACommand: TPressMVPCommand);
+begin
+  inherited Create(AOwner);
+  if Assigned(ACommand) then
+  begin
+    FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
+    FCommand := ACommand;
+    Caption := PressEncodeString(FCommand.Caption);
+    Enabled := FCommand.Enabled;
+    Visible := FCommand.Visible;
+    ShortCut := FCommand.ShortCut;
+    FNotifier.AddNotificationItem(FCommand, [TPressMVPCommandChangedEvent]);
+  end else
+    Caption := '-';
+end;
+
+procedure TPressXCLMenuItem.Click;
+begin
+  inherited;
+  if Assigned(FCommand) then
+    FCommand.Execute;
+end;
+
+destructor TPressXCLMenuItem.Destroy;
+begin
+  FNotifier.Free;
+  inherited;
+end;
+
+procedure TPressXCLMenuItem.Notify(AEvent: TPressEvent);
+begin
+  if Assigned(FCommand) then
+    Enabled := FCommand.Enabled;
+end;
+
+{ TPressXCLCommandMenu }
+
+procedure TPressXCLCommandMenu.BindMenu;
+begin
+  if Assigned(FControl) then
+    TPressXCLControlFriend(FControl).PopupMenu := FMenu;
+end;
+
+destructor TPressXCLCommandMenu.Destroy;
+begin
+  ReleaseMenu;
+  FMenu.Free;
+  inherited;
+end;
+
+function TPressXCLCommandMenu.GetMenu: TPopupMenu;
+begin
+  if not Assigned(FMenu) then
+  begin
+    FMenu := TPopupMenu.Create(nil);
+    BindMenu;
+  end;
+  Result := FMenu;
+end;
+
+procedure TPressXCLCommandMenu.InternalAddItem(ACommand: TPressMVPCommand);
+begin
+  Menu.Items.Add(TPressXCLMenuItem.Create(Menu, ACommand));
+end;
+
+procedure TPressXCLCommandMenu.InternalAssignMenu(AControl: TObject);
+begin
+  if FControl <> AControl then
+  begin
+    ReleaseMenu;
+    FControl := AControl as TControl;
+    BindMenu;
+  end;
+end;
+
+procedure TPressXCLCommandMenu.InternalClearMenuItems;
+begin
+  if Assigned(FMenu) then
+    FMenu.Items.Clear;
+end;
+
+procedure TPressXCLCommandMenu.ReleaseMenu;
+begin
+  if Assigned(FControl) then
+    TPressXCLControlFriend(FControl).PopupMenu := nil;
 end;
 
 { TPressMVPView }

@@ -21,8 +21,6 @@ interface
 uses
   Classes,
   Contnrs,
-  Controls,
-  Menus,
   PressClasses,
   PressNotifier,
   PressSubject,
@@ -51,30 +49,6 @@ type
     constructor Create(ACommand: TPressMVPCommand);
     destructor Destroy; override;
     property Command: TPressMVPCommand read FCommand;
-  end;
-
-  TPressMVPCommandMenuItem = class(TPressMVPCommandComponent)
-  private
-    FMenuItem: TMenuItem;
-  protected
-    procedure BindComponent; override;
-    procedure ReleaseComponent; override;
-    procedure SetEnabled(Value: Boolean); override;
-    procedure SetVisible(Value: Boolean); override;
-  public
-    constructor Create(ACommand: TPressMVPCommand; AMenuItem: TMenuItem);
-  end;
-
-  TPressMVPCommandControl = class(TPressMVPCommandComponent)
-  private
-    FControl: TControl;
-  protected
-    procedure BindComponent; override;
-    procedure ReleaseComponent; override;
-    procedure SetEnabled(Value: Boolean); override;
-    procedure SetVisible(Value: Boolean); override;
-  public
-    constructor Create(ACommand: TPressMVPCommand; AControl: TControl);
   end;
 
   TPressMVPCommandComponentIterator = class;
@@ -420,11 +394,9 @@ uses
   PressConsts,
   {$IFDEF PressLog}PressLog,{$ENDIF}
   PressApplication,
+  PressMVPWidget,
   PressMVPFactory,
   PressMVPCommand;
-
-type
-  TPressMVPControlFriend = class(TControl);
 
 var
   _CommandRegistryList: TPressMVPCommandRegistryList;
@@ -468,93 +440,6 @@ begin
     SetEnabled(FCommand.Enabled);
     SetVisible(FCommand.Visible);
   end;
-end;
-
-{ TPressMVPCommandMenuItem }
-
-procedure TPressMVPCommandMenuItem.BindComponent;
-begin
-  if Assigned(FMenuItem) then
-  begin
-    OnClickEvent := FMenuItem.OnClick;
-    FMenuItem.OnClick := {$IFDEF FPC}@{$ENDIF}ComponentClick;
-    FMenuItem.Enabled := Command.Enabled;
-    FMenuItem.Visible := Command.Visible;
-  end;
-end;
-
-constructor TPressMVPCommandMenuItem.Create(
-  ACommand: TPressMVPCommand; AMenuItem: TMenuItem);
-begin
-  inherited Create(ACommand);
-  FMenuItem := AMenuItem;
-  BindComponent;
-end;
-
-procedure TPressMVPCommandMenuItem.ReleaseComponent;
-begin
-  if Assigned(FMenuItem) then
-  begin
-    FMenuItem.OnClick := OnClickEvent;
-    FMenuItem := nil;
-    OnClickEvent := nil;
-  end;
-end;
-
-procedure TPressMVPCommandMenuItem.SetEnabled(Value: Boolean);
-begin
-  if Assigned(FMenuItem) then
-    FMenuItem.Enabled := Value;
-end;
-
-procedure TPressMVPCommandMenuItem.SetVisible(Value: Boolean);
-begin
-  if Assigned(FMenuItem) then
-    FMenuItem.Visible := Value;
-end;
-
-{ TPressMVPCommandControl }
-
-procedure TPressMVPCommandControl.BindComponent;
-begin
-  if Assigned(FControl) then
-  begin
-    OnClickEvent := TPressMVPControlFriend(FControl).OnClick;
-    TPressMVPControlFriend(FControl).OnClick :=
-     {$IFDEF FPC}@{$ENDIF}ComponentClick;
-    FControl.Enabled := Command.Enabled;
-    FControl.Visible := Command.Visible;
-  end;
-end;
-
-constructor TPressMVPCommandControl.Create(ACommand: TPressMVPCommand;
-  AControl: TControl);
-begin
-  inherited Create(ACommand);
-  FControl := AControl;
-  BindComponent;
-end;
-
-procedure TPressMVPCommandControl.ReleaseComponent;
-begin
-  if Assigned(FControl) then
-  begin
-    TPressMVPControlFriend(FControl).OnClick := OnClickEvent;
-    FControl := nil;
-    OnClickEvent := nil;
-  end;
-end;
-
-procedure TPressMVPCommandControl.SetEnabled(Value: Boolean);
-begin
-  if Assigned(FControl) then
-    FControl.Enabled := Value;
-end;
-
-procedure TPressMVPCommandControl.SetVisible(Value: Boolean);
-begin
-  if Assigned(FControl) then
-    FControl.Visible := Value;
 end;
 
 { TPressMVPCommandComponentList }
@@ -624,12 +509,8 @@ procedure TPressMVPCommand.AddComponent(AComponent: TObject);
 var
   VCommandComponent: TPressMVPCommandComponent;
 begin
-  { TODO : Assertion }
-  if AComponent is TMenuItem then
-    VCommandComponent := TPressMVPCommandMenuItem.Create(Self, TMenuItem(AComponent))
-  else if AComponent is TControl then
-    VCommandComponent := TPressMVPCommandControl.Create(Self, TControl(AComponent))
-  else
+  VCommandComponent := PressWidget.CreateCommandComponent(Self, AComponent);
+  if not Assigned(VCommandComponent) then
     raise EPressMVPError.CreateFmt(SUnsupportedComponent,
      [AComponent.ClassName]);
   ComponentList.Add(VCommandComponent);

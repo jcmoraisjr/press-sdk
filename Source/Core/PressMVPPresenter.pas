@@ -540,7 +540,7 @@ end;
 
 function TPressMVPPresenter.InternalCreateCommandMenu: TPressMVPCommandMenu;
 begin
-  Result := TPressMVPPopupCommandMenu.Create;
+  Result := PressWidget.CreateCommandMenu;
 end;
 
 class procedure TPressMVPPresenter.RegisterPresenter;
