@@ -441,6 +441,9 @@ implementation
 
 uses
   Math,
+{$ifdef fpc}
+  LCLProc,
+{$endif}
   Graphics,
   PressSubject,
   PressConsts,
@@ -509,7 +512,7 @@ end;
 
 function TPressMVPWidgetManager.ShortCut(const AShortCutText: string): TShortCut;
 begin
-  Result := Menus.TextToShortCut(AShortCutText);
+  Result := TextToShortCut(AShortCutText);
 end;
 
 procedure TPressMVPWidgetManager.ShowForm(AForm: TObject; AModal: Boolean);
