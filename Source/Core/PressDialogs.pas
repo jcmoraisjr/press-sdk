@@ -31,6 +31,7 @@ type
     function InternalConfirmDlg(const AMsg: string): Boolean; virtual;
     function InternalConfirmRemove(ACount: Integer): Boolean; virtual;
     procedure InternalDefaultDlg(const AMsg: string); virtual;
+    function InternalOpenPictureDialog(out AFileName: string): Boolean;
     function InternalSaveChanges: Boolean; virtual;
     class function InternalServiceType: TPressServiceType; override;
   public
@@ -38,6 +39,7 @@ type
     function ConfirmDlg(const AMsg: string): Boolean;
     function ConfirmRemove(ACount: Integer): Boolean;
     procedure DefaultDlg(const AMsg: string);
+    function OpenPicture(out AFileName: string): Boolean;
     function SaveChanges: Boolean;
   end;
 
@@ -49,6 +51,7 @@ uses
   SysUtils,
   Controls,
   Dialogs,
+  ExtDlgs,
   PressConsts;
 
 function PressDialog: TPressDialogs;
@@ -102,6 +105,19 @@ begin
   MessageDlg(AMsg, mtInformation, [mbOk], 0);
 end;
 
+function TPressDialogs.InternalOpenPictureDialog(out AFileName: string): Boolean;
+var
+  VDialog: TOpenPictureDialog;
+begin
+  VDialog := TOpenPictureDialog.Create(nil);
+  try
+    Result := VDialog.Execute;
+    AFileName := VDialog.FileName;
+  finally
+    VDialog.Free;
+  end;
+end;
+
 function TPressDialogs.InternalSaveChanges: Boolean;
 begin
   Result := ConfirmDlg(SPressSaveChangesDialog);
@@ -110,6 +126,11 @@ end;
 class function TPressDialogs.InternalServiceType: TPressServiceType;
 begin
   Result := CPressDialogService;
+end;
+
+function TPressDialogs.OpenPicture(out AFileName: string): Boolean;
+begin
+  Result := InternalOpenPictureDialog(AFileName);
 end;
 
 function TPressDialogs.SaveChanges: Boolean;

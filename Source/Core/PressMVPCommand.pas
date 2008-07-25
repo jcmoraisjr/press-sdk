@@ -276,7 +276,6 @@ implementation
 
 uses
   SysUtils,
-  ExtDlgs,
   PressConsts,
   PressUtils,
   PressApplication,
@@ -347,15 +346,12 @@ begin
 end;
 
 procedure TPressMVPLoadPictureCommand.InternalExecute;
+var
+  VFileName: string;
 begin
   inherited;
-  with TOpenPictureDialog.Create(nil) do
-  try
-    if Execute then
-      Subject.AssignFromFile(FileName);
-  finally
-    Free;
-  end;
+  if PressDialog.OpenPicture(VFileName) then
+    Subject.AssignFromFile(VFileName);
 end;
 
 { TPressMVPRemovePictureCommand }
