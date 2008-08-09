@@ -229,7 +229,7 @@ type
   ['{58E7C9D0-BEF6-4388-B410-23F24314C769}']
   end;
 
-  IPressMVPCheckBoxView = interface(IPressMVPWinView)
+  IPressMVPCheckBoxView = interface(IPressMVPBooleanView)
   ['{0E7A51E2-16E5-4236-A945-E94CBF1B09F0}']
   end;
 
