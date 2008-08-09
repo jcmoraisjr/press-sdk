@@ -375,7 +375,7 @@ begin
   if Assigned(FCommandMenu) then
   begin
     if Assigned(FView) then
-      FCommandMenu.AssignMenu(FView.GetHandle);
+      FCommandMenu.AssignMenu(FView.Handle);
     if not FIsInitializing then
       UpdateCommandMenu;
   end;
@@ -400,7 +400,7 @@ begin
   if Assigned(FView) then
   begin
     if Assigned(FCommandMenu) then
-      FCommandMenu.AssignMenu(FView.GetHandle);
+      FCommandMenu.AssignMenu(FView.Handle);
     if Assigned(FModel) then
     begin
       FView.SetModel(FModel);

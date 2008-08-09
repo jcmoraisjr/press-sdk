@@ -170,7 +170,7 @@ type
   IPressMVPBaseView = interface(IPressMVPObject)
   ['{BD52DAAE-EF86-47A0-B591-53024F0736B5}']
     function GetHandle: TObject;
-//    property Handle: TObject read GetHandle;
+    property Handle: TObject read GetHandle;
   end;
 
   IPressMVPView = interface(IPressMVPBaseView)
