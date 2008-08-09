@@ -27,6 +27,7 @@ procedure PressVCLForm(APresenter: TPressMVPFormPresenterClass; AForm: TFormClas
 implementation
 
 uses
+  PressMVPWidget,
   PressXCLBroker;
 
 procedure PressVCLForm(
@@ -34,5 +35,8 @@ procedure PressVCLForm(
 begin
   PressXCLForm(APresenter, AForm);
 end;
+
+initialization
+  PressRegisterWidgetManager(TPressMVPWidgetManager.Create);
 
 end.

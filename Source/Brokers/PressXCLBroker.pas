@@ -1944,7 +1944,6 @@ begin
 end;
 
 initialization
-  PressRegisterWidgetManager(TPressMVPWidgetManager.Create);
   TPressMVPEditView.RegisterView;
   TPressMVPDateTimeView.RegisterView;
   TPressMVPCheckBoxView.RegisterView;
