@@ -25,6 +25,9 @@ const
   CPressDialogService = CPressDialogServicesBase + $0002;
 
 type
+  TPressMessageType = (msgConfirm, msgInform);
+  TPressOpenDlgType = (odtPicture);
+
   TPressDialogs = class(TPressService)
   protected
     function InternalCancelChanges: Boolean; virtual;
@@ -49,10 +52,8 @@ implementation
 
 uses
   SysUtils,
-  Controls,
-  Dialogs,
-  ExtDlgs,
-  PressConsts;
+  PressConsts,
+  PressMVPWidget;
 
 function PressDialog: TPressDialogs;
 begin
@@ -88,7 +89,7 @@ end;
 
 function TPressDialogs.InternalConfirmDlg(const AMsg: string): Boolean;
 begin
-  Result := MessageDlg(AMsg, mtConfirmation, [mbYes, mbNo], 0) = mrYes;
+  Result := PressWidget.MessageDlg(msgConfirm, AMsg) = 0;
 end;
 
 function TPressDialogs.InternalConfirmRemove(ACount: Integer): Boolean;
@@ -102,20 +103,13 @@ end;
 
 procedure TPressDialogs.InternalDefaultDlg(const AMsg: string);
 begin
-  MessageDlg(AMsg, mtInformation, [mbOk], 0);
+  PressWidget.MessageDlg(msgInform, AMsg);
 end;
 
 function TPressDialogs.InternalOpenPictureDialog(out AFileName: string): Boolean;
-var
-  VDialog: TOpenPictureDialog;
 begin
-  VDialog := TOpenPictureDialog.Create(nil);
-  try
-    Result := VDialog.Execute;
-    AFileName := VDialog.FileName;
-  finally
-    VDialog.Free;
-  end;
+  AFileName := '';
+  Result := PressWidget.OpenDlg(odtPicture, AFileName);
 end;
 
 function TPressDialogs.InternalSaveChanges: Boolean;

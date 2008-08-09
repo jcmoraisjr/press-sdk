@@ -21,6 +21,7 @@ interface
 uses
   Classes,
   PressClasses,
+  PressDialogs,
   PressMVP,
   PressMVPView;
 
@@ -32,6 +33,8 @@ type
     function CreateCommandMenu: TPressMVPCommandMenu;
     function CreateForm(AFormClass: TClass): TObject;
     procedure Draw(ACanvasHandle: TObject; AShapeType: TPressShapeType; X1, Y1, X2, Y2: Integer; ASolid: Boolean);
+    function MessageDlg(AMsgType: TPressMessageType; const AMsg: string): Integer;
+    function OpenDlg(AOpenDlgType: TPressOpenDlgType; var AFileName: string): Boolean;
     function ShortCut(const AShortCutText: string): TShortCut;
     procedure ShowForm(AForm: TObject; AModal: Boolean);
     function TextHeight(ACanvasHandle: TObject; const AStr: string): Integer;

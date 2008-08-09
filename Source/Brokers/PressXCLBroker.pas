@@ -35,6 +35,7 @@ uses
   Forms,
   PressClasses,
   PressNotifier,
+  PressDialogs,
   PressUser,
   PressMVP,
   PressMVPModel,
@@ -51,6 +52,8 @@ type
     function CreateCommandMenu: TPressMVPCommandMenu;
     function CreateForm(AFormClass: TClass): TObject;
     procedure Draw(ACanvasHandle: TObject; AShape: TPressShapeType; X1, Y1, X2, Y2: Integer; ASolid: Boolean);
+    function MessageDlg(AMsgType: TPressMessageType; const AMsg: string): Integer;
+    function OpenDlg(AOpenDlgType: TPressOpenDlgType; var AFileName: string): Boolean;
     function ShortCut(const AShortCutText: string): TShortCut;
     procedure ShowForm(AForm: TObject; AModal: Boolean);
     function TextHeight(ACanvasHandle: TObject; const AStr: string): Integer;
@@ -445,6 +448,8 @@ uses
   LCLProc,
 {$endif}
   Graphics,
+  Dialogs,
+  ExtDlgs,
   PressSubject,
   PressConsts,
   PressUtils,
@@ -507,6 +512,39 @@ begin
   case AShape of
     shRectangle: TCanvas(ACanvasHandle).Rectangle(X1, Y1, X2, Y2);
     shEllipse: TCanvas(ACanvasHandle).Ellipse(X1, Y1, X2, Y2);
+  end;
+end;
+
+function TPressMVPWidgetManager.MessageDlg(
+  AMsgType: TPressMessageType; const AMsg: string): Integer;
+begin
+  case AMsgType of
+    msgConfirm:
+      case Dialogs.MessageDlg(AMsg, mtConfirmation, [mbYes, mbNo], 0) of
+        mrYes: Result := 0;
+        mrNo: Result := 1;
+        else Result := -1;
+      end;
+    msgInform:
+      if Dialogs.MessageDlg(AMsg, mtInformation, [mbOk], 0) = mrOk then
+        Result := 0
+      else
+        Result := -1;
+    else Result := -1;
+  end;
+end;
+
+function TPressMVPWidgetManager.OpenDlg(AOpenDlgType: TPressOpenDlgType;
+  var AFileName: string): Boolean;
+var
+  VDialog: TOpenPictureDialog;
+begin
+  VDialog := TOpenPictureDialog.Create(nil);
+  try
+    Result := VDialog.Execute;
+    AFileName := VDialog.FileName;
+  finally
+    VDialog.Free;
   end;
 end;
 
