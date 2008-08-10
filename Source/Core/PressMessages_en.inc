@@ -13,6 +13,7 @@
   SStringLengthOutOfBounds_rst = 'String length out of bounds';
   STokenExpected_rst = '''%s'' was expected, but ''%s'' was found';
   STokenLengthOutOfBounds_rst = 'Token length out of bounds';
+  SUnassignedAppManager_rst = 'App manager was not assigned';
   SUnassignedServiceType_rst = 'No service ''%s'' is assigned or registered';
   SUnexpectedEof_rst = 'Unexpected end of file';
   SUnsupportedFeature_rst = 'Unsupported feature ''%s''';

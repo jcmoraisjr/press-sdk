@@ -94,6 +94,7 @@ var
   SStringLengthOutOfBounds,
   STokenExpected,
   STokenLengthOutOfBounds,
+  SUnassignedAppManager,
   SUnassignedServiceType,
   SUnexpectedEof,
   SUnsupportedFeature,

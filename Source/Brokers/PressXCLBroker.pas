@@ -33,6 +33,7 @@ uses
   Calendar,
 {$ENDIF}
   Forms,
+  PressApplication,
   PressClasses,
   PressNotifier,
   PressDialogs,
@@ -59,6 +60,21 @@ type
     function TextHeight(ACanvasHandle: TObject; const AStr: string): Integer;
     procedure TextRect(ACanvasHandle: TObject; ARect: TPressRect; ALeft, ATop: Integer; const AStr: string);
     function TextWidth(ACanvasHandle: TObject; const AStr: string): Integer;
+  end;
+
+  TPressXCLAppManager = class(TPressManagedIObject, IPressAppManager)
+  private
+    FIdleMethod: TPressIdleMethod;
+    FOnIdle: TIdleEvent;
+    procedure ApplicationIdle(Sender: TObject; var Done: Boolean);
+  public
+    procedure Done;
+    procedure Finalize;
+    function HasMainForm: Boolean;
+    procedure IdleNotification(AIdleMethod: TPressIdleMethod);
+    procedure Init;
+    function MainForm: TObject;
+    procedure Run;
   end;
 
   TPressXCLCommandMenuItem = class(TPressMVPCommandComponent)
@@ -577,6 +593,53 @@ function TPressMVPWidgetManager.TextWidth(
   ACanvasHandle: TObject; const AStr: string): Integer;
 begin
   Result := TCanvas(ACanvasHandle).TextWidth(AStr);
+end;
+
+{ TPressXCLAppManager }
+
+procedure TPressXCLAppManager.ApplicationIdle(Sender: TObject; var Done: Boolean);
+begin
+  if Assigned(FIdleMethod) then
+    FIdleMethod;
+  if Assigned(FOnIdle) then
+    FOnIdle(Sender, Done);
+end;
+
+procedure TPressXCLAppManager.Done;
+begin
+  Application.OnIdle := FOnIdle;
+end;
+
+procedure TPressXCLAppManager.Finalize;
+begin
+  if HasMainForm then
+    Application.MainForm.Close;
+end;
+
+function TPressXCLAppManager.HasMainForm: Boolean;
+begin
+  Result := Assigned(Application) and Assigned(Application.MainForm);
+end;
+
+procedure TPressXCLAppManager.IdleNotification(AIdleMethod: TPressIdleMethod);
+begin
+  FIdleMethod := AIdleMethod;
+end;
+
+procedure TPressXCLAppManager.Init;
+begin
+  FOnIdle := Application.OnIdle;
+  Application.OnIdle := {$IFDEF FPC}@{$ENDIF}ApplicationIdle;
+end;
+
+function TPressXCLAppManager.MainForm: TObject;
+begin
+  Result := Application.MainForm;
+end;
+
+procedure TPressXCLAppManager.Run;
+begin
+  Application.Run;
 end;
 
 { TPressXCLCommandMenuItem }
@@ -1944,6 +2007,7 @@ begin
 end;
 
 initialization
+  PressApp.RegisterAppManager(TPressXCLAppManager.Create);
   TPressMVPEditView.RegisterView;
   TPressMVPDateTimeView.RegisterView;
   TPressMVPCheckBoxView.RegisterView;

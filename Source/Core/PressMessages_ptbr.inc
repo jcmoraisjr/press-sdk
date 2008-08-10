@@ -13,6 +13,7 @@
   SStringLengthOutOfBounds_rst = 'String muito grande';
   STokenExpected_rst = '''%s'' esperado, mas ''%s'' foi encontrado';
   STokenLengthOutOfBounds_rst = 'Token muito grande';
+  SUnassignedAppManager_rst = 'Gerenciador de aplicação não foi associado';
   SUnassignedServiceType_rst = 'Nenhum serviço ''%s'' foi associado ou registrado';
   SUnexpectedEof_rst = 'Final de arquivo inesperado';
   SUnsupportedFeature_rst = 'Feature ''%s'' não é suportada';

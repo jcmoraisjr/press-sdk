@@ -22,7 +22,6 @@ interface
 uses
   Classes,
   Contnrs,
-  Forms,
   PressClasses,
   PressNotifier,
   PressConfig;
@@ -245,22 +244,36 @@ type
     property Registry[AServiceType: TPressServiceType]: TPressRegistry read GetRegistry;
   end;
 
+  TPressIdleMethod = procedure of object;
+
+  IPressAppManager = interface(IPressInterface)
+  ['{47789A52-08BF-4BC4-B1DC-4BD65339F552}']
+    procedure Done;
+    procedure Finalize;
+    function HasMainForm: Boolean;
+    procedure IdleNotification(AIdleMethod: TPressIdleMethod);
+    procedure Init;
+    function MainForm: TObject;
+    procedure Run;
+  end;
+
   TPressApplication = class(TObject)
   private
+    FAppManager: IPressAppManager;
     FConfigFile: TPressConfigFile;
     FConfigFileName: string;
     FInitialized: Boolean;
-    FOnIdle: TIdleEvent;
     FRunning: Boolean;
     FServices: TPressAppServices;
-    procedure ApplicationIdle(Sender: TObject; var Done: Boolean);
+    procedure CheckAppManager;
     procedure DestroyConfigFile;
     procedure DoneApplication;
+    function GetHasMainForm: Boolean;
     function GetMainForm: TObject;
     function GetRegistry(AServiceType: TPressServiceType): TPressRegistry;
+    procedure Idle;
     procedure Init(AIsStatic: Boolean);
     procedure SetConfigFileName(const Value: string);
-    function GetHasMainForm: Boolean;
   public
     constructor Create;
     destructor Destroy; override;
@@ -269,6 +282,7 @@ type
     procedure InitApplication;
     procedure InitPackage;
     procedure ReadConfigFile(const AFileName: string = '');
+    procedure RegisterAppManager(const AAppManager: IPressAppManager);
     procedure RegisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass; AIsDefault: Boolean);
     procedure Run;
     procedure UnregisterService(AServiceType: TPressServiceType; AServiceClass: TPressServiceClass);
@@ -977,12 +991,10 @@ end;
 
 { TPressApplication }
 
-procedure TPressApplication.ApplicationIdle(Sender: TObject; var Done: Boolean);
+procedure TPressApplication.CheckAppManager;
 begin
-  {$IFDEF PressLogIdle}PressLogMsg(Self, 'Idle', [Sender]);{$ENDIF}
-  PressProcessEventQueue;
-  if Assigned(FOnIdle) then
-    FOnIdle(Sender, Done);
+  if not Assigned(FAppManager) then
+    raise EPressError.Create(SUnassignedAppManager);
 end;
 
 constructor TPressApplication.Create;
@@ -996,8 +1008,8 @@ end;
 
 destructor TPressApplication.Destroy;
 begin
-  if Running then
-    Application.OnIdle := FOnIdle;
+  if Running and Assigned(FAppManager) then
+    FAppManager.Done;
   FRunning := False;
   FServices.Free;
   FConfigFile.Free;
@@ -1023,7 +1035,8 @@ begin
   FRunning := False;
   TPressApplicationDoneEvent.Create(Self).Notify;
   Services.DoneAllServices;
-  Application.OnIdle := FOnIdle;
+  if Assigned(FAppManager) then
+    FAppManager.Done;
 end;
 
 procedure TPressApplication.DonePackage;
@@ -1033,26 +1046,35 @@ end;
 
 procedure TPressApplication.Finalize;
 begin
-  Application.MainForm.Close;
+  CheckAppManager;
+  FAppManager.Finalize;
 end;
 
 function TPressApplication.GetHasMainForm: Boolean;
 begin
-  Result := Assigned(Application) and Assigned(Application.MainForm);
+  CheckAppManager;
+  Result := FAppManager.HasMainForm;
 end;
 
 function TPressApplication.GetMainForm: TObject;
 begin
   { TODO : fix message initialization }
-  if not HasMainForm then
+  CheckAppManager;
+  if not FAppManager.HasMainForm then
     raise EPressError.Create(SUnassignedMainForm);
-  Result := Application.MainForm;
+  Result := FAppManager.MainForm;
 end;
 
 function TPressApplication.GetRegistry(
   AServiceType: TPressServiceType): TPressRegistry;
 begin
   Result := Services.Registry[AServiceType];
+end;
+
+procedure TPressApplication.Idle;
+begin
+  {$IFDEF PressLogIdle}PressLogMsg(Self, 'Idle', [Sender]);{$ENDIF}
+  PressProcessEventQueue;
 end;
 
 procedure TPressApplication.Init(AIsStatic: Boolean);
@@ -1062,8 +1084,8 @@ begin
   FInitialized := True;
   Services.CreateMandatoryServices;
   FRunning := True;
-  FOnIdle := Application.OnIdle;
-  Application.OnIdle := {$IFDEF FPC}@{$ENDIF}ApplicationIdle;
+  CheckAppManager;
+  FAppManager.Init;
   TPressApplicationInitEvent.Create(Self).Notify;
   if AIsStatic and not Assigned(FConfigFile) then
     ReadConfigFile;
@@ -1104,6 +1126,13 @@ begin
   end;
 end;
 
+procedure TPressApplication.RegisterAppManager(const AAppManager: IPressAppManager);
+begin
+  FAppManager := AAppManager;
+  if Assigned(FAppManager) then
+    FAppManager.IdleNotification({$ifdef fpc}@{$endif}Idle);
+end;
+
 procedure TPressApplication.RegisterService(AServiceType: TPressServiceType;
   AServiceClass: TPressServiceClass; AIsDefault: Boolean);
 begin
@@ -1114,7 +1143,7 @@ procedure TPressApplication.Run;
 begin
   InitApplication;
   try
-    Application.Run;
+    FAppManager.Run;
   finally
     DoneApplication;
   end;

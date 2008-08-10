@@ -13,6 +13,7 @@
   SStringLengthOutOfBounds := SStringLengthOutOfBounds_rst;
   STokenExpected := STokenExpected_rst;
   STokenLengthOutOfBounds := STokenLengthOutOfBounds_rst;
+  SUnassignedAppManager := SUnassignedAppManager_rst;
   SUnassignedServiceType := SUnassignedServiceType_rst;
   SUnexpectedEof := SUnexpectedEof_rst;
   SUnsupportedFeature := SUnsupportedFeature_rst;
