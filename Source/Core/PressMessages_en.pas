@@ -30,19 +30,14 @@ type
 implementation
 
 uses
-  PressConsts;
-
-resourcestring
-  {$I PressMessages_en.inc}
+  PressMessages;
 
 { TPressMessages_en }
 
 procedure TPressMessages_en.InternalIsDefaultChanged;
 begin
   if IsDefault then
-  begin
-    {$I PressMessages.inc}
-  end;
+    PressAssignDefaultMessages;
   inherited;
 end;
 

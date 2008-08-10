@@ -739,10 +739,7 @@ begin
   else if ServiceClasses.Count > 0 then
     Result := ServiceClasses.Last
   else
-    { TODO : Using literal; const might not have being initialized
-      for mandatory services. }
-    raise EPressError.CreateFmt(
-     'No service ''%s'' assigned or registered', [ServiceTypeName]);
+    raise EPressError.CreateFmt(SUnassignedServiceType, [ServiceTypeName]);
   for I := Pred(ServiceClasses.Count) downto 0 do
     if ServiceClasses[I].InheritsFrom(Result) then
       Result := ServiceClasses[I];

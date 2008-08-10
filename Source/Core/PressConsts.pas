@@ -218,4 +218,10 @@ var
 
 implementation
 
+uses
+  PressMessages;
+
+initialization
+  PressAssignDefaultMessages;
+
 end.
