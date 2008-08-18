@@ -181,7 +181,10 @@ end;
 
 class function TPressPicture.AttributeName: string;
 begin
-  Result := 'Picture';
+  if Self = TPressPicture then
+    Result := 'Picture'
+  else
+    Result := ClassName;
 end;
 
 procedure TPressPicture.ClearPicture;

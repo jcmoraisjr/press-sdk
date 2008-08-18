@@ -1085,7 +1085,10 @@ end;
 
 class function TPressString.AttributeName: string;
 begin
-  Result := 'String';
+  if Self = TPressString then
+    Result := 'String'
+  else
+    Result := ClassName;
 end;
 
 class function TPressString.EmptyValue: Variant;
@@ -1366,7 +1369,10 @@ end;
 
 class function TPressInteger.AttributeName: string;
 begin
-  Result := 'Integer';
+  if Self = TPressInteger then
+    Result := 'Integer'
+  else
+    Result := ClassName;
 end;
 
 procedure TPressInteger.Decrement(AValue: Integer);
@@ -1530,7 +1536,10 @@ end;
 
 class function TPressFloat.AttributeName: string;
 begin
-  Result := 'Float';
+  if Self = TPressFloat then
+    Result := 'Float'
+  else
+    Result := ClassName;
 end;
 
 procedure TPressFloat.Decrement(AValue: Double);
@@ -1694,7 +1703,10 @@ end;
 
 class function TPressCurrency.AttributeName: string;
 begin
-  Result := 'Currency';
+  if Self = TPressCurrency then
+    Result := 'Currency'
+  else
+    Result := ClassName;
 end;
 
 procedure TPressCurrency.Decrement(AValue: Currency);
@@ -1878,7 +1890,10 @@ end;
 
 class function TPressEnum.AttributeName: string;
 begin
-  Result := 'Enum';
+  if Self = TPressEnum then
+    Result := 'Enum'
+  else
+    Result := ClassName;
 end;
 
 class function TPressEnum.EmptyValue: Variant;
@@ -2072,7 +2087,10 @@ end;
 
 class function TPressBoolean.AttributeName: string;
 begin
-  Result := 'Boolean';
+  if Self = TPressBoolean then
+    Result := 'Boolean'
+  else
+    Result := ClassName;
 end;
 
 class function TPressBoolean.EmptyValue: Variant;
@@ -2243,7 +2261,10 @@ end;
 
 class function TPressDate.AttributeName: string;
 begin
-  Result := 'Date';
+  if Self = TPressDate then
+    Result := 'Date'
+  else
+    Result := ClassName;
 end;
 
 class function TPressDate.EmptyValue: Variant;
@@ -2428,7 +2449,10 @@ end;
 
 class function TPressTime.AttributeName: string;
 begin
-  Result := 'Time';
+  if Self = TPressTime then
+    Result := 'Time'
+  else
+    Result := ClassName;
 end;
 
 class function TPressTime.EmptyValue: Variant;
@@ -2602,7 +2626,10 @@ end;
 
 class function TPressDateTime.AttributeName: string;
 begin
-  Result := 'DateTime';
+  if Self = TPressDateTime then
+    Result := 'DateTime'
+  else
+    Result := ClassName;
 end;
 
 class function TPressDateTime.EmptyValue: Variant;
@@ -2791,7 +2818,10 @@ end;
 
 class function TPressVariant.AttributeName: string;
 begin
-  Result := 'Variant';
+  if Self = TPressVariant then
+    Result := 'Variant'
+  else
+    Result := ClassName;
 end;
 
 class function TPressVariant.EmptyValue: Variant;
@@ -3203,7 +3233,10 @@ end;
 
 class function TPressMemo.AttributeName: string;
 begin
-  Result := 'Memo';
+  if Self = TPressMemo then
+    Result := 'Memo'
+  else
+    Result := ClassName;
 end;
 
 { TPressBinary }
@@ -3215,7 +3248,10 @@ end;
 
 class function TPressBinary.AttributeName: string;
 begin
-  Result := 'Binary';
+  if Self = TPressBinary then
+    Result := 'Binary'
+  else
+    Result := ClassName;
 end;
 
 { TPressItem }
@@ -3434,7 +3470,10 @@ end;
 
 class function TPressPart.AttributeName: string;
 begin
-  Result := 'Part';
+  if Self = TPressPart then
+    Result := 'Part'
+  else
+    Result := ClassName;
 end;
 
 procedure TPressPart.BeforeChangeInstance(
@@ -3512,7 +3551,10 @@ end;
 
 class function TPressReference.AttributeName: string;
 begin
-  Result := 'Reference';
+  if Self = TPressReference then
+    Result := 'Reference'
+  else
+    Result := ClassName;
 end;
 
 procedure TPressReference.InternalAssignItem(AProxy: TPressProxy);
