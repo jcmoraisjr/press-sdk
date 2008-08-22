@@ -319,6 +319,14 @@ type
 
   TPressMVPChangeType = (ctSubject, ctDisplay);
 
+  TPressMVPModelChangedEvent = class(TPressMVPModelEvent)
+  private
+    FChangeType: TPressMVPChangeType;
+  public
+    constructor Create(AOwner: TObject; AChangeType: TPressMVPChangeType);
+    property ChangeType: TPressMVPChangeType read FChangeType;
+  end;
+
   TPressMVPModelChangeEvent = procedure(AChangeType: TPressMVPChangeType) of object;
 
   TPressMVPModelClass = class of TPressMVPModel;
@@ -1172,6 +1180,15 @@ begin
 end;
 {$ENDIF}
 
+{ TPressMVPModelChangedEvent }
+
+constructor TPressMVPModelChangedEvent.Create(AOwner: TObject;
+  AChangeType: TPressMVPChangeType);
+begin
+  inherited Create(AOwner);
+  FChangeType := AChangeType;
+end;
+
 { TPressMVPModel }
 
 function TPressMVPModel.AccessMode: TPressAccessMode;
@@ -1200,8 +1217,12 @@ end;
 
 procedure TPressMVPModel.Changed(AChangeType: TPressMVPChangeType);
 begin
-  if Assigned(FOnChange) and not EventsDisabled then
-    FOnChange(AChangeType);
+  if not EventsDisabled then
+  begin
+    if Assigned(FOnChange) then
+      FOnChange(AChangeType);
+    TPressMVPModelChangedEvent.Create(Self, AChangeType).Notify;
+  end;
 end;
 
 constructor TPressMVPModel.Create(
