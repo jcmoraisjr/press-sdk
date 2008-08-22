@@ -239,6 +239,7 @@ type
 
   IPressMVPObject = interface(IPressInterface)
   ['{FD85A06B-E95E-4BD2-BE8E-BB5B7D5565A2}']
+    procedure AddNotification(AEventClasses: array of TPressEventClass; AMethod: TPressNotificationEvent);
     function GetEventsDisabled: Boolean;
     function GetInstance: TPressMVPObject;
     procedure DisableEvents;

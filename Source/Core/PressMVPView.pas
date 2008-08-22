@@ -180,15 +180,18 @@ type
     function GetIsChanged: Boolean;
     function GetReadOnly: Boolean;
     function GetText: string;
+    function GetVisible: Boolean;
     procedure SetAccessMode(Value: TPressAccessMode);
     procedure SetModel(AModel: TPressMVPModel);
     procedure SetReadOnly(Value: Boolean);
     procedure SetText(const Value: string);
+    procedure SetVisible(Value: Boolean);
     procedure Update;
     property AccessMode: TPressAccessMode read GetAccessMode write SetAccessMode;
     property IsChanged: Boolean read GetIsChanged;
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
     property Text: string read GetText write SetText;
+    property Visible: Boolean read GetVisible write SetVisible;
   end;
 
   IPressMVPAttributeView = interface(IPressMVPView)

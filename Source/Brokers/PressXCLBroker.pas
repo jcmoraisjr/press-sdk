@@ -149,8 +149,10 @@ type
     function GetIsChanged: Boolean;
     function GetModel: TPressMVPModel;
     function GetReadOnly: Boolean;
+    function GetVisible: Boolean;
     procedure SetAccessMode(Value: TPressAccessMode);
     procedure SetReadOnly(Value: Boolean);
+    procedure SetVisible(Value: Boolean);
   protected
     procedure ViewClickEvent(Sender: TObject); virtual;
     procedure ViewDblClickEvent(Sender: TObject); virtual;
@@ -175,6 +177,7 @@ type
     property IsChanged: Boolean read FIsChanged;
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
     property Text: string read GetText write SetText;
+    property Visible: Boolean read GetVisible write SetVisible;
   end;
 
   TPressMVPAttributeView = class(TPressMVPView, IPressMVPAttributeView)
@@ -859,6 +862,11 @@ begin
   raise AccessError('Text');
 end;
 
+function TPressMVPView.GetVisible: Boolean;
+begin
+  Result := TPressXCLControlFriend(Control).Visible;
+end;
+
 procedure TPressMVPView.InitView;
 begin
   inherited;
@@ -943,6 +951,11 @@ end;
 procedure TPressMVPView.SetText(const Value: string);
 begin
   raise AccessError('Text');
+end;
+
+procedure TPressMVPView.SetVisible(Value: Boolean);
+begin
+  TPressXCLControlFriend(Control).Visible := Visible;
 end;
 
 procedure TPressMVPView.Unchanged;
