@@ -2,6 +2,7 @@ program SimpleOPF;
 
 uses
   Forms,
+  PressVCLBroker,
   PressApplication,
   MainFrm in '..\..\Units\MainFrm.pas' {MainForm},
   PersonBO in '..\..\Units\PersonBO.pas';
