@@ -4808,7 +4808,10 @@ procedure TPressAttribute.InternalChanging;
 begin
   inherited;
   if Assigned(FOwner) and not FIsSynchronizing then
+  begin
+    FOwner.Changing;
     FOwner.NotifyMemento(Self);  // friend class
+  end;
 end;
 
 procedure TPressAttribute.InternalReset;
