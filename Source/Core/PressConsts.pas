@@ -61,15 +61,6 @@ const
   SPressSubjectAccessorName = '_Subject';
 // user related
   SPressUserAdminId = 'admin';
-// short cuts
-  SPressAddCommandShortCut = 'F2';
-  SPressChangeCommandShortCut = 'F3';
-  SPressRemoveCommandShortCut = 'Ctrl+F8';
-  SPressTodayCommandShortCut = 'Ctrl+D';
-  SPressSelectAllCommandShortCut = 'Ctrl+A';
-  SPressSelectNoneCommandShortCut = 'Ctrl+W';
-  SPressSaveCommandShortCut = 'F12';
-  SPressExecuteCommandShortCut = 'F11';
 // service names
   SPressSessionServiceName = 'Session';
   SPressGeneratorServiceName = 'Generator';
@@ -78,6 +69,17 @@ const
   SPressMessagesServiceName = 'Messages';
 
 var
+  // short cuts
+  SPressAddCommandShortCut,
+  SPressChangeCommandShortCut,
+  SPressRemoveCommandShortCut,
+  SPressTodayCommandShortCut,
+  SPressSelectAllCommandShortCut,
+  SPressSelectNoneCommandShortCut,
+  SPressSelectCurrentCommandShortCut,
+  SPressSaveCommandShortCut,
+  SPressExecuteCommandShortCut: Word;
+
   { TODO : Implement messages ID }
   // Error messages from core and adjacent classes
   SCannotReleaseInstance,

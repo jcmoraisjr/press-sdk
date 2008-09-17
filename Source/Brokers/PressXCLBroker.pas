@@ -55,7 +55,6 @@ type
     procedure Draw(ACanvasHandle: TObject; AShape: TPressShapeType; X1, Y1, X2, Y2: Integer; ASolid: Boolean);
     function MessageDlg(AMsgType: TPressMessageType; const AMsg: string): Integer;
     function OpenDlg(AOpenDlgType: TPressOpenDlgType; var AFileName: string): Boolean;
-    function ShortCut(const AShortCutText: string): TShortCut;
     procedure ShowForm(AForm: TObject; AModal: Boolean);
     function TextHeight(ACanvasHandle: TObject; const AStr: string): Integer;
     procedure TextRect(ACanvasHandle: TObject; ARect: TPressRect; ALeft, ATop: Integer; const AStr: string);
@@ -565,11 +564,6 @@ begin
   finally
     VDialog.Free;
   end;
-end;
-
-function TPressMVPWidgetManager.ShortCut(const AShortCutText: string): TShortCut;
-begin
-  Result := TextToShortCut(AShortCutText);
 end;
 
 procedure TPressMVPWidgetManager.ShowForm(AForm: TObject; AModal: Boolean);
@@ -2020,6 +2014,16 @@ begin
 end;
 
 initialization
+  SPressAddCommandShortCut := VK_F2;
+  SPressChangeCommandShortCut := VK_F3;
+  SPressRemoveCommandShortCut := ShortCut(VK_F8, [ssCtrl]);
+  SPressTodayCommandShortCut := ShortCut(Ord('D'), [ssCtrl]);
+  SPressSelectAllCommandShortCut := ShortCut(Ord('A'), [ssCtrl]);
+  SPressSelectNoneCommandShortCut := ShortCut(Ord('W'), [ssCtrl]);
+  SPressSelectCurrentCommandShortCut := Ord(' ');
+  SPressSaveCommandShortCut := VK_F12;
+  SPressExecuteCommandShortCut := VK_F11;
+
   PressApp.RegisterAppManager(TPressXCLAppManager.Create);
   TPressMVPEditView.RegisterView;
   TPressMVPDateTimeView.RegisterView;

@@ -1818,7 +1818,8 @@ procedure TPressMVPItemsModel.InternalCreateSortCommands;
      Format(SPressSortByCommand, [ColumnData[AColumn].HeaderCaption]);
     if VChar <> #0 then
     begin
-      VShortCut := PressWidget.ShortCut('Shift+Ctrl+' + VChar);
+      { TODO : Build 'Shift+Ctrl+' + VChar shortcut }
+      VShortCut := 0;
       VCaption := '&' + VChar + ' ' + VCaption;
     end else
       VShortCut := 0;

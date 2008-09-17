@@ -311,7 +311,7 @@ end;
 
 function TPressMVPTodayCommand.GetShortCut: TShortCut;
 begin
-  Result := PressWidget.ShortCut(SPressTodayCommandShortCut);
+  Result := SPressTodayCommandShortCut;
 end;
 
 procedure TPressMVPTodayCommand.InternalExecute;
@@ -342,7 +342,7 @@ end;
 
 function TPressMVPLoadPictureCommand.GetShortCut: TShortCut;
 begin
-  Result := PressWidget.ShortCut(SPressAddCommandShortCut);
+  Result := SPressAddCommandShortCut;
 end;
 
 procedure TPressMVPLoadPictureCommand.InternalExecute;
@@ -363,7 +363,7 @@ end;
 
 function TPressMVPRemovePictureCommand.GetShortCut: TShortCut;
 begin
-  Result := PressWidget.ShortCut(SPressRemoveCommandShortCut);
+  Result := SPressRemoveCommandShortCut;
 end;
 
 procedure TPressMVPRemovePictureCommand.InitNotifier;
@@ -406,7 +406,7 @@ end;
 
 function TPressMVPEditItemCommand.GetShortCut: TShortCut;
 begin
-  Result := PressWidget.ShortCut(SPressChangeCommandShortCut);
+  Result := SPressChangeCommandShortCut;
 end;
 
 procedure TPressMVPEditItemCommand.InternalExecute;
@@ -442,7 +442,7 @@ end;
 
 function TPressMVPIncludeObjectCommand.GetShortCut: TShortCut;
 begin
-  Result := PressWidget.ShortCut(SPressAddCommandShortCut);
+  Result := SPressAddCommandShortCut;
 end;
 
 procedure TPressMVPIncludeObjectCommand.InternalExecute;
@@ -537,7 +537,7 @@ end;
 
 function TPressMVPAddItemsCommand.GetShortCut: TShortCut;
 begin
-  Result := PressWidget.ShortCut(SPressAddCommandShortCut);
+  Result := SPressAddCommandShortCut;
 end;
 
 { TPressMVPAddReferencesCommand }
@@ -549,7 +549,7 @@ end;
 
 function TPressMVPAddReferencesCommand.GetShortCut: TShortCut;
 begin
-  Result := PressWidget.ShortCut(SPressAddCommandShortCut);
+  Result := SPressAddCommandShortCut;
 end;
 
 procedure TPressMVPAddReferencesCommand.InternalExecute;
@@ -567,7 +567,7 @@ end;
 
 function TPressMVPRemoveItemsCommand.GetShortCut: TShortCut;
 begin
-  Result := PressWidget.ShortCut(SPressRemoveCommandShortCut);
+  Result := SPressRemoveCommandShortCut;
 end;
 
 procedure TPressMVPRemoveItemsCommand.InternalExecute;
@@ -616,7 +616,7 @@ end;
 
 function TPressMVPSelectAllCommand.GetShortCut: TShortCut;
 begin
-  Result := PressWidget.ShortCut(SPressSelectAllCommandShortCut);
+  Result := SPressSelectAllCommandShortCut;
 end;
 
 procedure TPressMVPSelectAllCommand.InternalExecute;
@@ -638,7 +638,7 @@ end;
 
 function TPressMVPSelectNoneCommand.GetShortCut: TShortCut;
 begin
-  Result := PressWidget.ShortCut(SPressSelectNoneCommandShortCut);
+  Result := SPressSelectNoneCommandShortCut;
 end;
 
 procedure TPressMVPSelectNoneCommand.InternalExecute;
@@ -660,7 +660,7 @@ end;
 
 function TPressMVPSelectCurrentCommand.GetShortCut: TShortCut;
 begin
-  Result := 32;
+  Result := SPressSelectCurrentCommandShortCut;
 end;
 
 procedure TPressMVPSelectCurrentCommand.InternalExecute;
@@ -771,7 +771,7 @@ end;
 
 function TPressMVPSaveObjectCommand.GetShortCut: TShortCut;
 begin
-  Result := PressWidget.ShortCut(SPressSaveCommandShortCut);
+  Result := SPressSaveCommandShortCut;
 end;
 
 function TPressMVPSaveObjectCommand.InternalConfirm: Boolean;
@@ -900,7 +900,7 @@ end;
 
 function TPressMVPExecuteQueryCommand.GetShortCut: TShortCut;
 begin
-  Result := PressWidget.ShortCut(SPressExecuteCommandShortCut);
+  Result := SPressExecuteCommandShortCut;
 end;
 
 procedure TPressMVPExecuteQueryCommand.InternalExecute;
