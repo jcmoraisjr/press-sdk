@@ -67,7 +67,7 @@ type
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressSessionAttributes): TPressObject;
     procedure RetrieveAttribute(AAttribute: TPressAttribute);
     procedure Rollback;
-    function SelectGeneratorStatement: string;
+    function SelectGeneratorStatement(const AGeneratorName: string): string;
     procedure Store(AObject: TPressObject);
     property AttributeMapper[AMap: TPressOPFStorageMap]: TPressOPFAttributeMapper read GetAttributeMapper;
     property Connector: TPressOPFConnector read FConnector;
@@ -443,9 +443,12 @@ begin
   StorageModel.ResetClassList;
 end;
 
-function TPressOPFObjectMapper.SelectGeneratorStatement: string;
+function TPressOPFObjectMapper.SelectGeneratorStatement(const AGeneratorName: string): string;
 begin
-  Result := DDLBuilder.SelectGeneratorStatement;
+  if AGeneratorName <> '' then
+    Result := Format(DDLBuilder.SelectGeneratorStatement, [AGeneratorName])
+  else
+    Result := '';
 end;
 
 procedure TPressOPFObjectMapper.Store(AObject: TPressObject);

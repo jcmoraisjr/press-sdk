@@ -538,25 +538,28 @@ function TPressOPFGenerator.InternalGenerateOID(
   AAttribute: TPressAttribute): string;
 var
   VOwner: TPressOPF;
-  VGenerator: string;
+  VGeneratorStatement: string;
 begin
-  Result := '';
   if not Assigned(FDataset) or not Assigned(FMapper) then
   begin
-    if not Assigned(Owner) then
-      Exit;
     VOwner := Owner as TPressOPF;
-    if not Assigned(FDataset) then
-      FDataset := VOwner.Connector.CreateDataset;
-    if not Assigned(FMapper) then
-      FMapper := VOwner.Mapper;
+    if Assigned(VOwner) then
+    begin
+      if not Assigned(FDataset) then
+        FDataset := VOwner.Connector.CreateDataset;
+      if not Assigned(FMapper) then
+        FMapper := VOwner.Mapper;
+    end else
+    begin
+      Result := inherited InternalGenerateOID(AAttribute);
+      Exit;
+    end;
   end;
-  VGenerator := GeneratorName(AAttribute);
-  if VGenerator <> '' then
-    VGenerator := Format(FMapper.SelectGeneratorStatement, [VGenerator]);
-  if VGenerator <> '' then
+  VGeneratorStatement :=
+   FMapper.SelectGeneratorStatement(GeneratorName(AAttribute));
+  if VGeneratorStatement <> '' then
   begin
-    FDataset.SQL := VGenerator;
+    FDataset.SQL := VGeneratorStatement;
     FDataset.Execute;
     Result := FDataset[0][0].AsString;
   end else if Assigned(AAttribute.Metadata) and
