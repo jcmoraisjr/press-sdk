@@ -37,12 +37,16 @@ type
     FItems: TStrings;
     FName: string;
     FTypeAddress: Pointer;
+    procedure AddEnumNameItem(AIndex: Integer);
+    function AddVarRecItem(AItem: TVarRec): Boolean;
+    function GetItems(AIndex: Integer): string;
     function RemoveEnumItemPrefix(const AEnumName: string): string;
   public
-    constructor Create(ATypeAddress: Pointer); overload;
-    constructor Create(ATypeAddress: Pointer; AEnumValues: array of string); overload;
+    constructor Create(ATypeAddress: Pointer; AEnumValues: array of const);
     destructor Destroy; override;
-    property Items: TStrings read FItems;
+    function Count: Integer;
+    function IndexOf(const AValue: string): Integer;
+    property Items[AIndex: Integer]: string read GetItems;
     property Name: string read FName write FName;
     property TypeAddress: Pointer read FTypeAddress;
   end;
@@ -515,7 +519,7 @@ type
     procedure RegisterAttributes(AAttributes: array of TPressAttributeClass);
     procedure RegisterClasses(AClasses: array of TPressObjectClass);
     function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string): TPressEnumMetadata; overload;
-    function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string; AEnumValues: array of string): TPressEnumMetadata; overload;
+    function RegisterEnumMetadata(AEnumAddress: Pointer; const AEnumName: string; AEnumValues: array of const): TPressEnumMetadata; overload;
     function RegisterMetadata(const AMetadataStr: string): TPressObjectMetadata;
     procedure RemoveAttribute(AAttributeClass: TPressAttributeClass);
     procedure RemoveClass(AClass: TPressObjectClass);
@@ -1230,21 +1234,29 @@ end;
 
 { TPressEnumMetadata }
 
-constructor TPressEnumMetadata.Create(ATypeAddress: Pointer);
-var
-  I: Integer;
-  VTypeData: PTypeData;
+procedure TPressEnumMetadata.AddEnumNameItem(AIndex: Integer);
 begin
-  inherited Create;
-  FTypeAddress := ATypeAddress;
-  VTypeData := GetTypeData(FTypeAddress);
-  FItems := TStringList.Create;
-  for I := VTypeData^.MinValue to VTypeData^.MaxValue do
-    FItems.Add(RemoveEnumItemPrefix(GetEnumName(FTypeAddress, I)));
+  FItems.Add(RemoveEnumItemPrefix(GetEnumName(FTypeAddress, AIndex)));
+end;
+
+function TPressEnumMetadata.AddVarRecItem(AItem: TVarRec): Boolean;
+begin
+  Result := True;
+  case AItem.VType of
+    vtPointer: FItems.AddObject('', AItem.VPointer);
+    vtString: FItems.Add(AItem.VString^);
+    vtAnsiString: FItems.Add(AnsiString(AItem.VAnsiString));
+    else Result := False;
+  end;
+end;
+
+function TPressEnumMetadata.Count: Integer;
+begin
+  Result := FItems.Count;
 end;
 
 constructor TPressEnumMetadata.Create(
-  ATypeAddress: Pointer; AEnumValues: array of string);
+  ATypeAddress: Pointer; AEnumValues: array of const);
 var
   I, J: Integer;
   VTypeData: PTypeData;
@@ -1257,16 +1269,29 @@ begin
   for I := VTypeData^.MinValue to VTypeData^.MaxValue do
     if J <= High(AEnumValues) then
     begin
-      FItems.Add(AEnumValues[J]);
+      if not AddVarRecItem(AEnumValues[J]) then
+        AddEnumNameItem(J);
       Inc(J);
     end else
-      FItems.Add(RemoveEnumItemPrefix(GetEnumName(FTypeAddress, I)));
+      AddEnumNameItem(I);
 end;
 
 destructor TPressEnumMetadata.Destroy;
 begin
   FItems.Free;
   inherited;
+end;
+
+function TPressEnumMetadata.GetItems(AIndex: Integer): string;
+begin
+  Result := FItems[AIndex];
+  if (Result = '') and Assigned(FItems.Objects[AIndex]) then
+    Result := PString(FItems.Objects[AIndex])^;
+end;
+
+function TPressEnumMetadata.IndexOf(const AValue: string): Integer;
+begin
+  Result := FItems.IndexOf(AValue);
 end;
 
 function TPressEnumMetadata.RemoveEnumItemPrefix(
@@ -2605,14 +2630,14 @@ end;
 function TPressModel.RegisterEnumMetadata(AEnumAddress: Pointer;
   const AEnumName: string): TPressEnumMetadata;
 begin
-  Result := TPressEnumMetadata.Create(AEnumAddress);
+  Result := TPressEnumMetadata.Create(AEnumAddress, []);
   Result.Name := AEnumName;
   FEnumMetadatas.Add(Result);
 end;
 
 function TPressModel.RegisterEnumMetadata(AEnumAddress: Pointer;
   const AEnumName: string;
-  AEnumValues: array of string): TPressEnumMetadata;
+  AEnumValues: array of const): TPressEnumMetadata;
 begin
   Result := TPressEnumMetadata.Create(AEnumAddress, AEnumValues);
   Result.Name := AEnumName;

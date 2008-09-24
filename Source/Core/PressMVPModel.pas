@@ -693,21 +693,21 @@ end;
 function TPressMVPEnumModel.CreateEnumValueIterator(
   AEnumQuery: string): TPressMVPEnumValueIterator;
 var
-  VEnumItems: TStrings;
+  VEnum: TPressEnumMetadata;
   VEnumValueItem: TPressMVPEnumValueItem;
   I: Integer;
 begin
   FEnumValues.Free;
   FEnumValues := TPressMVPEnumValueList.Create(True);
-  VEnumItems := Subject.Metadata.EnumMetadata.Items;
+  VEnum := Subject.Metadata.EnumMetadata;
   AEnumQuery := AnsiUpperCase(AEnumQuery);
-  for I := 0 to Pred(VEnumItems.Count) do
+  for I := 0 to Pred(VEnum.Count) do
     if (AEnumQuery = '') or
-     (Pos(AEnumQuery, AnsiUpperCase(VEnumItems[I])) > 0) then
+     (Pos(AEnumQuery, AnsiUpperCase(VEnum.Items[I])) > 0) then
     begin
       VEnumValueItem := TPressMVPEnumValueItem.Create;
       FEnumValues.Add(VEnumValueItem);
-      VEnumValueItem.EnumName := VEnumItems[I];
+      VEnumValueItem.EnumName := VEnum.Items[I];
       VEnumValueItem.EnumValue := I;
     end;
   Result := FEnumValues.CreateIterator;

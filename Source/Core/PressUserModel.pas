@@ -366,7 +366,7 @@ procedure TPressUserGroup.PopulateResources;
 var
   I: Integer;
 begin
-  for I := 0 to Pred(PressModel.EnumMetadataByName('TPressAppResource').Items.Count) do
+  for I := 0 to Pred(PressModel.EnumMetadataByName('TPressAppResource').Count) do
     GroupResources.ResourceById(I);
 end;
 

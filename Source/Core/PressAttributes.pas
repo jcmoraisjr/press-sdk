@@ -1966,7 +1966,7 @@ function TPressEnum.GetValue: Integer;
 begin
   Synchronize;
   if (FValue < 0) or
-   (Assigned(Metadata) and (FValue >= Metadata.EnumMetadata.Items.Count)) then
+   (Assigned(Metadata) and (FValue >= Metadata.EnumMetadata.Count)) then
     raise EPressError.CreateFmt(SEnumOutOfBounds, [Name, FValue]);
   Result := FValue;
 end;
@@ -2022,7 +2022,7 @@ begin
   begin
     VIndex := GetEnumValue(Metadata.EnumMetadata.TypeAddress, AValue);
     if VIndex = -1 then
-      VIndex := Metadata.EnumMetadata.Items.IndexOf(AValue);
+      VIndex := Metadata.EnumMetadata.IndexOf(AValue);
     if VIndex <> -1 then
       PubValue := VIndex
     else
