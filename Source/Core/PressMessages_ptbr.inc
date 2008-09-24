@@ -129,6 +129,11 @@
   SPressStringDelimiterMsg_rst = 'Delimitador de string';
   SPressStringValueMsg_rst = 'String';
 
+  // Messages for user access
+  SPressNoAccess_rst = 'Sem acesso';
+  SPressReadOnlyAccess_rst = 'Apenas leitura';
+  SPressReadWriteAccess_rst = 'Acesso completo';
+
   // Messages for dialog box
   SPressCancelChangesDialog_rst = 'Cancelar alterações?';
   SPressConfirmRemoveOneItemDialog_rst = 'Um item selecionado. Confirma remoção?';

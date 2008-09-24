@@ -129,6 +129,12 @@
   SPressStringDelimiterMsg_rst = 'Trennzeichen';
   SPressStringValueMsg_rst = 'String';
 
+  // Messages for user access
+  { TODO : Translate }
+  SPressNoAccess_rst = 'No access';
+  SPressReadOnlyAccess_rst = 'Read-only access';
+  SPressReadWriteAccess_rst = 'Full access';
+
   // Messages for dialog box
   SPressCancelChangesDialog_rst = 'Änderungen verwerfen?';
   SPressConfirmRemoveOneItemDialog_rst = 'Gewählten Eintrag löschen?';

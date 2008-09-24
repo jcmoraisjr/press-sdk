@@ -129,6 +129,11 @@
   SPressStringDelimiterMsg := SPressStringDelimiterMsg_rst;
   SPressStringValueMsg := SPressStringValueMsg_rst;
 
+  // Messages for user access
+  SPressNoAccess := SPressNoAccess_rst;
+  SPressReadOnlyAccess := SPressReadOnlyAccess_rst;
+  SPressReadWriteAccess := SPressReadWriteAccess_rst;
+
   // Messages for dialog box
   SPressCancelChangesDialog := SPressCancelChangesDialog_rst;
   SPressConfirmRemoveOneItemDialog := SPressConfirmRemoveOneItemDialog_rst;

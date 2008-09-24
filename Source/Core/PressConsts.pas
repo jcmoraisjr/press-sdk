@@ -212,6 +212,11 @@ var
   SPressStringDelimiterMsg,
   SPressStringValueMsg: string;
 
+  // Messages for user access
+  SPressNoAccess,
+  SPressReadOnlyAccess,
+  SPressReadWriteAccess: string;
+
   // Messages for dialog box
   SPressCancelChangesDialog,
   SPressConfirmRemoveOneItemDialog,

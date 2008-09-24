@@ -12,6 +12,35 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 *)
 
+{
+  Link to this unit causes one dependency with enum registration.
+
+  Declare the following enumeration within your application
+  and register it against the PressObjects' Model. This is just
+  a sample; the enum name, its items and the string representation
+  can be freely changed. Only the registration name (TPressAppResource)
+  should be used as described.
+
+
+  interface
+
+  type
+    TAppResource = (resUser, resReports, ...);
+
+  implementation
+
+  uses
+    PressSubject;
+
+  initialization
+    PressModel.RegisterEnumMetadata(
+     TypeInfo(TAppResource), 'TPressAppResource',
+     ['User control access', 'Report management', ...]);
+
+  end.
+
+}
+
 unit PressUserModel;
 
 {$I Press.inc}
@@ -671,6 +700,9 @@ begin
 end;
 
 initialization
+  PressModel.RegisterEnumMetadata(
+   TypeInfo(TPressAccessMode), 'TPressAccessMode',
+   [@SPressNoAccess, @SPressReadOnlyAccess, @SPressReadWriteAccess]);
   TPressUser.RegisterClass;
   TPressUserQuery.RegisterClass;
   TPressUserGroup.RegisterClass;
