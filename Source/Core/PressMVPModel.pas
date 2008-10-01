@@ -320,6 +320,7 @@ type
     function GetAsString: string; override;
     procedure InitCommands; override;
     procedure InternalAssignDisplayNames(const ADisplayNames: string); override;
+    procedure InternalBindSubject(AObject: TPressObject); virtual;
     function InternalObjectAsString(AObject: TPressObject; ACol: Integer): string; virtual;
     function InternalObjectClass: TPressObjectClass; virtual;
     procedure InternalUpdateQueryMetadata(const AQueryString: string); virtual;
@@ -1165,8 +1166,8 @@ begin
     Exit;
   VObject := Subject.Value;
   Selection.Select(VObject);
-  if Assigned(VObject) and (FReferencedAttribute <> '') then
-    VObject.FindPathAttribute(FReferencedAttribute, True, PathChangedNotifier);
+  if Assigned(VObject) then
+    InternalBindSubject(VObject);
 end;
 
 constructor TPressMVPReferenceModel.Create(
@@ -1276,6 +1277,12 @@ begin
     BindSubject;
     AssignColumnData(ADisplayNames);
   end;
+end;
+
+procedure TPressMVPReferenceModel.InternalBindSubject(AObject: TPressObject);
+begin
+  if FReferencedAttribute <> '' then
+    AObject.FindPathAttribute(FReferencedAttribute, True, PathChangedNotifier);
 end;
 
 function TPressMVPReferenceModel.InternalObjectAsString(
