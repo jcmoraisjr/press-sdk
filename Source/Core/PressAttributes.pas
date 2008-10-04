@@ -3949,6 +3949,7 @@ begin
   begin
     BeginUpdate;
     try
+      TPressStructureUnassignObjectEvent.Create(Self, FProxyList).Notify;
       FProxyList.Clear;
     finally
       EndUpdate;

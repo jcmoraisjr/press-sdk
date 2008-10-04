@@ -1099,11 +1099,13 @@ type
 
   TPressStructureUnassignObjectEvent = class(TPressSubjectEvent)
   private
+    FUnassignedList: TPressProxyList;
     FUnassignedObject: TPressObject;
   public
-    constructor Create(AOwner: TObject; AUnassignedObject: TPressObject);
+    constructor Create(AOwner: TObject; AUnassignedList: TPressProxyList); overload;
+    constructor Create(AOwner: TObject; AUnassignedObject: TPressObject); overload;
     destructor Destroy; override;
-    property UnassignedObject: TPressObject read FUnassignedObject;
+    function HasObject(AObject: TPressObject): Boolean;
   end;
 
   TPressStructureClass = class of TPressStructure;
@@ -2234,8 +2236,8 @@ begin
   begin
     if ASavedPoint < 0 then
       ASavedPoint := 0;
+    Owner.DisableChanges;
     try
-      Owner.DisableChanges;
       for I := Pred(FAttributes.Count) downto ASavedPoint do
         FAttributes[I].Restore;
     finally
@@ -5060,6 +5062,13 @@ end;
 
 { TPressStructureUnassignObjectEvent }
 
+constructor TPressStructureUnassignObjectEvent.Create(AOwner: TObject;
+  AUnassignedList: TPressProxyList);
+begin
+  inherited Create(AOwner);
+  FUnassignedList := AUnassignedList;
+end;
+
 constructor TPressStructureUnassignObjectEvent.Create(
   AOwner: TObject; AUnassignedObject: TPressObject);
 begin
@@ -5073,6 +5082,21 @@ destructor TPressStructureUnassignObjectEvent.Destroy;
 begin
   FUnassignedObject.Free;
   inherited;
+end;
+
+function TPressStructureUnassignObjectEvent.HasObject(
+  AObject: TPressObject): Boolean;
+var
+  I: Integer;
+begin
+  Result := True;
+  if not Assigned(AObject) or (FUnassignedObject = AObject) then
+    Exit;
+  if Assigned(FUnassignedList) then
+    for I := 0 to Pred(FUnassignedList.Count) do
+      if FUnassignedList[I].HasInstance and (FUnassignedList[I].Instance = AObject) then
+        Exit;
+  Result := False;
 end;
 
 { TPressStructure }

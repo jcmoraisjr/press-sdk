@@ -2116,7 +2116,7 @@ procedure TPressMVPObjectModel.Notify(AEvent: TPressEvent);
 begin
   inherited;
   if (AEvent is TPressStructureUnassignObjectEvent) and
-   (TPressStructureUnassignObjectEvent(AEvent).UnassignedObject = Subject) then
+   TPressStructureUnassignObjectEvent(AEvent).HasObject(Subject) then
     TPressMVPModelCloseFormEvent.Create(Self).Notify;
 end;
 
