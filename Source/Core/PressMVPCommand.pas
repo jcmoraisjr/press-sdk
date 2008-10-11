@@ -208,7 +208,6 @@ type
     function GetCaption: string; override;
     function GetShortCut: TShortCut; override;
     procedure InternalExecute; override;
-    function InternalIsEnabled: Boolean; override;
   end;
 
   TPressMVPSaveObjectCommand = class(TPressMVPObjectCommand)
@@ -229,6 +228,7 @@ type
   TPressMVPFinishObjectCommand = class(TPressMVPObjectCommand)
   protected
     procedure CloseForm;
+    function InternalIsEnabled: Boolean; override;
   end;
 
   TPressMVPCancelObjectCommand = class(TPressMVPFinishObjectCommand)
@@ -236,7 +236,6 @@ type
     function GetCaption: string; override;
     function InternalConfirm: Boolean; virtual;
     procedure InternalExecute; override;
-    function InternalIsEnabled: Boolean; override;
   end;
 
   TPressMVPCancelConfirmObjectCommand = class(TPressMVPCancelObjectCommand)
@@ -736,7 +735,7 @@ end;
 
 function TPressMVPObjectCommand.InternalIsEnabled: Boolean;
 begin
-  Result := not Model.HasSubject or not Model.Subject.ControlsDisabled;
+  Result := Model.HasSubject and not Model.Subject.ControlsDisabled;
 end;
 
 { TPressMVPRefreshObjectCommand }
@@ -755,11 +754,6 @@ procedure TPressMVPRefreshObjectCommand.InternalExecute;
 begin
   inherited;
   Model.Refresh;
-end;
-
-function TPressMVPRefreshObjectCommand.InternalIsEnabled: Boolean;
-begin
-  Result := True;
 end;
 
 { TPressMVPSaveObjectCommand }
@@ -796,8 +790,7 @@ end;
 
 function TPressMVPSaveObjectCommand.InternalIsEnabled: Boolean;
 begin
-  Result := inherited InternalIsEnabled and
-   Model.HasSubject and Model.Subject.IsValid;
+  Result := inherited InternalIsEnabled and Model.Subject.IsValid;
 end;
 
 procedure TPressMVPSaveObjectCommand.InternalStoreObject;
@@ -819,8 +812,13 @@ end;
 procedure TPressMVPFinishObjectCommand.CloseForm;
 begin
   TPressMVPModelCloseFormEvent.Create(Model).Notify;
-  if Model.IsIncluding and Assigned(Model.HookedSubject) then
+  if Model.HasSubject and Model.IsIncluding and Assigned(Model.HookedSubject) then
     Model.HookedSubject.UnassignObject(Model.Subject);
+end;
+
+function TPressMVPFinishObjectCommand.InternalIsEnabled: Boolean;
+begin
+  Result := not Model.HasSubject or inherited InternalIsEnabled;
 end;
 
 { TPressMVPCancelObjectCommand }
@@ -838,18 +836,13 @@ end;
 procedure TPressMVPCancelObjectCommand.InternalExecute;
 begin
   inherited;
-  if Model.IsChanged then
+  if Model.HasSubject and Model.IsChanged then
   begin
     if not InternalConfirm then
       Exit;
     Model.RevertChanges;
   end;
   CloseForm;
-end;
-
-function TPressMVPCancelObjectCommand.InternalIsEnabled: Boolean;
-begin
-  Result := inherited InternalIsEnabled and Model.HasSubject;
 end;
 
 { TPressMVPCancelConfirmObjectCommand }
