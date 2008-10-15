@@ -151,6 +151,7 @@ var
   SUnsupportedDisplayNames,
   SUnsupportedModel,
   SUnsupportedObject,
+  SUnsupportedSubject,
   SViewAccessError,
   SWidgetManagerAlreadyAssigned: string;
 

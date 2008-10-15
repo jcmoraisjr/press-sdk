@@ -1,6 +1,6 @@
 (*
   PressObjects, Base MVP Classes
-  Copyright (C) 2006-2007 Laserpress Ltda.
+  Copyright (C) 2006-2008 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -125,8 +125,10 @@ type
     destructor Destroy; override;
     procedure AddComponent(AComponent: TObject);
     class function Apply(AModel: TPressMVPModel): Boolean; virtual;
+    procedure BindObject(AObject: TPressObject); virtual;
     procedure Execute;
     class function RegisterCommand: TPressMVPCommandRegistry;
+    procedure ReleaseObject(AObject: TPressObject); virtual;
     property Caption: string read GetCaption;
     property Enabled: Boolean read FEnabled write SetEnabled;
     property EnabledUpdatingMethod: TPressMVPCommandUpdatingMethod read FEnabledUpdatingMethod write FEnabledUpdatingMethod;
@@ -215,8 +217,10 @@ type
   public
     destructor Destroy; override;
     function Add(ACommand: TPressMVPCommand): Integer;
+    procedure BindObject(AObject: TPressObject);
     function FindCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     procedure Insert(AIndex: Integer; ACommand: TPressMVPCommand);
+    procedure ReleaseObject(AObject: TPressObject);
     property Count: Integer read GetCount;
     property Item[AIndex: Integer]: TPressMVPCommand read GetItem; default;
   end;
@@ -343,6 +347,7 @@ type
     FSelection: TPressMVPSelection;
     FSession: TPressSession;
     FSubject: TPressSubject;
+    FSubjectMetadata: TPressSubjectMetadata;
     FUser: TPressCustomUser;
     function GetCommands: TPressMVPCommands;
     function GetHasParent: Boolean;
@@ -355,6 +360,7 @@ type
     procedure SetResourceId(Value: Integer);
     procedure SetResourceIdNewObjects(Value: Integer);
     procedure SetResourceIdObjectChanging(Value: Integer);
+    procedure SetSubject(Value: TPressSubject);
     procedure SetUser(Value: TPressCustomUser);
   protected
     procedure Finit; override;
@@ -365,16 +371,17 @@ type
     function InternalIsIncluding: Boolean; virtual;
     function InternalResourceId: Integer; virtual;
     procedure Notify(AEvent: TPressEvent); virtual;
+    procedure SubjectChanged(AOldSubject: TPressSubject); virtual;
     property Commands: TPressMVPCommands read GetCommands;
     property Notifier: TPressNotifier read GetNotifier;
     property OwnedCommands: TPressMVPCommandList read GetOwnedCommands;
   public
-    constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); virtual;
+    constructor Create(AParent: TPressMVPModel; ASubjectMetadata: TPressSubjectMetadata); virtual;
     function AccessMode: TPressAccessMode;
     function AddCommand(ACommandClass: TPressMVPCommandClass): Integer;
     function AddCommandInstance(ACommand: TPressMVPCommand): Integer;
     procedure AddCommands(ACommandClasses: array of TPressMVPCommandClass);
-    class function Apply(ASubject: TPressSubject): Boolean; virtual; abstract;
+    class function Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean; virtual; abstract;
     procedure Changed(AChangeType: TPressMVPChangeType);
     function FindCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     function HasCommands: Boolean;
@@ -392,7 +399,8 @@ type
     property ResourceIdObjectChanging: Integer read FResourceIdObjectChanging write SetResourceIdObjectChanging;
     property Selection: TPressMVPSelection read GetSelection;
     property Session: TPressSession read GetSession write FSession;
-    property Subject: TPressSubject read GetSubject;
+    property Subject: TPressSubject read GetSubject write SetSubject;
+    property SubjectMetadata: TPressSubjectMetadata read FSubjectMetadata;
     property User: TPressCustomUser read FUser write SetUser;
   end;
 
@@ -530,6 +538,15 @@ begin
   Result := True;
 end;
 
+procedure TPressMVPCommand.BindObject(AObject: TPressObject);
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(AObject.AttributeCount) do
+    Notifier.AddNotificationItem(
+     AObject.Attributes[I], [TPressAttributeChangedEvent]);
+end;
+
 procedure TPressMVPCommand.Changed;
 begin
   TPressMVPCommandChangedEvent.Create(Self).Notify;
@@ -613,14 +630,7 @@ begin
   Notifier.AddNotificationItem(Model.Selection, [TPressMVPSelectionChangedEvent]);
   Notifier.AddNotificationItem(nil, [TPressUserEvent]);
   if Model.HasSubject and (Model.Subject is TPressObject) then
-    with TPressObject(Model.Subject).CreateAttributeIterator do
-    try
-      BeforeFirstItem;
-      while NextItem do
-        Notifier.AddNotificationItem(CurrentItem, [TPressAttributeChangedEvent]);
-    finally
-      Free;
-    end;
+    BindObject(TPressObject(Model.Subject));
 end;
 
 procedure TPressMVPCommand.InitRegistryFields;
@@ -666,6 +676,14 @@ begin
     Result.Free;
     raise;
   end;
+end;
+
+procedure TPressMVPCommand.ReleaseObject(AObject: TPressObject);
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(AObject.AttributeCount) do
+    Notifier.RemoveNotificationItem(AObject.Attributes[I]);
 end;
 
 procedure TPressMVPCommand.SetAlwaysEnabled(Value: Boolean);
@@ -879,6 +897,19 @@ begin
   Result := Items.Add(ACommand);
 end;
 
+procedure TPressMVPCommands.BindObject(AObject: TPressObject);
+var
+  VCommand: TPressMVPCommand;
+  I: Integer;
+begin
+  for I := 0 to Pred(Count) do
+  begin
+    VCommand := FItems[I];
+    if Assigned(VCommand) then
+      VCommand.BindObject(AObject);
+  end;
+end;
+
 destructor TPressMVPCommands.Destroy;
 begin
   FItems.Free;
@@ -922,6 +953,19 @@ end;
 procedure TPressMVPCommands.Insert(AIndex: Integer; ACommand: TPressMVPCommand);
 begin
   Items.Insert(AIndex, ACommand);
+end;
+
+procedure TPressMVPCommands.ReleaseObject(AObject: TPressObject);
+var
+  VCommand: TPressMVPCommand;
+  I: Integer;
+begin
+  for I := 0 to Pred(Count) do
+  begin
+    VCommand := FItems[I];
+    if Assigned(VCommand) then
+      VCommand.ReleaseObject(AObject);
+  end;
 end;
 
 { TPressMVPCommandMenu }
@@ -1226,20 +1270,16 @@ begin
 end;
 
 constructor TPressMVPModel.Create(
-  AParent: TPressMVPModel; ASubject: TPressSubject);
+  AParent: TPressMVPModel; ASubjectMetadata: TPressSubjectMetadata);
 begin
-  CheckClass(not Assigned(ASubject) or Apply(ASubject));
+  CheckClass(not Assigned(ASubjectMetadata) or Apply(ASubjectMetadata));
   inherited Create;
   FParent := AParent;
-  FSubject := ASubject;
+  FSubjectMetadata := ASubjectMetadata;
   FResourceIdObjectChanging := -1;
   FResourceIdNewObjects := -1;
-  if HasSubject then
-  begin
-    FSubject.AddRef;
-    Notifier.AddNotificationItem(FSubject, [TPressSubjectEvent]);
+  if Assigned(FSubjectMetadata) then
     InitCommands;
-  end;
 end;
 
 function TPressMVPModel.FindCommand(
@@ -1440,6 +1480,41 @@ begin
   end;
 end;
 
+procedure TPressMVPModel.SetSubject(Value: TPressSubject);
+var
+  VOldSubject: TPressSubject;
+begin
+  { TODO : Implement nil support }
+  if FSubject <> Value then
+  begin
+    if Assigned(Value) then
+    begin
+      if Assigned(FSubjectMetadata) and
+       not FSubjectMetadata.Supports(TPressSubjectClass(Value.ClassType)) then
+        raise EPressMVPError.CreateFmt(SUnsupportedSubject,
+         [FSubjectMetadata.ClassName, Value.ClassName])
+      else if not Assigned(FSubjectMetadata) then
+        raise EPressMVPError.CreateFmt(SUnsupportedSubject,
+         [SPressNilString, Value.ClassName]);
+    end;
+    if Assigned(FSubject) then
+      Notifier.RemoveNotificationItem(FSubject);
+    VOldSubject := FSubject;
+    try
+      FSubject := Value;
+      if Assigned(FSubject) then
+      begin
+        FSubject.AddRef;
+        Notifier.AddNotificationItem(FSubject, [TPressSubjectEvent]);
+      end;
+      SubjectChanged(VOldSubject);
+    finally
+      VOldSubject.Free;
+    end;
+    Changed(ctDisplay);
+  end;
+end;
+
 procedure TPressMVPModel.SetUser(Value: TPressCustomUser);
 begin
   if FUser <> Value then
@@ -1449,6 +1524,10 @@ begin
     FUser.AddRef;
     Changed(ctDisplay);
   end;
+end;
+
+procedure TPressMVPModel.SubjectChanged(AOldSubject: TPressSubject);
+begin
 end;
 
 procedure TPressMVPModel.UpdateData;

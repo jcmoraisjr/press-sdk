@@ -751,7 +751,7 @@ class function TPressMVPIntegerInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
   Result := inherited Apply(APresenter) and
-   (APresenter.Model.Subject is TPressInteger);
+   APresenter.Model.SubjectMetadata.Supports(TPressInteger);
 end;
 
 procedure TPressMVPIntegerInteractor.InitInteractor;
@@ -766,8 +766,8 @@ class function TPressMVPFloatInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
   Result := inherited Apply(APresenter) and
-   ((APresenter.Model.Subject is TPressFloat) or
-   (APresenter.Model.Subject is TPressCurrency));
+   (APresenter.Model.SubjectMetadata.Supports(TPressFloat) or
+   APresenter.Model.SubjectMetadata.Supports(TPressCurrency));
 end;
 
 { TPressMVPDateTimeInteractor }
@@ -776,7 +776,7 @@ class function TPressMVPDateTimeInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
   Result := inherited Apply(APresenter) and
-   (APresenter.Model.Subject is TPressDateTime);
+   APresenter.Model.SubjectMetadata.Supports(TPressDateTime);
 end;
 
 procedure TPressMVPDateTimeInteractor.Notify(AEvent: TPressEvent);

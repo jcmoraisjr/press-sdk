@@ -76,6 +76,7 @@ type
     property CurrentItem: TPressEnumMetadata read GetCurrentItem;
   end;
 
+  TPressSubjectClass = class of TPressSubject;
   TPressObject = class;
   TPressObjectClass = class of TPressObject;
   TPressObjectArray = array of TPressObject;
@@ -98,9 +99,20 @@ type
   TPressObjectMetadata = class;
   TPressModel = class;
 
+  TPressSubjectMetadata = class(TPressStreamable)
+  protected
+    function GetSubjectName: string; virtual; abstract;
+    function InternalSupports(ASubjectClass: TPressSubjectClass): Boolean; virtual;
+    function InternalSupportsTarget(AObjectClass: TPressObjectClass): Boolean; virtual;
+  public
+    function Supports(ASubjectClass: TPressSubjectClass): Boolean;
+    function SupportsTarget(AObjectClass: TPressObjectClass): Boolean;
+    property SubjectName: string read GetSubjectName;
+  end;
+
   TPressAttributeMetadataClass = class of TPressAttributeMetadata;
 
-  TPressAttributeMetadata = class(TPressStreamable)
+  TPressAttributeMetadata = class(TPressSubjectMetadata)
   private
     { TODO : Refactor attribute metadatas to use attribute class inheritance,
       instead of object class inheritance.
@@ -168,6 +180,9 @@ type
     procedure Finit; override;
     function GetAttributeName: string; virtual;
     function GetObjectClassName: string; virtual;
+    function GetSubjectName: string; override;
+    function InternalSupports(ASubjectClass: TPressSubjectClass): Boolean; override;
+    function InternalSupportsTarget(AObjectClass: TPressObjectClass): Boolean; override;
     procedure SetAttributeName(const Value: string); virtual;
     procedure SetName(const Value: string); virtual;
     procedure SetObjectClassName(const Value: string); virtual;
@@ -270,7 +285,7 @@ type
 
   TPressObjectMetadataClass = class of TPressObjectMetadata;
 
-  TPressObjectMetadata = class(TPressStreamable)
+  TPressObjectMetadata = class(TPressSubjectMetadata)
   private
     FAttributeMetadatas: TPressAttributeMetadataList;
     FClassIdName: string;
@@ -309,7 +324,9 @@ type
     function StoreUpdateCountName: Boolean;
   protected
     procedure Finit; override;
+    function GetSubjectName: string; override;
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; virtual;
+    function InternalSupports(ASubjectClass: TPressSubjectClass): Boolean; override;
     property Model: TPressModel read FModel;
   public
     constructor Create(const AObjectClassName: string; AModel: TPressModel); virtual;
@@ -376,6 +393,7 @@ type
     procedure SetItemObjectClassName(const Value: string);
   protected
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; override;
+    function InternalSupportsTarget(AObjectClass: TPressObjectClass): Boolean; override;
   public
     constructor Create(const AObjectClassName: string; AModel: TPressModel); override;
     property IncludeSubClasses: Boolean read FIncludeSubClasses;
@@ -574,8 +592,6 @@ type
     function AllowLog: Boolean; override;
     {$ENDIF}
   end;
-
-  TPressSubjectClass = class of TPressSubject;
 
   TPressSubject = class(TPressStreamable)
   private
@@ -1413,6 +1429,32 @@ begin
      AInstance.AttributeByPath(FListenedAttributes[I]));
 end;
 
+{ TPressSubjectMetadata }
+
+function TPressSubjectMetadata.InternalSupports(
+  ASubjectClass: TPressSubjectClass): Boolean;
+begin
+  Result := False;
+end;
+
+function TPressSubjectMetadata.InternalSupportsTarget(
+  AObjectClass: TPressObjectClass): Boolean;
+begin
+  Result := False;
+end;
+
+function TPressSubjectMetadata.Supports(
+  ASubjectClass: TPressSubjectClass): Boolean;
+begin
+  Result := InternalSupports(ASubjectClass);
+end;
+
+function TPressSubjectMetadata.SupportsTarget(
+  AObjectClass: TPressObjectClass): Boolean;
+begin
+  Result := InternalSupportsTarget(AObjectClass);
+end;
+
 { TPressAttributeMetadata }
 
 function TPressAttributeMetadata.BuildPersLinkChildName: string;
@@ -1531,6 +1573,24 @@ begin
   if FShortName = '' then
     FShortName := FPersistentName;
   Result := FShortName;
+end;
+
+function TPressAttributeMetadata.GetSubjectName: string;
+begin
+  Result := Name;
+end;
+
+function TPressAttributeMetadata.InternalSupports(
+  ASubjectClass: TPressSubjectClass): Boolean;
+begin
+  Result :=
+   Assigned(AttributeClass) and AttributeClass.InheritsFrom(ASubjectClass);
+end;
+
+function TPressAttributeMetadata.InternalSupportsTarget(
+  AObjectClass: TPressObjectClass): Boolean;
+begin
+  Result := Assigned(ObjectClass) and ObjectClass.InheritsFrom(AObjectClass);
 end;
 
 function TPressAttributeMetadata.IsEmbeddedLink: Boolean;
@@ -1972,9 +2032,23 @@ begin
   Result := FShortName;
 end;
 
+function TPressObjectMetadata.GetSubjectName: string;
+begin
+  if Assigned(ObjectClass) then
+    Result := ObjectClass.ClassName
+  else
+    Result := '';
+end;
+
 function TPressObjectMetadata.InternalAttributeMetadataClass: TPressAttributeMetadataClass;
 begin
   Result := TPressAttributeMetadata;
+end;
+
+function TPressObjectMetadata.InternalSupports(
+  ASubjectClass: TPressSubjectClass): Boolean;
+begin
+  Result := Assigned(ObjectClass) and ObjectClass.InheritsFrom(ASubjectClass);
 end;
 
 function TPressObjectMetadata.MetadataByName(
@@ -2127,6 +2201,12 @@ end;
 function TPressQueryMetadata.InternalAttributeMetadataClass: TPressAttributeMetadataClass;
 begin
   Result := TPressQueryAttributeMetadata;
+end;
+
+function TPressQueryMetadata.InternalSupportsTarget(
+  AObjectClass: TPressObjectClass): Boolean;
+begin
+  Result := Assigned(FItemObjectClass) and FItemObjectClass.InheritsFrom(AObjectClass);
 end;
 
 procedure TPressQueryMetadata.SetItemObjectClass(Value: TPressObjectClass);

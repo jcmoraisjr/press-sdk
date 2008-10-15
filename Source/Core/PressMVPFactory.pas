@@ -91,7 +91,7 @@ type
     constructor Create;
     destructor Destroy; override;
     function MVPInteractorFactory(APresenter: TPressMVPPresenter): TPressMVPInteractorClasses;
-    function MVPModelFactory(AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
+    function MVPModelFactory(AParent: TPressMVPModel; ASubjectMetadata: TPressSubjectMetadata): TPressMVPModel;
     function MVPPresenterFactory(AParent: TPressMVPFormPresenter; AModel: TPressMVPModel; const AView: IPressMVPView): TPressMVPPresenter;
     function MVPViewFactory(AControl: TObject; AOwnsControl: Boolean = False): IPressMVPView;
     procedure RegisterBO(APresenterClass: TPressMVPFormPresenterClass; AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes; AModelClass: TPressMVPObjectModelClass);
@@ -335,8 +335,8 @@ begin
   end;
 end;
 
-function TPressMVPFactory.MVPModelFactory(
-  AParent: TPressMVPModel; ASubject: TPressSubject): TPressMVPModel;
+function TPressMVPFactory.MVPModelFactory(AParent: TPressMVPModel;
+  ASubjectMetadata: TPressSubjectMetadata): TPressMVPModel;
 var
   VModelClass, VCandidateClass: TPressMVPModelClass;
   VClassName: string;
@@ -346,20 +346,20 @@ begin
   for I := 0 to Pred(FModels.Count) do
   begin
     VModelClass := TPressMVPModelClass(FModels[I]);
-    if VModelClass.Apply(ASubject) then
+    if VModelClass.Apply(ASubjectMetadata) then
       VCandidateClass := TPressMVPModelClass(
        ChooseConcreteClass(VCandidateClass, VModelClass));
   end;
   if not Assigned(VCandidateClass) then
   begin
-    if Assigned(ASubject) then
-      VClassName := ASubject.ClassName
+    if Assigned(ASubjectMetadata) then
+      VClassName := ASubjectMetadata.SubjectName
     else
       VClassName := SPressNilString;
     raise EPressMVPError.CreateFmt(SUnsupportedObject,
      [TPressMVPModel.ClassName, VClassName]);
   end;
-  Result := VCandidateClass.Create(AParent, ASubject);
+  Result := VCandidateClass.Create(AParent, ASubjectMetadata);
 end;
 
 function TPressMVPFactory.MVPPresenterFactory(

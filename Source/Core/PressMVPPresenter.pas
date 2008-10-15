@@ -222,11 +222,12 @@ type
     function GetSubPresenters: TPressMVPPresenterList;
   protected
     class procedure AssignAccessor(AFormHandle: TObject; const AAccessorName: ShortString; AInstance: Pointer);
-    function AttributeByName(const AAttributeName: ShortString): TPressAttribute;
+    function AttributeByName(const AAttributeName: string): TPressAttribute;
+    function AttributeMetadataByName(const AAttributeName: string): TPressAttributeMetadata;
     function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
     procedure Finit; override;
     procedure InitPresenter; override;
-    function InternalCreateSubModel(ASubject: TPressSubject): TPressMVPModel; virtual;
+    function InternalCreateSubModel(ASubjectMetadata: TPressSubjectMetadata): TPressMVPModel; virtual;
     function InternalCreateSubPresenter(AModel: TPressMVPModel; const AView: IPressMVPView): TPressMVPPresenter; virtual;
     class function InternalModelClass: TPressMVPObjectModelClass; virtual;
     procedure Running; virtual;
@@ -795,15 +796,15 @@ begin
 end;
 
 function TPressMVPFormPresenter.AttributeByName(
-  const AAttributeName: ShortString): TPressAttribute;
+  const AAttributeName: string): TPressAttribute;
 begin
-  if Model.Subject is TPressObject then
-    Result := TPressObject(Model.Subject).FindPathAttribute(AAttributeName)
-  else
-    Result := nil;
-  if not Assigned(Result) then
-    raise EPressError.CreateFmt(SAttributeNotFound,
-     [Model.Subject.ClassName, AAttributeName]);
+  Result := (Model.Subject as TPressObject).FindPathAttribute(AAttributeName, False);
+end;
+
+function TPressMVPFormPresenter.AttributeMetadataByName(
+  const AAttributeName: string): TPressAttributeMetadata;
+begin
+  Result := (Model.SubjectMetadata as TPressObjectMetadata).Map.MetadataByPath(AAttributeName);
 end;
 
 function TPressMVPFormPresenter.BindCommand(
@@ -843,30 +844,33 @@ function TPressMVPFormPresenter.CreateSubPresenter(
   AModelClass: TPressMVPModelClass;
   APresenterClass: TPressMVPPresenterClass): TPressMVPPresenter;
 var
-  VAttribute: TPressAttribute;
+  VAttributeMetadata: TPressAttributeMetadata;
   VComponent: TObject;
   VModel: TPressMVPModel;
   VView: IPressMVPView;
 begin
-  if AAttributeName <> '' then
-    VAttribute := AttributeByName(AAttributeName)
-  else
-    VAttribute := nil;
+  VAttributeMetadata := AttributeMetadataByName(AAttributeName);
   VComponent := FFormView.ComponentByName(AControlName);
+
   if Assigned(AModelClass) then
-    VModel := AModelClass.Create(Model, VAttribute)
+    VModel := AModelClass.Create(Model, VAttributeMetadata)
   else
-    VModel := InternalCreateSubModel(VAttribute);
+    VModel := InternalCreateSubModel(VAttributeMetadata);
   if VModel is TPressMVPStructureModel then
     TPressMVPStructureModel(VModel).DisplayNames := ADisplayNames
   else if ADisplayNames <> '' then
   begin
-    VAttribute := VModel.Subject as TPressAttribute;
     VModel.Free;
-    raise EPressMVPError.CreateFmt(SUnsupportedDisplayNames,
-     [VAttribute.ClassName, VAttribute.Owner.ClassName, VAttribute.Name]);
+    raise EPressMVPError.CreateFmt(SUnsupportedDisplayNames, [
+     VAttributeMetadata.AttributeClass.ClassName,
+     VAttributeMetadata.Owner.ObjectClassName,
+     VAttributeMetadata.Name]);
   end;
+  if Model.HasSubject then
+    VModel.Subject := AttributeByName(AAttributeName);
+
   VView := PressDefaultMVPFactory.MVPViewFactory(VComponent, False);
+
   if Assigned(APresenterClass) then
     Result := APresenterClass.Create(Self, VModel, VView)
   else
@@ -902,9 +906,10 @@ begin
 end;
 
 function TPressMVPFormPresenter.InternalCreateSubModel(
-  ASubject: TPressSubject): TPressMVPModel;
+  ASubjectMetadata: TPressSubjectMetadata): TPressMVPModel;
 begin
-  Result := PressDefaultMVPFactory.MVPModelFactory(Model, ASubject);
+  Result := PressDefaultMVPFactory.MVPModelFactory(
+   Model, ASubjectMetadata);
 end;
 
 function TPressMVPFormPresenter.InternalCreateSubPresenter(
@@ -992,10 +997,11 @@ begin
   else
     VParentModel := nil;
   if Assigned(VModelClass) then
-    VModel := VModelClass.Create(VParentModel, AObject)
+    VModel := VModelClass.Create(VParentModel, AObject.Metadata)
   else
     VModel := PressDefaultMVPFactory.MVPModelFactory(
-     VParentModel, AObject) as TPressMVPObjectModel;
+     VParentModel, AObject.Metadata) as TPressMVPObjectModel;
+  VModel.Subject := AObject;
   VModel.IsIncluding := AIncluding;
   VModel.User := PressUserData.User;
   if VObjectIsMissing then
@@ -1080,6 +1086,7 @@ var
   VModel: TPressMVPObjectModel;
   VView: IPressMVPFormView;
   VSubject: TPressObject;
+  VMetadata: TPressObjectMetadata;
   VMainForm: TObject;
   VIndex: Integer;
   VRegForms: TPressMVPRegisteredFormList;
@@ -1105,9 +1112,16 @@ begin
       VModelClass := TPressMVPQueryModel
     else
       VModelClass := TPressMVPObjectModel;
-  VModel := VModelClass.Create(nil, VSubject);
   if Assigned(VSubject) then
+    VMetadata := VSubject.Metadata
+  else
+    VMetadata := nil;
+  VModel := VModelClass.Create(nil, VMetadata);
+  if Assigned(VSubject) then
+  begin
+    VModel.Subject := VSubject;
     VSubject.Release;
+  end;
   PressAsIntf(
    PressDefaultMVPFactory.MVPViewFactory(VMainForm),
    IPressMVPFormView, VView);

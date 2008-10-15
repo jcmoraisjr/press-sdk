@@ -195,11 +195,12 @@ type
   private
     function GetModel: TPressMVPObjectModel;
   protected
-    procedure InitNotifier; override;
     procedure InternalExecute; override;
     function InternalIsEnabled: Boolean; override;
   public
     class function Apply(AModel: TPressMVPModel): Boolean; override;
+    procedure BindObject(AObject: TPressObject); override;
+    procedure ReleaseObject(AObject: TPressObject); override;
     property Model: TPressMVPObjectModel read GetModel;
   end;
 
@@ -715,16 +716,15 @@ begin
   Result := AModel is TPressMVPObjectModel;
 end;
 
+procedure TPressMVPObjectCommand.BindObject(AObject: TPressObject);
+begin
+  inherited;
+  Notifier.AddNotificationItem(AObject, [TPressControlEvent]);
+end;
+
 function TPressMVPObjectCommand.GetModel: TPressMVPObjectModel;
 begin
   Result := inherited Model as TPressMVPObjectModel;
-end;
-
-procedure TPressMVPObjectCommand.InitNotifier;
-begin
-  inherited;
-  if Model.HasSubject then
-    Notifier.AddNotificationItem(Model.Subject, [TPressControlEvent]);
 end;
 
 procedure TPressMVPObjectCommand.InternalExecute;
@@ -736,6 +736,12 @@ end;
 function TPressMVPObjectCommand.InternalIsEnabled: Boolean;
 begin
   Result := Model.HasSubject and not Model.Subject.ControlsDisabled;
+end;
+
+procedure TPressMVPObjectCommand.ReleaseObject(AObject: TPressObject);
+begin
+  inherited;
+  Notifier.RemoveNotificationItem(AObject);
 end;
 
 { TPressMVPRefreshObjectCommand }

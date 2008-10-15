@@ -68,6 +68,7 @@
   SUnsupportedDisplayNames_rst = 'DisplayNames não é suportado para o atributo %s(''%s.%s'')';
   SUnsupportedModel_rst = 'Model ''%s'' não é suportado por ''%s''';
   SUnsupportedObject_rst = 'Nenhuma classe ''%s'' suporta objetos ''%s''';
+  SUnsupportedSubject_rst = 'A metaclasse ''%s'' não suporta subject ''%s''';
   SViewAccessError_rst = 'Não é possível acessar a view %s(''%s'') como ''%s''';
   SWidgetManagerAlreadyAssigned_rst = 'Widget manager já foi associado';
 

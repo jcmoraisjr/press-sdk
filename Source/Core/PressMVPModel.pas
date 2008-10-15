@@ -1,6 +1,6 @@
 (*
   PressObjects, MVP-Model Classes
-  Copyright (C) 2006-2007 Laserpress Ltda.
+  Copyright (C) 2006-2008 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -22,6 +22,7 @@ uses
 {$ifdef d6up}
   Variants,
 {$endif}
+  Contnrs,
   PressClasses,
   PressNotifier,
   PressSubject,
@@ -81,17 +82,21 @@ type
   private
     function GetIsSelected: Boolean;
     function GetSubject: TPressAttribute;
+    function GetSubjectMetadata: TPressAttributeMetadata;
+    procedure SetSubject(Value: TPressAttribute);
   protected
     function GetAsString: string; virtual;
   public
+    constructor Create(AParent: TPressMVPModel; ASubjectMetadata: TPressSubjectMetadata); override;
     property AsString: string read GetAsString;
     property IsSelected: Boolean read GetIsSelected;
-    property Subject: TPressAttribute read GetSubject;
+    property Subject: TPressAttribute read GetSubject write SetSubject;
+    property SubjectMetadata: TPressAttributeMetadata read GetSubjectMetadata;
   end;
 
   TPressMVPNullModel = class(TPressMVPAttributeModel)
   public
-    class function Apply(ASubject: TPressSubject): Boolean; override;
+    class function Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean; override;
   end;
 
   { Base Value Models }
@@ -100,7 +105,7 @@ type
   private
     function GetSubject: TPressValue;
   public
-    class function Apply(ASubject: TPressSubject): Boolean; override;
+    class function Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean; override;
     property Subject: TPressValue read GetSubject;
   end;
 
@@ -149,7 +154,7 @@ type
   protected
     procedure Finit; override;
   public
-    class function Apply(ASubject: TPressSubject): Boolean; override;
+    class function Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean; override;
     function CreateEnumValueIterator(AEnumQuery: string): TPressMVPEnumValueIterator;
     function EnumOf(AIndex: Integer): Integer;
     function EnumValueCount: Integer;
@@ -159,14 +164,14 @@ type
   protected
     procedure InitCommands; override;
   public
-    class function Apply(ASubject: TPressSubject): Boolean; override;
+    class function Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean; override;
   end;
 
   TPressMVPPictureModel = class(TPressMVPValueModel)
   protected
     procedure InitCommands; override;
   public
-    class function Apply(ASubject: TPressSubject): Boolean; override;
+    class function Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean; override;
   end;
 
   { Base Structure Models }
@@ -277,7 +282,7 @@ type
     procedure InternalAssignDisplayNames(const ADisplayNames: string); virtual; abstract;
     function InternalCreateSelection: TPressMVPSelection; override;
   public
-    constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
+    constructor Create(AParent: TPressMVPModel; ASubjectMetadata: TPressSubjectMetadata); override;
     property ColumnData: TPressMVPColumnData read GetColumnData;
     property DisplayNames: string read FDisplayNames write SetDisplayNames;
     property Selection: TPressMVPObjectSelection read GetSelection;
@@ -328,8 +333,7 @@ type
     property Metadata: TPressQueryMetadata read GetMetadata;
     property PathChangedNotifier: TPressNotifier read GetPathChangedNotifier;
   public
-    constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
-    class function Apply(ASubject: TPressSubject): Boolean; override;
+    class function Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean; override;
     function CreateQueryIterator(const AQueryString: string): TPressQueryIterator;
     function DisplayText(ACol, ARow: Integer): string;
     function ObjectOf(AIndex: Integer): TPressObject;
@@ -412,6 +416,7 @@ type
   TPressMVPItemsModel = class(TPressMVPStructureModel)
   private
     FObjectList: TPressMVPObjectList;
+    FRebuildingObjectList: Boolean;
     procedure BulkRetrieve;
     function GetObjectList: TPressMVPObjectList;
     function GetObjects(AIndex: Integer): TPressObject;
@@ -428,6 +433,7 @@ type
     procedure InternalCreateSelectionCommands; virtual;
     procedure InternalCreateSortCommands; virtual;
     procedure Notify(AEvent: TPressEvent); override;
+    procedure SubjectChanged(AOldSubject: TPressSubject); override;
     property ObjectList: TPressMVPObjectList read GetObjectList;
   public
     function Count: Integer;
@@ -442,7 +448,7 @@ type
 
   TPressMVPPartsModel = class(TPressMVPItemsModel)
   public
-    class function Apply(ASubject: TPressSubject): Boolean; override;
+    class function Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean; override;
   end;
 
   TPressMVPReferencesModel = class(TPressMVPItemsModel)
@@ -452,7 +458,7 @@ type
     procedure InternalCreateEditCommands; override;
     function IsQueryReferences: Boolean;
   public
-    class function Apply(ASubject: TPressSubject): Boolean; override;
+    class function Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean; override;
     function CanEditObject: Boolean;
   end;
 
@@ -469,12 +475,16 @@ type
     FIsIncluding: Boolean;
     FSavePoint: TPressSavePoint;
     FStoreObject: Boolean;
+    FSubModelList: TObjectList;
+    procedure AddSubModel(AModel: TPressMVPAttributeModel);
     procedure AfterChangeHookedSubject;
     procedure BeforeChangeHookedSubject;
     function GetIsChanged: Boolean;
     function GetSelection: TPressMVPModelSelection;
     function GetSubject: TPressObject;
+    function GetSubjectMetadata: TPressObjectMetadata;
     procedure SetHookedSubject(Value: TPressStructure);
+    procedure SetSubject(Value: TPressObject);
   protected
     procedure Finit; override;
     procedure InitCommands; override;
@@ -485,9 +495,10 @@ type
     function InternalGetSession: TPressSession; override;
     function InternalIsIncluding: Boolean; override;
     procedure Notify(AEvent: TPressEvent); override;
+    procedure SubjectChanged(AOldSubject: TPressSubject); override;
   public
-    constructor Create(AParent: TPressMVPModel; ASubject: TPressSubject); override;
-    class function Apply(ASubject: TPressSubject): Boolean; override;
+    constructor Create(AParent: TPressMVPModel; ASubjectMetadata: TPressSubjectMetadata); override;
+    class function Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean; override;
     function CanSaveObject: Boolean;
     procedure Refresh;
     procedure RevertChanges;
@@ -498,7 +509,8 @@ type
     property IsIncluding: Boolean read FIsIncluding write FIsIncluding;
     property Selection: TPressMVPModelSelection read GetSelection;
     property StoreObject: Boolean read FStoreObject write FStoreObject;
-    property Subject: TPressObject read GetSubject;
+    property Subject: TPressObject read GetSubject write SetSubject;
+    property SubjectMetadata: TPressObjectMetadata read GetSubjectMetadata;
   end;
 
   TPressMVPQueryModel = class(TPressMVPObjectModel)
@@ -511,7 +523,7 @@ type
     procedure AfterExecute; virtual;
     procedure InitCommands; override;
   public
-    class function Apply(ASubject: TPressSubject): Boolean; override;
+    class function Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean; override;
     procedure Clear;
     procedure Execute;
     property ItemsSession: TPressSession read GetItemsSession write SetItemsSession;
@@ -569,6 +581,14 @@ end;
 
 { TPressMVPAttributeModel }
 
+constructor TPressMVPAttributeModel.Create(AParent: TPressMVPModel;
+  ASubjectMetadata: TPressSubjectMetadata);
+begin
+  inherited Create(AParent, ASubjectMetadata);
+  if AParent is TPressMVPObjectModel then
+    TPressMVPObjectModel(AParent).AddSubModel(Self);  // friend class
+end;
+
 function TPressMVPAttributeModel.GetAsString: string;
 begin
   if IsSelected then
@@ -587,18 +607,28 @@ begin
   Result := inherited Subject as TPressAttribute;
 end;
 
+function TPressMVPAttributeModel.GetSubjectMetadata: TPressAttributeMetadata;
+begin
+  Result := inherited SubjectMetadata as TPressAttributeMetadata;
+end;
+
+procedure TPressMVPAttributeModel.SetSubject(Value: TPressAttribute);
+begin
+  inherited Subject := Value;
+end;
+
 { TPressMVPNullModel }
 
-class function TPressMVPNullModel.Apply(ASubject: TPressSubject): Boolean;
+class function TPressMVPNullModel.Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean;
 begin
-  Result := not Assigned(ASubject);
+  Result := not Assigned(ASubjectMetadata);
 end;
 
 { TPressMVPValueModel }
 
-class function TPressMVPValueModel.Apply(ASubject: TPressSubject): Boolean;
+class function TPressMVPValueModel.Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean;
 begin
-  Result := ASubject is TPressValue;
+  Result := ASubjectMetadata.Supports(TPressValue);
 end;
 
 function TPressMVPValueModel.GetSubject: TPressValue;
@@ -686,9 +716,9 @@ end;
 
 { TPressMVPEnumModel }
 
-class function TPressMVPEnumModel.Apply(ASubject: TPressSubject): Boolean;
+class function TPressMVPEnumModel.Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean;
 begin
-  Result := ASubject is TPressEnum;
+  Result := ASubjectMetadata.Supports(TPressEnum);
 end;
 
 function TPressMVPEnumModel.CreateEnumValueIterator(
@@ -738,9 +768,10 @@ end;
 
 { TPressMVPDateModel }
 
-class function TPressMVPDateModel.Apply(ASubject: TPressSubject): Boolean;
+class function TPressMVPDateModel.Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean;
 begin
-  Result := (ASubject is TPressDate) or (ASubject is TPressDateTime);
+  Result := ASubjectMetadata.Supports(TPressDate) or
+   ASubjectMetadata.Supports(TPressDateTime);
 end;
 
 procedure TPressMVPDateModel.InitCommands;
@@ -751,9 +782,9 @@ end;
 
 { TPressMVPPictureModel }
 
-class function TPressMVPPictureModel.Apply(ASubject: TPressSubject): Boolean;
+class function TPressMVPPictureModel.Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean;
 begin
-  Result := ASubject is TPressPicture;
+  Result := ASubjectMetadata.Supports(TPressPicture);
 end;
 
 procedure TPressMVPPictureModel.InitCommands;
@@ -1086,11 +1117,12 @@ begin
 end;
 
 constructor TPressMVPStructureModel.Create(AParent: TPressMVPModel;
-  ASubject: TPressSubject);
+  ASubjectMetadata: TPressSubjectMetadata);
 begin
-  inherited Create(AParent, ASubject);
+  inherited Create(AParent, ASubjectMetadata);
   FPersistChange :=
-   (ASubject is TPressReference) or (ASubject is TPressReferences) or
+   ASubjectMetadata.Supports(TPressReference) or
+   ASubjectMetadata.Supports(TPressReferences) or
    (AParent is TPressMVPQueryModel);
 end;
 
@@ -1103,7 +1135,7 @@ end;
 function TPressMVPStructureModel.GetColumnData: TPressMVPColumnData;
 begin
   if not Assigned(FColumnData) then
-    FColumnData := TPressMVPColumnData.Create(Subject.ObjectClass.ClassMap);
+    FColumnData := TPressMVPColumnData.Create(SubjectMetadata.ObjectClass.ClassMap);
   Result := FColumnData;
 end;
 
@@ -1122,8 +1154,8 @@ function TPressMVPStructureModel.HasForm(ANewObjectForm: Boolean;
 var
   VEvent: TPressMVPModelFindFormEvent;
 begin
-  if not Assigned(AObjectClass) and HasSubject and Assigned(Subject.Metadata) then
-    AObjectClass := Subject.Metadata.ObjectClass;
+  if not Assigned(AObjectClass) and (SubjectMetadata is TPressAttributeMetadata) then
+    AObjectClass := TPressAttributeMetadata(SubjectMetadata).ObjectClass;
   if Assigned(AObjectClass) then
   begin
     VEvent := TPressMVPModelFindFormEvent.Create(Self, ANewObjectForm, AObjectClass);
@@ -1152,9 +1184,9 @@ end;
 
 { TPressMVPReferenceModel }
 
-class function TPressMVPReferenceModel.Apply(ASubject: TPressSubject): Boolean;
+class function TPressMVPReferenceModel.Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean;
 begin
-  Result := ASubject is TPressReference;
+  Result := ASubjectMetadata.Supports(TPressReference);
 end;
 
 procedure TPressMVPReferenceModel.BindSubject;
@@ -1168,13 +1200,6 @@ begin
   Selection.Select(VObject);
   if Assigned(VObject) then
     InternalBindSubject(VObject);
-end;
-
-constructor TPressMVPReferenceModel.Create(
-  AParent: TPressMVPModel; ASubject: TPressSubject);
-begin
-  inherited Create(AParent, ASubject);
-  BindSubject;
 end;
 
 function TPressMVPReferenceModel.CreateQueryIterator(
@@ -1782,7 +1807,6 @@ procedure TPressMVPItemsModel.InternalAssignDisplayNames(
 begin
   AssignColumnData(ADisplayNames);
   InternalCreateSortCommands;
-  RebuildObjectList;
 end;
 
 procedure TPressMVPItemsModel.InternalCreateAddCommands;
@@ -1928,7 +1952,10 @@ procedure TPressMVPItemsModel.RebuildObjectList;
 var
   I: Integer;
 begin
+  if FRebuildingObjectList then
+    Exit;
   Selection.BeginUpdate;
+  FRebuildingObjectList := True;
   try
     Selection.Clear;
     ObjectList.Clear;
@@ -1941,6 +1968,7 @@ begin
       Selection.StrongSelection := False;
     end;
   finally
+    FRebuildingObjectList := False;
     Selection.EndUpdate;
   end;
 end;
@@ -1961,6 +1989,12 @@ begin
   Changed(ctSubject);
 end;
 
+procedure TPressMVPItemsModel.SubjectChanged(AOldSubject: TPressSubject);
+begin
+  inherited;
+  RebuildObjectList;
+end;
+
 function TPressMVPItemsModel.TextAlignment(ACol: Integer): TPressAlignment;
 begin
   Result := ColumnData[ACol].AttributeAlignment;
@@ -1968,16 +2002,16 @@ end;
 
 { TPressMVPPartsModel }
 
-class function TPressMVPPartsModel.Apply(ASubject: TPressSubject): Boolean;
+class function TPressMVPPartsModel.Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean;
 begin
-  Result := ASubject is TPressParts;
+  Result := ASubjectMetadata.Supports(TPressParts);
 end;
 
 { TPressMVPReferencesModel }
 
-class function TPressMVPReferencesModel.Apply(ASubject: TPressSubject): Boolean;
+class function TPressMVPReferencesModel.Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean;
 begin
-  Result := ASubject is TPressReferences;
+  Result := ASubjectMetadata.Supports(TPressReferences);
 end;
 
 function TPressMVPReferencesModel.CanEditObject: Boolean;
@@ -2006,11 +2040,19 @@ end;
 
 function TPressMVPReferencesModel.IsQueryReferences: Boolean;
 begin
-  Result := HasSubject and (Subject.Owner is TPressQuery) and
-   (Subject.Name = SPressQueryItemsString);
+  Result := (SubjectMetadata is TPressQueryAttributeMetadata) and
+   (SubjectMetadata.SubjectName = SPressQueryItemsString);
 end;
 
 { TPressMVPObjectModel }
+
+procedure TPressMVPObjectModel.AddSubModel(
+  AModel: TPressMVPAttributeModel);
+begin
+  if not Assigned(FSubModelList) then
+    FSubModelList := TObjectList.Create(False);
+  FSubModelList.Add(AModel);
+end;
 
 procedure TPressMVPObjectModel.AfterChangeHookedSubject;
 begin
@@ -2022,9 +2064,9 @@ begin
   end;
 end;
 
-class function TPressMVPObjectModel.Apply(ASubject: TPressSubject): Boolean;
+class function TPressMVPObjectModel.Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean;
 begin
-  Result := ASubject is TPressObject;
+  Result := ASubjectMetadata is TPressObjectMetadata;
 end;
 
 procedure TPressMVPObjectModel.BeforeChangeHookedSubject;
@@ -2042,16 +2084,15 @@ begin
 end;
 
 constructor TPressMVPObjectModel.Create(
-  AParent: TPressMVPModel; ASubject: TPressSubject);
+  AParent: TPressMVPModel; ASubjectMetadata: TPressSubjectMetadata);
 begin
-  inherited Create(AParent, ASubject);
+  inherited Create(AParent, ASubjectMetadata);
   FStoreObject := True;
-  if Assigned(ASubject) then
-    FSavePoint := (ASubject as TPressObject).Memento.SavePoint;
 end;
 
 procedure TPressMVPObjectModel.Finit;
 begin
+  FSubModelList.Free;
   FHookedSubject.Free;
   inherited;
 end;
@@ -2072,6 +2113,11 @@ end;
 function TPressMVPObjectModel.GetSubject: TPressObject;
 begin
   Result := inherited Subject as TPressObject;
+end;
+
+function TPressMVPObjectModel.GetSubjectMetadata: TPressObjectMetadata;
+begin
+  Result := inherited SubjectMetadata as TPressObjectMetadata;
 end;
 
 procedure TPressMVPObjectModel.InitCommands;
@@ -2138,9 +2184,49 @@ begin
   AfterChangeHookedSubject;
 end;
 
+procedure TPressMVPObjectModel.SetSubject(Value: TPressObject);
+begin
+  inherited Subject := Value;
+end;
+
 procedure TPressMVPObjectModel.Store;
 begin
   Session.Store(Subject);
+end;
+
+procedure TPressMVPObjectModel.SubjectChanged(AOldSubject: TPressSubject);
+
+  procedure AssignSubModels(ASubject: TPressObject);
+  var
+    VModel: TPressMVPAttributeModel;
+    I: Integer;
+  begin
+    if not Assigned(FSubModelList) then
+      Exit;
+    for I := 0 to Pred(FSubModelList.Count) do
+    begin
+      VModel := FSubModelList[I] as TPressMVPAttributeModel;
+      VModel.Subject := ASubject.AttributeByName(VModel.SubjectMetadata.Name);
+    end;
+  end;
+
+var
+  VObject: TPressObject;
+begin
+  inherited;
+  if AOldSubject is TPressObject then
+    Commands.ReleaseObject(TPressObject(AOldSubject));
+  if HasSubject then
+  begin
+    VObject := Subject;
+    AssignSubModels(VObject);
+    FSavePoint := VObject.Memento.SavePoint;
+    Commands.BindObject(VObject);
+  end else
+  begin
+    FSavePoint := 0;
+    AssignSubModels(nil);
+  end;
 end;
 
 procedure TPressMVPObjectModel.UpdateData;
@@ -2171,9 +2257,9 @@ begin
     end;
 end;
 
-class function TPressMVPQueryModel.Apply(ASubject: TPressSubject): Boolean;
+class function TPressMVPQueryModel.Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean;
 begin
-  Result := ASubject is TPressQuery;
+  Result := ASubjectMetadata.Supports(TPressQuery);
 end;
 
 procedure TPressMVPQueryModel.Clear;

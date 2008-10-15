@@ -68,6 +68,7 @@
   SUnsupportedDisplayNames := SUnsupportedDisplayNames_rst;
   SUnsupportedModel := SUnsupportedModel_rst;
   SUnsupportedObject := SUnsupportedObject_rst;
+  SUnsupportedSubject := SUnsupportedSubject_rst;
   SViewAccessError := SViewAccessError_rst;
   SWidgetManagerAlreadyAssigned := SWidgetManagerAlreadyAssigned_rst;
 
