@@ -1183,8 +1183,16 @@ end;
 
 procedure TPressMVPSelection.Select(AObject: TObject);
 begin
-  Clear;
-  Focus := AObject;
+  if (Count <> 1) or (Focus <> AObject) then
+  begin
+    BeginUpdate;
+    try
+      Clear;
+      Focus := AObject;
+    finally
+      EndUpdate;
+    end;
+  end;
 end;
 
 procedure TPressMVPSelection.SetFocus(Value: TObject);
