@@ -1261,7 +1261,7 @@ function TPressEnumMetadata.AddVarRecItem(AItem: TVarRec): Boolean;
 begin
   Result := True;
   case AItem.VType of
-    vtPointer: FItems.AddObject('', AItem.VPointer);
+    vtPointer: FItems.AddObject('', TObject(AItem.VPointer));
     vtString: FItems.Add(AItem.VString^);
     vtAnsiString: FItems.Add(AnsiString(AItem.VAnsiString));
     else Result := False;
