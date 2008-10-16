@@ -1,6 +1,6 @@
 (*
   PressObjects, MVP-Presenter Classes
-  Copyright (C) 2006-2007 Laserpress Ltda.
+  Copyright (C) 2006-2008 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -224,7 +224,6 @@ type
     class procedure AssignAccessor(AFormHandle: TObject; const AAccessorName: ShortString; AInstance: Pointer);
     function AttributeByName(const AAttributeName: string): TPressAttribute;
     function AttributeMetadataByName(const AAttributeName: string): TPressAttributeMetadata;
-    function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
     procedure Finit; override;
     procedure InitPresenter; override;
     function InternalCreateSubModel(ASubjectMetadata: TPressSubjectMetadata): TPressMVPModel; virtual;
@@ -236,7 +235,9 @@ type
     class function Apply(AModel: TPressMVPModel; const AView: IPressMVPView): Boolean; override;
     function BindCommand(ACommandClass: TPressMVPCommandClass; const AComponentName: ShortString): TPressMVPCommand; override;
     function BindPresenter(APresenterClass: TPressMVPFormPresenterClass; const AComponentName: ShortString): TPressMVPCommand; override;
+    function CreateDetailPresenter(AOwner: TPressMVPItemsPresenter): TPressMVPFormPresenter;
     function CreatePresenterIterator: TPressMVPPresenterIterator;
+    function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
     procedure Refresh;
     class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil);
     class function Run(AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
@@ -831,6 +832,18 @@ begin
   Model.AddCommandInstance(Result);
   Result.AddComponent(VComponent);
   Result.EnabledIfNoUser := True;
+end;
+
+function TPressMVPFormPresenter.CreateDetailPresenter(
+  AOwner: TPressMVPItemsPresenter): TPressMVPFormPresenter;
+var
+  VOwnerModel: TPressMVPItemsModel;
+  VModel: TPressMVPObjectModel;
+begin
+  VOwnerModel := AOwner.Model;
+  VModel := InternalCreateSubModel(VOwnerModel.SubjectMetadata.ObjectClassMetadata) as TPressMVPObjectModel;
+  VModel.OwnerModel := VOwnerModel;  
+  Result := InternalCreateSubPresenter(VModel, AOwner.Parent.View) as TPressMVPFormPresenter;
 end;
 
 function TPressMVPFormPresenter.CreatePresenterIterator: TPressMVPPresenterIterator;

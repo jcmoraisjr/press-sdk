@@ -473,6 +473,8 @@ type
   private
     FHookedSubject: TPressStructure;
     FIsIncluding: Boolean;
+    FSelectionNotifier: TPressNotifier;
+    FOwnerModel: TPressMVPItemsModel;
     FSavePoint: TPressSavePoint;
     FStoreObject: Boolean;
     FSubModelList: TObjectList;
@@ -483,7 +485,9 @@ type
     function GetSelection: TPressMVPModelSelection;
     function GetSubject: TPressObject;
     function GetSubjectMetadata: TPressObjectMetadata;
+    procedure SelectionNotification(AEvent: TPressEvent);
     procedure SetHookedSubject(Value: TPressStructure);
+    procedure SetOwnerModel(Value: TPressMVPItemsModel);
     procedure SetSubject(Value: TPressObject);
   protected
     procedure Finit; override;
@@ -507,6 +511,7 @@ type
     property HookedSubject: TPressStructure read FHookedSubject write SetHookedSubject;
     property IsChanged: Boolean read GetIsChanged;
     property IsIncluding: Boolean read FIsIncluding write FIsIncluding;
+    property OwnerModel: TPressMVPItemsModel read FOwnerModel write SetOwnerModel;
     property Selection: TPressMVPModelSelection read GetSelection;
     property StoreObject: Boolean read FStoreObject write FStoreObject;
     property Subject: TPressObject read GetSubject write SetSubject;
@@ -2092,6 +2097,7 @@ end;
 
 procedure TPressMVPObjectModel.Finit;
 begin
+  FSelectionNotifier.Free;
   FSubModelList.Free;
   FHookedSubject.Free;
   inherited;
@@ -2177,11 +2183,33 @@ begin
     Subject.Memento.Restore(FSavePoint);
 end;
 
+procedure TPressMVPObjectModel.SelectionNotification(AEvent: TPressEvent);
+begin
+  if Assigned(FOwnerModel) then
+    Subject := FOwnerModel.Selection.Focus;
+end;
+
 procedure TPressMVPObjectModel.SetHookedSubject(Value: TPressStructure);
 begin
   BeforeChangeHookedSubject;
   FHookedSubject := Value;
   AfterChangeHookedSubject;
+end;
+
+procedure TPressMVPObjectModel.SetOwnerModel(Value: TPressMVPItemsModel);
+begin
+  if FOwnerModel <> Value then
+  begin
+    FreeAndNil(FSelectionNotifier);
+    FOwnerModel := Value;
+    if Assigned(FOwnerModel) then
+    begin
+      FSelectionNotifier := TPressNotifier.Create({$ifdef fpc}@{$endif}SelectionNotification);
+      FSelectionNotifier.AddNotificationItem(
+       FOwnerModel.Selection, [TPressMVPSelectionChangedEvent]);
+      Subject := FOwnerModel.Selection.Focus;
+    end;
+  end;
 end;
 
 procedure TPressMVPObjectModel.SetSubject(Value: TPressObject);
@@ -2206,7 +2234,10 @@ procedure TPressMVPObjectModel.SubjectChanged(AOldSubject: TPressSubject);
     for I := 0 to Pred(FSubModelList.Count) do
     begin
       VModel := FSubModelList[I] as TPressMVPAttributeModel;
-      VModel.Subject := ASubject.AttributeByName(VModel.SubjectMetadata.Name);
+      if Assigned(ASubject) then
+        VModel.Subject := ASubject.AttributeByName(VModel.SubjectMetadata.Name)
+      else
+        VModel.Subject := nil;
     end;
   end;
 
