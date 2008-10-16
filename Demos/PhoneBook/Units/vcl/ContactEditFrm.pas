@@ -17,6 +17,10 @@ type
     CityComboBox: TComboBox;
     PhonesGroupBox: TGroupBox;
     PhonesStringGrid: TStringGrid;
+    NumberLabel: TLabel;
+    PhoneTypeLabel: TLabel;
+    NumberEdit: TEdit;
+    PhoneTypeComboBox: TComboBox;
   end;
 
 implementation

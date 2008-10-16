@@ -36,18 +36,24 @@ type
 implementation
 
 uses
-  ContactBO;
+  PressMVPPresenter, ContactBO;
 
 { TContactEditPresenter }
 
 procedure TContactEditPresenter.InitPresenter;
+var
+  VPhonesPresenter: TPressMVPItemsPresenter;
+  VPhonePresenter: TPressMVPFormPresenter;
 begin
   inherited;
   CreateSubPresenter('Name', 'NameEdit');
   CreateSubPresenter('Address.Street', 'StreetEdit');
   CreateSubPresenter('Address.Zip', 'ZipEdit');
   CreateSubPresenter('Address.City', 'CityComboBox', 'Name');
-  CreateSubPresenter('Phones', 'PhonesStringGrid', 'PhoneType(80);Number(120)');
+  VPhonesPresenter := CreateSubPresenter('Phones', 'PhonesStringGrid', 'PhoneType(80);Number(120)') as TPressMVPItemsPresenter;
+  VPhonePresenter := CreateDetailPresenter(VPhonesPresenter);
+  VPhonePresenter.CreateSubPresenter('Number', 'NumberEdit');
+  VPhonePresenter.CreateSubPresenter('PhoneType', 'PhoneTypeComboBox');
 end;
 
 { TPersonEditPresenter }

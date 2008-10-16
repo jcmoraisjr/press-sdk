@@ -11,6 +11,10 @@ type
   TContactEditForm = class(TCustomEditForm)
     NameLabel: TLabel;
     NameEdit: TEdit;
+    NumberEdit: TEdit;
+    NumberLabel: TLabel;
+    PhoneTypeComboBox: TComboBox;
+    PhoneTypeLabel: TLabel;
     StreetLabel: TLabel;
     StreetEdit: TEdit;
     ZipEdit: TEdit;

@@ -2,14 +2,14 @@ inherited ContactEditForm: TContactEditForm
   Left = 241
   Top = 175
   Caption = 'ContactEditForm'
-  ClientHeight = 223
+  ClientHeight = 307
   ClientWidth = 454
   OldCreateOrder = True
   PixelsPerInch = 96
   TextHeight = 13
   inherited ClientPanel: TPanel
     Width = 454
-    Height = 182
+    Height = 266
     object NameLabel: TLabel [0]
       Left = 16
       Top = 8
@@ -43,7 +43,7 @@ inherited ContactEditForm: TContactEditForm
       FocusControl = CityComboBox
     end
     inherited LinePanel: TPanel
-      Top = 180
+      Top = 264
       Width = 454
     end
     object NameEdit: TEdit
@@ -79,9 +79,25 @@ inherited ContactEditForm: TContactEditForm
       Left = 248
       Top = 16
       Width = 185
-      Height = 145
+      Height = 225
       Caption = 'Phones'
       TabOrder = 5
+      object NumberLabel: TLabel
+        Left = 16
+        Top = 176
+        Width = 40
+        Height = 13
+        Caption = 'Number:'
+        FocusControl = NumberEdit
+      end
+      object PhoneTypeLabel: TLabel
+        Left = 16
+        Top = 136
+        Width = 58
+        Height = 13
+        Caption = 'PhoneType:'
+        FocusControl = PhoneTypeComboBox
+      end
       object PhonesStringGrid: TStringGrid
         Left = 16
         Top = 24
@@ -91,10 +107,25 @@ inherited ContactEditForm: TContactEditForm
         DefaultRowHeight = 16
         TabOrder = 0
       end
+      object NumberEdit: TEdit
+        Left = 16
+        Top = 192
+        Width = 121
+        Height = 21
+        TabOrder = 1
+      end
+      object PhoneTypeComboBox: TComboBox
+        Left = 16
+        Top = 152
+        Width = 121
+        Height = 21
+        ItemHeight = 13
+        TabOrder = 2
+      end
     end
   end
   inherited BottomPanel: TPanel
-    Top = 182
+    Top = 266
     Width = 454
   end
 end
