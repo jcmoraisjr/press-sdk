@@ -137,20 +137,22 @@ type
   TPressMVPView = class(TPressMVPBaseView, IPressMVPView)
   private
     FAccessMode: TPressAccessMode;
+    FEnabled: Boolean;
     FIsChanged: Boolean;
     FModel: TPressMVPModel;
     FViewClickEvent: TNotifyEvent;
     FViewDblClickEvent: TNotifyEvent;
     FViewMouseDownEvent: TMouseEvent;
     FViewMouseUpEvent: TMouseEvent;
+    FVisible: Boolean;
     function AccessError(const ADataType: string): EPressMVPError;
     function GetAccessMode: TPressAccessMode;
+    function GetEnabled: Boolean;
     function GetIsChanged: Boolean;
     function GetModel: TPressMVPModel;
-    function GetReadOnly: Boolean;
     function GetVisible: Boolean;
     procedure SetAccessMode(Value: TPressAccessMode);
-    procedure SetReadOnly(Value: Boolean);
+    procedure SetEnabled(Value: Boolean);
     procedure SetVisible(Value: Boolean);
   protected
     procedure ViewClickEvent(Sender: TObject); virtual;
@@ -161,22 +163,22 @@ type
     procedure Changed;
     function GetText: string; virtual;
     procedure InitView; override;
-    procedure InternalAccessModeUpdated; virtual;
     procedure InternalReset; virtual;
     procedure InternalUpdate; virtual;
     procedure ModelChanged(AChangeType: TPressMVPChangeType); virtual;
     procedure ReleaseControl; override;
     procedure SetModel(Value: TPressMVPModel);
     procedure SetText(const Value: string); virtual;
+    procedure StateChanged; virtual;
     procedure Unchanged;
     property Model: TPressMVPModel read GetModel;
   public
     procedure Update;
     property AccessMode: TPressAccessMode read FAccessMode write SetAccessMode;
+    property Enabled: Boolean read FEnabled write SetEnabled;
     property IsChanged: Boolean read FIsChanged;
-    property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
     property Text: string read GetText write SetText;
-    property Visible: Boolean read GetVisible write SetVisible;
+    property Visible: Boolean read FVisible write SetVisible;
   end;
 
   TPressMVPAttributeView = class(TPressMVPView, IPressMVPAttributeView)
@@ -190,6 +192,7 @@ type
     function GetText: string; override;
     function GetIsClear: Boolean; virtual;
     procedure InternalClear; virtual;
+    procedure InternalUpdate; override;
     procedure SetSize(Value: Integer); virtual;
   public
     procedure Clear;
@@ -210,8 +213,6 @@ type
     FViewKeyPressEvent: TKeyPressEvent;
     FViewKeyUpEvent: TKeyEvent;
     function GetControl: TWinControl;
-  private
-    procedure UpdateRelatedLabel;
   protected
     procedure ViewEnterEvent(Sender: TObject); virtual;
     procedure ViewExitEvent(Sender: TObject); virtual;
@@ -220,8 +221,8 @@ type
     procedure ViewKeyUpEvent(Sender: TObject; var Key: Word; Shift: TShiftState); virtual;
   protected
     procedure InitView; override;
-    procedure InternalAccessModeUpdated; override;
     procedure ReleaseControl; override;
+    procedure StateChanged; override;
   public
     function Focused: Boolean;
     procedure SelectNext; virtual;
@@ -834,6 +835,11 @@ begin
   Result := FAccessMode;
 end;
 
+function TPressMVPView.GetEnabled: Boolean;
+begin
+  Result := FEnabled;
+end;
+
 function TPressMVPView.GetIsChanged: Boolean;
 begin
   Result := FIsChanged;
@@ -846,11 +852,6 @@ begin
   Result := FModel;
 end;
 
-function TPressMVPView.GetReadOnly: Boolean;
-begin
-  Result := AccessMode <> amWritable;
-end;
-
 function TPressMVPView.GetText: string;
 begin
   raise AccessError('Text');
@@ -858,7 +859,7 @@ end;
 
 function TPressMVPView.GetVisible: Boolean;
 begin
-  Result := TPressXCLControlFriend(Control).Visible;
+  Result := FVisible;
 end;
 
 procedure TPressMVPView.InitView;
@@ -875,12 +876,9 @@ begin
     OnDblClick := {$IFDEF FPC}@{$ENDIF}ViewDblClickEvent;
     OnMouseDown := {$IFDEF FPC}@{$ENDIF}ViewMouseDownEvent;
     OnMouseUp := {$IFDEF FPC}@{$ENDIF}ViewMouseUpEvent;
+    FVisible := Visible;
+    FEnabled := Enabled;
   end;
-end;
-
-procedure TPressMVPView.InternalAccessModeUpdated;
-begin
-  Update;
 end;
 
 procedure TPressMVPView.InternalReset;
@@ -917,7 +915,16 @@ begin
   if FAccessMode <> Value then
   begin
     FAccessMode := Value;
-    InternalAccessModeUpdated;
+    Update;
+  end;
+end;
+
+procedure TPressMVPView.SetEnabled(Value: Boolean);
+begin
+  if FEnabled <> Value then
+  begin
+    FEnabled := Value;
+    StateChanged;
   end;
 end;
 
@@ -934,14 +941,6 @@ begin
   end;
 end;
 
-procedure TPressMVPView.SetReadOnly(Value: Boolean);
-begin
-  if Value then
-    AccessMode := amVisible
-  else
-    AccessMode := amWritable;
-end;
-
 procedure TPressMVPView.SetText(const Value: string);
 begin
   raise AccessError('Text');
@@ -949,6 +948,16 @@ end;
 
 procedure TPressMVPView.SetVisible(Value: Boolean);
 begin
+  if FVisible <> Value then
+  begin
+    FVisible := Value;
+    StateChanged;
+  end;
+end;
+
+procedure TPressMVPView.StateChanged;
+begin
+  TPressXCLControlFriend(Control).Enabled := Enabled;
   TPressXCLControlFriend(Control).Visible := Visible;
 end;
 
@@ -959,8 +968,7 @@ end;
 
 procedure TPressMVPView.Update;
 begin
-  if Model.HasSubject then
-    InternalUpdate;
+  InternalUpdate;
 end;
 
 procedure TPressMVPView.ViewClickEvent(Sender: TObject);
@@ -1047,6 +1055,12 @@ procedure TPressMVPAttributeView.InternalClear;
 begin
 end;
 
+procedure TPressMVPAttributeView.InternalUpdate;
+begin
+  inherited;
+  Enabled := Model.HasSubject and (AccessMode = amWritable);
+end;
+
 procedure TPressMVPAttributeView.SetSize(Value: Integer);
 begin
 end;
@@ -1081,12 +1095,6 @@ begin
   end;
 end;
 
-procedure TPressMVPWinView.InternalAccessModeUpdated;
-begin
-  inherited;
-  UpdateRelatedLabel;
-end;
-
 procedure TPressMVPWinView.ReleaseControl;
 begin
   with TPressXCLWinControlFriend(Control) do
@@ -1119,12 +1127,13 @@ begin
   Control.SetFocus;
 end;
 
-procedure TPressMVPWinView.UpdateRelatedLabel;
+procedure TPressMVPWinView.StateChanged;
 var
   VOwner: TComponent;
   VLabel: TCustomLabel;
   I: Integer;
 begin
+  inherited;
   VOwner := Control.Owner;
   if Assigned(VOwner) then
     for I := 0 to Pred(VOwner.ComponentCount) do
@@ -1132,10 +1141,7 @@ begin
       begin
         VLabel := TCustomLabel(VOwner.Components[I]);
         if TPressXCLCustomLabelFriend(VLabel).FocusControl = Control then
-        begin
-          VLabel.Enabled := AccessMode = amWritable;
-          Exit;
-        end;
+          VLabel.Enabled := Enabled;
       end;
 end;
 
@@ -1230,11 +1236,10 @@ end;
 procedure TPressMVPEditView.InternalUpdate;
 begin
   inherited;
-  if AccessMode = amInvisible then
+  if not Model.HasSubject or (AccessMode = amInvisible) then
     TPressXCLCustomEditFriend(Control).Text := ''
   else
     TPressXCLCustomEditFriend(Control).Text := PressEncodeString(Model.AsString);
-  Control.Enabled := AccessMode = amWritable;
   Unchanged;
 end;
 
@@ -1307,12 +1312,11 @@ end;
 procedure TPressMVPDateTimeView.InternalUpdate;
 begin
   inherited;
-  if AccessMode = amInvisible then
+  if not Model.HasSubject or (AccessMode = amInvisible) then
     TPressXCLCustomCalendarFriend(Control).DateTime := 0
   else
     TPressXCLCustomCalendarFriend(Control).DateTime :=
      Model.Subject.AsDateTime;
-  Control.Enabled := AccessMode = amWritable;
   Unchanged;
 end;
 
@@ -1366,15 +1370,18 @@ var
   VAttribute: TPressAttribute;
 begin
   inherited;
-  VAttribute := Model.Subject;
-  { TODO : Implement invisibility }
-  if VAttribute.IsNull then
-    TPressXCLCustomCheckBoxFriend(Control).State := cbGrayed
-  else if VAttribute.AsBoolean then
-    TPressXCLCustomCheckBoxFriend(Control).State := cbChecked
-  else
+  if Model.HasSubject then
+  begin
+    VAttribute := Model.Subject;
+    { TODO : Implement invisibility }
+    if VAttribute.IsNull then
+      TPressXCLCustomCheckBoxFriend(Control).State := cbGrayed
+    else if VAttribute.AsBoolean then
+      TPressXCLCustomCheckBoxFriend(Control).State := cbChecked
+    else
+      TPressXCLCustomCheckBoxFriend(Control).State := cbUnchecked;
+  end else
     TPressXCLCustomCheckBoxFriend(Control).State := cbUnchecked;
-  Control.Enabled := AccessMode = amWritable;
   Unchanged;
 end;
 
@@ -1506,11 +1513,10 @@ end;
 procedure TPressMVPComboBoxView.InternalUpdate;
 begin
   inherited;
-  if AccessMode = amInvisible then
+  if not Model.HasSubject or (AccessMode = amInvisible) then
     TPressXCLCustomComboBoxFriend(Control).Text := ''
   else
     TPressXCLCustomComboBoxFriend(Control).Text := PressEncodeString(Model.AsString);
-  Control.Enabled := AccessMode = amWritable;
   Unchanged;
 end;
 
@@ -1628,7 +1634,6 @@ procedure TPressMVPItemsView.InternalUpdate;
 begin
   inherited;
   RowCount := Model.Count;
-  Control.Enabled := AccessMode = amWritable;
   { TODO : Improve }
   Control.Invalidate;
 end;
@@ -1888,7 +1893,7 @@ end;
 procedure TPressMVPCaptionView.InternalUpdate;
 begin
   inherited;
-  if AccessMode = amInvisible then
+  if not Model.HasSubject or (AccessMode = amInvisible) then
     TPressXCLControlFriend(Control).Caption := ''
   else
     TPressXCLControlFriend(Control).Caption := PressEncodeString(Model.AsString);
@@ -1930,9 +1935,13 @@ var
   VSubject: TPressAttribute;
 begin
   inherited;
-  VSubject := Model.Subject;
-  if VSubject is TPressPicture then
-    TPressPicture(VSubject).AssignToPicture(Control.Picture);
+  if Model.HasSubject then
+  begin
+    VSubject := Model.Subject;
+    if VSubject is TPressPicture then
+      TPressPicture(VSubject).AssignToPicture(Control.Picture);
+  end else
+    Control.Picture.Graphic := nil;
 end;
 
 { TPressMVPCustomFormView }

@@ -177,19 +177,18 @@ type
   ['{F975801E-32A0-4242-9943-11EB5A5D551F}']
     function AccessError(const ADataType: string): EPressMVPError;
     function GetAccessMode: TPressAccessMode;
+    function GetEnabled: Boolean;
     function GetIsChanged: Boolean;
-    function GetReadOnly: Boolean;
     function GetText: string;
     function GetVisible: Boolean;
     procedure SetAccessMode(Value: TPressAccessMode);
     procedure SetModel(AModel: TPressMVPModel);
-    procedure SetReadOnly(Value: Boolean);
     procedure SetText(const Value: string);
     procedure SetVisible(Value: Boolean);
     procedure Update;
     property AccessMode: TPressAccessMode read GetAccessMode write SetAccessMode;
+    property Enabled: Boolean read GetEnabled;
     property IsChanged: Boolean read GetIsChanged;
-    property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
     property Text: string read GetText write SetText;
     property Visible: Boolean read GetVisible write SetVisible;
   end;
