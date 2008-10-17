@@ -140,6 +140,7 @@ type
     FEnabled: Boolean;
     FIsChanged: Boolean;
     FModel: TPressMVPModel;
+    FReadOnly: Boolean;
     FViewClickEvent: TNotifyEvent;
     FViewDblClickEvent: TNotifyEvent;
     FViewMouseDownEvent: TMouseEvent;
@@ -150,9 +151,11 @@ type
     function GetEnabled: Boolean;
     function GetIsChanged: Boolean;
     function GetModel: TPressMVPModel;
+    function GetReadOnly: Boolean;
     function GetVisible: Boolean;
     procedure SetAccessMode(Value: TPressAccessMode);
     procedure SetEnabled(Value: Boolean);
+    procedure SetReadOnly(Value: Boolean);
     procedure SetVisible(Value: Boolean);
   protected
     procedure ViewClickEvent(Sender: TObject); virtual;
@@ -171,12 +174,14 @@ type
     procedure SetText(const Value: string); virtual;
     procedure StateChanged; virtual;
     procedure Unchanged;
+    procedure UpdateEnabledState;
     property Model: TPressMVPModel read GetModel;
   public
     procedure Update;
     property AccessMode: TPressAccessMode read FAccessMode write SetAccessMode;
     property Enabled: Boolean read FEnabled write SetEnabled;
     property IsChanged: Boolean read FIsChanged;
+    property ReadOnly: Boolean read FReadOnly write SetReadOnly;
     property Text: string read GetText write SetText;
     property Visible: Boolean read FVisible write SetVisible;
   end;
@@ -852,6 +857,11 @@ begin
   Result := FModel;
 end;
 
+function TPressMVPView.GetReadOnly: Boolean;
+begin
+  Result := FReadOnly;
+end;
+
 function TPressMVPView.GetText: string;
 begin
   raise AccessError('Text');
@@ -924,6 +934,8 @@ begin
   if FEnabled <> Value then
   begin
     FEnabled := Value;
+    if Enabled then
+      FReadOnly := False;
     StateChanged;
   end;
 end;
@@ -938,6 +950,15 @@ begin
     FModel := Value;
     if Assigned(FModel) then
       FModel.OnChange := {$ifdef fpc}@{$endif}ModelChanged;
+  end;
+end;
+
+procedure TPressMVPView.SetReadOnly(Value: Boolean);
+begin
+  if FReadOnly <> Value then
+  begin
+    FReadOnly := Value;
+    UpdateEnabledState;
   end;
 end;
 
@@ -969,6 +990,11 @@ end;
 procedure TPressMVPView.Update;
 begin
   InternalUpdate;
+end;
+
+procedure TPressMVPView.UpdateEnabledState;
+begin
+  Enabled := not ReadOnly and Model.HasSubject and (AccessMode = amWritable);
 end;
 
 procedure TPressMVPView.ViewClickEvent(Sender: TObject);
@@ -1058,7 +1084,7 @@ end;
 procedure TPressMVPAttributeView.InternalUpdate;
 begin
   inherited;
-  Enabled := Model.HasSubject and (AccessMode = amWritable);
+  UpdateEnabledState;
 end;
 
 procedure TPressMVPAttributeView.SetSize(Value: Integer);
