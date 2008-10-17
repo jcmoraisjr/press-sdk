@@ -204,6 +204,11 @@ type
     property Model: TPressMVPObjectModel read GetModel;
   end;
 
+  TPressMVPEmptySubjectCommand = class(TPressMVPObjectCommand)
+  protected
+    function InternalIsEnabled: Boolean; override;
+  end;
+
   TPressMVPRefreshObjectCommand = class(TPressMVPObjectCommand)
   protected
     function GetCaption: string; override;
@@ -741,6 +746,13 @@ procedure TPressMVPObjectCommand.ReleaseObject(AObject: TPressObject);
 begin
   inherited;
   Notifier.RemoveNotificationItem(AObject);
+end;
+
+{ TPressMVPEmptySubjectCommand }
+
+function TPressMVPEmptySubjectCommand.InternalIsEnabled: Boolean;
+begin
+  Result := not Model.HasSubject or not Model.Subject.ControlsDisabled;
 end;
 
 { TPressMVPRefreshObjectCommand }
