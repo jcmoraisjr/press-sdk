@@ -330,6 +330,7 @@ type
     function InternalObjectClass: TPressObjectClass; virtual;
     procedure InternalUpdateQueryMetadata(const AQueryString: string); virtual;
     procedure Notify(AEvent: TPressEvent); override;
+    procedure SubjectChanged(AOldSubject: TPressSubject); override;
     property Metadata: TPressQueryMetadata read GetMetadata;
     property PathChangedNotifier: TPressNotifier read GetPathChangedNotifier;
   public
@@ -1374,6 +1375,13 @@ begin
     raise EPressMVPError.CreateFmt(SAttributeIsNotValue,
      [AObject.ClassName, VAttribute.Name]);
   Result := TPressValue(VAttribute);
+end;
+
+procedure TPressMVPReferenceModel.SubjectChanged(
+  AOldSubject: TPressSubject);
+begin
+  inherited;
+  BindSubject;
 end;
 
 function TPressMVPReferenceModel.TextAlignment(ACol: Integer): TPressAlignment;
