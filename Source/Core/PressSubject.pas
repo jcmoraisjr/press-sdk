@@ -3059,10 +3059,15 @@ begin
 end;
 
 procedure TPressObject.Assign(Source: TPersistent);
+var
+  VSource: TPressObject;
 begin
   if Source is ClassType then
   begin
-    with TPressObject(Source).CreateAttributeIterator do
+    VSource := TPressObject(Source);
+    if Assigned(VSource.Session) and VSource.Session.IsPersistent(VSource) then
+      VSource.Session.Load(VSource, True, True);
+    with VSource.CreateAttributeIterator do
     try
       FirstItem;  // skip Id attribute
       while NextItem do
@@ -3160,8 +3165,6 @@ end;
 
 function TPressObject.Clone: TPressObject;
 begin
-  if Assigned(Session) and Session.IsPersistent(Self) then
-    Session.Load(Self, True, True);
   Result := ClassType.Create(FMetadata);
   Result.Assign(Self);
 end;

@@ -3523,6 +3523,7 @@ end;
 
 procedure TPressPart.InternalAssignItem(AProxy: TPressProxy);
 begin
+  { TODO : AfterCreate called before assign the owner }
   PubValue := AProxy.Instance.Clone;
 end;
 
@@ -4089,7 +4090,7 @@ end;
 
 procedure TPressParts.InternalAssignItem(AProxy: TPressProxy);
 begin
-  Add(AProxy.Instance.Clone);
+  Add(AProxy.ObjectClassType).Assign(AProxy.Instance);
 end;
 
 function TPressParts.InternalProxyType: TPressProxyType;
