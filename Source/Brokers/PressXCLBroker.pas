@@ -454,11 +454,14 @@ type
   protected
     function GetText: string; override;
     procedure InitView; override;
+    procedure InternalResetForm; virtual;
+    procedure InternalResetPageControls(AControl: TWinControl); virtual;
     procedure ReleaseControl; override;
     procedure SetText(const Value: string); override;
   public
     class function Apply(AControl: TObject): Boolean; override;
     procedure Close;
+    procedure ResetForm;
     procedure Show(AModal: Boolean = False);
   end;
 
@@ -2016,6 +2019,34 @@ begin
   end;
 end;
 
+procedure TPressMVPFormView.InternalResetForm;
+var
+  VControl: TPressXCLCustomFormFriend;
+  VFirstControl: TWinControl;
+begin
+  VControl := TPressXCLCustomFormFriend(Control);
+  InternalResetPageControls(VControl);
+  VControl.SelectNext(VControl, True, True);
+  VFirstControl := VControl.ActiveControl;
+  while VControl.ActiveControl is TPageControl do
+  begin
+    VControl.SelectNext(VControl.ActiveControl, True, True);
+    if VControl.ActiveControl = VFirstControl then
+      Exit;
+  end;
+end;
+
+procedure TPressMVPFormView.InternalResetPageControls(AControl: TWinControl);
+var
+  I: Integer;
+begin
+  if AControl is TPageControl then
+    TPageControl(AControl).ActivePageIndex := 0;
+  for I := 0 to Pred(AControl.ControlCount) do
+    if AControl.Controls[I] is TWinControl then
+      InternalResetPageControls(TWinControl(AControl.Controls[I]));
+end;
+
 procedure TPressMVPFormView.ReleaseControl;
 begin
   with TPressXCLCustomFormFriend(Control) do
@@ -2023,6 +2054,11 @@ begin
     OnClose := FViewCloseEvent;
   end;
   inherited;
+end;
+
+procedure TPressMVPFormView.ResetForm;
+begin
+  InternalResetForm;
 end;
 
 procedure TPressMVPFormView.SetText(const Value: string);

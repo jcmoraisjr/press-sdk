@@ -279,6 +279,7 @@ type
   IPressMVPFormView = interface(IPressMVPCustomFormView)
   ['{254033B2-A5D7-436A-BF2D-83835040F8CE}']
     procedure Close;
+    procedure ResetForm;
     procedure Show(AModal: Boolean = False);
   end;
 
