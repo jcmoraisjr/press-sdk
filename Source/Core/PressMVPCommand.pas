@@ -801,7 +801,10 @@ begin
         Exit;
       InternalStoreObject;
     end;
-    TPressMVPModelCloseFormEvent.Create(Model).Notify;
+    if Assigned(Model.Subject.OwnerAttribute) then
+      TPressMVPModelCleanupFormEvent.Create(Model).Notify
+    else
+      TPressMVPModelCloseFormEvent.Create(Model).Notify;
   end;
 end;
 

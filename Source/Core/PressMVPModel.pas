@@ -73,6 +73,9 @@ type
     property CanSave: Boolean read GetCanSave write SetCanSave;
   end;
 
+  TPressMVPModelCleanupFormEvent = class(TPressMVPModelEvent)
+  end;
+
   TPressMVPModelCloseFormEvent = class(TPressMVPModelEvent)
   end;
 

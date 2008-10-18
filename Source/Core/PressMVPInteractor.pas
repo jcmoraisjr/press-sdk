@@ -300,15 +300,24 @@ type
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
   end;
 
-  TPressMVPCloseFormInteractor = class(TPressMVPInteractor)
+  TPressMVPFormInteractor = class(TPressMVPInteractor)
   private
     function GetOwner: TPressMVPFormPresenter;
-  protected
-    procedure InitInteractor; override;
-    procedure Notify(AEvent: TPressEvent); override;
   public
     class function Apply(APresenter: TPressMVPPresenter): Boolean; override;
     property Owner: TPressMVPFormPresenter read GetOwner;
+  end;
+
+  TPressMVPCleanupFormInteractor = class(TPressMVPFormInteractor)
+  protected
+    procedure InitInteractor; override;
+    procedure Notify(AEvent: TPressEvent); override;
+  end;
+
+  TPressMVPCloseFormInteractor = class(TPressMVPFormInteractor)
+  protected
+    procedure InitInteractor; override;
+    procedure Notify(AEvent: TPressEvent); override;
   end;
 
   TPressMVPFreePresenterInteractor = class(TPressMVPInteractor)
@@ -1187,19 +1196,39 @@ begin
   ExecuteQueryPresenter;
 end;
 
-{ TPressMVPCloseFormInteractor }
+{ TPressMVPFormInteractor }
 
-class function TPressMVPCloseFormInteractor.Apply(
+class function TPressMVPFormInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
   Result := (APresenter is TPressMVPFormPresenter) and
    not (APresenter is TPressMVPMainFormPresenter);
 end;
 
-function TPressMVPCloseFormInteractor.GetOwner: TPressMVPFormPresenter;
+function TPressMVPFormInteractor.GetOwner: TPressMVPFormPresenter;
 begin
   Result := inherited Owner as TPressMVPFormPresenter;
 end;
+
+{ TPressMVPCleanupFormInteractor }
+
+procedure TPressMVPCleanupFormInteractor.InitInteractor;
+begin
+  inherited;
+  Notifier.AddNotificationItem(Owner.Model, [TPressMVPModelCleanupFormEvent]);
+end;
+
+procedure TPressMVPCleanupFormInteractor.Notify(AEvent: TPressEvent);
+var
+  VModel: TPressMVPObjectModel;
+begin
+  inherited;
+  VModel := Owner.Model;
+  VModel.Subject := (VModel.Subject.OwnerAttribute as TPressItems).Add;
+  Owner.FormView.ResetForm;
+end;
+
+{ TPressMVPCloseFormInteractor }
 
 procedure TPressMVPCloseFormInteractor.InitInteractor;
 begin
@@ -1235,8 +1264,7 @@ begin
   Owner.Free;
 end;
 
-procedure RegisterInteractors;
-begin
+initialization
   TPressMVPNextControlInteractor.RegisterInteractor;
   TPressMVPUpdateComboInteractor.RegisterInteractor;
   TPressMVPOpenComboInteractor.RegisterInteractor;
@@ -1259,11 +1287,8 @@ begin
   TPressMVPCreateIncludeFormInteractor.RegisterInteractor;
   TPressMVPCreatePresentFormInteractor.RegisterInteractor;
   TPressMVPCreateSearchFormInteractor.RegisterInteractor;
+  TPressMVPCleanupFormInteractor.RegisterInteractor;
   TPressMVPCloseFormInteractor.RegisterInteractor;
   TPressMVPFreePresenterInteractor.RegisterInteractor;
-end;
-
-initialization
-  RegisterInteractors;
 
 end.
