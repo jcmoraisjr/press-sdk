@@ -55,7 +55,6 @@ type
     procedure Draw(ACanvasHandle: TObject; AShape: TPressShapeType; X1, Y1, X2, Y2: Integer; ASolid: Boolean);
     function MessageDlg(AMsgType: TPressMessageType; const AMsg: string): Integer;
     function OpenDlg(AOpenDlgType: TPressOpenDlgType; var AFileName: string): Boolean;
-    procedure ShowForm(AForm: TObject; AModal: Boolean);
     function TextHeight(ACanvasHandle: TObject; const AStr: string): Integer;
     procedure TextRect(ACanvasHandle: TObject; ARect: TPressRect; ALeft, ATop: Integer; const AStr: string);
     function TextWidth(ACanvasHandle: TObject; const AStr: string): Integer;
@@ -460,6 +459,7 @@ type
   public
     class function Apply(AControl: TObject): Boolean; override;
     procedure Close;
+    procedure Show(AModal: Boolean = False);
   end;
 
 procedure PressXCLForm(APresenter: TPressMVPFormPresenterClass; AForm: TFormClass);
@@ -570,14 +570,6 @@ begin
   finally
     VDialog.Free;
   end;
-end;
-
-procedure TPressMVPWidgetManager.ShowForm(AForm: TObject; AModal: Boolean);
-begin
-  if AModal then
-    TCustomForm(AForm).ShowModal
-  else
-    TCustomForm(AForm).Show;
 end;
 
 function TPressMVPWidgetManager.TextHeight(
@@ -2036,6 +2028,14 @@ end;
 procedure TPressMVPFormView.SetText(const Value: string);
 begin
   Control.Caption := PressEncodeString(Value);
+end;
+
+procedure TPressMVPFormView.Show(AModal: Boolean);
+begin
+  if not AModal then
+    Control.Show
+  else
+    Control.ShowModal;
 end;
 
 procedure TPressMVPFormView.ViewCloseEvent(Sender: TObject; var Action: TCloseAction);

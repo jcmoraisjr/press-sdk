@@ -1032,7 +1032,7 @@ begin
   AssignAccessor(VForm, SPressPresenterAccessorName, Result);
   Result.FAutoDestroy := AAutoDestroy;
   Result.Refresh;
-  PressWidget.ShowForm(VForm, False);
+  VView.Show;
   Result.Running;
 end;
 
