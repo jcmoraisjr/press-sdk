@@ -791,20 +791,23 @@ begin
 end;
 
 procedure TPressMVPSaveObjectCommand.InternalExecute;
+var
+  VModel: TPressMVPObjectModel;
 begin
   inherited;
-  if Model.CanSaveObject then
+  VModel := Model;
+  if VModel.CanSaveObject then
   begin
-    if not Model.Subject.IsUpdated then
+    if not VModel.Subject.IsUpdated then
     begin
       if not InternalConfirm then
         Exit;
       InternalStoreObject;
     end;
-    if Assigned(Model.Subject.OwnerAttribute) then
-      TPressMVPModelCleanupFormEvent.Create(Model).Notify
+    if Assigned(VModel.Subject.OwnerAttribute) then
+      TPressMVPModelCleanupFormEvent.Create(VModel).Notify
     else
-      TPressMVPModelCloseFormEvent.Create(Model).Notify;
+      TPressMVPModelCloseFormEvent.Create(VModel).Notify;
   end;
 end;
 
