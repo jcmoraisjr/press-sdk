@@ -31,7 +31,7 @@
   SEnumMetadataNotFound_rst = 'Enumeration metadata ''%s'' não encontrado';
   SEnumOutOfBounds_rst = 'Enumeration ''%s'' fora do limite (%d)';
   SInstanceAlreadyOwned_rst = 'O objeto %s(''%s'') já possui proprietário';
-  SInstanceNotFound_rst = 'Instance not found: %s(''%s'')';
+  SInstanceNotFound_rst = 'Instância não encontrada: %s(''%s'')';
   SInvalidAttributeClass_rst = 'O atributo %s(''%s'') requer objetos da classe ''%s''';
   SInvalidAttributeName_rst = 'Nome inválido para um atributo (''%s'')';
   SInvalidAttributeValue_rst = 'Valor ''%s'' inválido para %s(''%s'')';
