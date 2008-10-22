@@ -582,6 +582,10 @@ begin
   begin
     VProxy := FProxyList[I] as TPressProxy;
     VProxy.Instance := FInstance;
+
+    if Assigned(FInstance) then
+    { TODO : fix TPressOPFAttributeMapper.RetrieveBaseMapsList }
+
     if VProxy.ProxyType = ptOwned then
       FInstance.AddRef;
   end;
