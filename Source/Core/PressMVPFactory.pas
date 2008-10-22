@@ -424,8 +424,8 @@ begin
   begin
     VEvent := TPressMVPModelFindFormEvent(AEvent);
     if not VEvent.HasForm then
-      VEvent.HasForm := Forms.IndexOfObjectClass(
-       VEvent.ObjectClass, CFormType[VEvent.NewObjectForm], False) >= 0;
+      VEvent.HasForm := Forms.IndexOfObjectClass(VEvent.ObjectClass,
+       CFormType[VEvent.NewObjectForm], VEvent.IncludeDescendants) >= 0;
   end;
 end;
 

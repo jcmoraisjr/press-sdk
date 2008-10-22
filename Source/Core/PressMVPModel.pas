@@ -37,11 +37,13 @@ type
   TPressMVPModelFindFormEvent = class(TPressMVPModelEvent)
   private
     FHasForm: Boolean;
+    FIncludeDescendants: Boolean;
     FNewObjectForm: Boolean;
     FObjectClass: TPressObjectClass;
   public
-    constructor Create(AOwner: TObject; ANewObjectForm: Boolean; AObjectClass: TPressObjectClass);
+    constructor Create(AOwner: TObject; ANewObjectForm: Boolean; AObjectClass: TPressObjectClass; AIncludeDescendants: Boolean);
     property HasForm: Boolean read FHasForm write FHasForm;
+    property IncludeDescendants: Boolean read FIncludeDescendants;
     property NewObjectForm: Boolean read FNewObjectForm;
     property ObjectClass: TPressObjectClass read FObjectClass;
   end;
@@ -281,7 +283,7 @@ type
   protected
     procedure AssignColumnData(const AColumnData: string);
     procedure Finit; override;
-    function HasForm(ANewObjectForm: Boolean; AObjectClass: TPressObjectClass = nil): Boolean;
+    function HasForm(ANewObjectForm: Boolean; AIncludeDescendants: Boolean = False): Boolean;
     procedure InternalAssignDisplayNames(const ADisplayNames: string); virtual; abstract;
     function InternalCreateSelection: TPressMVPSelection; override;
   public
@@ -553,11 +555,13 @@ uses
 { TPressMVPModelFindFormEvent }
 
 constructor TPressMVPModelFindFormEvent.Create(AOwner: TObject;
-  ANewObjectForm: Boolean; AObjectClass: TPressObjectClass);
+  ANewObjectForm: Boolean; AObjectClass: TPressObjectClass;
+  AIncludeDescendants: Boolean);
 begin
   inherited Create(AOwner);
   FNewObjectForm := ANewObjectForm;
   FObjectClass := AObjectClass;
+  FIncludeDescendants := AIncludeDescendants;
 end;
 
 { TPressMVPModelCreateIncludeFormEvent }
@@ -1158,16 +1162,15 @@ begin
   Result := inherited Subject as TPressStructure;
 end;
 
-function TPressMVPStructureModel.HasForm(ANewObjectForm: Boolean;
-  AObjectClass: TPressObjectClass): Boolean;
+function TPressMVPStructureModel.HasForm(
+  ANewObjectForm: Boolean; AIncludeDescendants: Boolean): Boolean;
 var
   VEvent: TPressMVPModelFindFormEvent;
 begin
-  if not Assigned(AObjectClass) and (SubjectMetadata is TPressAttributeMetadata) then
-    AObjectClass := TPressAttributeMetadata(SubjectMetadata).ObjectClass;
-  if Assigned(AObjectClass) then
+  if SubjectMetadata is TPressAttributeMetadata then
   begin
-    VEvent := TPressMVPModelFindFormEvent.Create(Self, ANewObjectForm, AObjectClass);
+    VEvent := TPressMVPModelFindFormEvent.Create(Self, ANewObjectForm,
+     TPressAttributeMetadata(SubjectMetadata).ObjectClass, AIncludeDescendants);
     try
       VEvent.Notify(False);
       Result := VEvent.HasForm;
@@ -1833,12 +1836,14 @@ end;
 
 procedure TPressMVPItemsModel.InternalCreateEditCommands;
 begin
-  AddCommand(TPressMVPEditItemCommand);
+  if HasForm(True, True) then
+    AddCommand(TPressMVPEditItemCommand);
 end;
 
 procedure TPressMVPItemsModel.InternalCreateRemoveCommands;
 begin
-  AddCommand(TPressMVPRemoveItemsCommand);
+  if SubjectMetadata.ObjectClassMetadata.IsPersistent then
+    AddCommand(TPressMVPRemoveItemsCommand);
 end;
 
 procedure TPressMVPItemsModel.InternalCreateSelectionCommands;
