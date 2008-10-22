@@ -147,6 +147,7 @@ var
   SUnassignedItemObjectClass,
   SUnassignedMainForm,
   SUnassignedModel,
+  SUnassignedPresenterBO,
   SUnassignedPresenterForm,
   SUnassignedPresenterParent,
   SUnassignedSubject,

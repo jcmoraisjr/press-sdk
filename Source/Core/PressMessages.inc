@@ -58,6 +58,7 @@
   SUnassignedItemObjectClass := SUnassignedItemObjectClass_rst;
   SUnassignedMainForm := SUnassignedMainForm_rst;
   SUnassignedModel := SUnassignedModel_rst;
+  SUnassignedPresenterBO := SUnassignedPresenterBO_rst;
   SUnassignedPresenterForm := SUnassignedPresenterForm_rst;
   SUnassignedPresenterParent := SUnassignedPresenterParent_rst;
   SUnassignedSubject := SUnassignedSubject_rst;

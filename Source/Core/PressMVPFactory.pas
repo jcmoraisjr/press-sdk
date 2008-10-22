@@ -36,13 +36,14 @@ type
     FModelClass: TPressMVPObjectModelClass;
     FObjectClass: TPressObjectClass;
     FPresenterClass: TPressMVPFormPresenterClass;
+    function GetObjectClass: TPressObjectClass;
   public
     constructor Create(APresenterClass: TPressMVPFormPresenterClass);
     procedure AssignForm(AFormClass: TClass);
     property FormClass: TClass read FFormClass;
     property FormPresenterTypes: TPressMVPFormPresenterTypes read FFormPresenterTypes;
     property ModelClass: TPressMVPObjectModelClass read FModelClass;
-    property ObjectClass: TPressObjectClass read FObjectClass;
+    property ObjectClass: TPressObjectClass read GetObjectClass;
     property PresenterClass: TPressMVPFormPresenterClass read FPresenterClass;
   end;
 
@@ -132,6 +133,14 @@ constructor TPressMVPRegisteredForm.Create(
 begin
   inherited Create;
   FPresenterClass := APresenterClass;
+end;
+
+function TPressMVPRegisteredForm.GetObjectClass: TPressObjectClass;
+begin
+  if not Assigned(FObjectClass) then
+    raise EPressMVPError.CreateFmt(
+     SUnassignedPresenterBO, [FPresenterClass.ClassName]);
+  Result := FObjectClass;
 end;
 
 { TPressMVPRegisteredFormList }

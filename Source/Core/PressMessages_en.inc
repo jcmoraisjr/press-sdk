@@ -58,6 +58,7 @@
   SUnassignedItemObjectClass_rst = 'Unassigned business class Query item ''%s''';
   SUnassignedMainForm_rst = 'Unassigned main form';
   SUnassignedModel_rst = 'Unassigned Model';
+  SUnassignedPresenterBO_rst = 'Class ''%s'' does not have business object';
   SUnassignedPresenterForm_rst = 'Class ''%s'' does not have form';
   SUnassignedPresenterParent_rst = 'Class ''%s'' does not have a parent';
   SUnassignedSubject_rst = 'Unassigned Subject';

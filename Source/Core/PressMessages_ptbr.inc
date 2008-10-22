@@ -58,6 +58,7 @@
   SUnassignedItemObjectClass_rst = 'Classe de negócio dos itens da Query ''%s'' não está associado';
   SUnassignedMainForm_rst = 'Formulário principal não está associado';
   SUnassignedModel_rst = 'Model não está associado';
+  SUnassignedPresenterBO_rst = 'A classe ''%s'' não possui objeto de negócio';
   SUnassignedPresenterForm_rst = 'A classe ''%s'' não possui form';
   SUnassignedPresenterParent_rst = 'A classe ''%s'' não possui parent';
   SUnassignedSubject_rst = 'Subject não foi associado';

@@ -58,6 +58,8 @@
   SUnassignedItemObjectClass_rst = 'Nicht zugewiesene business Klasse Query item ''%s''';
   SUnassignedMainForm_rst = 'Hauptformular nicht zugewiesen';
   SUnassignedModel_rst = 'Model nicht zugewiesenen';
+{ TODO : Translate }
+  SUnassignedPresenterBO_rst = 'Class ''%s'' does not have business object';
   SUnassignedPresenterForm_rst = 'Klasse ''%s'' hat kein Formular';
   SUnassignedPresenterParent_rst = 'Klasse ''%s'' hat kein Parent';
   SUnassignedSubject_rst = 'Nicht zugewiesenes Subjekt';
