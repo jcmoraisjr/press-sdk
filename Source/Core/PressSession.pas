@@ -594,48 +594,13 @@ end;
 
 function TPressSession.InternalRetrieveQuery(
   AQuery: TPressQuery): TPressProxyList;
-
-  function SelectPart: string;
-  begin
-    Result := 'select ' + AQuery.FieldNamesClause;
-  end;
-
-  function FromPart: string;
-  begin
-    Result := AQuery.FromClause;
-    if Result <> '' then
-      if (AQuery.Style = qsOQL) and AQuery.Metadata.IncludeSubClasses then
-        Result := ' from any ' + Result
-      else
-        Result := ' from ' + Result;
-  end;
-
-  function WherePart: string;
-  begin
-    Result := AQuery.WhereClause;
-    if Result <> '' then
-      Result := ' where ' + Result;
-  end;
-
-  function GroupByPart: string;
-  begin
-    Result := AQuery.GroupByClause;
-    if Result <> '' then
-      Result := ' group by ' + Result;
-  end;
-
-  function OrderByPart: string;
-  begin
-    Result := AQuery.OrderByClause;
-    if Result <> '' then
-      Result := ' order by ' + Result;
-  end;
-
 var
   VQueryStr: string;
 begin
-  VQueryStr := SelectPart + FromPart + WherePart + GroupByPart + OrderByPart;
-  {$ifdef PressLogDAOPersistence}PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');{$endif}
+  VQueryStr := AQuery.BuildQuery;
+{$ifdef PressLogDAOPersistence}
+  PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');
+{$endif}
   case AQuery.Style of
     qsOQL:
       Result := OQLQuery(VQueryStr, AQuery.Params);

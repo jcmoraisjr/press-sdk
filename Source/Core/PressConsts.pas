@@ -47,6 +47,12 @@ const
   SPressSubjectParamPrefix = 'par';
   SPressCalcString = 'Calc';
   SPressQueryItemsString = 'QueryItems';
+  SPressQuerySelectString = 'select';
+  SPressQueryFromString = 'from';
+  SPressQueryFromAnyString = 'from any';
+  SPressQueryWhereString = 'where';
+  SPressQueryGroupByString = 'group by';
+  SPressQueryOrderByString = 'order by';
 // opf related
   SPressPrimaryKeyNamePrefix = 'PK_';
   SPressForeignKeyNamePrefix = 'FK_';

@@ -821,13 +821,25 @@ type
     function GetWhereClause: string; virtual;
     procedure Init; override;
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
+    function InternalBuildFrom: string; virtual;
+    function InternalBuildGroupBy: string; virtual;
+    function InternalBuildQuery: string; virtual;
+    function InternalBuildOrderBy: string; virtual;
+    function InternalBuildSelect: string; virtual;
+    function InternalBuildWhere: string; virtual;
     function InternalBuildStatement(AAttribute: TPressAttribute): string; virtual;
+    property FieldNamesClause: string read GetFieldNamesClause;
+    property FromClause: string read GetFromClause;
+    property GroupByClause: string read GetGroupByClause;
+    property OrderByClause: string read GetOrderByClause;
+    property WhereClause: string read GetWhereClause;
   public
     function Add(AObject: TPressObject): Integer;
     function AddAttributeParam(AAttribute: TPressAttribute): string;
     function AddParam(AParamType: TPressAttributeBaseType; const AName: string = ''): TPressParam;
     function AddValueParam(AValue: Variant; AAttributeType: TPressAttributeBaseType): string;
     procedure AssignList(AProxyList: TPressProxyList);
+    function BuildQuery: string;
     procedure Clear;
     function Count: Integer;
     class function ClassMetadata: TPressQueryMetadata;
@@ -836,16 +848,11 @@ type
     class function ObjectMetadataClass: TPressObjectMetadataClass; override;
     function Remove(AObject: TPressObject): Integer;
     function RemoveReference(AProxy: TPressProxy): Integer;
-    property FieldNamesClause: string read GetFieldNamesClause;
-    property FromClause: string read GetFromClause;
-    property GroupByClause: string read GetGroupByClause;
     property MatchEmptyAndNull: Boolean read FMatchEmptyAndNull write FMatchEmptyAndNull;
     property Metadata: TPressQueryMetadata read GetMetadata;
     property Objects[AIndex: Integer]: TPressObject read GetObjects; default;
-    property OrderByClause: string read GetOrderByClause;
     property Params: TPressParamList read GetParams;
     property Style: TPressQueryStyle read FStyle write SetStyle;
-    property WhereClause: string read GetWhereClause;
   end;
 
   { Proxy declarations }
@@ -3935,6 +3942,11 @@ begin
   TPressReferences(FQueryItems).AssignProxyList(AProxyList);
 end;
 
+function TPressQuery.BuildQuery: string;
+begin
+  Result := InternalBuildQuery;
+end;
+
 class function TPressQuery.ClassMetadata: TPressQueryMetadata;
 begin
   Result := inherited ClassMetadata as TPressQueryMetadata;
@@ -4045,6 +4057,41 @@ begin
     Result := inherited InternalAttributeAddress(AAttributeName);
 end;
 
+function TPressQuery.InternalBuildFrom: string;
+begin
+  Result := FromClause;
+  if Result <> '' then
+    if (Style = qsOQL) and Metadata.IncludeSubClasses then
+      Result := ' ' + SPressQueryFromAnyString + ' ' + Result
+    else
+      Result := ' ' + SPressQueryFromString + ' ' + Result;
+end;
+
+function TPressQuery.InternalBuildGroupBy: string;
+begin
+  Result := GroupByClause;
+  if Result <> '' then
+    Result := ' ' + SPressQueryGroupByString + ' ' + Result;
+end;
+
+function TPressQuery.InternalBuildOrderBy: string;
+begin
+  Result := OrderByClause;
+  if Result <> '' then
+    Result := ' ' + SPressQueryOrderByString + ' ' + Result;
+end;
+
+function TPressQuery.InternalBuildQuery: string;
+begin
+  Result := InternalBuildSelect + InternalBuildFrom + InternalBuildWhere +
+   InternalBuildGroupBy + InternalBuildOrderBy;
+end;
+
+function TPressQuery.InternalBuildSelect: string;
+begin
+  Result := SPressQuerySelectString + ' ' + FieldNamesClause;
+end;
+
 function TPressQuery.InternalBuildStatement(
   AAttribute: TPressAttribute): string;
 var
@@ -4117,6 +4164,13 @@ begin
         Result := IsEmptyStatement
     else
       Result := IsNullStatement;
+end;
+
+function TPressQuery.InternalBuildWhere: string;
+begin
+  Result := WhereClause;
+  if Result <> '' then
+    Result := ' ' + SPressQueryWhereString + ' ' + Result;
 end;
 
 class function TPressQuery.ObjectMetadataClass: TPressObjectMetadataClass;
