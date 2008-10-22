@@ -1064,13 +1064,34 @@ end;
 procedure TPressOPFAttributeMapper.RetrieveBaseMapsList(
   AIDs: TPressStringArray; AObjects: TPressObjectList;
   AAttributes: TPressSessionAttributes);
+
+  function FindID(const AID: string; ADataset: TPressOPFDataset; AIndex: Integer): Boolean;
+  var
+    I: Integer;
+  begin
+    Result := True;
+    for I := 0 to Pred(ADataset.Count) do
+      if ADataset[I][AIndex].AsString = AID then
+        Exit;
+    Result := False;
+  end;
+
 var
   VDataset: TPressOPFDataset;
+  VIndex: Integer;
   I: Integer;
 begin
   VDataset := SelectBaseGroupDataset(Length(AIDs), AAttributes);
   AddIdArrayParam(VDataset, AIDs);
   VDataset.Execute;
+  if VDataset.Count < Length(AIDs) then
+  begin
+    VIndex := VDataset.FieldDefs.IndexOfName(Map[0].PersistentName);
+    for I := 0 to Pred(Length(AIDs)) do
+      if not FindID(AIDs[I], VDataset, VIndex) then
+        raise EPressOPFError.CreateFmt(SInstanceNotFound,
+         [Map.ObjectClass.ClassName, AIDs[I]]);
+  end;
   for I := 0 to Pred(VDataset.Count) do
     AObjects.Add(CreateObject(
      ResolveClassType(VDataset[I]), nil, '', VDataset[I], AAttributes));
