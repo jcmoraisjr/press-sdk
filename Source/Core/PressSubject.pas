@@ -626,7 +626,9 @@ type
   end;
 
   TPressQuery = class;
+  TPressProxy = class;
   TPressProxyList = class;
+  TPressProxyIterator = class;
 
   IPressSession = interface(IPressInterface)
   ['{8B46DE54-6987-477B-8AA4-9176D66018D4}']
@@ -649,6 +651,7 @@ type
     function SQLQuery(AClass: TPressObjectClass; const ASQLStatement: string; AParams: TPressParamList = nil): TPressProxyList;
     procedure StartTransaction;
     procedure Store(AObject: TPressObject);
+    procedure SynchronizeProxy(AProxy: TPressProxy);
     procedure UpdateQuery(AQuery: TPressQuery);
   end;
 
@@ -794,9 +797,6 @@ type
   public
     property CurrentItem: TPressObject read GetCurrentItem;
   end;
-
-  TPressProxy = class;
-  TPressProxyIterator = class;
 
   TPressQueryClass = class of TPressQuery;
   TPressQueryIterator = TPressProxyIterator;
@@ -966,6 +966,7 @@ type
     function Remove(AObject: TPressProxy): Integer;
     function RemoveInstance(AObject: TPressObject): Integer;
     function RemoveReference(const ARefClass, ARefID: string): Integer;
+    procedure Synchronize;
     property Instances[AIndex: Integer]: TPressObject read GetInstances write SetInstances;
     property Items[AIndex: Integer]: TPressProxy read GetItems write SetItems; default;
     property NotificationDisabled: Boolean read GetNotificationDisabled;
@@ -4679,6 +4680,15 @@ procedure TPressProxyList.SetItems(
   AIndex: Integer; Value: TPressProxy);
 begin
   inherited Items[AIndex] := Value;
+end;
+
+procedure TPressProxyList.Synchronize;
+var
+  I: Integer;
+begin
+  if Assigned(FSession) then
+    for I := 0 to Pred(Count) do
+      FSession.SynchronizeProxy(Items[I]);
 end;
 
 { TPressProxyIterator }
