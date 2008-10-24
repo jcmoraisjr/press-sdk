@@ -49,14 +49,16 @@ type
   end;
 
   TPressMVPModelCreateFormEvent = class(TPressMVPModelEvent)
+  private
+    FPresenterHandle: TObject;
+    FTargetObject: TPressObject;
+  public
+    constructor Create(AOwner: TObject; ATargetObject: TPressObject = nil);
+    property PresenterHandle: TObject read FPresenterHandle write FPresenterHandle;
+    property TargetObject: TPressObject read FTargetObject;
   end;
 
   TPressMVPModelCreateIncludeFormEvent = class(TPressMVPModelCreateFormEvent)
-  private
-    FNewObject: TPressObject;
-  public
-    constructor Create(AOwner: TObject; ANewObject: TPressObject = nil);
-    property NewObject: TPressObject read FNewObject;
   end;
 
   TPressMVPModelCreatePresentFormEvent = class(TPressMVPModelCreateFormEvent)
@@ -564,13 +566,13 @@ begin
   FIncludeDescendants := AIncludeDescendants;
 end;
 
-{ TPressMVPModelCreateIncludeFormEvent }
+{ TPressMVPModelCreateFormEvent }
 
-constructor TPressMVPModelCreateIncludeFormEvent.Create(AOwner: TObject;
-  ANewObject: TPressObject);
+constructor TPressMVPModelCreateFormEvent.Create(AOwner: TObject;
+  ATargetObject: TPressObject);
 begin
   inherited Create(AOwner);
-  FNewObject := ANewObject;
+  FTargetObject := ATargetObject;
 end;
 
 { TPressMVPObjectModelCanSaveEvent }

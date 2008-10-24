@@ -267,8 +267,8 @@ type
   private
     function GetModel: TPressMVPStructureModel;
   protected
-    procedure ExecuteFormPresenter(AFormPresenterType: TPressMVPFormPresenterType);
-    procedure RunPresenter(APresenterIndex: Integer; AObject: TPressObject; AIncluding: Boolean);
+    procedure ExecuteFormPresenter(AEvent: TPressMVPModelCreateFormEvent; AFormPresenterType: TPressMVPFormPresenterType);
+    function RunPresenter(APresenterIndex: Integer; AObject: TPressObject; AIncluding: Boolean): TPressMVPFormPresenter;
   public
     property Model: TPressMVPStructureModel read GetModel;
   end;
@@ -293,7 +293,7 @@ type
 
   TPressMVPCreateSearchFormInteractor = class(TPressMVPCreateFormInteractor)
   protected
-    procedure ExecuteQueryPresenter;
+    procedure ExecuteQueryPresenter(AEvent: TPressMVPModelCreateSearchFormEvent);
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
   public
@@ -1074,18 +1074,22 @@ end;
 { TPressMVPCreateFormInteractor }
 
 procedure TPressMVPCreateFormInteractor.ExecuteFormPresenter(
+  AEvent: TPressMVPModelCreateFormEvent;
   AFormPresenterType: TPressMVPFormPresenterType);
 var
   VPresenterIndex: Integer;
   VObject: TPressObject;
 begin
-  if Model.Selection.Count = 1 then
-  begin
+  VObject := AEvent.TargetObject;
+  if not Assigned(VObject) and (Model.Selection.Count = 1) then
     VObject := Model.Selection[0];
+  if Assigned(VObject) then
+  begin
     VPresenterIndex := PressDefaultMVPFactory.Forms.IndexOfObjectClass(
      VObject.ClassType, AFormPresenterType);
     if VPresenterIndex >= 0 then
-      RunPresenter(VPresenterIndex, VObject, AFormPresenterType = fpNew);
+      AEvent.PresenterHandle :=
+       RunPresenter(VPresenterIndex, VObject, AFormPresenterType = fpNew);
   end;
 end;
 
@@ -1094,15 +1098,46 @@ begin
   Result := Owner.Model as TPressMVPStructureModel;
 end;
 
-procedure TPressMVPCreateFormInteractor.RunPresenter(
-  APresenterIndex: Integer; AObject: TPressObject; AIncluding: Boolean);
+function TPressMVPCreateFormInteractor.RunPresenter(APresenterIndex: Integer;
+  AObject: TPressObject; AIncluding: Boolean): TPressMVPFormPresenter;
 var
-  VPresenter: TPressMVPFormPresenter;
+  VModel: TPressMVPStructureModel;
+  VFormPresenter: TPressMVPFormPresenter;
+  VSubPresenter: TPressMVPPresenter;
+  VPresenterIndex: Integer;
 begin
-  VPresenter := PressDefaultMVPFactory.Forms[APresenterIndex].
-   PresenterClass.Run(Owner.Parent, AObject, AIncluding);
-  VPresenter.Model.HookedSubject := Model.Subject;
-  VPresenter.Model.StoreObject := Model.PersistChange;
+  VModel := Model;
+  if not AObject.IsOwned or (AObject is VModel.SubjectMetadata.ObjectClass) then
+  begin
+    Result := PressDefaultMVPFactory.Forms[APresenterIndex].
+     PresenterClass.Run(Owner.Parent, AObject, AIncluding);
+    Result.Model.HookedSubject := VModel.Subject;
+    Result.Model.StoreObject := VModel.PersistChange;
+  end else
+  begin
+    Result := nil;
+    VFormPresenter := nil;
+    VPresenterIndex := PressDefaultMVPFactory.Forms.IndexOfObjectClass(
+     AObject.Owner.ClassType, fpExisting);
+    if VPresenterIndex >= 0 then
+      VFormPresenter := RunPresenter(VPresenterIndex, AObject.Owner, False);
+    if Assigned(VFormPresenter) then
+    begin
+      VSubPresenter :=
+       VFormPresenter.FindSubPresenterBySubjectName(AObject.OwnerAttribute.Name);
+      if Assigned(VSubPresenter) then
+      begin
+        VSubPresenter.Model.Selection.Select(AObject);
+        with TPressMVPModelCreatePresentFormEvent.Create(VSubPresenter.Model) do
+        try
+          Notify(False);
+          Result := PresenterHandle as TPressMVPFormPresenter;
+        finally
+          Free;
+        end;
+      end;
+    end;
+  end;
 end;
 
 { TPressMVPCreateIncludeFormInteractor }
@@ -1130,7 +1165,7 @@ begin
   inherited;
   if AEvent is TPressMVPModelCreateIncludeFormEvent then
   begin
-    VObject := TPressMVPModelCreateIncludeFormEvent(AEvent).NewObject;
+    VObject := TPressMVPModelCreateIncludeFormEvent(AEvent).TargetObject;
     if Assigned(VObject) then
     begin
       VModel := Model;
@@ -1139,8 +1174,8 @@ begin
         VAttribute.AsString := FAttrView.AsString;
       VModel.Subject.AssignObject(VObject);
     end;
+    ExecuteFormPresenter(TPressMVPModelCreateIncludeFormEvent(AEvent), fpNew);
   end;
-  ExecuteFormPresenter(fpNew);
 end;
 
 { TPressMVPCreatePresentFormInteractor }
@@ -1162,7 +1197,8 @@ procedure TPressMVPCreatePresentFormInteractor.Notify(AEvent: TPressEvent);
 begin
   inherited;
   TPressMVPModelUpdateDataEvent.Create(Owner.Model).Notify;
-  ExecuteFormPresenter(fpExisting);
+  if AEvent is TPressMVPModelCreatePresentFormEvent then
+    ExecuteFormPresenter(TPressMVPModelCreatePresentFormEvent(AEvent), fpExisting);
 end;
 
 { TPressMVPCreateSearchFormInteractor }
@@ -1173,14 +1209,15 @@ begin
   Result := APresenter.Model is TPressMVPReferencesModel;
 end;
 
-procedure TPressMVPCreateSearchFormInteractor.ExecuteQueryPresenter;
+procedure TPressMVPCreateSearchFormInteractor.ExecuteQueryPresenter(
+  AEvent: TPressMVPModelCreateSearchFormEvent);
 var
   VPresenterIndex: Integer;
 begin
   VPresenterIndex := PressDefaultMVPFactory.Forms.IndexOfQueryItemObject(
    Model.Subject.ObjectClass, fpQuery);
   if VPresenterIndex >= 0 then
-    RunPresenter(VPresenterIndex, nil, False);
+    AEvent.PresenterHandle := RunPresenter(VPresenterIndex, nil, False);
 end;
 
 procedure TPressMVPCreateSearchFormInteractor.InitInteractor;
@@ -1193,7 +1230,8 @@ end;
 procedure TPressMVPCreateSearchFormInteractor.Notify(AEvent: TPressEvent);
 begin
   inherited;
-  ExecuteQueryPresenter;
+  if AEvent is TPressMVPModelCreateSearchFormEvent then
+    ExecuteQueryPresenter(TPressMVPModelCreateSearchFormEvent(AEvent));
 end;
 
 { TPressMVPFormInteractor }

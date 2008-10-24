@@ -238,6 +238,7 @@ type
     function CreateDetailPresenter(AOwner: TPressMVPItemsPresenter): TPressMVPFormPresenter;
     function CreatePresenterIterator: TPressMVPPresenterIterator;
     function CreateSubPresenter(const AAttributeName, AControlName: ShortString; const ADisplayNames: string = ''; AModelClass: TPressMVPModelClass = nil; APresenterClass: TPressMVPPresenterClass = nil): TPressMVPPresenter;
+    function FindSubPresenterBySubjectName(const AName: string): TPressMVPPresenter;
     procedure Refresh;
     class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil);
     class function Run(AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
@@ -892,6 +893,21 @@ begin
   { TODO : Fix leakages when exception raises. }
   { Note - if FModel and FView fields of the presenter was assigned,
     the compiler will destroy these instances }
+end;
+
+function TPressMVPFormPresenter.FindSubPresenterBySubjectName(
+  const AName: string): TPressMVPPresenter;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if Assigned(FSubPresenters) then
+    for I := 0 to Pred(FSubPresenters.Count) do
+    begin
+      Result := FSubPresenters[I];
+      if SameText(Result.Model.SubjectMetadata.SubjectName, AName) then
+        Exit;
+    end;
 end;
 
 procedure TPressMVPFormPresenter.Finit;
