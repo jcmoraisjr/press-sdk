@@ -40,6 +40,7 @@ type
   public
     constructor Create(APresenterClass: TPressMVPFormPresenterClass);
     procedure AssignForm(AFormClass: TClass);
+    function HasObjectClass: Boolean;
     property FormClass: TClass read FFormClass;
     property FormPresenterTypes: TPressMVPFormPresenterTypes read FFormPresenterTypes;
     property ModelClass: TPressMVPObjectModelClass read FModelClass;
@@ -141,6 +142,11 @@ begin
     raise EPressMVPError.CreateFmt(
      SUnassignedPresenterBO, [FPresenterClass.ClassName]);
   Result := FObjectClass;
+end;
+
+function TPressMVPRegisteredForm.HasObjectClass: Boolean;
+begin
+  Result := Assigned(FObjectClass);
 end;
 
 { TPressMVPRegisteredFormList }

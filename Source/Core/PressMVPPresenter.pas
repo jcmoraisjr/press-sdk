@@ -1114,7 +1114,7 @@ begin
    TPressMVPFormPresenterClass(ClassType));
   if VIndex >= 0 then
   begin
-    if Assigned(VRegForms[VIndex].ObjectClass) then
+    if VRegForms[VIndex].HasObjectClass then
       VSubject := VRegForms[VIndex].ObjectClass.Create;
     VModelClass := VRegForms[VIndex].ModelClass;
   end;
