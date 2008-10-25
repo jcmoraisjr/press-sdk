@@ -1112,8 +1112,7 @@ begin
   begin
     Result := PressDefaultMVPFactory.Forms[APresenterIndex].
      PresenterClass.Run(Owner.Parent, AObject, AIncluding);
-    Result.Model.HookedSubject := VModel.Subject;
-    Result.Model.StoreObject := VModel.PersistChange;
+    Result.Model.AssignOwnerModel(VModel);
   end else
   begin
     Result := nil;

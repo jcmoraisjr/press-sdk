@@ -511,6 +511,7 @@ type
   public
     constructor Create(AParent: TPressMVPModel; ASubjectMetadata: TPressSubjectMetadata); override;
     class function Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean; override;
+    procedure AssignOwnerModel(AOwnerModel: TPressMVPStructureModel);
     function CanSaveObject: Boolean;
     procedure Refresh;
     procedure RevertChanges;
@@ -1135,10 +1136,7 @@ constructor TPressMVPStructureModel.Create(AParent: TPressMVPModel;
   ASubjectMetadata: TPressSubjectMetadata);
 begin
   inherited Create(AParent, ASubjectMetadata);
-  FPersistChange :=
-   ASubjectMetadata.Supports(TPressReference) or
-   ASubjectMetadata.Supports(TPressReferences) or
-   (AParent is TPressMVPQueryModel);
+  FPersistChange := AParent is TPressMVPQueryModel;
 end;
 
 procedure TPressMVPStructureModel.Finit;
@@ -2090,6 +2088,18 @@ end;
 class function TPressMVPObjectModel.Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean;
 begin
   Result := ASubjectMetadata is TPressObjectMetadata;
+end;
+
+procedure TPressMVPObjectModel.AssignOwnerModel(
+  AOwnerModel: TPressMVPStructureModel);
+var
+  VOwnerSubject: TPressStructure;
+begin
+  VOwnerSubject := AOwnerModel.Subject;
+  HookedSubject := VOwnerSubject;
+  StoreObject := AOwnerModel.PersistChange or
+   (VOwnerSubject is TPressReference) or
+   (VOwnerSubject is TPressReferences);
 end;
 
 procedure TPressMVPObjectModel.BeforeChangeHookedSubject;
