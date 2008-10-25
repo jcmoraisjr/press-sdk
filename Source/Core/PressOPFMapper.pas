@@ -792,7 +792,7 @@ procedure TPressOPFAttributeMapper.DisposeObject(AObject: TPressObject);
       try
         BeforeFirstItem;
         while NextItem do
-          if not CurrentItem.IsEmpty then
+          if CurrentItem.HasId then
             ObjectMapper.Dispose(
              CurrentItem.ObjectClassType, CurrentItem.ObjectId);
       finally

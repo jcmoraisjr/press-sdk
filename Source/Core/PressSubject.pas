@@ -908,6 +908,7 @@ type
     procedure ClearInstance;
     procedure ClearReference;
     function Clone: TPressProxy;
+    function HasId: Boolean;
     function HasInstance: Boolean;
     function HasReference: Boolean;
     function IsEmpty: Boolean;
@@ -4384,6 +4385,11 @@ begin
     Result := FInstance.Id
   else
     Result := FRefId;
+end;
+
+function TPressProxy.HasId: Boolean;
+begin
+  Result := (Assigned(FInstance) and (FInstance.Id <> '')) or HasReference;
 end;
 
 function TPressProxy.HasInstance: Boolean;
