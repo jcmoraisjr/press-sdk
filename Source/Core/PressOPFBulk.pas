@@ -101,12 +101,16 @@ type
     FObjectClass: TPressObjectClass;
     FObjectId: string;
     FProxyList: TObjectList;
+    FChangesDisabled: Boolean;
+    procedure ReleaseInstance;
     procedure SetInstance(AValue: TPressObject);
+    procedure SetChangesDisabled(Value: Boolean);
   public
     constructor Create(AProxy: TPressProxy);
     destructor Destroy; override;
     procedure AddProxy(AProxy: TPressProxy);
     procedure UpdateProxy;
+    property ChangesDisabled: Boolean read FChangesDisabled write SetChangesDisabled;
     property Instance: TPressObject read FInstance write SetInstance;
     property ObjectClass: TPressObjectClass read FObjectClass;
     property ObjectId: string read FObjectId;
@@ -326,7 +330,10 @@ begin
     begin
       VInstance := FProxyList[I].Instance;
       if Assigned(VInstance) then
+      begin
+        FProxyList[I].ChangesDisabled := False;
         TPressObjectFriend(VInstance).AfterRetrieve;
+      end;
     end;
 end;
 
@@ -419,9 +426,9 @@ begin
   CreateProxies(AStartingAt, AItemCount);
   CreateMaps;
   RetrieveMaps;
-  AfterRetrieveEvent;
   UpdateProxies;
   BulkRetrieveItem;
+  AfterRetrieveEvent;
 end;
 
 function TPressOPFBulkRetrieve.InternalCreateMap(
@@ -541,6 +548,7 @@ end;
 constructor TPressOPFBulkProxy.Create(AProxy: TPressProxy);
 begin
   inherited Create;
+  FChangesDisabled := True;
   FProxyList := TObjectList.Create(False);
   FObjectId := AProxy.ObjectId;
   FObjectClass := AProxy.ObjectClassType;
@@ -551,25 +559,43 @@ end;
 
 destructor TPressOPFBulkProxy.Destroy;
 begin
-  if Assigned(FInstance) then
-  begin
-    FInstance.EnableChanges;
-    FInstance.Free;
-  end;
+  ReleaseInstance;
   FProxyList.Free;
   inherited;
 end;
 
-procedure TPressOPFBulkProxy.SetInstance(AValue: TPressObject);
+procedure TPressOPFBulkProxy.ReleaseInstance;
 begin
   if Assigned(FInstance) then
   begin
-    FInstance.EnableChanges;
+    if ChangesDisabled then
+      FInstance.EnableChanges;
     FInstance.Free;
   end;
+end;
+
+procedure TPressOPFBulkProxy.SetChangesDisabled(Value: Boolean);
+begin
+  if FChangesDisabled <> Value then
+  begin
+    FChangesDisabled := Value;
+    if Assigned(FInstance) then
+      if FChangesDisabled then
+        FInstance.DisableChanges
+      else
+        FInstance.EnableChanges;
+  end;
+end;
+
+procedure TPressOPFBulkProxy.SetInstance(AValue: TPressObject);
+begin
+  if not Assigned(AValue) then
+    Exit;
+  ReleaseInstance;
   FInstance := AValue;
   FInstance.AddRef;
-  FInstance.DisableChanges;
+  if ChangesDisabled then
+    FInstance.DisableChanges;
   FObjectClass := FInstance.ClassType;
 end;
 
