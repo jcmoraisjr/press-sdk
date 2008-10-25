@@ -1107,7 +1107,8 @@ var
   VPresenterIndex: Integer;
 begin
   VModel := Model;
-  if not AObject.IsOwned or (AObject is VModel.SubjectMetadata.ObjectClass) then
+  if not Assigned(AObject) or not AObject.IsOwned or
+   (AObject is VModel.SubjectMetadata.ObjectClass) then
   begin
     Result := PressDefaultMVPFactory.Forms[APresenterIndex].
      PresenterClass.Run(Owner.Parent, AObject, AIncluding);
