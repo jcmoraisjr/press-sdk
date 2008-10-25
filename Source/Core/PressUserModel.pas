@@ -356,9 +356,14 @@ begin
 end;
 
 procedure TPressUserGroup.AfterRetrieve;
+var
+  VCount: Integer;
 begin
   inherited;
+  VCount := GroupResources.Count;
   PopulateResources;
+  if Assigned(Session) and (GroupResources.Count <> VCount) then
+    Session.Store(Self);
 end;
 
 function TPressUserGroup.GetAccessMode(
@@ -393,9 +398,11 @@ end;
 
 procedure TPressUserGroup.PopulateResources;
 var
+  VCount: Integer;
   I: Integer;
 begin
-  for I := 0 to Pred(PressModel.EnumMetadataByName('TPressAppResource').Count) do
+  VCount := PressModel.EnumMetadataByName('TPressAppResource').Count;
+  for I := 0 to Pred(VCount) do
     GroupResources.ResourceById(I);
 end;
 
