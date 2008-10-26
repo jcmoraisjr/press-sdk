@@ -2232,6 +2232,9 @@ begin
     FOwnerModel := Value;
     if Assigned(FOwnerModel) then
     begin
+      { TODO : An improvement here (knows that it's an owned object
+        model before create a command list) is welcome }
+      Commands.Clear;
       FSelectionNotifier := TPressNotifier.Create({$ifdef fpc}@{$endif}SelectionNotification);
       FSelectionNotifier.AddNotificationItem(
        FOwnerModel.Selection, [TPressMVPSelectionChangedEvent]);

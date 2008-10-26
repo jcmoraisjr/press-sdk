@@ -218,6 +218,7 @@ type
     destructor Destroy; override;
     function Add(ACommand: TPressMVPCommand): Integer;
     procedure BindObject(AObject: TPressObject);
+    procedure Clear;
     function FindCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     procedure Insert(AIndex: Integer; ACommand: TPressMVPCommand);
     procedure ReleaseObject(AObject: TPressObject);
@@ -908,6 +909,11 @@ begin
     if Assigned(VCommand) then
       VCommand.BindObject(AObject);
   end;
+end;
+
+procedure TPressMVPCommands.Clear;
+begin
+  FreeAndNil(FItems);
 end;
 
 destructor TPressMVPCommands.Destroy;
