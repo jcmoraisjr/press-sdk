@@ -2072,6 +2072,7 @@ begin
     Control.Show
   else
     Control.ShowModal;
+  ResetForm;
 end;
 
 procedure TPressMVPFormView.ViewCloseEvent(Sender: TObject; var Action: TCloseAction);
