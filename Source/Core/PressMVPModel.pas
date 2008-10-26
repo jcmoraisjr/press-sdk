@@ -437,6 +437,7 @@ type
     procedure InternalAssignDisplayNames(const ADisplayNames: string); override;
     procedure InternalCreateAddCommands; virtual;
     procedure InternalCreateEditCommands; virtual;
+    procedure InternalCreateInsertCommands; virtual;
     procedure InternalCreateRemoveCommands; virtual;
     procedure InternalCreateSelectionCommands; virtual;
     procedure InternalCreateSortCommands; virtual;
@@ -1816,6 +1817,7 @@ procedure TPressMVPItemsModel.InitCommands;
 begin
   inherited;
   InternalCreateAddCommands;
+  InternalCreateInsertCommands;
   InternalCreateEditCommands;
   InternalCreateRemoveCommands;
   InternalCreateSelectionCommands;
@@ -1838,6 +1840,12 @@ procedure TPressMVPItemsModel.InternalCreateEditCommands;
 begin
   if HasForm(True, True) then
     AddCommand(TPressMVPEditItemCommand);
+end;
+
+procedure TPressMVPItemsModel.InternalCreateInsertCommands;
+begin
+  if HasForm(True) then
+    AddCommand(TPressMVPInsertItemsCommand);
 end;
 
 procedure TPressMVPItemsModel.InternalCreateRemoveCommands;

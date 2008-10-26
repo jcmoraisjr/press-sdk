@@ -101,6 +101,8 @@
   SPressRemovePictureCommand_rst = 'Bild entfernen';
   SPressIncludeObjectCommand_rst = 'Neuer Eintrag';
   SPressAddItemCommand_rst = 'Neuer Eintrag';
+{ TODO : Translate }
+  SPressInsertItemCommand_rst = 'Insert item';
   SPressSelectItemCommand_rst = 'Einträge auswählen';
   SPressEditItemCommand_rst = 'Eintrag bearbeiten';
   SPressRemoveItemCommand_rst = 'Eintrag löschen';

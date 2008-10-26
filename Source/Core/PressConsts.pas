@@ -77,6 +77,7 @@ const
 var
   // short cuts
   SPressAddCommandShortCut,
+  SPressInsertCommandShortCut,
   SPressChangeCommandShortCut,
   SPressRemoveCommandShortCut,
   SPressTodayCommandShortCut,
@@ -188,6 +189,7 @@ var
   SPressRemovePictureCommand,
   SPressIncludeObjectCommand,
   SPressAddItemCommand,
+  SPressInsertItemCommand,
   SPressSelectItemCommand,
   SPressEditItemCommand,
   SPressRemoveItemCommand,

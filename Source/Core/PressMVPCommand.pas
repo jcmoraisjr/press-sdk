@@ -133,6 +133,14 @@ type
     function GetShortCut: TShortCut; override;
   end;
 
+  TPressMVPInsertItemsCommand = class(TPressMVPCustomAddItemsCommand)
+  protected
+    function GetCaption: string; override;
+    function GetShortCut: TShortCut; override;
+    function InternalCreateObject: TPressObject; override;
+    function InternalIsEnabled: Boolean; override;
+  end;
+
   TPressMVPAddReferencesCommand = class(TPressMVPItemsCommand)
   protected
     function GetCaption: string; override;
@@ -542,6 +550,29 @@ end;
 function TPressMVPAddItemsCommand.GetShortCut: TShortCut;
 begin
   Result := SPressAddCommandShortCut;
+end;
+
+{ TPressMVPInsertItemsCommand }
+
+function TPressMVPInsertItemsCommand.GetCaption: string;
+begin
+  Result := SPressInsertItemCommand;
+end;
+
+function TPressMVPInsertItemsCommand.GetShortCut: TShortCut;
+begin
+  Result := SPressInsertCommandShortCut;
+end;
+
+function TPressMVPInsertItemsCommand.InternalCreateObject: TPressObject;
+begin
+  Result := Model.Subject.Insert(
+   Model.IndexOf(Model.Selection.Focus), InternalObjectClass);
+end;
+
+function TPressMVPInsertItemsCommand.InternalIsEnabled: Boolean;
+begin
+  Result := Model.Count > 0;
 end;
 
 { TPressMVPAddReferencesCommand }

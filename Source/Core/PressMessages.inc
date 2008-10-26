@@ -99,6 +99,7 @@
   SPressRemovePictureCommand := SPressRemovePictureCommand_rst;
   SPressIncludeObjectCommand := SPressIncludeObjectCommand_rst;
   SPressAddItemCommand := SPressAddItemCommand_rst;
+  SPressInsertItemCommand := SPressInsertItemCommand_rst;
   SPressSelectItemCommand := SPressSelectItemCommand_rst;
   SPressEditItemCommand := SPressEditItemCommand_rst;
   SPressRemoveItemCommand := SPressRemoveItemCommand_rst;

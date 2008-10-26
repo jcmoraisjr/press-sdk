@@ -2087,6 +2087,7 @@ end;
 
 initialization
   SPressAddCommandShortCut := VK_F2;
+  SPressInsertCommandShortCut := ShortCut(VK_F2, [ssShift]);
   SPressChangeCommandShortCut := VK_F3;
   SPressRemoveCommandShortCut := ShortCut(VK_F8, [ssCtrl]);
   SPressTodayCommandShortCut := ShortCut(Ord('D'), [ssCtrl]);

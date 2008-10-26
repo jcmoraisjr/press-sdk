@@ -99,6 +99,7 @@
   SPressRemovePictureCommand_rst = 'Remove Picture';
   SPressIncludeObjectCommand_rst = 'Add new item';
   SPressAddItemCommand_rst = 'Add item';
+  SPressInsertItemCommand_rst = 'Insert item';
   SPressSelectItemCommand_rst = 'Select items';
   SPressEditItemCommand_rst = 'Edit item';
   SPressRemoveItemCommand_rst = 'Delete item';

@@ -99,6 +99,7 @@
   SPressRemovePictureCommand_rst = 'Remover figura';
   SPressIncludeObjectCommand_rst = 'Cadastrar novo item';
   SPressAddItemCommand_rst = 'Adicionar item';
+  SPressInsertItemCommand_rst = 'Inserir item';
   SPressSelectItemCommand_rst = 'Selecionar itens';
   SPressEditItemCommand_rst = 'Alterar item';
   SPressRemoveItemCommand_rst = 'Remover item';
