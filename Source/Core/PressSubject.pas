@@ -5121,9 +5121,12 @@ end;
 
 procedure TPressAttribute.Unload;
 begin
-  InternalReset;
-  FState := asNotLoaded;
-  Changed(False);
+  if Assigned(FMetadata) and FMetadata.IsPersistent then
+  begin
+    InternalReset;
+    FState := asNotLoaded;
+    Changed(False);
+  end;
 end;
 
 class procedure TPressAttribute.UnregisterAttribute;
