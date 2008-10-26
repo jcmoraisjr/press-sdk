@@ -492,10 +492,10 @@ begin
     FParent.SubPresenters.Add(Self);
   SetModel(AModel);
   SetView(AView);
-  if Model.HasCommands then
-    CommandMenu := InternalCreateCommandMenu;
   DoInitInteractors;
   DoInitPresenter;
+  if Model.HasCommands then
+    CommandMenu := InternalCreateCommandMenu;
   FIsInitializing := False;
 end;
 
