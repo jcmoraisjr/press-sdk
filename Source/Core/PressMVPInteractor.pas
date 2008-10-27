@@ -484,6 +484,9 @@ begin
    (AEvent is TPressMVPViewExitEvent) then
   begin
     VObjectModel := Owner.Parent.Model;
+    while Assigned(VObjectModel.OwnerModel) and
+     (VObjectModel.OwnerModel.Parent is TPressMVPObjectModel) do
+      VObjectModel := TPressMVPObjectModel(VObjectModel.OwnerModel.Parent);
     if AEvent is TPressMVPViewEnterEvent then
     begin
       VObjectModel.Selection.Select(Owner.Model);
