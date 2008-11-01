@@ -5126,7 +5126,8 @@ begin
     InternalReset;
     FState := asNotLoaded;
     Changed(False);
-  end;
+  end else if IsCalcAttribute then
+    FCalcUpdated := False;
 end;
 
 class procedure TPressAttribute.UnregisterAttribute;
