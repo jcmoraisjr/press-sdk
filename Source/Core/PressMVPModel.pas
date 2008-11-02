@@ -507,6 +507,7 @@ type
     function InternalCreateSelection: TPressMVPSelection; override;
     function InternalGetSession: TPressSession; override;
     function InternalIsIncluding: Boolean; override;
+    procedure InternalModelChanged(AChangeType: TPressMVPChangeType); override;
     procedure Notify(AEvent: TPressEvent); override;
     procedure SubjectChanged(AOldSubject: TPressSubject); override;
   public
@@ -2198,6 +2199,17 @@ end;
 function TPressMVPObjectModel.InternalIsIncluding: Boolean;
 begin
   Result := IsIncluding;
+end;
+
+procedure TPressMVPObjectModel.InternalModelChanged(
+  AChangeType: TPressMVPChangeType);
+var
+  I: Integer;
+begin
+  inherited;
+  if Assigned(FSubModelList) then
+    for I := 0 to Pred(FSubModelList.Count) do
+      (FSubModelList[I] as TPressMVPModel).Changed(AChangeType);
 end;
 
 procedure TPressMVPObjectModel.Notify(AEvent: TPressEvent);

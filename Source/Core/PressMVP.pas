@@ -370,6 +370,7 @@ type
     function InternalCreateSelection: TPressMVPSelection; virtual;
     function InternalGetSession: TPressSession; virtual;
     function InternalIsIncluding: Boolean; virtual;
+    procedure InternalModelChanged(AChangeType: TPressMVPChangeType); virtual;
     function InternalResourceId: Integer; virtual;
     procedure Notify(AEvent: TPressEvent); virtual;
     procedure SubjectChanged(AOldSubject: TPressSubject); virtual;
@@ -1280,6 +1281,7 @@ begin
     if Assigned(FOnChange) then
       FOnChange(AChangeType);
     TPressMVPModelChangedEvent.Create(Self, AChangeType).Notify;
+    InternalModelChanged(AChangeType);
   end;
 end;
 
@@ -1438,6 +1440,10 @@ begin
     Result := Parent.InternalIsIncluding
   else
     Result := True;
+end;
+
+procedure TPressMVPModel.InternalModelChanged(AChangeType: TPressMVPChangeType);
+begin
 end;
 
 function TPressMVPModel.InternalResourceId: Integer;
