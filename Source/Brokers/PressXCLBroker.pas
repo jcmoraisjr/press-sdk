@@ -426,6 +426,13 @@ type
     class function Apply(AControl: TObject): Boolean; override;
   end;
 
+  TPressMVPTabSheetView = class(TPressMVPView)
+  protected
+    procedure InternalUpdate; override;
+  public
+    class function Apply(AControl: TObject): Boolean; override;
+  end;
+
   TPressMVPPictureView = class(TPressMVPAttributeView)
   private
     function GetControl: TImage;
@@ -1939,6 +1946,19 @@ begin
   Result := AControl is TCustomPanel;
 end;
 
+{ TPressMVPTabSheetView }
+
+class function TPressMVPTabSheetView.Apply(AControl: TObject): Boolean;
+begin
+  Result := AControl is TTabSheet;
+end;
+
+procedure TPressMVPTabSheetView.InternalUpdate;
+begin
+  inherited;
+  (Control as TTabSheet).TabVisible := AccessMode = amWritable;
+end;
+
 { TPressMVPPictureView }
 
 class function TPressMVPPictureView.Apply(AControl: TObject): Boolean;
@@ -2106,6 +2126,7 @@ initialization
   TPressMVPGridView.RegisterView;
   TPressMVPLabelView.RegisterView;
   TPressMVPPanelView.RegisterView;
+  TPressMVPTabSheetView.RegisterView;
   TPressMVPPictureView.RegisterView;
   TPressMVPFormView.RegisterView;
 
