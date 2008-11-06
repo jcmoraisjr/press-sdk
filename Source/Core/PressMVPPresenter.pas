@@ -864,26 +864,30 @@ var
   VModel: TPressMVPModel;
   VView: IPressMVPView;
 begin
-  VAttributeMetadata := AttributeMetadataByName(AAttributeName);
-  VComponent := FFormView.ComponentByName(AControlName);
-
-  if Assigned(AModelClass) then
-    VModel := AModelClass.Create(Model, VAttributeMetadata)
-  else
-    VModel := InternalCreateSubModel(VAttributeMetadata);
-  if VModel is TPressMVPStructureModel then
-    TPressMVPStructureModel(VModel).DisplayNames := ADisplayNames
-  else if ADisplayNames <> '' then
+  if AAttributeName <> '' then
   begin
-    VModel.Free;
-    raise EPressMVPError.CreateFmt(SUnsupportedDisplayNames, [
-     VAttributeMetadata.AttributeClass.ClassName,
-     VAttributeMetadata.Owner.ObjectClassName,
-     VAttributeMetadata.Name]);
-  end;
-  if Model.HasSubject then
-    VModel.Subject := AttributeByName(AAttributeName);
+    VAttributeMetadata := AttributeMetadataByName(AAttributeName);
 
+    if Assigned(AModelClass) then
+      VModel := AModelClass.Create(Model, VAttributeMetadata)
+    else
+      VModel := InternalCreateSubModel(VAttributeMetadata);
+    if VModel is TPressMVPStructureModel then
+      TPressMVPStructureModel(VModel).DisplayNames := ADisplayNames
+    else if ADisplayNames <> '' then
+    begin
+      VModel.Free;
+      raise EPressMVPError.CreateFmt(SUnsupportedDisplayNames, [
+       VAttributeMetadata.AttributeClass.ClassName,
+       VAttributeMetadata.Owner.ObjectClassName,
+       VAttributeMetadata.Name]);
+    end;
+    if Model.HasSubject then
+      VModel.Subject := AttributeByName(AAttributeName);
+  end else
+    VModel := TPressMVPNullModel.Create(Model, nil);
+
+  VComponent := FFormView.ComponentByName(AControlName);
   VView := PressDefaultMVPFactory.MVPViewFactory(VComponent, False);
 
   if Assigned(APresenterClass) then
