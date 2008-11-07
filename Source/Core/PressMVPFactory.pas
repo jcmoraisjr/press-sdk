@@ -199,10 +199,10 @@ begin
   for Result := 0 to Pred(Count) do
   begin
     VForm := Items[Result];
-    if (AFormPresenterType in VForm.FormPresenterTypes) and
+    if VForm.HasObjectClass and
+     (AFormPresenterType in VForm.FormPresenterTypes) and
      ((not AIncludeDescendants and (VForm.ObjectClass = AObjectClass)) or
-     (AIncludeDescendants and Assigned(VForm.ObjectClass) and
-     VForm.ObjectClass.InheritsFrom(AObjectClass))) then
+     (AIncludeDescendants and VForm.ObjectClass.InheritsFrom(AObjectClass))) then
       Exit;
   end;
   { TODO : Notify ambiguous presenter class }
@@ -224,7 +224,7 @@ function TPressMVPRegisteredFormList.IndexOfQueryItemObject(
 
   function Match(ARegForm: TPressMVPRegisteredForm): Boolean;
   begin
-    Result := Assigned(ARegForm.ObjectClass) and
+    Result := ARegForm.HasObjectClass and
      (AFormPresenterType in ARegForm.FormPresenterTypes) and
      (ARegForm.ObjectClass.InheritsFrom(TPressQuery)) and
      (TPressQueryClass(ARegForm.ObjectClass).ClassMetadata.ItemObjectClass =
