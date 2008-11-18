@@ -121,6 +121,7 @@ type
     function GetOldAttribute: TPressValue;
     function GetSignature: string; override;
     function InternalCreateMemento: TPressAttributeMemento; override;
+  public
     property OldAttribute: TPressValue read GetOldAttribute;
   end;
 
