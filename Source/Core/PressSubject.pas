@@ -1022,6 +1022,7 @@ type
     function InvalidValueError(AValue: Variant; E: EVariantError): EPressError;
     { TODO : Review the need of As<Type> methods }
     procedure BindCalcNotification(AInstance: TPressObject);
+    procedure ClearPersistenceData; virtual;
     function FindUnchangedMemento: TPressAttributeMemento;
     procedure Finit; override;
     function GetAsBoolean: Boolean; virtual;
@@ -1247,8 +1248,12 @@ begin
 end;
 
 procedure PressAssignPersistentUpdateCount(AObject: TPressObject);
+var
+  I: Integer;
 begin
   AObject.FPersUpdateCount := AObject.FUpdateCount;  // friend classes
+  for I := 0 to Pred(AObject.AttributeCount) do
+    AObject.Attributes[I].ClearPersistenceData;  // friend class
 end;
 
 procedure PressEvolveUpdateCount(AObject: TPressObject);
@@ -4753,6 +4758,12 @@ begin
     InternalReset;
     ValueUnassigned;
   end;
+end;
+
+procedure TPressAttribute.ClearPersistenceData;
+begin
+  { TODO : Numeric.RelativeChange implements this method.
+    Move all relative change stuff to the data packet object }
 end;
 
 function TPressAttribute.Clone: TPressAttribute;

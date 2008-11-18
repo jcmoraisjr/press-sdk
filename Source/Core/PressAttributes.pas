@@ -187,6 +187,7 @@ type
     function GetPubValue: Integer;
     procedure SetPubValue(AValue: Integer);
   protected
+    procedure ClearPersistenceData; override;
     function GetAsFloat: Double; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
@@ -222,6 +223,7 @@ type
     function GetPubValue: Double;
     procedure SetPubValue(AValue: Double);
   protected
+    procedure ClearPersistenceData; override;
     function GetAsFloat: Double; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
@@ -257,6 +259,7 @@ type
     function GetPubValue: Currency;
     procedure SetPubValue(AValue: Currency);
   protected
+    procedure ClearPersistenceData; override;
     function GetAsCurrency: Currency; override;
     function GetAsFloat: Double; override;
     function GetAsInteger: Integer; override;
@@ -1377,6 +1380,12 @@ begin
     Result := ClassName;
 end;
 
+procedure TPressInteger.ClearPersistenceData;
+begin
+  inherited;
+  FDiff := 0;
+end;
+
 procedure TPressInteger.Decrement(AValue: Integer);
 begin
   Increment(-AValue);
@@ -1544,6 +1553,12 @@ begin
     Result := ClassName;
 end;
 
+procedure TPressFloat.ClearPersistenceData;
+begin
+  inherited;
+  FDiff := 0;
+end;
+
 procedure TPressFloat.Decrement(AValue: Double);
 begin
   Increment(-AValue);
@@ -1709,6 +1724,12 @@ begin
     Result := 'Currency'
   else
     Result := ClassName;
+end;
+
+procedure TPressCurrency.ClearPersistenceData;
+begin
+  inherited;
+  FDiff := 0;
 end;
 
 procedure TPressCurrency.Decrement(AValue: Currency);
