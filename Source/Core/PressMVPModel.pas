@@ -315,11 +315,13 @@ type
 
   TPressMVPReferenceModel = class(TPressMVPStructureModel)
   private
+    FAttributeMetadata: TPressQueryAttributeMetadata;
     FMetadata: TPressQueryMetadata;
     FPathChangedNotifier: TPressNotifier;
     FQuery: TPressMVPReferenceQuery;
     FReferencedAttribute: string;
     procedure BindSubject;
+    function GetAttributeMetadata: TPressQueryAttributeMetadata;
     function GetMetadata: TPressQueryMetadata;
     function GetPathChangedNotifier: TPressNotifier;
     function GetQuery: TPressMVPReferenceQuery;
@@ -338,6 +340,7 @@ type
     procedure InternalUpdateQueryMetadata(const AQueryString: string); virtual;
     procedure Notify(AEvent: TPressEvent); override;
     procedure SubjectChanged(AOldSubject: TPressSubject); override;
+    property AttributeMetadata: TPressQueryAttributeMetadata read GetAttributeMetadata;
     property Metadata: TPressQueryMetadata read GetMetadata;
     property PathChangedNotifier: TPressNotifier read GetPathChangedNotifier;
   public
@@ -1251,6 +1254,15 @@ end;
 function TPressMVPReferenceModel.GetAsString: string;
 begin
   Result := InternalObjectAsString(Subject.Value, -1);
+end;
+
+function TPressMVPReferenceModel.GetAttributeMetadata: TPressQueryAttributeMetadata;
+const
+  CQueryAttributeName = 'Name';
+begin
+  if not Assigned(FAttributeMetadata) then
+    FAttributeMetadata := Metadata.MetadataByName(CQueryAttributeName) as TPressQueryAttributeMetadata;
+  Result := FAttributeMetadata;
 end;
 
 function TPressMVPReferenceModel.GetMetadata: TPressQueryMetadata;
