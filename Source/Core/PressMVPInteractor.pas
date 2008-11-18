@@ -930,12 +930,18 @@ var
   VText: string;
 begin
   VModel := Owner.Model;
+  { TODO : Most of Model.Count > ARow tests prevent index out of bounds
+    exception due to wrong order of grid's setindex and rowcount calls.
+    See TPressMVPSelectItemInteractor.Notify,
+    UpdateSelectedItem and FItemsView.Update calls (among others?) }
   if ACol = -1 then
   begin
     if (ARow = -1) or (VModel.Count = 0) then
       VText := ''
+    else if VModel.Count > ARow then
+      VText := IntToStr(VModel.ItemNumber(ARow))
     else
-      VText := IntToStr(VModel.ItemNumber(ARow));
+      VText := '';
     VAlignment := alRight;
   end else if ARow = -1 then
     with VModel.ColumnData[ACol] do
