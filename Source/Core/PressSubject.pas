@@ -915,6 +915,7 @@ type
     function SameReference(AObject: TPressObject): Boolean; overload;
     function SameReference(const ARefClass, ARefID: string): Boolean; overload;
     function SameReference(ARefClass: TPressObjectClass; const ARefID: string): Boolean; overload;
+    function SameReference(AProxy: TPressProxy): Boolean; overload;    
     property AfterChangeInstance: TPressProxyChangeInstanceEvent read FAfterChangeInstance write FAfterChangeInstance;
     property AfterChangeReference: TPressProxyChangeReferenceEvent read FAfterChangeReference write FAfterChangeReference;
     property BeforeChangeInstance: TPressProxyChangeInstanceEvent read FBeforeChangeInstance write FBeforeChangeInstance;
@@ -4453,6 +4454,16 @@ begin
       (Assigned(FRefClass) and FRefClass.InheritsFrom(ARefClass)))
   else
     Result := IsEmptyReference(ARefClass, ARefID);
+end;
+
+function TPressProxy.SameReference(AProxy: TPressProxy): Boolean;
+begin
+  if AProxy.HasInstance then
+    Result := SameReference(AProxy.Instance)
+  else if AProxy.HasReference then
+    Result := SameReference(AProxy.ObjectClassType, AProxy.ObjectId)
+  else
+    Result := IsEmpty;
 end;
 
 procedure TPressProxy.SetInstance(Value: TPressObject);
