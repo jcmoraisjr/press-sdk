@@ -1120,8 +1120,7 @@ begin
    (AObject is VModel.SubjectMetadata.ObjectClass) then
   begin
     Result := PressDefaultMVPFactory.Forms[APresenterIndex].
-     PresenterClass.Run(Owner.Parent, AObject, AIncluding);
-    Result.Model.AssignOwnerModel(VModel);
+     PresenterClass.Run(Owner.Parent, VModel, AObject, AIncluding);
   end else
   begin
     Result := nil;

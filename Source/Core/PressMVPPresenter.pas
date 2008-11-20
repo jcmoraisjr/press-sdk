@@ -242,7 +242,7 @@ type
     procedure Refresh;
     class procedure RegisterBO(AObjectClass: TPressObjectClass; AFormPresenterTypes: TPressMVPFormPresenterTypes = [fpNew, fpExisting]; AModelClass: TPressMVPObjectModelClass = nil);
     class function Run(AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
-    class function Run(AParent: TPressMVPFormPresenter; AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
+    class function Run(AParent: TPressMVPFormPresenter; AOwnerModel: TPressMVPStructureModel = nil; AObject: TPressObject = nil; AIncluding: Boolean = False; AAutoDestroy: Boolean = True): TPressMVPFormPresenter; overload;
     property AutoDestroy: Boolean read FAutoDestroy;
     property FormView: IPressMVPFormView read FFormView;
     property Model: TPressMVPObjectModel read GetModel;
@@ -984,11 +984,12 @@ class function TPressMVPFormPresenter.Run(
   AObject: TPressObject; AIncluding: Boolean;
   AAutoDestroy: Boolean): TPressMVPFormPresenter;
 begin
-  Result := Run(_PressMVPMainPresenter, AObject, AIncluding, AAutoDestroy);
+  Result := Run(_PressMVPMainPresenter, nil, AObject, AIncluding, AAutoDestroy);
 end;
 
 class function TPressMVPFormPresenter.Run(
-  AParent: TPressMVPFormPresenter; AObject: TPressObject; AIncluding: Boolean;
+  AParent: TPressMVPFormPresenter; AOwnerModel: TPressMVPStructureModel;
+  AObject: TPressObject; AIncluding: Boolean;
   AAutoDestroy: Boolean): TPressMVPFormPresenter;
 var
   VModelClass: TPressMVPObjectModelClass;
@@ -1038,6 +1039,8 @@ begin
   VModel.Subject := AObject;
   VModel.IsIncluding := AIncluding;
   VModel.User := PressUserData.User;
+  if Assigned(AOwnerModel) then
+    VModel.AssignOwnerModel(AOwnerModel);
   if VObjectIsMissing then
     AObject.Release
   else if VModel.Session.IsPersistent(AObject) then

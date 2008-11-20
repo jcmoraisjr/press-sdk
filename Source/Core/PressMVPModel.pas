@@ -522,7 +522,7 @@ type
     procedure RevertChanges;
     procedure Store;
     procedure UpdateData;
-    property HookedSubject: TPressStructure read FHookedSubject write SetHookedSubject;
+    property HookedSubject: TPressStructure read FHookedSubject;
     property IsChanged: Boolean read GetIsChanged;
     property IsIncluding: Boolean read FIsIncluding write FIsIncluding;
     property OwnerModel: TPressMVPItemsModel read FOwnerModel write SetOwnerModel;
@@ -2117,7 +2117,7 @@ var
   VOwnerSubject: TPressStructure;
 begin
   VOwnerSubject := AOwnerModel.Subject;
-  HookedSubject := VOwnerSubject;
+  SetHookedSubject(VOwnerSubject);
   StoreObject := AOwnerModel.PersistChange or
    (VOwnerSubject is TPressReference) or
    (VOwnerSubject is TPressReferences);
