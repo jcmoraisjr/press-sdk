@@ -1286,7 +1286,9 @@ var
   VMaxSize: Integer;
   VOwnerName: string;
 begin
-  if (FValue <> AValue) or (State <> asValue) then
+  if State = asNotLoaded then
+    Synchronize;
+  if (FValue <> AValue) or (State = asNull) then
   begin
     if Assigned(Metadata) then
       VMaxSize := Metadata.Size
@@ -1522,7 +1524,9 @@ end;
 
 procedure TPressInteger.SetValue(AValue: Integer);
 begin
-  if (AValue <> FValue) or (State <> asValue) then
+  if State = asNotLoaded then
+    Synchronize;
+  if (FValue <> AValue) or (State = asNull) then
   begin
     Changing;
     FValue := AValue;
@@ -1695,7 +1699,9 @@ end;
 
 procedure TPressFloat.SetValue(AValue: Double);
 begin
-  if (AValue <> FValue) or (State <> asValue) then
+  if State = asNotLoaded then
+    Synchronize;
+  if (FValue <> AValue) or (State = asNull) then
   begin
     Changing;
     FValue := AValue;
@@ -1888,7 +1894,9 @@ end;
 
 procedure TPressCurrency.SetValue(AValue: Currency);
 begin
-  if (AValue <> FValue) or (State <> asValue) then
+  if State = asNotLoaded then
+    Synchronize;
+  if (FValue <> AValue) or (State = asNull) then
   begin
     Changing;
     FValue := AValue;
@@ -2084,9 +2092,11 @@ end;
 
 procedure TPressEnum.SetValue(AValue: Integer);
 begin
+  if State = asNotLoaded then
+    Synchronize;
   if AValue = -1 then
     Clear
-  else if (AValue <> FValue) or (State <> asValue) then
+  else if (FValue <> AValue) or (State = asNull) then
   begin
     Changing;
     FValue := AValue;
@@ -2260,7 +2270,9 @@ end;
 
 procedure TPressBoolean.SetValue(AValue: Boolean);
 begin
-  if (AValue <> FValue) or (State <> asValue) then
+  if State = asNotLoaded then
+    Synchronize;
+  if (FValue <> AValue) or (State = asNull) then
   begin
     Changing;
     FValue := AValue;
@@ -2443,7 +2455,9 @@ end;
 
 procedure TPressDate.SetValue(AValue: TDate);
 begin
-  if (FValue <> AValue) or (State <> asValue) then
+  if State = asNotLoaded then
+    Synchronize;
+  if (FValue <> AValue) or (State = asNull) then
   begin
     Changing;
     if AValue = 0 then
@@ -2625,7 +2639,9 @@ end;
 
 procedure TPressTime.SetValue(AValue: TTime);
 begin
-  if (FValue <> AValue) or (State <> asValue) then
+  if State = asNotLoaded then
+    Synchronize;
+  if (FValue <> AValue) or (State = asNull) then
   begin
     Changing;
     FValue := Frac(AValue);
@@ -2812,7 +2828,9 @@ end;
 
 procedure TPressDateTime.SetValue(AValue: TDateTime);
 begin
-  if (FValue <> AValue) or (State <> asValue) then
+  if State = asNotLoaded then
+    Synchronize;
+  if (FValue <> AValue) or (State = asNull) then
   begin
     Changing;
     if AValue = 0 then
@@ -3046,7 +3064,9 @@ end;
 
 procedure TPressVariant.SetValue(AValue: Variant);
 begin
-  if (FValue <> AValue) or (State <> asValue) then
+  if State = asNotLoaded then
+    Synchronize;
+  if (FValue <> AValue) or (State = asNull) then
   begin
     Changing;
     if VarIsEmpty(AValue) or VarIsNull(AValue) then
@@ -3200,9 +3220,11 @@ end;
 
 procedure TPressBlob.SetValue(const AValue: string);
 begin
+  if State = asNotLoaded then
+    Synchronize;
   if AValue <> '' then
     WriteBuffer(AValue[1], Length(AValue))
-  else if State <> asValue then
+  else if State = asNull then
   begin
     Changing;
     ValueAssigned;
