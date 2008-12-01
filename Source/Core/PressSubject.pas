@@ -834,7 +834,8 @@ type
     property OrderByClause: string read GetOrderByClause;
     property WhereClause: string read GetWhereClause;
   public
-    function Add(AObject: TPressObject): Integer;
+    function Add: TPressObject; overload;
+    function Add(AObject: TPressObject): Integer; overload;
     function AddAttributeParam(AAttribute: TPressAttribute): string;
     function AddParam(AParamType: TPressAttributeBaseType; const AName: string = ''): TPressParam;
     function AddValueParam(AValue: Variant; AAttributeType: TPressAttributeBaseType): string;
@@ -845,6 +846,8 @@ type
     class function ClassMetadata: TPressQueryMetadata;
     function CreateIterator: TPressQueryIterator;
     procedure Delete(AIndex: Integer);
+    function Insert(AIndex: Integer): TPressObject; overload;
+    procedure Insert(AIndex: Integer; AObject: TPressObject); overload;
     class function ObjectMetadataClass: TPressObjectMetadataClass; override;
     function Remove(AObject: TPressObject): Integer;
     function RemoveReference(AProxy: TPressProxy): Integer;
@@ -3885,6 +3888,18 @@ end;
 
 { TPressQuery }
 
+function TPressQuery.Add: TPressObject;
+begin
+  Result := Metadata.ItemObjectClass.Create;
+  try
+    Add(Result);
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
+  Result.Release;
+end;
+
 function TPressQuery.Add(AObject: TPressObject): Integer;
 begin
   Result := TPressReferences(FQueryItems).Add(AObject);
@@ -4054,6 +4069,23 @@ begin
   inherited;
   FMatchEmptyAndNull := True;
   FStyle := Metadata.Style;
+end;
+
+function TPressQuery.Insert(AIndex: Integer): TPressObject;
+begin
+  Result := Metadata.ItemObjectClass.Create;
+  try
+    Insert(AIndex, Result);
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
+  Result.Release;
+end;
+
+procedure TPressQuery.Insert(AIndex: Integer; AObject: TPressObject);
+begin
+  TPressReferences(FQueryItems).Insert(AIndex, AObject);
 end;
 
 function TPressQuery.InternalAttributeAddress(
