@@ -379,7 +379,7 @@ type
     property CurrentItem: TPressObjectMetadata read GetCurrentItem;
   end;
 
-  TPressQueryStyle = (qsOQL, qsReference, qsCustom);
+  TPressQueryStyle = (qsOQL, qsReference, qsCustom, qsNone);
 
   TPressQueryMetadata = class(TPressObjectMetadata)
   private
@@ -807,11 +807,14 @@ type
     FMatchEmptyAndNull: Boolean;
     FParams: TPressParamList;
     FStyle: TPressQueryStyle;
+    FSubQueries: TObjectList;
     function GetMetadata: TPressQueryMetadata;
     function GetObjects(AIndex: Integer): TPressObject;
     function GetParams: TPressParamList;
+    function GetSubQueries(AIndex: Integer): TPressQuery;
     procedure SetStyle(AValue: TPressQueryStyle);
   protected
+    procedure AddSubQuery(AQuery: TPressQuery);
     procedure ConcatStatements(const AStatementStr, AConnectorToken: string; var ABuffer: string);
     procedure Finit; override;
     function GetFieldNamesClause: string; virtual;
@@ -820,6 +823,7 @@ type
     function GetOrderByClause: string; virtual;
     function GetWhereClause: string; virtual;
     procedure Init; override;
+    procedure InternalAssignLists(var AProxyLists: array of TPressProxyList); virtual; 
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     function InternalBuildFrom: string; virtual;
     function InternalBuildGroupBy: string; virtual;
@@ -828,6 +832,7 @@ type
     function InternalBuildSelect: string; virtual;
     function InternalBuildWhere: string; virtual;
     function InternalBuildStatement(AAttribute: TPressAttribute): string; virtual;
+    procedure SynchronizeQueryAttributes(AQuery: TPressQuery); virtual;
     property FieldNamesClause: string read GetFieldNamesClause;
     property FromClause: string read GetFromClause;
     property GroupByClause: string read GetGroupByClause;
@@ -839,7 +844,7 @@ type
     function AddAttributeParam(AAttribute: TPressAttribute): string;
     function AddParam(AParamType: TPressAttributeBaseType; const AName: string = ''): TPressParam;
     function AddValueParam(AValue: Variant; AAttributeType: TPressAttributeBaseType): string;
-    procedure AssignList(AProxyList: TPressProxyList);
+    procedure AssignLists(var AProxyLists: array of TPressProxyList);
     function BuildQuery: string;
     procedure Clear;
     function Count: Integer;
@@ -851,10 +856,12 @@ type
     class function ObjectMetadataClass: TPressObjectMetadataClass; override;
     function Remove(AObject: TPressObject): Integer;
     function RemoveReference(AProxy: TPressProxy): Integer;
+    function SubQueryCount: Integer;
     property MatchEmptyAndNull: Boolean read FMatchEmptyAndNull write FMatchEmptyAndNull;
     property Metadata: TPressQueryMetadata read GetMetadata;
     property Objects[AIndex: Integer]: TPressObject read GetObjects; default;
     property Params: TPressParamList read GetParams;
+    property SubQueries[AIndex: Integer]: TPressQuery read GetSubQueries;
     property Style: TPressQueryStyle read FStyle write SetStyle;
   end;
 
@@ -3949,6 +3956,13 @@ begin
   Params.Add(Result);
 end;
 
+procedure TPressQuery.AddSubQuery(AQuery: TPressQuery);
+begin
+  if not Assigned(FSubQueries) then
+    FSubQueries := TObjectList.Create(True);
+  FSubQueries.Add(AQuery);
+end;
+
 function TPressQuery.AddValueParam(
   AValue: Variant; AAttributeType: TPressAttributeBaseType): string;
 var
@@ -3959,14 +3973,17 @@ begin
   Result := VParam.Name;
 end;
 
-procedure TPressQuery.AssignList(AProxyList: TPressProxyList);
+procedure TPressQuery.AssignLists(var AProxyLists: array of TPressProxyList);
 begin
-  Params.Clear;
-  TPressReferences(FQueryItems).AssignProxyList(AProxyList);
+  if Length(AProxyLists) > 0 then
+    InternalAssignLists(AProxyLists)
+  else
+    TPressReferences(FQueryItems).Clear;
 end;
 
 function TPressQuery.BuildQuery: string;
 begin
+  Params.Clear;
   Result := InternalBuildQuery;
 end;
 
@@ -4008,6 +4025,7 @@ end;
 procedure TPressQuery.Finit;
 begin
   FParams.Free;
+  FSubQueries.Free;
   inherited;
 end;
 
@@ -4049,6 +4067,12 @@ begin
   Result := FParams;
 end;
 
+function TPressQuery.GetSubQueries(AIndex: Integer): TPressQuery;
+begin
+  Result := FSubQueries[AIndex] as TPressQuery;
+  SynchronizeQueryAttributes(Result);
+end;
+
 function TPressQuery.GetWhereClause: string;
 begin
   Result := '';
@@ -4088,6 +4112,13 @@ begin
   TPressReferences(FQueryItems).Insert(AIndex, AObject);
 end;
 
+procedure TPressQuery.InternalAssignLists(
+  var AProxyLists: array of TPressProxyList);
+begin
+  TPressReferences(FQueryItems).AssignProxyList(AProxyLists[0]);
+  AProxyLists[0] := nil;
+end;
+
 function TPressQuery.InternalAttributeAddress(
   const AAttributeName: string): PPressAttribute;
 begin
@@ -4123,8 +4154,11 @@ end;
 
 function TPressQuery.InternalBuildQuery: string;
 begin
-  Result := InternalBuildSelect + InternalBuildFrom + InternalBuildWhere +
-   InternalBuildGroupBy + InternalBuildOrderBy;
+  if Style <> qsNone then
+    Result := InternalBuildSelect + InternalBuildFrom + InternalBuildWhere +
+     InternalBuildGroupBy + InternalBuildOrderBy
+  else
+    Result := '';
 end;
 
 function TPressQuery.InternalBuildSelect: string;
@@ -4234,6 +4268,28 @@ begin
   begin
     FStyle := AValue;
     Clear;
+  end;
+end;
+
+function TPressQuery.SubQueryCount: Integer;
+begin
+  if Assigned(FSubQueries) then
+    Result := FSubQueries.Count
+  else
+    Result := 0;
+end;
+
+procedure TPressQuery.SynchronizeQueryAttributes(AQuery: TPressQuery);
+var
+  VAttr1, VAttr2: TPressAttribute;
+  I: Integer;
+begin
+  for I := 2 to Pred(AttributeCount) do  // skips Id and QueryItems
+  begin
+    VAttr1 := Attributes[I];
+    VAttr2 := AQuery.FindAttribute(VAttr1.Name);
+    if Assigned(VAttr2) then
+      VAttr2.Assign(VAttr1);
   end;
 end;
 

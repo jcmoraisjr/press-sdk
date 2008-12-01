@@ -598,18 +598,24 @@ var
   VQueryStr: string;
 begin
   VQueryStr := AQuery.BuildQuery;
+  Result := nil;
+  if VQueryStr <> '' then
+  begin
 {$ifdef PressLogDAOPersistence}
-  PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');
+    PressLogMsg(Self, 'Querying "' +  VQueryStr + '"');
 {$endif}
-  case AQuery.Style of
-    qsOQL:
-      Result := OQLQuery(VQueryStr, AQuery.Params);
-    qsReference:
-      Result := SQLProxy(VQueryStr, AQuery.Params);
-    else {qsCustom}
-      Result := SQLQuery(
-       AQuery.Metadata.ItemObjectClass, VQueryStr, AQuery.Params);
+    case AQuery.Style of
+      qsOQL:
+        Result := OQLQuery(VQueryStr, AQuery.Params);
+      qsReference:
+        Result := SQLProxy(VQueryStr, AQuery.Params);
+      qsCustom:
+        Result := SQLQuery(
+         AQuery.Metadata.ItemObjectClass, VQueryStr, AQuery.Params);
+    end;
   end;
+  if not Assigned(Result) then
+    Result := TPressProxyList.Create(Self, True, ptShared);
 end;
 
 procedure TPressSession.InternalRollback;
@@ -887,13 +893,26 @@ end;
 
 procedure TPressSession.UpdateQuery(AQuery: TPressQuery);
 var
-  VList: TPressProxyList;
+  VProxyLists: array of TPressProxyList;
+  I: Integer;
 begin
-  VList := RetrieveQuery(AQuery);
+  SetLength(VProxyLists, AQuery.SubQueryCount + 1);
+  for I := 0 to Pred(Length(VProxyLists)) do
+    VProxyLists[I] := nil;
+  StartTransaction;
   try
-    AQuery.AssignList(VList);
+    try
+      VProxyLists[0] := RetrieveQuery(AQuery);
+      for I := 0 to Pred(AQuery.SubQueryCount) do
+        VProxyLists[I + 1] := RetrieveQuery(AQuery.SubQueries[I]);
+      AQuery.AssignLists(VProxyLists);
+    finally
+      for I := 0 to Pred(Length(VProxyLists)) do
+        VProxyLists[I].Free;
+    end;
+    Commit;
   except
-    VList.Free;
+    Rollback;
     raise;
   end;
 end;
