@@ -1453,7 +1453,7 @@ end;
 
 procedure TPressInteger.Increment(AValue: Integer);
 begin
-  if AValue <> 0 then
+  if (AValue <> 0) and (State <> asNull) then
   begin
     Changing;
     FValue := FValue + AValue;
@@ -1628,7 +1628,7 @@ end;
 
 procedure TPressFloat.Increment(AValue: Double);
 begin
-  if AValue <> 0 then
+  if (AValue <> 0) and (State <> asNull) then
   begin
     Changing;
     FValue := FValue + AValue;
@@ -1818,7 +1818,7 @@ end;
 
 procedure TPressCurrency.Increment(AValue: Currency);
 begin
-  if AValue <> 0 then
+  if (AValue <> 0) and (State <> asNull) then
   begin
     Changing;
     FValue := FValue + AValue;
