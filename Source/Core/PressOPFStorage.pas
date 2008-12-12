@@ -716,6 +716,10 @@ var
   VFieldOptions: TPressOPFFieldOptions;
 begin
   VFieldOptions := [];
+  if AAttributeMetadata.NotNull then
+    VFieldOptions := VFieldOptions + [foNotNull];
+  if AAttributeMetadata.Index then
+    VFieldOptions := VFieldOptions + [foIndexed];
   VField := AddField(
    AAttributeMetadata.PersistentName, AAttributeMetadata.ShortName,
    AAttributeMetadata.AttributeClass.AttributeBaseType,

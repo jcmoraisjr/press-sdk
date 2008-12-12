@@ -139,10 +139,12 @@ type
     FEditMask: string;
     FEnumMetadata: TPressEnumMetadata;
     FGeneratorName: string;
+    FIndex: Boolean;
     FIsPersistent: Boolean;
     FLazyLoad: Boolean;
     FModel: TPressModel;
     FName: string;
+    FNotNull: Boolean;
     FObjectClass: TPressObjectClass;
     FObjectClassMetadata: TPressObjectMetadata;
     FOwner: TPressObjectMetadata;
@@ -207,8 +209,10 @@ type
     property DefaultValue: string read FDefaultValue write FDefaultValue;
     property EditMask: string read FEditMask write FEditMask;
     property GeneratorName: string read FGeneratorName write FGeneratorName;
+    property Index: Boolean read FIndex write FIndex;
     property IsPersistent: Boolean read FIsPersistent write FIsPersistent default True;
     property LazyLoad: Boolean read FLazyLoad write FLazyLoad stored StoreLazyLoad;
+    property NotNull: Boolean read FNotNull write FNotNull;
     property PersistentName: string read FPersistentName write FPersistentName stored StorePersistentName;
     property PersLinkChildName: string read GetPersLinkChildName write FPersLinkChildName stored StorePersLinkChildName;
     property PersLinkIdName: string read FPersLinkIdName write FPersLinkIdName stored StorePersLinkIdName;
