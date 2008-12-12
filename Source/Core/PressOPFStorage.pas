@@ -161,25 +161,53 @@ type
     property ShortName: string read FShortName;
   end;
 
-  TPressOPFStorageModel = class(TObject)
+  TPressOPFTableMetadatas = class(TObject)
   private
-    FClassIdList: TStrings;
     FClassIdMetadata: TPressObjectMetadata;
-    FClassNameList: TStrings;
     FGeneratorList: TStringList;
     FHasClassIdStorage: Boolean;
     FMapsList: TObjectList;
     FModel: TPressModel;
+    FTableList: TObjectList;
+    function GetClassIdMetadata: TPressObjectMetadata;
+    function GetItems(AIndex: Integer): TPressOPFTableMetadata;
+    function GetMaps(AClass: TPressObjectClass): TPressOPFStorageMapList;
+  protected
+    procedure AddAttributeItemMetadata(ATableMetadata: TPressOPFTableMetadata; AAttributeMetadata: TPressAttributeMetadata);
+    procedure AddAttributeItemsMetadata(ATableMetadata: TPressOPFTableMetadata; AAttributeMetadata: TPressAttributeMetadata);
+    procedure AddAttributeMetadata(AStorageMap: TPressOPFStorageMap; ATableMetadata: TPressOPFTableMetadata; AAttributeMetadata: TPressAttributeMetadata);
+    procedure AddAttributeOwnedPartsMetadata;
+    procedure AddAttributeValueMetadata(AStorageMap: TPressOPFStorageMap; ATableMetadata: TPressOPFTableMetadata; AAttributeMetadata: TPressAttributeMetadata);
+    function AddField(const AFieldName, AShortFieldName: string; ADataType: TPressAttributeBaseType; ASize: Integer; AFieldOptions: TPressOPFFieldOptions; AIndexOptions: TPressOPFIndexOptions; ATableMetadata: TPressOPFTableMetadata): TPressOPFFieldMetadata;
+    procedure AddForeignKey(ATableMetadata: TPressOPFTableMetadata; AFieldMetadata: TPressOPFFieldMetadata; AReferencedObject: TPressObjectMetadata);
+    procedure AddGeneratorName(const AName: string);
+    procedure AddIndex(ATableMetadata: TPressOPFTableMetadata; AFieldMetadata: TPressOPFFieldMetadata; AIndexOptions: TPressOPFIndexOptions; AIndexName: string = '');
+    procedure AddObjectMetadata(AStorageMap: TPressOPFStorageMap);
+    procedure AddTableMetadata(ATableMetadata: TPressOPFTableMetadata);
+    property HasClassIdStorage: Boolean read FHasClassIdStorage;
+  public
+    constructor Create(AModel: TPressModel);
+    destructor Destroy; override;
+    function Count: Integer;
+    property ClassIdMetadata: TPressObjectMetadata read GetClassIdMetadata;
+    property GeneratorList: TStringList read FGeneratorList;
+    property Items[AIndex: Integer]: TPressOPFTableMetadata read GetItems; default;
+    property Maps[AClass: TPressObjectClass]: TPressOPFStorageMapList read GetMaps;
+  end;
+
+  TPressOPFStorageModel = class(TObject)
+  private
+    FClassIdList: TStrings;
+    FClassNameList: TStrings;
+    FHasClassIdStorage: Boolean;
+    FModel: TPressModel;
     FNotifier: TPressNotifier;
     FSession: TPressSession;
-    FTableMetadatas: TObjectList;
-    procedure AddGeneratorName(const AName: string);
+    FTableMetadatas: TPressOPFTableMetadatas;
     procedure BuildClassLists;
-    function CreateTableMetadatas: TObjectList;
     function FindClass(var AClassList: TStrings; const AValue: string): Integer;
-    function GetClassIdMetadata: TPressObjectMetadata;
     function GetMaps(AClass: TPressObjectClass): TPressOPFStorageMapList;
-    function GetTableMetadatas(AIndex: Integer): TPressOPFTableMetadata;
+    function GetTableMetadatas: TPressOPFTableMetadatas;
     procedure Notify(AEvent: TPressEvent);
   public
     constructor Create(ASession: TPressSession; AModel: TPressModel);
@@ -188,14 +216,11 @@ type
     function ClassIdByName(const AClassName: string): string;
     function ClassNameById(const AClassId: string): string;
     procedure ResetClassList;
-    function TableMetadataCount: Integer;
-    property ClassIdMetadata: TPressObjectMetadata read GetClassIdMetadata;
-    property GeneratorList: TStringList read FGeneratorList;
     property HasClassIdStorage: Boolean read FHasClassIdStorage;
     property Maps[AClass: TPressObjectClass]: TPressOPFStorageMapList read GetMaps;
     property Model: TPressModel read FModel;
     property Session: TPressSession read FSession;
-    property TableMetadatas[AIndex: Integer]: TPressOPFTableMetadata read GetTableMetadatas;
+    property TableMetadatas: TPressOPFTableMetadatas read GetTableMetadatas;
   end;
 
 function PressStorageModel(ASession: TPressSession): TPressOPFStorageModel;
@@ -566,18 +591,326 @@ begin
   FPrimaryKey := AValue;
 end;
 
-{ TPressOPFStorageModel }
+{ TPressOPFTableMetadatas }
 
-procedure TPressOPFStorageModel.AddGeneratorName(const AName: string);
+procedure TPressOPFTableMetadatas.AddAttributeItemMetadata(
+  ATableMetadata: TPressOPFTableMetadata;
+  AAttributeMetadata: TPressAttributeMetadata);
+var
+  VField: TPressOPFFieldMetadata;
+  VObjectMetadata: TPressObjectMetadata;
 begin
-  if not Assigned(FGeneratorList) then
+  VField := ATableMetadata.AddField(
+   AAttributeMetadata.PersistentName, AAttributeMetadata.ShortName);
+  VObjectMetadata := AAttributeMetadata.ObjectClassMetadata;
+  VField.DataType :=
+   VObjectMetadata.IdMetadata.AttributeClass.AttributeBaseType;
+  VField.Size := VObjectMetadata.IdMetadata.Size;
+  VField.Options := [];
+  AddForeignKey(ATableMetadata, VField, VObjectMetadata);
+end;
+
+procedure TPressOPFTableMetadatas.AddAttributeItemsMetadata(
+  ATableMetadata: TPressOPFTableMetadata;
+  AAttributeMetadata: TPressAttributeMetadata);
+var
+  VTableMetadata: TPressOPFTableMetadata;
+  VField: TPressOPFFieldMetadata;
+  VObjectMetadata: TPressObjectMetadata;
+  VHasId: Boolean;
+begin
+  VTableMetadata := TPressOPFTableMetadata.Create(
+   AAttributeMetadata.PersLinkName, '');
+  AddTableMetadata(VTableMetadata);
+  VTableMetadata.PrimaryKey := TPressOPFIndexMetadata.Create(
+   SPressPrimaryKeyNamePrefix + VTableMetadata.Name);
+  VHasId := AAttributeMetadata.PersLinkIdName <> '';
+  if VHasId then
   begin
-    FGeneratorList := TStringList.Create;
-    FGeneratorList.Sorted := True;
+    VField :=
+     VTableMetadata.AddField(AAttributeMetadata.PersLinkIdName, '');
+    { TODO : Implement }
+    VField.DataType := FModel.DefaultKeyType.AttributeBaseType;
+    VField.Size := 32;
+    VField.Options := [foNotNull];
+    VTableMetadata.PrimaryKey.FieldNames.Text := VField.Name;
   end;
+
+  VField :=
+   VTableMetadata.AddField(AAttributeMetadata.PersLinkParentName, '');
+  VObjectMetadata := AAttributeMetadata.Owner;
+  VField.DataType :=
+   VObjectMetadata.IdMetadata.AttributeClass.AttributeBaseType;
+  VField.Size := VObjectMetadata.IdMetadata.Size;
+  VField.Options := [foNotNull];
+  AddForeignKey(VTableMetadata, VField, VObjectMetadata);
+  if not VHasId then
+    VTableMetadata.PrimaryKey.FieldNames.Text := VField.Name;
+
+  VField :=
+   VTableMetadata.AddField(AAttributeMetadata.PersLinkChildName, '');
+  VObjectMetadata := AAttributeMetadata.ObjectClassMetadata;
+  VField.DataType :=
+   VObjectMetadata.IdMetadata.AttributeClass.AttributeBaseType;
+  VField.Size := VObjectMetadata.IdMetadata.Size;
+  VField.Options := [foNotNull];
+  AddForeignKey(VTableMetadata, VField, VObjectMetadata);
+  if not VHasId then
+    VTableMetadata.PrimaryKey.FieldNames.Add(VField.Name);
+
+  if AAttributeMetadata.PersLinkPosName <> '' then
+  begin
+    VField :=
+     VTableMetadata.AddField(AAttributeMetadata.PersLinkPosName, '');
+    VField.DataType := attInteger;
+    VField.Options := [foNotNull];
+  end;
+end;
+
+procedure TPressOPFTableMetadatas.AddAttributeMetadata(
+  AStorageMap: TPressOPFStorageMap;
+  ATableMetadata: TPressOPFTableMetadata;
+  AAttributeMetadata: TPressAttributeMetadata);
+var
+  VTargetOwner: TPressObjectMetadata;
+begin
+  if AAttributeMetadata.GeneratorName <> '' then
+    AddGeneratorName(AAttributeMetadata.GeneratorName);
+  if AAttributeMetadata.AttributeClass.InheritsFrom(TPressValue) then
+    AddAttributeValueMetadata(AStorageMap, ATableMetadata, AAttributeMetadata)
+  else if AAttributeMetadata.AttributeClass.InheritsFrom(TPressStructure) then
+  begin
+    if not AAttributeMetadata.ObjectClassMetadata.IsPersistent then
+      raise EPressOPFError.CreateFmt(STargetClassIsNotPersistent, [
+       AAttributeMetadata.Owner.ObjectClassName,
+       AAttributeMetadata.Name,
+       AAttributeMetadata.ObjectClass.ClassName]);
+    VTargetOwner := AAttributeMetadata.ObjectClassMetadata.OwnerMetadata;
+    if Assigned(VTargetOwner) and
+     (VTargetOwner <> AAttributeMetadata.Owner) then
+      raise EPressOPFError.CreateFmt(SAttributeReferencesOwnedClass, [
+       AAttributeMetadata.Owner.ObjectClassName,
+       AAttributeMetadata.Name,
+       AAttributeMetadata.ObjectClass.ClassName,
+       VTargetOwner.ObjectClassName]);
+    if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItem) then
+      AddAttributeItemMetadata(ATableMetadata, AAttributeMetadata)
+    else if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItems) then
+      if AAttributeMetadata.IsEmbeddedLink then
+        AddAttributeOwnedPartsMetadata
+      else
+        AddAttributeItemsMetadata(ATableMetadata, AAttributeMetadata);
+  end;
+end;
+
+procedure TPressOPFTableMetadatas.AddAttributeOwnedPartsMetadata;
+begin
+end;
+
+procedure TPressOPFTableMetadatas.AddAttributeValueMetadata(
+  AStorageMap: TPressOPFStorageMap;
+  ATableMetadata: TPressOPFTableMetadata;
+  AAttributeMetadata: TPressAttributeMetadata);
+var
+  VField: TPressOPFFieldMetadata;
+  VFieldOptions: TPressOPFFieldOptions;
+begin
+  VFieldOptions := [];
+  VField := AddField(
+   AAttributeMetadata.PersistentName, AAttributeMetadata.ShortName,
+   AAttributeMetadata.AttributeClass.AttributeBaseType,
+   AAttributeMetadata.Size, VFieldOptions, [], ATableMetadata);
+  if AStorageMap.Metadata.IdMetadata = AAttributeMetadata then
+  begin
+    ATableMetadata.PrimaryKey := TPressOPFIndexMetadata.Create(
+     SPressPrimaryKeyNamePrefix + ATableMetadata.Name);
+    ATableMetadata.PrimaryKey.FieldNames.Text := VField.Name;
+    VField.Options := [foNotNull];
+  end;
+end;
+
+function TPressOPFTableMetadatas.AddField(
+  const AFieldName, AShortFieldName: string;
+  ADataType: TPressAttributeBaseType; ASize: Integer;
+  AFieldOptions: TPressOPFFieldOptions;
+  AIndexOptions: TPressOPFIndexOptions;
+  ATableMetadata: TPressOPFTableMetadata): TPressOPFFieldMetadata;
+var
+  VField: TPressOPFFieldMetadata;
+begin
+  VField := ATableMetadata.AddField(AFieldName, AShortFieldName);
+  VField.DataType := ADataType;
+  VField.Size := ASize;
+  VField.Options := AFieldOptions;
+  if foIndexed in AFieldOptions then
+    AddIndex(ATableMetadata, VField, AIndexOptions);
+  Result := VField;
+end;
+
+procedure TPressOPFTableMetadatas.AddForeignKey(
+  ATableMetadata: TPressOPFTableMetadata;
+  AFieldMetadata: TPressOPFFieldMetadata;
+  AReferencedObject: TPressObjectMetadata);
+var
+  VForeignKey: TPressOPFForeignKeyMetadata;
+begin
+  VForeignKey := ATableMetadata.AddForeignKey(SPressForeignKeyNamePrefix +
+   ATableMetadata.ShortName + SPressIdentifierSeparator + AFieldMetadata.ShortName);
+  VForeignKey.KeyFieldNames.Text := AFieldMetadata.Name;
+  VForeignKey.ReferencedFieldNames.Text :=
+   AReferencedObject.IdMetadata.PersistentName;
+  VForeignKey.ReferencedTableName := AReferencedObject.PersistentName;
+  VForeignKey.OnUpdateAction := raCascade;
+  VForeignKey.OnDeleteAction := raNoAction;
+end;
+
+procedure TPressOPFTableMetadatas.AddGeneratorName(const AName: string);
+begin
   if FGeneratorList.IndexOf(AName) = -1 then
     FGeneratorList.Add(AName);
 end;
+
+procedure TPressOPFTableMetadatas.AddIndex(
+  ATableMetadata: TPressOPFTableMetadata;
+  AFieldMetadata: TPressOPFFieldMetadata;
+  AIndexOptions: TPressOPFIndexOptions; AIndexName: string = '');
+var
+  VIndex: TPressOPFIndexMetadata;
+begin
+  if AIndexName = '' then
+    AIndexName := SPressIndexNamePrefix + ATableMetadata.ShortName +
+     SPressIdentifierSeparator + AFieldMetadata.ShortName;
+  VIndex := ATableMetadata.AddIndex(AIndexName);
+  VIndex.FieldNames.Text := AFieldMetadata.Name;
+  VIndex.Options := AIndexOptions;
+end;
+
+procedure TPressOPFTableMetadatas.AddObjectMetadata(
+  AStorageMap: TPressOPFStorageMap);
+var
+  VTableMetadata: TPressOPFTableMetadata;
+  VFieldMetadata: TPressOPFFieldMetadata;
+  VMetadata: TPressObjectMetadata;
+  VIdMetadata: TPressAttributeMetadata;
+  I: Integer;
+begin
+  VMetadata := AStorageMap.Metadata;
+  VTableMetadata := TPressOPFTableMetadata.Create(
+   VMetadata.PersistentName, VMetadata.ShortName);
+  AddTableMetadata(VTableMetadata);
+  AddAttributeMetadata(AStorageMap, VTableMetadata, VMetadata.IdMetadata);
+
+  if VMetadata.ClassIdName <> '' then
+  begin
+    VFieldMetadata := AddField(VMetadata.ClassIdName, '',
+     ClassIdMetadata.IdMetadata.AttributeClass.AttributeBaseType,
+     ClassIdMetadata.IdMetadata.Size,
+     [foNotNull], [], VTableMetadata);
+    if HasClassIdStorage then
+      AddForeignKey(VTableMetadata, VFieldMetadata, ClassIdMetadata);
+  end;
+
+  if VMetadata.UpdateCountName <> '' then
+    AddField(VMetadata.UpdateCountName, '',
+     attInteger, 0, [foNotNull], [], VTableMetadata);
+
+  if Assigned(VMetadata.OwnerPartsMetadata) then
+  begin
+    if VMetadata.OwnerPartsMetadata.PersLinkParentName <> '' then
+    begin
+      VIdMetadata := VMetadata.OwnerMetadata.IdMetadata;
+      VFieldMetadata := AddField(
+       VMetadata.OwnerPartsMetadata.PersLinkParentName, '',
+       VIdMetadata.AttributeClass.AttributeBaseType, VIdMetadata.Size,
+       [foNotNull], [], VTableMetadata);
+      AddForeignKey(
+       VTableMetadata, VFieldMetadata, VMetadata.OwnerMetadata);
+    end;
+    if VMetadata.OwnerPartsMetadata.PersLinkPosName <> '' then
+      AddField(VMetadata.OwnerPartsMetadata.PersLinkPosName, '',
+       attInteger, 0, [foNotNull], [], VTableMetadata);
+  end;
+
+  for I := 1 to Pred(AStorageMap.Count) do  // skips ID
+    AddAttributeMetadata(AStorageMap, VTableMetadata, AStorageMap[I]);
+end;
+
+procedure TPressOPFTableMetadatas.AddTableMetadata(
+  ATableMetadata: TPressOPFTableMetadata);
+begin
+  FTableList.Add(ATableMetadata);
+end;
+
+function TableMetadataListCompare(Item1, Item2: Pointer): Integer;
+begin
+  Result := AnsiCompareStr(
+   TPressOPFTableMetadata(Item1).Name, TPressOPFTableMetadata(Item2).Name);
+end;
+
+function TPressOPFTableMetadatas.Count: Integer;
+begin
+  Result := FTableList.Count;
+end;
+
+constructor TPressOPFTableMetadatas.Create(AModel: TPressModel);
+begin
+  inherited Create;
+  FModel := AModel;
+  FHasClassIdStorage := TPressInstanceClass.ClassMetadata.IsPersistent;
+  FGeneratorList := TStringList.Create;
+  FGeneratorList.Sorted := True;
+  FTableList := TObjectList.Create(True);
+  with FModel.CreateMetadataIterator do
+  try
+    BeforeFirstItem;
+    while NextItem do
+      if CurrentItem.IsPersistent then
+        AddObjectMetadata(Maps[CurrentItem.ObjectClass].Last);
+  finally
+    Free;
+  end;
+  FTableList.Sort({$IFDEF FPC}@{$ENDIF}TableMetadataListCompare);
+end;
+
+destructor TPressOPFTableMetadatas.Destroy;
+begin
+  FGeneratorList.Free;
+  FMapsList.Free;
+  FTableList.Free;
+  inherited;
+end;
+
+function TPressOPFTableMetadatas.GetClassIdMetadata: TPressObjectMetadata;
+begin
+  if not Assigned(FClassIdMetadata) then
+    FClassIdMetadata := TPressInstanceClass.ClassMetadata;
+  Result := FClassIdMetadata;
+end;
+
+function TPressOPFTableMetadatas.GetItems(
+  AIndex: Integer): TPressOPFTableMetadata;
+begin
+  Result := FTableList[AIndex] as TPressOPFTableMetadata;
+end;
+
+function TPressOPFTableMetadatas.GetMaps(
+  AClass: TPressObjectClass): TPressOPFStorageMapList;
+var
+  I: Integer;
+begin
+  if not Assigned(FMapsList) then
+    FMapsList := TObjectList.Create(True);
+  for I := 0 to Pred(FMapsList.Count) do
+  begin
+    Result := FMapsList[I] as TPressOPFStorageMapList;
+    if Result.ObjectClass = AClass then
+      Exit;
+  end;
+  Result := TPressOPFStorageMapList.Create(AClass);
+  FMapsList.Add(Result);
+end;
+
+{ TPressOPFStorageModel }
 
 procedure TPressOPFStorageModel.BuildClassLists;
 var
@@ -666,269 +999,11 @@ begin
   FHasClassIdStorage := TPressInstanceClass.ClassMetadata.IsPersistent;
 end;
 
-function TableMetadataListCompare(Item1, Item2: Pointer): Integer;
-begin
-  Result := AnsiCompareStr(
-   TPressOPFTableMetadata(Item1).Name, TPressOPFTableMetadata(Item2).Name);
-end;
-
-function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;
-
-  procedure AddObjectMetadata(
-    AStorageMap: TPressOPFStorageMap; ATableMetadatas: TObjectList);
-
-    procedure AddIndex(ATableMetadata: TPressOPFTableMetadata;
-      AFieldMetadata: TPressOPFFieldMetadata;
-      AIndexOptions: TPressOPFIndexOptions; AIndexName: string = '');
-    var
-      VIndex: TPressOPFIndexMetadata;
-    begin
-      if AIndexName = '' then
-        AIndexName := SPressIndexNamePrefix + ATableMetadata.ShortName +
-         SPressIdentifierSeparator + AFieldMetadata.ShortName;
-      VIndex := ATableMetadata.AddIndex(AIndexName);
-      VIndex.FieldNames.Text := AFieldMetadata.Name;
-      VIndex.Options := AIndexOptions;
-    end;
-
-    procedure AddForeignKey(ATable: TPressOPFTableMetadata;
-      AField: TPressOPFFieldMetadata; AReferencedObject: TPressObjectMetadata);
-    var
-      VForeignKey: TPressOPFForeignKeyMetadata;
-    begin
-      VForeignKey := ATable.AddForeignKey(SPressForeignKeyNamePrefix +
-       ATable.ShortName + SPressIdentifierSeparator + AField.ShortName);
-      VForeignKey.KeyFieldNames.Text := AField.Name;
-      VForeignKey.ReferencedFieldNames.Text :=
-       AReferencedObject.IdMetadata.PersistentName;
-      VForeignKey.ReferencedTableName := AReferencedObject.PersistentName;
-      VForeignKey.OnUpdateAction := raCascade;
-      VForeignKey.OnDeleteAction := raNoAction;
-    end;
-
-    procedure AddAttributeMetadata(AAttributeMetadata: TPressAttributeMetadata;
-      ATableMetadata: TPressOPFTableMetadata);
-
-      procedure AddFieldMetadata;
-      var
-        VField: TPressOPFFieldMetadata;
-      begin
-        VField := ATableMetadata.AddField(
-         AAttributeMetadata.PersistentName, AAttributeMetadata.ShortName);
-        VField.DataType := AAttributeMetadata.AttributeClass.AttributeBaseType;
-        VField.Size := AAttributeMetadata.Size;
-        VField.Options := [];
-        if AStorageMap.Metadata.IdMetadata = AAttributeMetadata then
-        begin
-          ATableMetadata.PrimaryKey := TPressOPFIndexMetadata.Create(
-           SPressPrimaryKeyNamePrefix + ATableMetadata.Name);
-          ATableMetadata.PrimaryKey.FieldNames.Text := VField.Name;
-          VField.Options := [foNotNull];
-        end;
-      end;
-
-      procedure AddItemMetadata;
-      var
-        VField: TPressOPFFieldMetadata;
-        VObjectMetadata: TPressObjectMetadata;
-      begin
-        VField := ATableMetadata.AddField(
-         AAttributeMetadata.PersistentName, AAttributeMetadata.ShortName);
-        VObjectMetadata := AAttributeMetadata.ObjectClassMetadata;
-        VField.DataType :=
-         VObjectMetadata.IdMetadata.AttributeClass.AttributeBaseType;
-        VField.Size := VObjectMetadata.IdMetadata.Size;
-        VField.Options := [];
-        AddForeignKey(ATableMetadata, VField, VObjectMetadata);
-      end;
-
-      procedure AddOwnedPartsMetadata;
-      begin
-      end;
-
-      procedure AddItemsMetadata;
-      var
-        VTableMetadata: TPressOPFTableMetadata;
-        VField: TPressOPFFieldMetadata;
-        VObjectMetadata: TPressObjectMetadata;
-        VHasId: Boolean;
-      begin
-        VTableMetadata := TPressOPFTableMetadata.Create(
-         AAttributeMetadata.PersLinkName, '');
-        ATableMetadatas.Add(VTableMetadata);
-        VTableMetadata.PrimaryKey := TPressOPFIndexMetadata.Create(
-         SPressPrimaryKeyNamePrefix + VTableMetadata.Name);
-        VHasId := AAttributeMetadata.PersLinkIdName <> '';
-        if VHasId then
-        begin
-          VField :=
-           VTableMetadata.AddField(AAttributeMetadata.PersLinkIdName, '');
-          { TODO : Implement }
-          VField.DataType := Model.DefaultKeyType.AttributeBaseType;
-          VField.Size := 32;
-          VField.Options := [foNotNull];
-          VTableMetadata.PrimaryKey.FieldNames.Text := VField.Name;
-        end;
-
-        VField :=
-         VTableMetadata.AddField(AAttributeMetadata.PersLinkParentName, '');
-        VObjectMetadata := AAttributeMetadata.Owner;
-        VField.DataType :=
-         VObjectMetadata.IdMetadata.AttributeClass.AttributeBaseType;
-        VField.Size := VObjectMetadata.IdMetadata.Size;
-        VField.Options := [foNotNull];
-        AddForeignKey(VTableMetadata, VField, VObjectMetadata);
-        if not VHasId then
-          VTableMetadata.PrimaryKey.FieldNames.Text := VField.Name;
-
-        VField :=
-         VTableMetadata.AddField(AAttributeMetadata.PersLinkChildName, '');
-        VObjectMetadata := AAttributeMetadata.ObjectClassMetadata;
-        VField.DataType :=
-         VObjectMetadata.IdMetadata.AttributeClass.AttributeBaseType;
-        VField.Size := VObjectMetadata.IdMetadata.Size;
-        VField.Options := [foNotNull];
-        AddForeignKey(VTableMetadata, VField, VObjectMetadata);
-        if not VHasId then
-          VTableMetadata.PrimaryKey.FieldNames.Add(VField.Name);
-
-        if AAttributeMetadata.PersLinkPosName <> '' then
-        begin
-          VField :=
-           VTableMetadata.AddField(AAttributeMetadata.PersLinkPosName, '');
-          VField.DataType := attInteger;
-          VField.Options := [foNotNull];
-        end;
-      end;
-
-    {procedure AddAttributeMetadata(AAttributeMetadata: TPressAttributeMetadata;
-      ATableMetadata: TPressOPFTableMetadata);}
-    var
-      VTargetOwner: TPressObjectMetadata;
-    begin
-      if AAttributeMetadata.GeneratorName <> '' then
-        AddGeneratorName(AAttributeMetadata.GeneratorName);
-      if AAttributeMetadata.AttributeClass.InheritsFrom(TPressValue) then
-        AddFieldMetadata
-      else if AAttributeMetadata.AttributeClass.InheritsFrom(TPressStructure) then
-      begin
-        if not AAttributeMetadata.ObjectClassMetadata.IsPersistent then
-          raise EPressOPFError.CreateFmt(STargetClassIsNotPersistent, [
-           AAttributeMetadata.Owner.ObjectClassName,
-           AAttributeMetadata.Name,
-           AAttributeMetadata.ObjectClass.ClassName]);
-        VTargetOwner := AAttributeMetadata.ObjectClassMetadata.OwnerMetadata;
-        if Assigned(VTargetOwner) and
-         (VTargetOwner <> AAttributeMetadata.Owner) then
-          raise EPressOPFError.CreateFmt(SAttributeReferencesOwnedClass, [
-           AAttributeMetadata.Owner.ObjectClassName,
-           AAttributeMetadata.Name,
-           AAttributeMetadata.ObjectClass.ClassName,
-           VTargetOwner.ObjectClassName]);
-        if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItem) then
-          AddItemMetadata
-        else if AAttributeMetadata.AttributeClass.InheritsFrom(TPressItems) then
-          if AAttributeMetadata.IsEmbeddedLink then
-            AddOwnedPartsMetadata
-          else
-            AddItemsMetadata;
-      end;
-    end;
-
-    function AddFieldMetadata(const AFieldName, AShortFieldName: string;
-      ADataType: TPressAttributeBaseType; ASize: Integer;
-      AFieldOptions: TPressOPFFieldOptions;
-      AIndexOptions: TPressOPFIndexOptions;
-      ATableMetadata: TPressOPFTableMetadata): TPressOPFFieldMetadata;
-    var
-      VField: TPressOPFFieldMetadata;
-    begin
-      VField := ATableMetadata.AddField(AFieldName, AShortFieldName);
-      VField.DataType := ADataType;
-      VField.Size := ASize;
-      VField.Options := AFieldOptions;
-      if foIndexed in AFieldOptions then
-        AddIndex(ATableMetadata, VField, AIndexOptions);
-      Result := VField;
-    end;
-
-  {procedure AddObjectMetadata(
-    AStorageMap: TPressOPFStorageMap; ATableMetadatas: TObjectList);}
-  var
-    VTableMetadata: TPressOPFTableMetadata;
-    VFieldMetadata: TPressOPFFieldMetadata;
-    VMetadata: TPressObjectMetadata;
-    VIdMetadata: TPressAttributeMetadata;
-    I: Integer;
-  begin
-    VMetadata := AStorageMap.Metadata;
-    VTableMetadata := TPressOPFTableMetadata.Create(
-     VMetadata.PersistentName, VMetadata.ShortName);
-    ATableMetadatas.Add(VTableMetadata);
-    AddAttributeMetadata(VMetadata.IdMetadata, VTableMetadata);
-
-    if VMetadata.ClassIdName <> '' then
-    begin
-      VFieldMetadata := AddFieldMetadata(VMetadata.ClassIdName, '',
-       ClassIdMetadata.IdMetadata.AttributeClass.AttributeBaseType,
-       ClassIdMetadata.IdMetadata.Size,
-       [foNotNull], [], VTableMetadata);
-      if HasClassIdStorage then
-        AddForeignKey(VTableMetadata, VFieldMetadata, ClassIdMetadata);
-    end;
-
-    if VMetadata.UpdateCountName <> '' then
-      AddFieldMetadata(VMetadata.UpdateCountName, '',
-       attInteger, 0, [foNotNull], [], VTableMetadata);
-
-    if Assigned(VMetadata.OwnerPartsMetadata) then
-    begin
-      if VMetadata.OwnerPartsMetadata.PersLinkParentName <> '' then
-      begin
-        VIdMetadata := VMetadata.OwnerMetadata.IdMetadata;
-        VFieldMetadata := AddFieldMetadata(
-         VMetadata.OwnerPartsMetadata.PersLinkParentName, '',
-         VIdMetadata.AttributeClass.AttributeBaseType, VIdMetadata.Size,
-         [foNotNull], [], VTableMetadata);
-        AddForeignKey(
-         VTableMetadata, VFieldMetadata, VMetadata.OwnerMetadata);
-      end;
-      if VMetadata.OwnerPartsMetadata.PersLinkPosName <> '' then
-        AddFieldMetadata(VMetadata.OwnerPartsMetadata.PersLinkPosName, '',
-         attInteger, 0, [foNotNull], [], VTableMetadata);
-    end;
-
-    for I := 1 to Pred(AStorageMap.Count) do  // skips ID
-      AddAttributeMetadata(AStorageMap[I], VTableMetadata);
-  end;
-
-{function TPressOPFStorageModel.CreateTableMetadatas: TObjectList;}
-begin
-  Result := TObjectList.Create(True);
-  try
-    with Model.CreateMetadataIterator do
-    try
-      BeforeFirstItem;
-      while NextItem do
-        if CurrentItem.IsPersistent then
-          AddObjectMetadata(Maps[CurrentItem.ObjectClass].Last, Result);
-    finally
-      Free;
-    end;
-    Result.Sort({$IFDEF FPC}@{$ENDIF}TableMetadataListCompare);
-  except
-    Result.Free;
-    raise;
-  end;
-end;
-
 destructor TPressOPFStorageModel.Destroy;
 begin
   FNotifier.Free;
   FClassIdList.Free;
   FClassNameList.Free;
-  FGeneratorList.Free;
-  FMapsList.Free;
   FTableMetadatas.Free;
   inherited;
 end;
@@ -947,36 +1022,17 @@ begin
   end;
 end;
 
-function TPressOPFStorageModel.GetClassIdMetadata: TPressObjectMetadata;
-begin
-  if not Assigned(FClassIdMetadata) then
-    FClassIdMetadata := TPressInstanceClass.ClassMetadata;
-  Result := FClassIdMetadata;
-end;
-
 function TPressOPFStorageModel.GetMaps(
   AClass: TPressObjectClass): TPressOPFStorageMapList;
-var
-  I: Integer;
 begin
-  if not Assigned(FMapsList) then
-    FMapsList := TObjectList.Create(True);
-  for I := 0 to Pred(FMapsList.Count) do
-  begin
-    Result := FMapsList[I] as TPressOPFStorageMapList;
-    if Result.ObjectClass = AClass then
-      Exit;
-  end;
-  Result := TPressOPFStorageMapList.Create(AClass);
-  FMapsList.Add(Result);
+  Result := TableMetadatas.Maps[AClass];
 end;
 
-function TPressOPFStorageModel.GetTableMetadatas(
-  AIndex: Integer): TPressOPFTableMetadata;
+function TPressOPFStorageModel.GetTableMetadatas: TPressOPFTableMetadatas;
 begin
   if not Assigned(FTableMetadatas) then
-    FTableMetadatas := CreateTableMetadatas;
-  Result := FTableMetadatas[AIndex] as TPressOPFTableMetadata
+    FTableMetadatas := TPressOPFTableMetadatas.Create(Model);
+  Result := FTableMetadatas;
 end;
 
 procedure TPressOPFStorageModel.Notify(AEvent: TPressEvent);
@@ -985,7 +1041,6 @@ begin
   begin
     FreeAndNil(FClassIdList);
     FreeAndNil(FClassNameList);
-    FreeAndNil(FMapsList);
     FreeAndNil(FTableMetadatas);
   end;
 end;
@@ -994,13 +1049,6 @@ procedure TPressOPFStorageModel.ResetClassList;
 begin
   FreeAndNil(FClassIdList);
   FreeAndNil(FClassNameList);
-end;
-
-function TPressOPFStorageModel.TableMetadataCount: Integer;
-begin
-  if not Assigned(FTableMetadatas) then
-    FTableMetadatas := CreateTableMetadatas;
-  Result := FTableMetadatas.Count;
 end;
 
 initialization

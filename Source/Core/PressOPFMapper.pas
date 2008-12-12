@@ -596,7 +596,7 @@ begin
   if Map.Metadata.ClassIdName <> '' then
     AddIdParam(ADataset, Map.Metadata.ClassIdName,
      ObjectMapper.StorageModel.ClassIdByName(AObject.ClassName),
-     ObjectMapper.StorageModel.ClassIdMetadata.IdType);
+     ObjectMapper.StorageModel.TableMetadatas.ClassIdMetadata.IdType);
 end;
 
 procedure TPressOPFAttributeMapper.AddIdArrayParam(

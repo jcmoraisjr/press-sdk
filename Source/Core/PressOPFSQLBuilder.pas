@@ -174,14 +174,14 @@ begin
   Result := '/*' + SPressLineBreak +
    'The following statement(s) can be used' + SPressLineBreak +
    'to drop all tables from the database' + SPressLineBreak + SPressLineBreak;
-  for I := 0 to Pred(AModel.TableMetadataCount) do
+  for I := 0 to Pred(AModel.TableMetadatas.Count) do
   begin
     VTable := AModel.TableMetadatas[I];
     for J := 0 to Pred(VTable.ForeignKeyCount) do
       Result := Result + '  ' +
        DropConstraintStatement(VTable, VTable.ForeignKeys[J]);
   end;
-  for I := 0 to Pred(AModel.TableMetadataCount) do
+  for I := 0 to Pred(AModel.TableMetadatas.Count) do
     Result := Result + '  ' +
      DropTableStatement(AModel.TableMetadatas[I]);
   Result := Result + '*/' + SPressLineBreak + SPressLineBreak;
@@ -194,12 +194,11 @@ var
   I, J: Integer;
 begin
   Result := '';
-  if Assigned(AModel.GeneratorList) then
-    for I := 0 to Pred(AModel.GeneratorList.Count) do
-      Result := Result +
-       CreateGeneratorStatement(AModel.GeneratorList[I]) + ';' +
-       SPressLineBreak + SPressLineBreak;
-  for I := 0 to Pred(AModel.TableMetadataCount) do
+  for I := 0 to Pred(AModel.TableMetadatas.GeneratorList.Count) do
+    Result := Result +
+     CreateGeneratorStatement(AModel.TableMetadatas.GeneratorList[I]) + ';' +
+     SPressLineBreak + SPressLineBreak;
+  for I := 0 to Pred(AModel.TableMetadatas.Count) do
   begin
     VTable := AModel.TableMetadatas[I];
     Result := Result +
@@ -212,7 +211,7 @@ begin
         Result := Result +
          CreateForeignKeyIndexStatement(VTable, VTable.ForeignKeys[J]);
   end;
-  for I := 0 to Pred(AModel.TableMetadataCount) do
+  for I := 0 to Pred(AModel.TableMetadatas.Count) do
   begin
     VTable := AModel.TableMetadatas[I];
     for J := 0 to Pred(VTable.ForeignKeyCount) do
@@ -306,7 +305,7 @@ begin
   Result := '';
   if VMaxIdentLength > 0 then
   begin
-    for I := 0 to Pred(AModel.TableMetadataCount) do
+    for I := 0 to Pred(AModel.TableMetadatas.Count) do
     begin
       VTable := AModel.TableMetadatas[I];
       CheckIdentLength(VTable.Name, VMaxIdentLength, Result);
@@ -316,7 +315,7 @@ begin
       for J := 0 to Pred(VTable.IndexCount) do
         CheckIdentLength(VTable.Indexes[J].Name, VMaxIdentLength, Result);
     end;
-    for I := 0 to Pred(AModel.TableMetadataCount) do
+    for I := 0 to Pred(AModel.TableMetadatas.Count) do
     begin
       VTable := AModel.TableMetadatas[I];
       for J := 0 to Pred(VTable.ForeignKeyCount) do
