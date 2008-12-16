@@ -455,11 +455,22 @@ end;
 
 function TPressServiceClassList.IndexOfServiceName(
   const AServiceName: string): Integer;
+var
+  VService, VCurrentService: TPressServiceClass;
+  I: Integer;
 begin
-  for Result := 0 to Pred(Count) do
-    if SameText(Items[Result].ServiceName, AServiceName) then
-      Exit;
+  VCurrentService := nil;
   Result := -1;
+  for I := Pred(Count) downto 0 do
+  begin
+    VService := Items[I];
+    if SameText(VService.ServiceName, AServiceName) and
+     (not Assigned(VCurrentService) or VService.InheritsFrom(VCurrentService)) then
+    begin
+      VCurrentService := VService;
+      Result := I;
+    end;
+  end;
 end;
 
 procedure TPressServiceClassList.Insert(
