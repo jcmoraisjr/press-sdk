@@ -2240,7 +2240,11 @@ end;
 procedure TPressMVPObjectModel.RevertChanges;
 begin
   if HasSubject then
+  begin
+    if IsIncluding and Assigned(HookedSubject) then
+      HookedSubject.UnassignObject(Subject);
     Subject.Memento.Restore(FSavePoint);
+  end;
 end;
 
 procedure TPressMVPObjectModel.SelectionNotification(AEvent: TPressEvent);

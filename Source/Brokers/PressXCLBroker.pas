@@ -456,6 +456,7 @@ type
   TPressMVPFormView = class(TPressMVPCustomFormView, IPressMVPFormView)
   private
     FViewCloseEvent: TCloseEvent;
+    function GetModel: TPressMVPObjectModel;
   protected
     procedure ViewCloseEvent(Sender: TObject; var Action: TCloseAction); virtual;
   protected
@@ -465,6 +466,7 @@ type
     procedure InternalResetPageControls(AControl: TWinControl); virtual;
     procedure ReleaseControl; override;
     procedure SetText(const Value: string); override;
+    property Model: TPressMVPObjectModel read GetModel;
   public
     class function Apply(AControl: TObject): Boolean; override;
     procedure Close;
@@ -2013,6 +2015,11 @@ begin
   Control.Close;
 end;
 
+function TPressMVPFormView.GetModel: TPressMVPObjectModel;
+begin
+  Result := inherited Model as TPressMVPObjectModel;
+end;
+
 function TPressMVPFormView.GetText: string;
 begin
   Result := Control.Caption;
@@ -2102,6 +2109,7 @@ begin
   if Action = caFree then
     ReleaseControl;
   { TODO : Check AV when Action = caFree due to queue notification }
+  Model.RevertChanges;
   TPressMVPViewCloseFormEvent.Create(Self).Notify;
 end;
 

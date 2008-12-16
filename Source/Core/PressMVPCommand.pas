@@ -865,9 +865,8 @@ end;
 
 procedure TPressMVPFinishObjectCommand.CloseForm;
 begin
+  Model.RevertChanges;
   TPressMVPModelCloseFormEvent.Create(Model).Notify;
-  if Model.HasSubject and Model.IsIncluding and Assigned(Model.HookedSubject) then
-    Model.HookedSubject.UnassignObject(Model.Subject);
 end;
 
 function TPressMVPFinishObjectCommand.InternalIsEnabled: Boolean;
@@ -890,12 +889,8 @@ end;
 procedure TPressMVPCancelObjectCommand.InternalExecute;
 begin
   inherited;
-  if Model.HasSubject and Model.IsChanged then
-  begin
-    if not InternalConfirm then
-      Exit;
-    Model.RevertChanges;
-  end;
+  if Model.HasSubject and Model.IsChanged and not InternalConfirm then
+    Exit;
   CloseForm;
 end;
 
