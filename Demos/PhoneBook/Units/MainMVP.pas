@@ -19,7 +19,7 @@ type
 {$ENDIF}
   protected
     procedure Finit; override;
-    procedure InitCommands; override;
+    procedure SubjectChanged(AOldSubject: TPressSubject); override;
   end;
 
   TMainGridModel = class(TPressMVPReferencesModel)
@@ -82,7 +82,7 @@ begin
   inherited;
 end;
 
-procedure TMainModel.InitCommands;
+procedure TMainModel.SubjectChanged(AOldSubject: TPressSubject);
 begin
   inherited;
 {$IFDEF UseReport}

@@ -5,6 +5,7 @@ unit CustomMVP;
 interface
 
 uses
+  PressSubject,
 {$IFDEF UseReport}
   PressReportManager,
 {$ENDIF}
@@ -18,7 +19,7 @@ type
 {$ENDIF}
   protected
     procedure Finit; override;
-    procedure InitCommands; override;
+    procedure SubjectChanged(AOldSubject: TPressSubject); override;
   end;
 
   TCustomEditPresenter = class(TPressMVPFormPresenter)
@@ -42,7 +43,7 @@ begin
   inherited;
 end;
 
-procedure TCustomEditModel.InitCommands;
+procedure TCustomEditModel.SubjectChanged(AOldSubject: TPressSubject);
 begin
   inherited;
 {$IFDEF UseReport}
