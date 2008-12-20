@@ -81,6 +81,7 @@ uses
   SysUtils,
   Menus,
   PressApplication,
+  PressClasses,
   PressConsts,
   PressMVPPresenter,
   PressMVPFactory;
@@ -215,11 +216,12 @@ function TPressReportManager.GetReportGroup: TPressCustomReportGroup;
 begin
   if not Assigned(FReportGroup) then
   begin
+    if not Assigned(Model) then
+      raise EPressError.Create(SUnassignedModel);
     { TODO : Implement update report list }
     FReportGroup := PressDefaultReportDataService.ReportGroupByClassName(
      Model.Subject.ClassName);
-    if Assigned(Model) then
-      FReportGroup.AssignObject(Model.Subject);
+    FReportGroup.AssignObject(Model.Subject);
   end;
   Result := FReportGroup;
 end;
