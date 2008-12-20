@@ -1,6 +1,6 @@
 (*
   PressObjects, Persistence Storage Classes
-  Copyright (C) 2007 Laserpress Ltda.
+  Copyright (C) 2007-2008 Laserpress Ltda.
 
   http://www.pressobjects.org
 
@@ -239,7 +239,7 @@ uses
 type
   TPressInstanceClass = class(TPressObject)
   private
-    FObjectClassName: TPressString;
+    FObjectClassName: TPressPlainString;
     function GetObjectClassName: string;
     procedure SetObjectClassName(AValue: string);
   protected
@@ -283,7 +283,7 @@ begin
   Result := Format(
    'TPressInstanceClass ' +
    'KeyType=%s PersistentName="%s" ClassIdName="" UpdateCountName="" (' +
-   'ObjectClassName: String(32))', [
+   'ObjectClassName: PlainString(32))', [
    PressModel.ClassIdType.AttributeName,
    PressModel.ClassIdStorageName]);
 end;

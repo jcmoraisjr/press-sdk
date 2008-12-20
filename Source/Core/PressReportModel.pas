@@ -27,7 +27,7 @@ uses
 type
   TPressReportGroup = class(TPressCustomReportGroup)
   private
-    FObjectClassName: TPressString;
+    FObjectClassName: TPressPlainString;
     FReports: TPressParts;
     function GetObjectClassName: string;
   protected
@@ -41,7 +41,7 @@ type
 
   TPressReportItem = class(TPressCustomReportItem)
   private
-    FCaption: TPressString;
+    FCaption: TPressAnsiString;
     FVisible: TPressBoolean;
     FReportMetadata: TPressBinary;
   protected
@@ -90,7 +90,7 @@ end;
 class function TPressReportGroup.InternalMetadataStr: string;
 begin
   Result := 'TPressReportGroup PersistentName="TRepGrp" ('+
-   'ObjectClassName: String(32);' +
+   'ObjectClassName: PlainString(32);' +
    'Reports: Parts(TPressReportItem))';
 end;
 
@@ -132,7 +132,7 @@ end;
 class function TPressReportItem.InternalMetadataStr: string;
 begin
   Result := 'TPressReportItem PersistentName="TRepItem" (' +
-   'Caption: String(40);' +
+   'Caption: AnsiString(40);' +
    'Visible: Boolean DefaultValue=True;' +
    'ReportMetadata: Binary)';
 end;

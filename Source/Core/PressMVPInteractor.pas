@@ -1178,7 +1178,7 @@ begin
     begin
       VModel := Model;
       VAttribute := VObject.FindAttribute(VModel.DisplayNames);
-      if VAttribute is TPressString then
+      if VAttribute is TPressCustomString then
         VAttribute.AsString := FAttrView.AsString;
       VModel.Subject.AssignObject(VObject);
     end;

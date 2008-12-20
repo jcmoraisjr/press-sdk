@@ -282,8 +282,9 @@ type
     property IncludeIfEmpty: Boolean read FIncludeIfEmpty write FIncludeIfEmpty default False;
   end;
 
-  TPressAttributeBaseType = (attUnknown, attString, attInteger, attFloat,
-   attCurrency, attEnum, attBoolean, attDate, attTime, attDateTime, attVariant,
+  TPressAttributeBaseType = (attUnknown, attPlainString, attAnsiString,
+   attInteger, attFloat, attCurrency, attEnum, attBoolean,
+   attDate, attTime, attDateTime, attVariant,
    attMemo, attBinary, attPicture,
    attPart, attReference, attParts, attReferences);
 
@@ -2537,7 +2538,7 @@ begin
   FClasses := TClassList.Create;
   FMetadatas := TPressObjectMetadataList.Create(True);
   FEnumMetadatas := TPressEnumMetadataList.Create(True);
-  FDefaultKeyType := TPressString;
+  FDefaultKeyType := TPressPlainString;
   {$IFNDEF PressRelease}
   FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
   FNotifier.AddNotificationItem(PressApp, [TPressApplicationRunningEvent]);
@@ -2653,7 +2654,7 @@ end;
 function TPressModel.GetClassIdType: TPressAttributeClass;
 begin
   if ClassIdStorageName = '' then
-    Result := TPressString
+    Result := TPressPlainString
   else if not Assigned(FClassIdType) then
     Result := DefaultKeyType
   else
@@ -4184,7 +4185,7 @@ var
   function FormatStringItem(const AParamValue: string): string;
   begin
     Result := Format('%s like :%s', [
-     VMetadata.DataName, AddValueParam(AParamValue, attString)]);
+     VMetadata.DataName, AddValueParam(AParamValue, attAnsiString)]);
   end;
 
   function FormatContainsItem: string;
@@ -4199,7 +4200,7 @@ var
   function IsEmptyStatement: string;
   begin
     Result := Format('%s = :%s', [
-     VMetadata.DataName, AddValueParam('', attString)]);
+     VMetadata.DataName, AddValueParam('', attAnsiString)]);
   end;
 
   function IsNullStatement: string;
@@ -4213,7 +4214,7 @@ begin
     Exit;
   VMetadata := TPressQueryAttributeMetadata(AAttribute.Metadata);
   if not AAttribute.IsEmpty or
-   (not AAttribute.IsNull and not (AAttribute is TPressString)) then
+   (not AAttribute.IsNull and not (AAttribute is TPressCustomString)) then
     case VMetadata.MatchType of
       mtEqual:
         Result := FormatOperatorItem('=');
@@ -4233,7 +4234,7 @@ begin
         Result := FormatOperatorItem('<=');
     end
   else if VMetadata.IncludeIfEmpty then
-    if AAttribute is TPressString then
+    if AAttribute is TPressCustomString then
       if MatchEmptyAndNull then
         Result := Format('(%s) or (%s)', [IsNullStatement, IsEmptyStatement])
       else if AAttribute.IsNull then
@@ -4961,7 +4962,7 @@ end;
 
 function TPressAttribute.GetAsString: string;
 begin
-  raise AccessError(TPressString.AttributeName);
+  raise AccessError(TPressAnsiString.AttributeName);
 end;
 
 function TPressAttribute.GetAsTime: TTime;
@@ -5195,7 +5196,7 @@ end;
 
 procedure TPressAttribute.SetAsString(const AValue: string);
 begin
-  raise AccessError(TPressString.AttributeName);
+  raise AccessError(TPressAnsiString.AttributeName);
 end;
 
 procedure TPressAttribute.SetAsTime(AValue: TTime);
@@ -5519,16 +5520,18 @@ end;
 
 initialization
   PressModel.RegisterClasses([TPressObject, TPressQuery]);
-  PressModel.RegisterAttributes([TPressString, TPressInteger, TPressFloat,
-   TPressCurrency, TPressEnum, TPressBoolean, TPressDate, TPressTime,
+  PressModel.RegisterAttributes([TPressPlainString, TPressAnsiString,
+   TPressString, TPressInteger, TPressFloat, TPressCurrency,
+   TPressEnum, TPressBoolean, TPressDate, TPressTime,
    TPressDateTime, TPressVariant, TPressMemo, TPressBinary,
    TPressPart, TPressReference, TPressParts, TPressReferences,
    TPressQueryItems]);
 
 finalization
   PressModel.UnregisterClasses([TPressQuery]);
-  PressModel.UnregisterAttributes([TPressString, TPressInteger, TPressFloat,
-   TPressCurrency, TPressEnum, TPressBoolean, TPressDate, TPressTime,
+  PressModel.UnregisterAttributes([TPressPlainString, TPressAnsiString,
+   TPressString, TPressInteger, TPressFloat, TPressCurrency,
+   TPressEnum, TPressBoolean, TPressDate, TPressTime,
    TPressDateTime, TPressVariant, TPressMemo, TPressBinary,
    TPressPart, TPressReference, TPressParts, TPressReferences,
    TPressQueryItems]);

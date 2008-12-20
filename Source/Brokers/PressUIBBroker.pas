@@ -285,7 +285,7 @@ begin
     if not VParam.IsNull then
     begin
       case VParam.DataType of
-        oftString:
+        oftPlainString, oftAnsiString:
           VDBParams.ByNameAsString[VParam.Name] := VParam.AsString;
         oftInt16:
           VDBParams.ByNameAsSmallint[VParam.Name] := VParam.AsInt16;

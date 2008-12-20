@@ -125,7 +125,7 @@ type
     property OldAttribute: TPressValue read GetOldAttribute;
   end;
 
-  TPressString = class(TPressValue)
+  TPressCustomString = class(TPressValue)
   private
     FValue: string;
     function GetOldValue: string;
@@ -155,12 +155,27 @@ type
     procedure SetValue(const AValue: string); virtual;
   public
     procedure Assign(Source: TPersistent); override;
-    class function AttributeBaseType: TPressAttributeBaseType; override;
-    class function AttributeName: string; override;
     class function EmptyValue: Variant; override;
     property OldValue: string read GetOldValue;
     property PubValue: string read GetPubValue write SetPubValue;
     property Value: string read GetValue write SetValue;
+  end;
+
+  TPressPlainString = class(TPressCustomString)
+  public
+    class function AttributeBaseType: TPressAttributeBaseType; override;
+    class function AttributeName: string; override;
+  end;
+
+  TPressAnsiString = class(TPressCustomString)
+  public
+    class function AttributeBaseType: TPressAttributeBaseType; override;
+    class function AttributeName: string; override;
+  end;
+
+  TPressString = class(TPressAnsiString)
+  public
+    class function AttributeName: string; override;
   end;
 
   TPressNumeric = class(TPressValue)
@@ -1074,35 +1089,22 @@ begin
   Result := TPressValueMemento.Create(Self);
 end;
 
-{ TPressString }
+{ TPressCustomString }
 
-procedure TPressString.Assign(Source: TPersistent);
+procedure TPressCustomString.Assign(Source: TPersistent);
 begin
-  if (Source is TPressString) and (TPressString(Source).State = asValue) then
-    PubValue := TPressString(Source).PubValue
+  if (Source is TPressCustomString) and (TPressCustomString(Source).State = asValue) then
+    PubValue := TPressCustomString(Source).PubValue
   else
     inherited;
 end;
 
-class function TPressString.AttributeBaseType: TPressAttributeBaseType;
-begin
-  Result := attString;
-end;
-
-class function TPressString.AttributeName: string;
-begin
-  if Self = TPressString then
-    Result := 'String'
-  else
-    Result := ClassName;
-end;
-
-class function TPressString.EmptyValue: Variant;
+class function TPressCustomString.EmptyValue: Variant;
 begin
   Result := '';
 end;
 
-function TPressString.GetAsBoolean: Boolean;
+function TPressCustomString.GetAsBoolean: Boolean;
 var
   VValue: string;
 begin
@@ -1115,7 +1117,7 @@ begin
     raise ConversionError(nil);
 end;
 
-function TPressString.GetAsDate: TDate;
+function TPressCustomString.GetAsDate: TDate;
 begin
   try
     Result := StrToDate(PubValue);
@@ -1127,7 +1129,7 @@ begin
   end;
 end;
 
-function TPressString.GetAsDateTime: TDateTime;
+function TPressCustomString.GetAsDateTime: TDateTime;
 begin
   try
     Result := StrToDateTime(PubValue);
@@ -1139,7 +1141,7 @@ begin
   end;
 end;
 
-function TPressString.GetAsFloat: Double;
+function TPressCustomString.GetAsFloat: Double;
 begin
   try
     Result := StrToFloat(PubValue);
@@ -1151,7 +1153,7 @@ begin
   end;
 end;
 
-function TPressString.GetAsInteger: Integer;
+function TPressCustomString.GetAsInteger: Integer;
 begin
   try
     Result := StrToInt(PubValue);
@@ -1163,12 +1165,12 @@ begin
   end;
 end;
 
-function TPressString.GetAsString: string;
+function TPressCustomString.GetAsString: string;
 begin
   Result := PubValue;
 end;
 
-function TPressString.GetAsTime: TTime;
+function TPressCustomString.GetAsTime: TTime;
 begin
   try
     Result := StrToTime(PubValue);
@@ -1180,22 +1182,22 @@ begin
   end;
 end;
 
-function TPressString.GetAsVariant: Variant;
+function TPressCustomString.GetAsVariant: Variant;
 begin
   Result := PubValue;
 end;
 
-function TPressString.GetIsEmpty: Boolean;
+function TPressCustomString.GetIsEmpty: Boolean;
 begin
   Result := PubValue = '';
 end;
 
-function TPressString.GetOldValue: string;
+function TPressCustomString.GetOldValue: string;
 begin
-  Result := (OldAttribute as TPressString).Value;
+  Result := (OldAttribute as TPressCustomString).Value;
 end;
 
-function TPressString.GetPubValue: string;
+function TPressCustomString.GetPubValue: string;
 begin
   if UsePublishedGetter then
     Result := GetStrProp(Owner, Metadata.Name)
@@ -1203,24 +1205,24 @@ begin
     Result := Value;
 end;
 
-function TPressString.GetValue: string;
+function TPressCustomString.GetValue: string;
 begin
   Synchronize;
   Result := FValue;
 end;
 
-procedure TPressString.InternalReset;
+procedure TPressCustomString.InternalReset;
 begin
   inherited;
   FValue := '';
 end;
 
-function TPressString.InternalTypeKinds: TTypeKinds;
+function TPressCustomString.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkString, tkLString, tkWString];
 end;
 
-procedure TPressString.SetAsBoolean(AValue: Boolean);
+procedure TPressCustomString.SetAsBoolean(AValue: Boolean);
 begin
   if AValue then
     PubValue := SPressTrueString
@@ -1228,37 +1230,37 @@ begin
     PubValue := SPressFalseString;
 end;
 
-procedure TPressString.SetAsDate(AValue: TDate);
+procedure TPressCustomString.SetAsDate(AValue: TDate);
 begin
   PubValue := DateToStr(AValue);
 end;
 
-procedure TPressString.SetAsDateTime(AValue: TDateTime);
+procedure TPressCustomString.SetAsDateTime(AValue: TDateTime);
 begin
   PubValue := DateTimeToStr(AValue);
 end;
 
-procedure TPressString.SetAsFloat(AValue: Double);
+procedure TPressCustomString.SetAsFloat(AValue: Double);
 begin
   PubValue := FloatToStr(AValue);
 end;
 
-procedure TPressString.SetAsInteger(AValue: Integer);
+procedure TPressCustomString.SetAsInteger(AValue: Integer);
 begin
   PubValue := IntToStr(AValue);
 end;
 
-procedure TPressString.SetAsString(const AValue: string);
+procedure TPressCustomString.SetAsString(const AValue: string);
 begin
   PubValue := AValue;
 end;
 
-procedure TPressString.SetAsTime(AValue: TTime);
+procedure TPressCustomString.SetAsTime(AValue: TTime);
 begin
   PubValue := TimeToStr(AValue);
 end;
 
-procedure TPressString.SetAsVariant(AValue: Variant);
+procedure TPressCustomString.SetAsVariant(AValue: Variant);
 begin
   try
     if VarIsEmpty(AValue) or VarIsNull(AValue) then
@@ -1273,7 +1275,7 @@ begin
   end;
 end;
 
-procedure TPressString.SetPubValue(const AValue: string);
+procedure TPressCustomString.SetPubValue(const AValue: string);
 begin
   if UsePublishedSetter then
     SetStrProp(Owner, Metadata.Name, AValue)
@@ -1281,7 +1283,7 @@ begin
     Value := AValue;
 end;
 
-procedure TPressString.SetValue(const AValue: string);
+procedure TPressCustomString.SetValue(const AValue: string);
 var
   VMaxSize: Integer;
   VOwnerName: string;
@@ -1306,6 +1308,43 @@ begin
     FValue := AValue;
     ValueAssigned;
   end;
+end;
+
+{ TPressPlainString }
+
+class function TPressPlainString.AttributeBaseType: TPressAttributeBaseType;
+begin
+  Result := attPlainString;
+end;
+
+class function TPressPlainString.AttributeName: string;
+begin
+  if Self = TPressPlainString then
+    Result := 'PlainString'
+  else
+    Result := ClassName;
+end;
+
+{ TPressAnsiString }
+
+class function TPressAnsiString.AttributeBaseType: TPressAttributeBaseType;
+begin
+  Result := attAnsiString;
+end;
+
+class function TPressAnsiString.AttributeName: string;
+begin
+  if Self = TPressAnsiString then
+    Result := 'AnsiString'
+  else
+    Result := ClassName;
+end;
+
+{ TPressString }
+
+class function TPressString.AttributeName: string;
+begin
+  Result := 'String';
 end;
 
 { TPressNumeric }

@@ -479,7 +479,7 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
     if not AValue.IsNull then
     begin
       case AValue.AttributeBaseType of
-        attString:
+        attPlainString, attAnsiString:
           VParam.AsString := AValue.AsString;
         attInteger:
           if (AValue as TPressInteger).IsRelativelyChanged then
@@ -617,7 +617,7 @@ begin
     if AIdType = attUnknown then
       AIdType := Map.IdType;
     case AIdType of
-      attString:
+      attPlainString:
         ADataset.Params.ParamByName(AParamName).AsString := AValue;
       attInteger:
         ADataset.Params.ParamByName(AParamName).AsInt32 := StrToInt(AValue);

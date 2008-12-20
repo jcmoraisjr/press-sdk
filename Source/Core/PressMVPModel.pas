@@ -301,14 +301,14 @@ type
 
   TPressMVPReferenceQuery = class(TPressQuery)
   private
-    FName: TPressString;
+    FName: TPressAnsiString;
     function GetName: string;
     procedure SetName(const Value: string);
   protected
     function InternalAttributeAddress(const AAttributeName: string): PPressAttribute; override;
     class function InternalMetadataStr: string; override;
   public
-    property _Name: TPressString read FName;
+    property _Name: TPressAnsiString read FName;
   published
     property Name: string read GetName write SetName;
   end;
@@ -834,7 +834,7 @@ class function TPressMVPReferenceQuery.InternalMetadataStr: string;
 begin
   Result :=
    TPressMVPReferenceQuery.ClassName + ' (' + TPressObject.ClassName + ') (' +
-   'Name: String MatchType=mtContains)';
+   'Name: AnsiString MatchType=mtContains)';
 end;
 
 procedure TPressMVPReferenceQuery.SetName(const Value: string);
@@ -1268,7 +1268,7 @@ end;
 function TPressMVPReferenceModel.GetMetadata: TPressQueryMetadata;
 const
   CQueryMetadata =
-   '%s(%s) Any Order=%s (Name: String DataName=%2:s MatchType=mtContains)';
+   '%s(%s) Any Order=%s (Name: AnsiString DataName=%2:s MatchType=mtContains)';
 begin
   if not Assigned(FMetadata) then
     FMetadata := PressModel.RegisterMetadata(Format(
@@ -1696,7 +1696,7 @@ begin
       Result := 0
     else
       case VAttr1.AttributeBaseType of
-        attString, attBoolean, attMemo:
+        attPlainString, attAnsiString, attBoolean, attMemo:
           Result := CompareStrings(VAttr1.AsString, VAttr2.AsString);
         attInteger:
           Result := CompareIntegers(VAttr1.AsInteger, VAttr2.AsInteger);

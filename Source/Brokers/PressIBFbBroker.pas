@@ -50,7 +50,8 @@ function TPressIBFbDDLBuilder.InternalFieldTypeStr(
 const
   CFieldTypeStr: array[TPressOPFFieldType] of string = (
    '',                  //  oftUnknown
-   'varchar',           //  oftString
+   'varchar',           //  oftPlainString
+   'varchar',           //  oftAnsiString
    'smallint',          //  oftInt16
    'integer',           //  oftInt32
    'bigint',            //  oftInt64

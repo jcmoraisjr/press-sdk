@@ -26,8 +26,9 @@ uses
 type
   EPressOPFError = class(EPressError);
 
-  TPressOPFFieldType = (oftUnknown, oftString, oftInt16, oftInt32, oftInt64,
-   oftFloat, oftCurrency, oftBoolean, oftDate, oftTime, oftDateTime,
+  TPressOPFFieldType = (oftUnknown, oftPlainString, oftAnsiString,
+   oftInt16, oftInt32, oftInt64, oftFloat, oftCurrency,
+   oftBoolean, oftDate, oftTime, oftDateTime,
    oftMemo, oftBinary);
 
   TPressOPFParam = class(TObject)
@@ -304,7 +305,7 @@ end;
 procedure TPressOPFParam.SetAsString(const AValue: string);
 begin
   FValue := AValue;
-  FDataType := oftString;
+  FDataType := oftAnsiString;
   ValueAssigned;
 end;
 
@@ -331,7 +332,7 @@ begin
     varBoolean:
       FDataType := oftBoolean;
     varStrArg, varString:
-      FDataType := oftString;
+      FDataType := oftAnsiString;
     else
       FDataType := oftUnknown;
   end;
@@ -368,7 +369,7 @@ var
 begin
   VParam := Add(AParam.Name);
   case AParam.ParamType of
-    attString:
+    attPlainString, attAnsiString:
       VParam.AsString := AParam.Value;
     attInteger:
       VParam.AsInt32 := AParam.Value;

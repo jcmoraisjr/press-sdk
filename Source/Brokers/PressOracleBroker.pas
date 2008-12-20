@@ -75,7 +75,8 @@ function TPressOracleDDLBuilder.InternalFieldTypeStr(
 const
   CFieldTypeStr: array[TPressOPFFieldType] of string = (
    '',               //  oftUnknown
-   'nvarchar2',      //  oftString
+   'varchar2',       //  oftPlainString
+   'nvarchar2',      //  oftAnsiString
    'number(5)',      //  oftInt16
    'number(10)',     //  oftInt32
    'number(19)',     //  oftInt64

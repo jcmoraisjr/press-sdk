@@ -393,7 +393,7 @@ end;
 class function TPressMetaParserSizeable.InternalApply(
   Reader: TPressParserReader): Boolean;
 begin
-  Result := AttributeInheritsFrom(Reader, Reader.ReadToken, [TPressString]);
+  Result := AttributeInheritsFrom(Reader, Reader.ReadToken, [TPressCustomString]);
 end;
 
 procedure TPressMetaParserSizeable.InternalRead(

@@ -57,9 +57,9 @@ type
 
   TPressUser = class(TPressCustomUser)
   private
-    FUserName: TPressString;
-    FUserId: TPressString;
-    FPasswordHash: TPressString;
+    FUserName: TPressAnsiString;
+    FUserId: TPressPlainString;
+    FPasswordHash: TPressPlainString;
     FPasswordExpired: TPressBoolean;
     FUserGroups: TPressUserGroupReferences;
     function GetPasswordExpired: Boolean;
@@ -86,7 +86,7 @@ type
 
   TPressUserQuery = class(TPressQuery)
   private
-    FUserName: TPressString;
+    FUserName: TPressAnsiString;
     function GetUserName: string;
     procedure SetUserName(const Value: string);
   protected
@@ -100,7 +100,7 @@ type
 
   TPressUserGroup = class(TPressObject)
   private
-    FGroupName: TPressString;
+    FGroupName: TPressAnsiString;
     FGroupResources: TPressUserGroupResourceParts;
     function GetGroupName: string;
     procedure SetGroupName(const Value: string);
@@ -122,7 +122,7 @@ type
 
   TPressUserGroupQuery = class(TPressQuery)
   private
-    FGroupName: TPressString;
+    FGroupName: TPressAnsiString;
     function GetGroupName: string;
     procedure SetGroupName(const Value: string);
   protected
@@ -175,8 +175,8 @@ type
 
   TPressLogon = class(TPressObject)
   private
-    FUserId: TPressString;
-    FPassword: TPressString;
+    FUserId: TPressPlainString;
+    FPassword: TPressPlainString;
     function GetPassword: string;
     function GetUserId: string;
   protected
@@ -189,8 +189,8 @@ type
 
   TPressChangePassword = class(TPressObject)
   private
-    FPassword1: TPressString;
-    FPassword2: TPressString;
+    FPassword1: TPressPlainString;
+    FPassword2: TPressPlainString;
   private
     FStoreUser: Boolean;
     FUpdatePasswordExpired: Boolean;
@@ -291,9 +291,9 @@ end;
 class function TPressUser.InternalMetadataStr: string;
 begin
   Result := 'TPressUser PersistentName="TUser" (' +
-   'UserName: String(60);' +
-   'UserId: String(32);' +
-   'PasswordHash: String(32);' +
+   'UserName: AnsiString(60);' +
+   'UserId: PlainString(32);' +
+   'PasswordHash: PlainString(32);' +
    'PasswordExpired: Boolean DefaultValue=True;' +
    'UserGroups: TPressUserGroupReferences PersistentName="UserGrp";' +
    ')';
@@ -338,7 +338,7 @@ end;
 class function TPressUserQuery.InternalMetadataStr: string;
 begin
   Result := 'TPressUserQuery(TPressUser) (' +
-   'UserName: String(60) MatchType=mtContains;' +
+   'UserName: AnsiString(60) MatchType=mtContains;' +
    ')';
 end;
 
@@ -391,7 +391,7 @@ end;
 class function TPressUserGroup.InternalMetadataStr: string;
 begin
   Result := 'TPressUserGroup PersistentName="TUserGrp" (' +
-   'GroupName: String(20);' +
+   'GroupName: AnsiString(20);' +
    'GroupResources: TPressUserGroupResourceParts PersistentName="GrpRes";' +
    ')';
 end;
@@ -436,7 +436,7 @@ end;
 class function TPressUserGroupQuery.InternalMetadataStr: string;
 begin
   Result := 'TPressUserGroupQuery(TPressUserGroup) (' +
-   'GroupName: String(20) MatchType=mtContains;' +
+   'GroupName: AnsiString(20) MatchType=mtContains;' +
    ')';
 end;
 
@@ -596,8 +596,8 @@ end;
 class function TPressLogon.InternalMetadataStr: string;
 begin
   Result := 'TPressLogon (' +
-   'UserId: String(32);' +
-   'Password: String(32);' +
+   'UserId: PlainString(32);' +
+   'Password: PlainString(32);' +
    ')';
 end;
 
@@ -631,8 +631,8 @@ end;
 class function TPressChangePassword.InternalMetadataStr: string;
 begin
   Result := 'TPressChangePassword (' +
-   'Password1: String(32);' +
-   'Password2: String(32);' +
+   'Password1: PlainString(32);' +
+   'Password2: PlainString(32);' +
    ')';
 end;
 

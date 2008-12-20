@@ -50,7 +50,7 @@ function TPressOPFDBDataset.DBTypeToOPFType(AFieldType: TFieldType): TPressOPFFi
 begin
   case AFieldType of
     ftString, ftWideString:
-      Result := oftString;
+      Result := oftAnsiString;
     ftSmallint:
       Result := oftInt16;
     ftInteger, ftWord:
@@ -83,7 +83,8 @@ function TPressOPFDBDataset.OPFTypeToDBType(AFieldType: TPressOPFFieldType): TFi
 const
   CFieldType: array[TPressOPFFieldType] of TFieldType = (
    ftUnknown,   //  oftUnknown
-   ftString,    //  oftString
+   ftString,    //  oftPlainString
+   ftString,    //  oftAnsiString
    ftSmallint,  //  oftInt16
    ftInteger,   //  oftInt32
    ftLargeint,  //  oftInt64
@@ -142,7 +143,7 @@ begin
     if not VParam.IsNull then
     begin
       case VParam.DataType of
-        oftString:
+        oftPlainString, oftAnsiString:
           AParams.ParamByName(VParam.Name).AsString := VParam.AsString;
         oftInt16:
           AParams.ParamByName(VParam.Name).AsSmallInt := VParam.AsInt16;

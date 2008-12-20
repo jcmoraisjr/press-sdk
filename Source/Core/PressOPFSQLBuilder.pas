@@ -123,7 +123,8 @@ function TPressOPFDDLBuilder.AttributeTypeToFieldType(
 const
   CFieldType: array[TPressAttributeBaseType] of TPressOPFFieldType = (
    oftUnknown,    // attUnknown
-   oftString,     // attString
+   oftPlainString,  // attPlainString
+   oftAnsiString,  // attAnsiString
    oftInt32,      // attInteger
    oftFloat,      // attFloat
    oftCurrency,   // attCurrency
@@ -152,7 +153,7 @@ function TPressOPFDDLBuilder.BuildFieldType(
 begin
   Result :=
    InternalFieldTypeStr(AttributeTypeToFieldType(AFieldMetadata.DataType));
-  if AFieldMetadata.DataType = attString then
+  if AFieldMetadata.DataType in [attPlainString, attAnsiString] then
     Result := Result + Format('(%d)', [AFieldMetadata.Size]);
 end;
 
