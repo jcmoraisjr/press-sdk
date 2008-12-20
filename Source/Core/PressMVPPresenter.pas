@@ -433,7 +433,7 @@ begin
   if Assigned(FModel) then
   begin
     if Assigned(FView) then
-      FView.SetModel(nil);
+      FView.ReleaseModel(FModel);
     if Assigned(FCommandMenu) then
       FCommandMenu.UnassignCommands;
     FreeAndNil(FModel);
@@ -447,7 +447,7 @@ begin
     if Assigned(FCommandMenu) then
       FCommandMenu.AssignMenu(nil);
     if Assigned(FModel) then
-      FView.SetModel(nil);
+      FView.ReleaseModel(FModel);
     FView := nil;
   end;
 end;

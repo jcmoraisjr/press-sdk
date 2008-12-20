@@ -169,6 +169,7 @@ type
     procedure InternalUpdate; virtual;
     procedure ModelChanged(AChangeType: TPressMVPChangeType); virtual;
     procedure ReleaseControl; override;
+    procedure ReleaseModel(AModel: TPressMVPModel);
     procedure SetModel(Value: TPressMVPModel);
     procedure SetText(const Value: string); virtual;
     procedure StateChanged; virtual;
@@ -924,6 +925,12 @@ begin
   end;
 end;
 
+procedure TPressMVPView.ReleaseModel(AModel: TPressMVPModel);
+begin
+  if FModel = AModel then
+    SetModel(nil);
+end;
+
 procedure TPressMVPView.SetAccessMode(Value: TPressAccessMode);
 begin
   if FAccessMode <> Value then
@@ -947,7 +954,11 @@ end;
 procedure TPressMVPView.SetModel(Value: TPressMVPModel);
 begin
   inherited;
-  if FModel <> Value then
+  if Assigned(FModel) xor Assigned(Value) then
+  { TODO : Detail presenters are changing the model of the FormView, this
+    fix (currently a work around) should be changed to the (Form)Presenter.
+    Currently the old Model need to be released from the View before change
+    it to another one. }
   begin
     if Assigned(FModel) then
       FModel.OnChange := nil;

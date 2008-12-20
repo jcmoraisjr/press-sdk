@@ -182,6 +182,7 @@ type
     function GetReadOnly: Boolean;
     function GetText: string;
     function GetVisible: Boolean;
+    procedure ReleaseModel(AModel: TPressMVPModel);
     procedure SetAccessMode(Value: TPressAccessMode);
     procedure SetModel(AModel: TPressMVPModel);
     procedure SetReadOnly(Value: Boolean);
