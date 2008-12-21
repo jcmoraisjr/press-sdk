@@ -188,7 +188,7 @@ function TPressFBLibDataset.FBLTypeToOPFType(
 begin
   case AFBLType of
     SQL_TEXT, SQL_VARYING:
-      Result := oftString;
+      Result := oftAnsiString;
     SQL_SHORT:
       if AScale = 0 then
         Result := oftInt16
@@ -299,7 +299,7 @@ begin
     if not VParam.IsNull then
     begin
       case VParam.DataType of
-        oftString:
+        oftPlainString, oftAnsiString:
           VQuery.ParamByNameAsString(VParam.Name, VParam.AsString);
         oftInt16:
           VQuery.ParamByNameAsShort(VParam.Name, VParam.AsInt16);
@@ -328,7 +328,7 @@ begin
     ADataRow[AIndex].Clear
   else
     case FieldDefs[AIndex].FieldType of
-      oftString:
+      oftPlainString, oftAnsiString:
         ADataRow[AIndex].Value := Query.FieldAsString(AIndex);
       oftInt16, oftInt32:
         ADataRow[AIndex].Value := Query.FieldAsLong(AIndex);
