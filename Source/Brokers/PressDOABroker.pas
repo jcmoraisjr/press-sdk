@@ -264,7 +264,8 @@ procedure TPressDOADataset.PopulateDOAParams;
   const
     CDOAType: array[TPressOPFFieldType] of Integer = (
      -1,           // oftUnknown
-     otString,     // oftString
+     otString,     // oftPlainString
+     otString,     // oftAnsiString
      otInteger,    // oftInt16
      otInteger,    // oftInt32
      otInteger,    // oftInt64
