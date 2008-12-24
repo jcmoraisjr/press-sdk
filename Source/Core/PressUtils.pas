@@ -304,6 +304,8 @@ end;
 
 function PressD5Int64ToVariant(AInt64: Int64): Variant;
 begin
+  { TODO : This is the same hack used by vcl (db) but leaks memory.
+    Is there a better approach for D5? }
   TVarData(Result).VType := VT_DECIMAL;
   Decimal(Result).lo64 := AInt64;
 end;
