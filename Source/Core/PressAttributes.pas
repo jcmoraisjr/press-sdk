@@ -1344,7 +1344,10 @@ end;
 
 class function TPressString.AttributeName: string;
 begin
-  Result := 'String';
+  if Self = TPressString then
+    Result := 'String'
+  else
+    Result := ClassName;
 end;
 
 { TPressNumeric }
