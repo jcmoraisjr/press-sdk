@@ -123,6 +123,7 @@ uses
   SysUtils,
   TypInfo,
 {$ifdef d5down}
+  ActiveX,
   PressUtils,
 {$endif}
   PressConsts;
@@ -319,10 +320,16 @@ end;
 procedure TPressOPFParam.SetAsVariant(AValue: Variant);
 begin
   case VarType(AValue) of
-    varByte, varSmallint:
+    {$ifndef d5down}varShortInt, {$endif}varByte, varSmallInt:
       FDataType := oftInt16;
     varInteger:
       FDataType := oftInt32;
+{$ifdef d5down}
+    VT_DECIMAL:
+{$else}
+    varInt64:
+{$endif}
+      FDataType := oftInt64;
     varSingle, varDouble:
       FDataType := oftDouble;
     varCurrency:
@@ -333,6 +340,16 @@ begin
       FDataType := oftBoolean;
     varStrArg, varString:
       FDataType := oftAnsiString;
+{$ifndef d5down}
+    varWord:
+      FDataType := oftInt16;  { TODO : unsigned }
+    varLongWord:
+      FDataType := oftInt32;  { TODO : unsigned }
+{$endif}
+{$ifdef fpc}
+    varQWord:
+      FDataType := oftInt64;  { TODO : unsigned }
+{$endif}
     else
       FDataType := oftUnknown;
   end;
@@ -373,6 +390,8 @@ begin
       VParam.AsString := AParam.Value;
     attInteger:
       VParam.AsInt32 := AParam.Value;
+    attInt64:
+      VParam.AsInt64 := {$ifdef d5down}PressD5VariantToInt64(AParam.Value){$else}AParam.Value{$endif};
     attDouble:
       VParam.AsDouble := AParam.Value;
     attCurrency:

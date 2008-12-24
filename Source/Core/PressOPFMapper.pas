@@ -62,7 +62,7 @@ type
     function CreateDatabaseStatement(ACreateClearDatabaseStatements: Boolean = False): string;
     procedure Dispose(AClass: TPressObjectClass; const AId: string);
     function DMLBuilderClass: TPressOPFDMLBuilderClass;
-    function GenerateId(const AGeneratorName: string): Integer;
+    function GenerateId(const AGeneratorName: string): Int64;
     procedure Load(AObject: TPressObject; AIncludeLazyLoading: Boolean);
     procedure Refresh(AObject: TPressObject);
     function Retrieve(AClass: TPressObjectClass; const AId: string; AMetadata: TPressObjectMetadata; AAttributes: TPressSessionAttributes): TPressObject;
@@ -149,6 +149,9 @@ uses
   SysUtils,
   TypInfo,
   {$IFDEF PressLog}PressLog,{$ENDIF}
+{$ifdef d5down}
+  PressUtils,
+{$endif}
   PressConsts,
   PressOPFBulk;
 
@@ -187,7 +190,7 @@ procedure TPressOPFObjectMapper.CheckGenerators(AObject: TPressObject);
   begin
     if (AAttribute.Metadata.GeneratorName <> '') and AAttribute.IsNull and
      (AAttribute is TPressValue) then
-      AAttribute.AsInteger := { TODO : Implement AsInt64 }
+      AAttribute.AsInt64 :=
        GenerateId(AAttribute.Metadata.GeneratorName);
   end;
 
@@ -312,13 +315,13 @@ begin
 end;
 
 function TPressOPFObjectMapper.GenerateId(
-  const AGeneratorName: string): Integer;
+  const AGeneratorName: string): Int64;
 var
   VDataset: TPressOPFDataset;
 begin
   VDataset := GeneratorDataset(AGeneratorName);
   VDataset.Execute;
-  Result := VDataset[0][0].Value;
+  Result := {$ifdef d5down}PressD5VariantToInt64(VDataset[0][0].Value){$else}VDataset[0][0].Value{$endif};
 end;
 
 function TPressOPFObjectMapper.GeneratorDataset(
@@ -509,6 +512,8 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
             VParam.AsInt32 := TPressInteger(AValue).Diff
           else
             VParam.AsInt32 := AValue.AsInteger;
+        attInt64:
+          VParam.AsInt64 := AValue.AsInteger;
         attDouble:
           if (AValue as TPressDouble).IsRelativelyChanged then
             VParam.AsDouble := TPressDouble(AValue).Diff
