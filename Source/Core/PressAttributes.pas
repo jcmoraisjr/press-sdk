@@ -147,7 +147,7 @@ type
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
-    procedure SetAsDouble(AValue: Double); override;
+    procedure SetAsDouble(const AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
@@ -213,7 +213,7 @@ type
     function GetValue: Integer; virtual;
     procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
-    procedure SetAsDouble(AValue: Double); override;
+    procedure SetAsDouble(const AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -249,7 +249,7 @@ type
     function GetValue: Int64; virtual;
     procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
-    procedure SetAsDouble(AValue: Double); override;
+    procedure SetAsDouble(const AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -285,7 +285,7 @@ type
     function GetValue: Double; virtual;
     procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
-    procedure SetAsDouble(AValue: Double); override;
+    procedure SetAsDouble(const AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -329,7 +329,7 @@ type
     procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsCurrency(AValue: Currency); override;
-    procedure SetAsDouble(AValue: Double); override;
+    procedure SetAsDouble(const AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -369,7 +369,7 @@ type
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
-    procedure SetAsDouble(AValue: Double); override;
+    procedure SetAsDouble(const AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
@@ -405,7 +405,7 @@ type
     procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsBoolean(AValue: Boolean); override;
-    procedure SetAsDouble(AValue: Double); override;
+    procedure SetAsDouble(const AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -440,7 +440,7 @@ type
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
-    procedure SetAsDouble(AValue: Double); override;
+    procedure SetAsDouble(const AValue: Double); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -475,7 +475,7 @@ type
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
-    procedure SetAsDouble(AValue: Double); override;
+    procedure SetAsDouble(const AValue: Double); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -510,7 +510,7 @@ type
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
-    procedure SetAsDouble(AValue: Double); override;
+    procedure SetAsDouble(const AValue: Double); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -546,7 +546,7 @@ type
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
-    procedure SetAsDouble(AValue: Double); override;
+    procedure SetAsDouble(const AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
@@ -1281,7 +1281,7 @@ begin
   PubValue := DateTimeToStr(AValue);
 end;
 
-procedure TPressCustomString.SetAsDouble(AValue: Double);
+procedure TPressCustomString.SetAsDouble(const AValue: Double);
 begin
   PubValue := FloatToStr(AValue);
 end;
@@ -1557,7 +1557,7 @@ begin
   Result := [tkInteger];
 end;
 
-procedure TPressInteger.SetAsDouble(AValue: Double);
+procedure TPressInteger.SetAsDouble(const AValue: Double);
 begin
   PubValue := Round(AValue);
 end;
@@ -1732,7 +1732,7 @@ begin
   Result := [tkInt64];
 end;
 
-procedure TPressInt64.SetAsDouble(AValue: Double);
+procedure TPressInt64.SetAsDouble(const AValue: Double);
 begin
   PubValue := Round(AValue);
 end;
@@ -1907,7 +1907,7 @@ begin
   Result := [tkFloat];
 end;
 
-procedure TPressDouble.SetAsDouble(AValue: Double);
+procedure TPressDouble.SetAsDouble(const AValue: Double);
 begin
   PubValue := AValue;
 end;
@@ -2112,7 +2112,7 @@ begin
   PubValue := AValue;
 end;
 
-procedure TPressCurrency.SetAsDouble(AValue: Double);
+procedure TPressCurrency.SetAsDouble(const AValue: Double);
 begin
   PubValue := AValue;
 end;
@@ -2302,7 +2302,7 @@ begin
   PubValue := Trunc(AValue);
 end;
 
-procedure TPressEnum.SetAsDouble(AValue: Double);
+procedure TPressEnum.SetAsDouble(const AValue: Double);
 begin
   PubValue := Round(AValue);
 end;
@@ -2491,7 +2491,7 @@ begin
   PubValue := AValue;
 end;
 
-procedure TPressBoolean.SetAsDouble(AValue: Double);
+procedure TPressBoolean.SetAsDouble(const AValue: Double);
 begin
   AsInteger := Round(AValue);
 end;
@@ -2673,7 +2673,7 @@ begin
   PubValue := AValue;
 end;
 
-procedure TPressDate.SetAsDouble(AValue: Double);
+procedure TPressDate.SetAsDouble(const AValue: Double);
 begin
   PubValue := AValue;
 end;
@@ -2857,7 +2857,7 @@ begin
   PubValue := AValue;
 end;
 
-procedure TPressTime.SetAsDouble(AValue: Double);
+procedure TPressTime.SetAsDouble(const AValue: Double);
 begin
   PubValue := AValue;
 end;
@@ -3046,7 +3046,7 @@ begin
   PubValue := AValue;
 end;
 
-procedure TPressDateTime.SetAsDouble(AValue: Double);
+procedure TPressDateTime.SetAsDouble(const AValue: Double);
 begin
   PubValue := AValue;
 end;
@@ -3297,7 +3297,7 @@ begin
   PubValue := AValue;
 end;
 
-procedure TPressVariant.SetAsDouble(AValue: Double);
+procedure TPressVariant.SetAsDouble(const AValue: Double);
 begin
   PubValue := AValue;
 end;

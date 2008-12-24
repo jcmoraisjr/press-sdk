@@ -1030,7 +1030,7 @@ type
     function GetUsePublishedSetter: Boolean;
     procedure InitPropInfo;
     function GetSession: IPressSession;
-    procedure SetAsFloat(AValue: Double);
+    procedure SetAsFloat(const AValue: Double);
   protected
     procedure AddSessionIntf(const ASession: IPressSession); virtual;
     function AccessError(const AAttributeName: string): EPressError;
@@ -1068,7 +1068,7 @@ type
     procedure SetAsCurrency(AValue: Currency); virtual;
     procedure SetAsDate(AValue: TDate); virtual;
     procedure SetAsDateTime(AValue: TDateTime); virtual;
-    procedure SetAsDouble(AValue: Double); virtual;
+    procedure SetAsDouble(const AValue: Double); virtual;
     procedure SetAsInteger(AValue: Integer); virtual;
     procedure SetAsString(const AValue: string); virtual;
     procedure SetAsTime(AValue: TTime); virtual;
@@ -5193,12 +5193,12 @@ begin
   raise AccessError(TPressDateTime.AttributeName);
 end;
 
-procedure TPressAttribute.SetAsDouble(AValue: Double);
+procedure TPressAttribute.SetAsDouble(const AValue: Double);
 begin
   raise AccessError(TPressDouble.AttributeName);
 end;
 
-procedure TPressAttribute.SetAsFloat(AValue: Double);
+procedure TPressAttribute.SetAsFloat(const AValue: Double);
 begin
   AsDouble := AValue;
 end;
