@@ -27,7 +27,11 @@ uses
   Classes;
 
 type
-  EPressError = class(Exception);
+  EPressError = class(Exception)
+  public
+    constructor Create(const AMsg: string);
+    constructor CreateFmt(const AMsg: string; const AArgs: array of const);
+  end;
 
   EPressConversionError = class(EPressError);
 
@@ -302,7 +306,21 @@ uses
   Windows,
 {$ENDIF}
   Math,
-  PressConsts;
+  PressConsts,
+  PressUtils;
+
+{ EPressError }
+
+constructor EPressError.Create(const AMsg: string);
+begin
+  inherited Create(PressEncodeString(AMsg));
+end;
+
+constructor EPressError.CreateFmt(const AMsg: string;
+  const AArgs: array of const);
+begin
+  inherited CreateFmt(PressEncodeString(AMsg), AArgs);
+end;
 
 { EPressParseError }
 
