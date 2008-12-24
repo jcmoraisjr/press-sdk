@@ -74,6 +74,7 @@
   SWidgetManagerAlreadyAssigned_rst = 'Widget manager já foi associado';
 
   // Error messages from the OPF framework
+  SAttributeCannotBeNull_rst = 'O atributo %s(''%s'') não pode ser nulo';
   SAttributeReferencesOwnedClass_rst = '%s(%s) faz referência a ''%s'' que pertence a ''%s''';
   SCannotChangeOPFBroker_rst = 'Não é possível alterar o Broker de acesso a dados';
   SCannotStoreOrphanObject_rst = 'Não é possível gravar objetos órfãos';

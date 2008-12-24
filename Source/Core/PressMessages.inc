@@ -74,6 +74,7 @@
   SWidgetManagerAlreadyAssigned := SWidgetManagerAlreadyAssigned_rst;
 
   // Error messages from the OPF framework
+  SAttributeCannotBeNull := SAttributeCannotBeNull_rst;
   SAttributeReferencesOwnedClass := SAttributeReferencesOwnedClass_rst;
   SCannotChangeOPFBroker := SCannotChangeOPFBroker_rst;
   SCannotStoreOrphanObject := SCannotStoreOrphanObject_rst;

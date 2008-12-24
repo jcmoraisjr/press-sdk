@@ -74,6 +74,7 @@
   SWidgetManagerAlreadyAssigned_rst = 'Widget manager was already assigned';
 
   // Error messages from the OPF framework
+  SAttributeCannotBeNull_rst = 'Attribute %s(''%s'') cannot be null';
   SAttributeReferencesOwnedClass_rst = '%s(%s) references ''%s'' which is owned by ''%s''';
   SCannotChangeOPFBroker_rst = 'Cannot change the data broker';
   SCannotStoreOrphanObject_rst = 'Cannot store orphan object';

@@ -45,6 +45,7 @@ type
     FPersistence: TPressPersistence;
     FStorageModel: TPressOPFStorageModel;
     procedure CheckGenerators(AObject: TPressObject);
+    procedure CheckNulls(AObject: TPressObject);
     procedure CheckOID(AObject: TPressObject);
     function GeneratorDataset(const AGeneratorName: string): TPressOPFDataset;
     function GetAttributeMapper(AMap: TPressOPFStorageMap): TPressOPFAttributeMapper;
@@ -186,8 +187,29 @@ procedure TPressOPFObjectMapper.CheckGenerators(AObject: TPressObject);
   begin
     if (AAttribute.Metadata.GeneratorName <> '') and AAttribute.IsNull and
      (AAttribute is TPressValue) then
-      AAttribute.AsInteger :=
+      AAttribute.AsInteger := { TODO : Implement AsInt64 }
        GenerateId(AAttribute.Metadata.GeneratorName);
+  end;
+
+var
+  I: Integer;
+begin
+  for I := 0 to Pred(AObject.AttributeCount) do
+    CheckAttr(AObject.Attributes[I]);
+end;
+
+procedure TPressOPFObjectMapper.CheckNulls(AObject: TPressObject);
+
+  procedure CheckAttr(AAttribute: TPressAttribute);
+  var
+    I: Integer;
+  begin
+    if AAttribute.IsNull and AAttribute.Metadata.NotNull then
+      raise EPressOPFError.CreateFmt(SAttributeCannotBeNull, [
+       AObject.ClassName, AAttribute.Name]);
+    if AAttribute is TPressItems then
+      for I := 0 to Pred(TPressItems(AAttribute).Count) do
+        CheckNulls(TPressItems(AAttribute)[I]);
   end;
 
 var
@@ -458,6 +480,7 @@ var
 begin
   CheckGenerators(AObject);
   CheckOID(AObject);
+  CheckNulls(AObject);
   PressEvolveUpdateCount(AObject);
   VMaps := StorageModel.Maps[AObject.ClassType];
   for I := Pred(VMaps.Count) downto 0 do

@@ -164,6 +164,7 @@ var
   SWidgetManagerAlreadyAssigned: string;
 
   // Error messages from the OPF framework
+  SAttributeCannotBeNull,
   SAttributeReferencesOwnedClass,
   SCannotChangeOPFBroker,
   SCannotStoreOrphanObject,
