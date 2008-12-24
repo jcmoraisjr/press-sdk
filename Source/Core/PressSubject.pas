@@ -1048,6 +1048,7 @@ type
     function GetAsDate: TDate; virtual;
     function GetAsDateTime: TDateTime; virtual;
     function GetAsDouble: Double; virtual;
+    function GetAsInt64: Int64; virtual;
     function GetAsInteger: Integer; virtual;
     function GetAsString: string; virtual;
     function GetAsTime: TTime; virtual;
@@ -1069,6 +1070,7 @@ type
     procedure SetAsDate(AValue: TDate); virtual;
     procedure SetAsDateTime(AValue: TDateTime); virtual;
     procedure SetAsDouble(const AValue: Double); virtual;
+    procedure SetAsInt64(const AValue: Int64); virtual;
     procedure SetAsInteger(AValue: Integer); virtual;
     procedure SetAsString(const AValue: string); virtual;
     procedure SetAsTime(AValue: TTime); virtual;
@@ -1100,6 +1102,7 @@ type
     property AsDateTime: TDateTime read GetAsDateTime write SetAsDateTime;
     property AsDouble: Double read GetAsDouble write SetAsDouble;
     property AsFloat: Double read GetAsFloat write SetAsFloat;
+    property AsInt64: Int64 read GetAsInt64 write SetAsInt64;
     property AsInteger: Integer read GetAsInteger write SetAsInteger;
     property AsString: string read GetAsString write SetAsString;
     property AsTime: TTime read GetAsTime write SetAsTime;
@@ -4964,6 +4967,11 @@ begin
   Result := AsDouble;
 end;
 
+function TPressAttribute.GetAsInt64: Int64;
+begin
+  Result := AsInteger;
+end;
+
 function TPressAttribute.GetAsInteger: Integer;
 begin
   raise AccessError(TPressInteger.AttributeName);
@@ -5201,6 +5209,11 @@ end;
 procedure TPressAttribute.SetAsFloat(const AValue: Double);
 begin
   AsDouble := AValue;
+end;
+
+procedure TPressAttribute.SetAsInt64(const AValue: Int64);
+begin
+  AsInteger := AValue;
 end;
 
 procedure TPressAttribute.SetAsInteger(AValue: Integer);

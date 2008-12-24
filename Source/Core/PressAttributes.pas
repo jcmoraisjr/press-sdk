@@ -136,6 +136,7 @@ type
     function GetAsDate: TDate; override;
     function GetAsDateTime: TDateTime; override;
     function GetAsDouble: Double; override;
+    function GetAsInt64: Int64; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetAsTime: TTime; override;
@@ -148,6 +149,7 @@ type
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
     procedure SetAsDouble(const AValue: Double); override;
+    procedure SetAsInt64(const AValue: Int64); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
@@ -241,6 +243,7 @@ type
   protected
     procedure ClearPersistenceData; override;
     function GetAsDouble: Double; override;
+    function GetAsInt64: Int64; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetAsVariant: Variant; override;
@@ -250,6 +253,7 @@ type
     procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDouble(const AValue: Double); override;
+    procedure SetAsInt64(const AValue: Int64); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -277,6 +281,7 @@ type
   protected
     procedure ClearPersistenceData; override;
     function GetAsDouble: Double; override;
+    function GetAsInt64: Int64; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetAsVariant: Variant; override;
@@ -286,6 +291,7 @@ type
     procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDouble(const AValue: Double); override;
+    procedure SetAsInt64(const AValue: Int64); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -319,6 +325,7 @@ type
     procedure ClearPersistenceData; override;
     function GetAsCurrency: Currency; override;
     function GetAsDouble: Double; override;
+    function GetAsInt64: Int64; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetAsVariant: Variant; override;
@@ -330,6 +337,7 @@ type
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsCurrency(AValue: Currency); override;
     procedure SetAsDouble(const AValue: Double); override;
+    procedure SetAsInt64(const AValue: Int64); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -536,6 +544,7 @@ type
     function GetAsDate: TDate; override;
     function GetAsDateTime: TDateTime; override;
     function GetAsDouble: Double; override;
+    function GetAsInt64: Int64; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetAsTime: TTime; override;
@@ -547,6 +556,7 @@ type
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
     procedure SetAsDouble(const AValue: Double); override;
+    procedure SetAsInt64(const AValue: Int64); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
@@ -621,6 +631,7 @@ type
     procedure AddSessionIntf(const ASession: IPressSession); override;
     procedure AfterChangeInstance(Sender: TPressProxy; Instance: TPressObject; ChangeType: TPressProxyChangeType); override;
     procedure Finit; override;
+    function GetAsInt64: Int64; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetAsVariant: Variant; override;
@@ -632,6 +643,7 @@ type
     function InternalTypeKinds: TTypeKinds; override;
     procedure InternalUnassignObject(AObject: TPressObject); override;
     procedure RemoveSessionIntf(const ASession: IPressSession); override;
+    procedure SetAsInt64(const AValue: Int64); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -1194,6 +1206,18 @@ begin
   end;
 end;
 
+function TPressCustomString.GetAsInt64: Int64;
+begin
+  try
+    Result := StrToInt64(PubValue);
+  except
+    on E: EConvertError do
+      raise ConversionError(E);
+    else
+      raise;
+  end;
+end;
+
 function TPressCustomString.GetAsInteger: Integer;
 begin
   try
@@ -1284,6 +1308,11 @@ end;
 procedure TPressCustomString.SetAsDouble(const AValue: Double);
 begin
   PubValue := FloatToStr(AValue);
+end;
+
+procedure TPressCustomString.SetAsInt64(const AValue: Int64);
+begin
+  PubValue := IntToStr(AValue);
 end;
 
 procedure TPressCustomString.SetAsInteger(AValue: Integer);
@@ -1662,6 +1691,11 @@ begin
   Result := PubValue;
 end;
 
+function TPressInt64.GetAsInt64: Int64;
+begin
+  Result := PubValue;
+end;
+
 function TPressInt64.GetAsInteger: Integer;
 begin
   Result := PubValue;
@@ -1735,6 +1769,11 @@ end;
 procedure TPressInt64.SetAsDouble(const AValue: Double);
 begin
   PubValue := Round(AValue);
+end;
+
+procedure TPressInt64.SetAsInt64(const AValue: Int64);
+begin
+  PubValue := AValue;
 end;
 
 procedure TPressInt64.SetAsInteger(AValue: Integer);
@@ -1837,6 +1876,11 @@ begin
   Result := PubValue;
 end;
 
+function TPressDouble.GetAsInt64: Int64;
+begin
+  Result := Round(PubValue);
+end;
+
 function TPressDouble.GetAsInteger: Integer;
 begin
   Result := Round(PubValue);
@@ -1908,6 +1952,11 @@ begin
 end;
 
 procedure TPressDouble.SetAsDouble(const AValue: Double);
+begin
+  PubValue := AValue;
+end;
+
+procedure TPressDouble.SetAsInt64(const AValue: Int64);
 begin
   PubValue := AValue;
 end;
@@ -2027,6 +2076,11 @@ begin
   Result := PubValue;
 end;
 
+function TPressCurrency.GetAsInt64: Int64;
+begin
+  Result := Round(PubValue);
+end;
+
 function TPressCurrency.GetAsInteger: Integer;
 begin
   Result := Round(PubValue);
@@ -2113,6 +2167,11 @@ begin
 end;
 
 procedure TPressCurrency.SetAsDouble(const AValue: Double);
+begin
+  PubValue := AValue;
+end;
+
+procedure TPressCurrency.SetAsInt64(const AValue: Int64);
 begin
   PubValue := AValue;
 end;
@@ -3199,6 +3258,21 @@ begin
   end;
 end;
 
+function TPressVariant.GetAsInt64: Int64;
+var
+  VValue: Variant;
+begin
+  VValue := PubValue;
+  try
+    Result := {$ifdef d5down}PressD5VariantToInt64(VValue){$else}VValue{$endif};
+  except
+    on E: EVariantError do
+      raise InvalidValueError(VValue, E);
+    else
+      raise;
+  end;
+end;
+
 function TPressVariant.GetAsInteger: Integer;
 var
   VValue: Variant;
@@ -3300,6 +3374,11 @@ end;
 procedure TPressVariant.SetAsDouble(const AValue: Double);
 begin
   PubValue := AValue;
+end;
+
+procedure TPressVariant.SetAsInt64(const AValue: Int64);
+begin
+  PubValue := {$ifdef d5down}PressD5Int64ToVariant(AValue){$else}AValue{$endif};
 end;
 
 procedure TPressVariant.SetAsInteger(AValue: Integer);
@@ -3605,6 +3684,18 @@ begin
   inherited;
 end;
 
+function TPressItem.GetAsInt64: Int64;
+begin
+  try
+    Result := StrToInt64(AsString);
+  except
+    on E: EConvertError do
+      raise ConversionError(E);
+    else
+      raise;
+  end;
+end;
+
 function TPressItem.GetAsInteger: Integer;
 begin
   try
@@ -3715,13 +3806,6 @@ begin
     Proxy.ClearInstance;
 end;
 
-function TPressItem.SameReference(AObject: TPressObject): Boolean;
-begin
-  Synchronize;
-  Result := (not Assigned(AObject) and not Assigned(FProxy)) or
-   (Assigned(FProxy) and FProxy.SameReference(AObject));
-end;
-
 procedure TPressItem.RemoveSessionIntf(const ASession: IPressSession);
 begin
   inherited;
@@ -3729,9 +3813,21 @@ begin
     TPressProxyFriend(FProxy).RemoveSessionIntf(ASession);
 end;
 
+function TPressItem.SameReference(AObject: TPressObject): Boolean;
+begin
+  Synchronize;
+  Result := (not Assigned(AObject) and not Assigned(FProxy)) or
+   (Assigned(FProxy) and FProxy.SameReference(AObject));
+end;
+
 function TPressItem.SameReference(const ARefClass, ARefID: string): Boolean;
 begin
   Result := Proxy.SameReference(ARefClass, ARefID);
+end;
+
+procedure TPressItem.SetAsInt64(const AValue: Int64);
+begin
+  AsString := IntToStr(AValue);
 end;
 
 procedure TPressItem.SetAsInteger(AValue: Integer);
