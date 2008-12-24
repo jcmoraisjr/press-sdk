@@ -231,6 +231,42 @@ type
     property Value: Integer read GetValue write SetValue;
   end;
 
+  TPressInt64 = class(TPressNumeric)
+  private
+    FDiff: Int64;
+    FValue: Int64;
+    function GetOldValue: Int64;
+    function GetPubValue: Int64;
+    procedure SetPubValue(AValue: Int64);
+  protected
+    procedure ClearPersistenceData; override;
+    function GetAsDouble: Double; override;
+    function GetAsInteger: Integer; override;
+    function GetAsString: string; override;
+    function GetAsVariant: Variant; override;
+    function GetIsEmpty: Boolean; override;
+    function GetIsRelativelyChanged: Boolean; override;
+    function GetValue: Int64; virtual;
+    procedure InternalReset; override;
+    function InternalTypeKinds: TTypeKinds; override;
+    procedure SetAsDouble(AValue: Double); override;
+    procedure SetAsInteger(AValue: Integer); override;
+    procedure SetAsString(const AValue: string); override;
+    procedure SetAsVariant(AValue: Variant); override;
+    procedure SetValue(AValue: Int64); virtual;
+  public
+    procedure Assign(Source: TPersistent); override;
+    class function AttributeBaseType: TPressAttributeBaseType; override;
+    class function AttributeName: string; override;
+    procedure Decrement(AValue: Int64 = 1); virtual;
+    class function EmptyValue: Variant; override;
+    procedure Increment(AValue: Int64 = 1); virtual;
+    property Diff: Int64 read FDiff;
+    property OldValue: Int64 read GetOldValue;
+    property PubValue: Int64 read GetPubValue write SetPubValue;
+    property Value: Int64 read GetValue write SetValue;
+  end;
+
   TPressDouble = class(TPressNumeric)
   private
     FDiff: Double;
@@ -1570,6 +1606,181 @@ begin
 end;
 
 procedure TPressInteger.SetValue(AValue: Integer);
+begin
+  if State = asNotLoaded then
+    Synchronize;
+  if (FValue <> AValue) or (State = asNull) then
+  begin
+    Changing;
+    FValue := AValue;
+    FDiff := 0;
+    ValueAssigned;
+  end;
+end;
+
+{ TPressInt64 }
+
+procedure TPressInt64.Assign(Source: TPersistent);
+begin
+  if (Source is TPressInt64) and (TPressInt64(Source).State = asValue) then
+    PubValue := TPressInt64(Source).PubValue
+  else
+    inherited;
+end;
+
+class function TPressInt64.AttributeBaseType: TPressAttributeBaseType;
+begin
+  Result := attInt64;
+end;
+
+class function TPressInt64.AttributeName: string;
+begin
+  if Self = TPressInt64 then
+    Result := 'Int64'
+  else
+    Result := ClassName;
+end;
+
+procedure TPressInt64.ClearPersistenceData;
+begin
+  inherited;
+  FDiff := 0;
+end;
+
+procedure TPressInt64.Decrement(AValue: Int64);
+begin
+  Increment(-AValue);
+end;
+
+class function TPressInt64.EmptyValue: Variant;
+begin
+  Result := 0;
+end;
+
+function TPressInt64.GetAsDouble: Double;
+begin
+  Result := PubValue;
+end;
+
+function TPressInt64.GetAsInteger: Integer;
+begin
+  Result := PubValue;
+end;
+
+function TPressInt64.GetAsString: string;
+begin
+  if IsNull then
+    Result := ''
+  else
+    Result := IntToStr(PubValue);
+end;
+
+function TPressInt64.GetAsVariant: Variant;
+begin
+  Result := {$ifdef d5down}PressD5Int64ToVariant(PubValue){$else}PubValue{$endif};
+end;
+
+function TPressInt64.GetIsEmpty: Boolean;
+begin
+  Result := PubValue = 0;
+end;
+
+function TPressInt64.GetIsRelativelyChanged: Boolean;
+begin
+  Result := FDiff <> 0;
+end;
+
+function TPressInt64.GetOldValue: Int64;
+begin
+  Result := (OldAttribute as TPressInteger).Value;
+end;
+
+function TPressInt64.GetPubValue: Int64;
+begin
+  if UsePublishedGetter then
+    Result := GetInt64Prop(Owner, Metadata.Name)
+  else
+    Result := Value;
+end;
+
+function TPressInt64.GetValue: Int64;
+begin
+  Synchronize;
+  Result := FValue;
+end;
+
+procedure TPressInt64.Increment(AValue: Int64);
+begin
+  if (AValue <> 0) and (State <> asNull) then
+  begin
+    Changing;
+    FValue := FValue + AValue;
+    if (FDiff <> 0) or not IsChanged then
+      FDiff := FDiff + AValue;
+    ValueAssigned;
+  end;
+end;
+
+procedure TPressInt64.InternalReset;
+begin
+  inherited;
+  FValue := 0;
+end;
+
+function TPressInt64.InternalTypeKinds: TTypeKinds;
+begin
+  Result := [tkInt64];
+end;
+
+procedure TPressInt64.SetAsDouble(AValue: Double);
+begin
+  PubValue := Round(AValue);
+end;
+
+procedure TPressInt64.SetAsInteger(AValue: Integer);
+begin
+  PubValue := AValue;
+end;
+
+procedure TPressInt64.SetAsString(const AValue: string);
+begin
+  try
+    if AValue = '' then
+      Clear
+    else
+      PubValue := StrToInt64(AValue);
+  except
+    on E: EConvertError do
+      raise ConversionError(E);
+    else
+      raise;
+  end;
+end;
+
+procedure TPressInt64.SetAsVariant(AValue: Variant);
+begin
+  try
+    if VarIsEmpty(AValue) or VarIsNull(AValue) then
+      Clear
+    else
+      PubValue := {$ifdef d5down}PressD5VariantToInt64(AValue){$else}AValue{$endif};
+  except
+    on E: EVariantError do
+      raise InvalidValueError(AValue, E);
+    else
+      raise;
+  end;
+end;
+
+procedure TPressInt64.SetPubValue(AValue: Int64);
+begin
+  if UsePublishedSetter then
+    SetInt64Prop(Owner, Metadata.Name, AValue)
+  else
+    Value := AValue;
+end;
+
+procedure TPressInt64.SetValue(AValue: Int64);
 begin
   if State = asNotLoaded then
     Synchronize;

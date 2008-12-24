@@ -283,7 +283,7 @@ type
   end;
 
   TPressAttributeBaseType = (attUnknown, attPlainString, attAnsiString,
-   attInteger, attDouble, attCurrency, attEnum, attBoolean,
+   attInteger, attInt64, attDouble, attCurrency, attEnum, attBoolean,
    attDate, attTime, attDateTime, attVariant,
    attMemo, attBinary, attPicture,
    attPart, attReference, attParts, attReferences);
@@ -5534,7 +5534,8 @@ end;
 initialization
   PressModel.RegisterClasses([TPressObject, TPressQuery]);
   PressModel.RegisterAttributes([TPressPlainString, TPressAnsiString,
-   TPressString, TPressInteger, TPressDouble, TPressFloat, TPressCurrency,
+   TPressString, TPressInteger, TPressInt64,
+   TPressDouble, TPressFloat, TPressCurrency,
    TPressEnum, TPressBoolean, TPressDate, TPressTime,
    TPressDateTime, TPressVariant, TPressMemo, TPressBinary,
    TPressPart, TPressReference, TPressParts, TPressReferences,
@@ -5543,7 +5544,8 @@ initialization
 finalization
   PressModel.UnregisterClasses([TPressQuery]);
   PressModel.UnregisterAttributes([TPressPlainString, TPressAnsiString,
-   TPressString, TPressInteger, TPressDouble, TPressFloat, TPressCurrency,
+   TPressString, TPressInteger, TPressInt64,
+   TPressDouble, TPressFloat, TPressCurrency,
    TPressEnum, TPressBoolean, TPressDate, TPressTime,
    TPressDateTime, TPressVariant, TPressMemo, TPressBinary,
    TPressPart, TPressReference, TPressParts, TPressReferences,

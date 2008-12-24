@@ -126,6 +126,7 @@ const
    oftPlainString,  // attPlainString
    oftAnsiString,  // attAnsiString
    oftInt32,      // attInteger
+   oftInt64,      // attInt64
    oftDouble,     // attDouble
    oftCurrency,   // attCurrency
    oftInt16,      // attEnum

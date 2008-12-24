@@ -621,6 +621,8 @@ begin
         ADataset.Params.ParamByName(AParamName).AsString := AValue;
       attInteger:
         ADataset.Params.ParamByName(AParamName).AsInt32 := StrToInt(AValue);
+      attInt64:
+        ADataset.Params.ParamByName(AParamName).AsInt64 := StrToInt64(AValue);
       else
         raise EPressOPFError.CreateFmt(SUnsupportedFieldType, [
          GetEnumName(TypeInfo(TPressAttributeBaseType), Ord(AIdType))]);
