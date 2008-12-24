@@ -2021,6 +2021,7 @@ begin
     FIdMetadata.Name := KeyName;
     FIdMetadata.AttributeName := KeyType;
     FIdMetadata.Size := KeySize;
+    FIdMetadata.NotNull := True;
     if GeneratorName = '' then
       FIdMetadata.GeneratorName := Model.DefaultGeneratorName
     else
