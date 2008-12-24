@@ -80,7 +80,7 @@ const
    'number(5)',      //  oftInt16
    'number(10)',     //  oftInt32
    'number(19)',     //  oftInt64
-   'binary_double',  //  oftFloat
+   'binary_double',  //  oftDouble
    'number(14,4)',   //  oftCurrency
    'number(1)',      //  oftBoolean
    'date',           //  oftDate

@@ -55,7 +55,7 @@ const
    'smallint',          //  oftInt16
    'integer',           //  oftInt32
    'bigint',            //  oftInt64
-   'double precision',  //  oftFloat
+   'double precision',  //  oftDouble
    'decimal(14,4)',     //  oftCurrency
    'smallint',          //  oftBoolean
    'date',              //  oftDate

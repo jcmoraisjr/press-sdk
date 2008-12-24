@@ -126,7 +126,7 @@ const
    oftPlainString,  // attPlainString
    oftAnsiString,  // attAnsiString
    oftInt32,      // attInteger
-   oftFloat,      // attFloat
+   oftDouble,     // attDouble
    oftCurrency,   // attCurrency
    oftInt16,      // attEnum
    oftBoolean,    // attBoolean

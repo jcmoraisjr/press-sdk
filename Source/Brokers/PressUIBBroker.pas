@@ -293,8 +293,8 @@ begin
           VDBParams.ByNameAsInteger[VParam.Name] := VParam.AsInt32;
         oftInt64:
           VDBParams.ByNameAsInt64[VParam.Name] := VParam.AsInt64;
-        oftFloat:
-          VDBParams.ByNameAsDouble[VParam.Name] := VParam.AsFloat;
+        oftDouble:
+          VDBParams.ByNameAsDouble[VParam.Name] := VParam.AsDouble;
         oftCurrency:
           VDBParams.ByNameAsCurrency[VParam.Name] := VParam.AsCurrency;
         oftBoolean:

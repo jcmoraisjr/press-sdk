@@ -135,7 +135,7 @@ type
     function GetAsBoolean: Boolean; override;
     function GetAsDate: TDate; override;
     function GetAsDateTime: TDateTime; override;
-    function GetAsFloat: Double; override;
+    function GetAsDouble: Double; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetAsTime: TTime; override;
@@ -147,7 +147,7 @@ type
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
-    procedure SetAsFloat(AValue: Double); override;
+    procedure SetAsDouble(AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
@@ -204,7 +204,7 @@ type
     procedure SetPubValue(AValue: Integer);
   protected
     procedure ClearPersistenceData; override;
-    function GetAsFloat: Double; override;
+    function GetAsDouble: Double; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetAsVariant: Variant; override;
@@ -213,7 +213,7 @@ type
     function GetValue: Integer; virtual;
     procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
-    procedure SetAsFloat(AValue: Double); override;
+    procedure SetAsDouble(AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -231,7 +231,7 @@ type
     property Value: Integer read GetValue write SetValue;
   end;
 
-  TPressFloat = class(TPressNumeric)
+  TPressDouble = class(TPressNumeric)
   private
     FDiff: Double;
     FValue: Double;
@@ -240,7 +240,7 @@ type
     procedure SetPubValue(AValue: Double);
   protected
     procedure ClearPersistenceData; override;
-    function GetAsFloat: Double; override;
+    function GetAsDouble: Double; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetAsVariant: Variant; override;
@@ -249,7 +249,7 @@ type
     function GetValue: Double; virtual;
     procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
-    procedure SetAsFloat(AValue: Double); override;
+    procedure SetAsDouble(AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -267,6 +267,11 @@ type
     property Value: Double read GetValue write SetValue;
   end;
 
+  TPressFloat = class(TPressDouble)
+  public
+    class function AttributeName: string; override;
+  end;
+
   TPressCurrency = class(TPressNumeric)
   private
     FDiff: Currency;
@@ -277,7 +282,7 @@ type
   protected
     procedure ClearPersistenceData; override;
     function GetAsCurrency: Currency; override;
-    function GetAsFloat: Double; override;
+    function GetAsDouble: Double; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetAsVariant: Variant; override;
@@ -288,7 +293,7 @@ type
     procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsCurrency(AValue: Currency); override;
-    procedure SetAsFloat(AValue: Double); override;
+    procedure SetAsDouble(AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -316,7 +321,7 @@ type
     function GetAsBoolean: Boolean; override;
     function GetAsDate: TDate; override;
     function GetAsDateTime: TDateTime; override;
-    function GetAsFloat: Double; override;
+    function GetAsDouble: Double; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetAsTime: TTime; override;
@@ -328,7 +333,7 @@ type
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
-    procedure SetAsFloat(AValue: Double); override;
+    procedure SetAsDouble(AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
@@ -354,7 +359,7 @@ type
     procedure SetPubValue(AValue: Boolean);
   protected
     function GetAsBoolean: Boolean; override;
-    function GetAsFloat: Double; override;
+    function GetAsDouble: Double; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetAsVariant: Variant; override;
@@ -364,7 +369,7 @@ type
     procedure InternalReset; override;
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsBoolean(AValue: Boolean); override;
-    procedure SetAsFloat(AValue: Double); override;
+    procedure SetAsDouble(AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -388,7 +393,7 @@ type
   protected
     function GetAsDate: TDate; override;
     function GetAsDateTime: TDateTime; override;
-    function GetAsFloat: Double; override;
+    function GetAsDouble: Double; override;
     function GetAsString: string; override;
     function GetAsTime: TTime; override;
     function GetAsVariant: Variant; override;
@@ -399,7 +404,7 @@ type
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
-    procedure SetAsFloat(AValue: Double); override;
+    procedure SetAsDouble(AValue: Double); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -423,7 +428,7 @@ type
   protected
     function GetAsDate: TDate; override;
     function GetAsDateTime: TDateTime; override;
-    function GetAsFloat: Double; override;
+    function GetAsDouble: Double; override;
     function GetAsString: string; override;
     function GetAsTime: TTime; override;
     function GetAsVariant: Variant; override;
@@ -434,7 +439,7 @@ type
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
-    procedure SetAsFloat(AValue: Double); override;
+    procedure SetAsDouble(AValue: Double); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -458,7 +463,7 @@ type
   protected
     function GetAsDate: TDate; override;
     function GetAsDateTime: TDateTime; override;
-    function GetAsFloat: Double; override;
+    function GetAsDouble: Double; override;
     function GetAsString: string; override;
     function GetAsTime: TTime; override;
     function GetAsVariant: Variant; override;
@@ -469,7 +474,7 @@ type
     function InternalTypeKinds: TTypeKinds; override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
-    procedure SetAsFloat(AValue: Double); override;
+    procedure SetAsDouble(AValue: Double); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
     procedure SetAsVariant(AValue: Variant); override;
@@ -494,7 +499,7 @@ type
     function GetAsBoolean: Boolean; override;
     function GetAsDate: TDate; override;
     function GetAsDateTime: TDateTime; override;
-    function GetAsFloat: Double; override;
+    function GetAsDouble: Double; override;
     function GetAsInteger: Integer; override;
     function GetAsString: string; override;
     function GetAsTime: TTime; override;
@@ -505,7 +510,7 @@ type
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDate(AValue: TDate); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
-    procedure SetAsFloat(AValue: Double); override;
+    procedure SetAsDouble(AValue: Double); override;
     procedure SetAsInteger(AValue: Integer); override;
     procedure SetAsString(const AValue: string); override;
     procedure SetAsTime(AValue: TTime); override;
@@ -1141,7 +1146,7 @@ begin
   end;
 end;
 
-function TPressCustomString.GetAsFloat: Double;
+function TPressCustomString.GetAsDouble: Double;
 begin
   try
     Result := StrToFloat(PubValue);
@@ -1240,7 +1245,7 @@ begin
   PubValue := DateTimeToStr(AValue);
 end;
 
-procedure TPressCustomString.SetAsFloat(AValue: Double);
+procedure TPressCustomString.SetAsDouble(AValue: Double);
 begin
   PubValue := FloatToStr(AValue);
 end;
@@ -1359,17 +1364,17 @@ end;
 
 function TPressNumeric.GetAsDate: TDate;
 begin
-  Result := Int(AsFloat);
+  Result := Int(AsDouble);
 end;
 
 function TPressNumeric.GetAsDateTime: TDateTime;
 begin
-  Result := AsFloat;
+  Result := AsDouble;
 end;
 
 function TPressNumeric.GetAsTime: TTime;
 begin
-  Result := Frac(AsFloat);
+  Result := Frac(AsDouble);
 end;
 
 function TPressNumeric.GetDisplayText: string;
@@ -1377,7 +1382,7 @@ begin
   if IsNull then
     Result := ''
   else if EditMask <> '' then
-    Result := FormatFloat(EditMask, AsFloat)
+    Result := FormatFloat(EditMask, AsDouble)
   else
     Result := AsString;
 end;
@@ -1389,17 +1394,17 @@ end;
 
 procedure TPressNumeric.SetAsDate(AValue: TDate);
 begin
-  AsFloat := Int(AValue);
+  AsDouble := Int(AValue);
 end;
 
 procedure TPressNumeric.SetAsDateTime(AValue: TDateTime);
 begin
-  AsFloat := AValue;
+  AsDouble := AValue;
 end;
 
 procedure TPressNumeric.SetAsTime(AValue: TTime);
 begin
-  AsFloat := Frac(AValue);
+  AsDouble := Frac(AValue);
 end;
 
 { TPressInteger }
@@ -1441,7 +1446,7 @@ begin
   Result := 0;
 end;
 
-function TPressInteger.GetAsFloat: Double;
+function TPressInteger.GetAsDouble: Double;
 begin
   Result := PubValue;
 end;
@@ -1516,7 +1521,7 @@ begin
   Result := [tkInteger];
 end;
 
-procedure TPressInteger.SetAsFloat(AValue: Double);
+procedure TPressInteger.SetAsDouble(AValue: Double);
 begin
   PubValue := Round(AValue);
 end;
@@ -1577,56 +1582,56 @@ begin
   end;
 end;
 
-{ TPressFloat }
+{ TPressDouble }
 
-procedure TPressFloat.Assign(Source: TPersistent);
+procedure TPressDouble.Assign(Source: TPersistent);
 begin
-  if (Source is TPressFloat) and (TPressFloat(Source).State = asValue) then
-    PubValue := TPressFloat(Source).PubValue
+  if (Source is TPressDouble) and (TPressDouble(Source).State = asValue) then
+    PubValue := TPressDouble(Source).PubValue
   else
     inherited;
 end;
 
-class function TPressFloat.AttributeBaseType: TPressAttributeBaseType;
+class function TPressDouble.AttributeBaseType: TPressAttributeBaseType;
 begin
-  Result := attFloat;
+  Result := attDouble;
 end;
 
-class function TPressFloat.AttributeName: string;
+class function TPressDouble.AttributeName: string;
 begin
-  if Self = TPressFloat then
-    Result := 'Float'
+  if Self = TPressDouble then
+    Result := 'Double'
   else
     Result := ClassName;
 end;
 
-procedure TPressFloat.ClearPersistenceData;
+procedure TPressDouble.ClearPersistenceData;
 begin
   inherited;
   FDiff := 0;
 end;
 
-procedure TPressFloat.Decrement(AValue: Double);
+procedure TPressDouble.Decrement(AValue: Double);
 begin
   Increment(-AValue);
 end;
 
-class function TPressFloat.EmptyValue: Variant;
+class function TPressDouble.EmptyValue: Variant;
 begin
   Result := 0.0;
 end;
 
-function TPressFloat.GetAsFloat: Double;
+function TPressDouble.GetAsDouble: Double;
 begin
   Result := PubValue;
 end;
 
-function TPressFloat.GetAsInteger: Integer;
+function TPressDouble.GetAsInteger: Integer;
 begin
   Result := Round(PubValue);
 end;
 
-function TPressFloat.GetAsString: string;
+function TPressDouble.GetAsString: string;
 begin
   if IsNull then
     Result := ''
@@ -1634,27 +1639,27 @@ begin
     Result := FloatToStr(PubValue);
 end;
 
-function TPressFloat.GetAsVariant: Variant;
+function TPressDouble.GetAsVariant: Variant;
 begin
   Result := PubValue;
 end;
 
-function TPressFloat.GetIsEmpty: Boolean;
+function TPressDouble.GetIsEmpty: Boolean;
 begin
   Result := PubValue = 0;
 end;
 
-function TPressFloat.GetIsRelativelyChanged: Boolean;
+function TPressDouble.GetIsRelativelyChanged: Boolean;
 begin
   Result := FDiff <> 0;
 end;
 
-function TPressFloat.GetOldValue: Double;
+function TPressDouble.GetOldValue: Double;
 begin
-  Result := (OldAttribute as TPressFloat).Value;
+  Result := (OldAttribute as TPressDouble).Value;
 end;
 
-function TPressFloat.GetPubValue: Double;
+function TPressDouble.GetPubValue: Double;
 begin
   if UsePublishedGetter then
     Result := GetFloatProp(Owner, Metadata.Name)
@@ -1662,13 +1667,13 @@ begin
     Result := Value;
 end;
 
-function TPressFloat.GetValue: Double;
+function TPressDouble.GetValue: Double;
 begin
   Synchronize;
   Result := FValue;
 end;
 
-procedure TPressFloat.Increment(AValue: Double);
+procedure TPressDouble.Increment(AValue: Double);
 begin
   if (AValue <> 0) and (State <> asNull) then
   begin
@@ -1680,28 +1685,28 @@ begin
   end;
 end;
 
-procedure TPressFloat.InternalReset;
+procedure TPressDouble.InternalReset;
 begin
   inherited;
   FValue := 0;
 end;
 
-function TPressFloat.InternalTypeKinds: TTypeKinds;
+function TPressDouble.InternalTypeKinds: TTypeKinds;
 begin
   Result := [tkFloat];
 end;
 
-procedure TPressFloat.SetAsFloat(AValue: Double);
+procedure TPressDouble.SetAsDouble(AValue: Double);
 begin
   PubValue := AValue;
 end;
 
-procedure TPressFloat.SetAsInteger(AValue: Integer);
+procedure TPressDouble.SetAsInteger(AValue: Integer);
 begin
   PubValue := AValue;
 end;
 
-procedure TPressFloat.SetAsString(const AValue: string);
+procedure TPressDouble.SetAsString(const AValue: string);
 begin
   try
     if AValue = '' then
@@ -1716,7 +1721,7 @@ begin
   end;
 end;
 
-procedure TPressFloat.SetAsVariant(AValue: Variant);
+procedure TPressDouble.SetAsVariant(AValue: Variant);
 begin
   try
     if VarIsEmpty(AValue) or VarIsNull(AValue) then
@@ -1731,7 +1736,7 @@ begin
   end;
 end;
 
-procedure TPressFloat.SetPubValue(AValue: Double);
+procedure TPressDouble.SetPubValue(AValue: Double);
 begin
   if UsePublishedSetter then
     SetFloatProp(Owner, Metadata.Name, AValue)
@@ -1739,7 +1744,7 @@ begin
     Value := AValue;
 end;
 
-procedure TPressFloat.SetValue(AValue: Double);
+procedure TPressDouble.SetValue(AValue: Double);
 begin
   if State = asNotLoaded then
     Synchronize;
@@ -1750,6 +1755,16 @@ begin
     FDiff := 0;
     ValueAssigned;
   end;
+end;
+
+{ TPressFloat }
+
+class function TPressFloat.AttributeName: string;
+begin
+  if Self = TPressFloat then
+    Result := 'Float'
+  else
+    Result := ClassName;
 end;
 
 { TPressCurrency }
@@ -1796,7 +1811,7 @@ begin
   Result := PubValue;
 end;
 
-function TPressCurrency.GetAsFloat: Double;
+function TPressCurrency.GetAsDouble: Double;
 begin
   Result := PubValue;
 end;
@@ -1886,7 +1901,7 @@ begin
   PubValue := AValue;
 end;
 
-procedure TPressCurrency.SetAsFloat(AValue: Double);
+procedure TPressCurrency.SetAsDouble(AValue: Double);
 begin
   PubValue := AValue;
 end;
@@ -1990,7 +2005,7 @@ begin
   Result := PubValue;
 end;
 
-function TPressEnum.GetAsFloat: Double;
+function TPressEnum.GetAsDouble: Double;
 begin
   Result := PubValue;
 end;
@@ -2076,7 +2091,7 @@ begin
   PubValue := Trunc(AValue);
 end;
 
-procedure TPressEnum.SetAsFloat(AValue: Double);
+procedure TPressEnum.SetAsDouble(AValue: Double);
 begin
   PubValue := Round(AValue);
 end;
@@ -2179,7 +2194,7 @@ begin
   Result := PubValue;
 end;
 
-function TPressBoolean.GetAsFloat: Double;
+function TPressBoolean.GetAsDouble: Double;
 begin
   Result := AsInteger;
 end;
@@ -2265,7 +2280,7 @@ begin
   PubValue := AValue;
 end;
 
-procedure TPressBoolean.SetAsFloat(AValue: Double);
+procedure TPressBoolean.SetAsDouble(AValue: Double);
 begin
   AsInteger := Round(AValue);
 end;
@@ -2360,7 +2375,7 @@ begin
   Result := PubValue;
 end;
 
-function TPressDate.GetAsFloat: Double;
+function TPressDate.GetAsDouble: Double;
 begin
   Result := PubValue;
 end;
@@ -2447,7 +2462,7 @@ begin
   PubValue := AValue;
 end;
 
-procedure TPressDate.SetAsFloat(AValue: Double);
+procedure TPressDate.SetAsDouble(AValue: Double);
 begin
   PubValue := AValue;
 end;
@@ -2550,7 +2565,7 @@ begin
   Result := PubValue;
 end;
 
-function TPressTime.GetAsFloat: Double;
+function TPressTime.GetAsDouble: Double;
 begin
   Result := PubValue;
 end;
@@ -2631,7 +2646,7 @@ begin
   PubValue := AValue;
 end;
 
-procedure TPressTime.SetAsFloat(AValue: Double);
+procedure TPressTime.SetAsDouble(AValue: Double);
 begin
   PubValue := AValue;
 end;
@@ -2729,7 +2744,7 @@ begin
   Result := PubValue;
 end;
 
-function TPressDateTime.GetAsFloat: Double;
+function TPressDateTime.GetAsDouble: Double;
 begin
   Result := PubValue;
 end;
@@ -2820,7 +2835,7 @@ begin
   PubValue := AValue;
 end;
 
-procedure TPressDateTime.SetAsFloat(AValue: Double);
+procedure TPressDateTime.SetAsDouble(AValue: Double);
 begin
   PubValue := AValue;
 end;
@@ -2958,7 +2973,7 @@ begin
   end;
 end;
 
-function TPressVariant.GetAsFloat: Double;
+function TPressVariant.GetAsDouble: Double;
 var
   VValue: Variant;
 begin
@@ -3071,7 +3086,7 @@ begin
   PubValue := AValue;
 end;
 
-procedure TPressVariant.SetAsFloat(AValue: Double);
+procedure TPressVariant.SetAsDouble(AValue: Double);
 begin
   PubValue := AValue;
 end;

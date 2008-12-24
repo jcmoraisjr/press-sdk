@@ -1700,8 +1700,8 @@ begin
           Result := CompareStrings(VAttr1.AsString, VAttr2.AsString);
         attInteger:
           Result := CompareIntegers(VAttr1.AsInteger, VAttr2.AsInteger);
-        attFloat, attCurrency, attDate, attTime, attDateTime:
-          Result := CompareFloats(VAttr1.AsFloat, VAttr2.AsFloat);
+        attDouble, attCurrency, attDate, attTime, attDateTime:
+          Result := CompareFloats(VAttr1.AsDouble, VAttr2.AsDouble);
         attEnum:
           Result := CompareEnums(TPressEnum(VAttr1), TPressEnum(VAttr2));
         attVariant:

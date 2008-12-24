@@ -283,7 +283,7 @@ type
   end;
 
   TPressAttributeBaseType = (attUnknown, attPlainString, attAnsiString,
-   attInteger, attFloat, attCurrency, attEnum, attBoolean,
+   attInteger, attDouble, attCurrency, attEnum, attBoolean,
    attDate, attTime, attDateTime, attVariant,
    attMemo, attBinary, attPicture,
    attPart, attReference, attParts, attReferences);
@@ -1016,6 +1016,7 @@ type
     FUsePublishedGetter: Boolean;
     FUsePublishedSetter: Boolean;
     function CreateMemento: TPressAttributeMemento;
+    function GetAsFloat: Double;
     function GetDefaultValue: string;
     function GetEditMask: string;
     function GetIsCalcAttribute: Boolean;
@@ -1029,6 +1030,7 @@ type
     function GetUsePublishedSetter: Boolean;
     procedure InitPropInfo;
     function GetSession: IPressSession;
+    procedure SetAsFloat(AValue: Double);
   protected
     procedure AddSessionIntf(const ASession: IPressSession); virtual;
     function AccessError(const AAttributeName: string): EPressError;
@@ -1045,7 +1047,7 @@ type
     function GetAsCurrency: Currency; virtual;
     function GetAsDate: TDate; virtual;
     function GetAsDateTime: TDateTime; virtual;
-    function GetAsFloat: Double; virtual;
+    function GetAsDouble: Double; virtual;
     function GetAsInteger: Integer; virtual;
     function GetAsString: string; virtual;
     function GetAsTime: TTime; virtual;
@@ -1066,7 +1068,7 @@ type
     procedure SetAsCurrency(AValue: Currency); virtual;
     procedure SetAsDate(AValue: TDate); virtual;
     procedure SetAsDateTime(AValue: TDateTime); virtual;
-    procedure SetAsFloat(AValue: Double); virtual;
+    procedure SetAsDouble(AValue: Double); virtual;
     procedure SetAsInteger(AValue: Integer); virtual;
     procedure SetAsString(const AValue: string); virtual;
     procedure SetAsTime(AValue: TTime); virtual;
@@ -1096,6 +1098,7 @@ type
     property AsCurrency: Currency read GetAsCurrency write SetAsCurrency;
     property AsDate: TDate read GetAsDate write SetAsDate;
     property AsDateTime: TDateTime read GetAsDateTime write SetAsDateTime;
+    property AsDouble: Double read GetAsDouble write SetAsDouble;
     property AsFloat: Double read GetAsFloat write SetAsFloat;
     property AsInteger: Integer read GetAsInteger write SetAsInteger;
     property AsString: string read GetAsString write SetAsString;
@@ -1652,7 +1655,7 @@ begin
       implementing metadata inheritance per attribute class }
     if FSize = 0 then
       if FAttributeClass.AttributeBaseType in [
-       attInteger, attFloat, attCurrency, attEnum, attBoolean,
+       attInteger, attDouble, attCurrency, attEnum, attBoolean,
        attDate, attTime] then
         FSize := 10
       else if FAttributeClass = TPressDateTime then
@@ -3779,7 +3782,7 @@ begin
       Result := ''
   else if SameText(Token, 'FormatFloat') and (AAttr is TPressNumeric) then
     if Assigned(AAttr) then
-      Result := FormatFloat(ReadParams(Reader, 1, 1)[0], AAttr.AsFloat)
+      Result := FormatFloat(ReadParams(Reader, 1, 1)[0], AAttr.AsDouble)
     else
       Result := ''
   else if SameText(Token, 'FormatDateTime') and ((AAttr is TPressDate) or
@@ -4937,7 +4940,7 @@ end;
 
 function TPressAttribute.GetAsCurrency: Currency;
 begin
-  Result := AsFloat;
+  Result := AsDouble;
 end;
 
 function TPressAttribute.GetAsDate: TDate;
@@ -4950,9 +4953,14 @@ begin
   raise AccessError(TPressDateTime.AttributeName);
 end;
 
+function TPressAttribute.GetAsDouble: Double;
+begin
+  raise AccessError(TPressDouble.AttributeName);
+end;
+
 function TPressAttribute.GetAsFloat: Double;
 begin
-  raise AccessError(TPressFloat.AttributeName);
+  Result := AsDouble;
 end;
 
 function TPressAttribute.GetAsInteger: Integer;
@@ -5171,7 +5179,7 @@ end;
 
 procedure TPressAttribute.SetAsCurrency(AValue: Currency);
 begin
-  AsFloat := AValue;
+  AsDouble := AValue;
 end;
 
 procedure TPressAttribute.SetAsDate(AValue: TDate);
@@ -5184,9 +5192,14 @@ begin
   raise AccessError(TPressDateTime.AttributeName);
 end;
 
+procedure TPressAttribute.SetAsDouble(AValue: Double);
+begin
+  raise AccessError(TPressDouble.AttributeName);
+end;
+
 procedure TPressAttribute.SetAsFloat(AValue: Double);
 begin
-  raise AccessError(TPressFloat.AttributeName);
+  AsDouble := AValue;
 end;
 
 procedure TPressAttribute.SetAsInteger(AValue: Integer);
@@ -5521,7 +5534,7 @@ end;
 initialization
   PressModel.RegisterClasses([TPressObject, TPressQuery]);
   PressModel.RegisterAttributes([TPressPlainString, TPressAnsiString,
-   TPressString, TPressInteger, TPressFloat, TPressCurrency,
+   TPressString, TPressInteger, TPressDouble, TPressFloat, TPressCurrency,
    TPressEnum, TPressBoolean, TPressDate, TPressTime,
    TPressDateTime, TPressVariant, TPressMemo, TPressBinary,
    TPressPart, TPressReference, TPressParts, TPressReferences,
@@ -5530,7 +5543,7 @@ initialization
 finalization
   PressModel.UnregisterClasses([TPressQuery]);
   PressModel.UnregisterAttributes([TPressPlainString, TPressAnsiString,
-   TPressString, TPressInteger, TPressFloat, TPressCurrency,
+   TPressString, TPressInteger, TPressDouble, TPressFloat, TPressCurrency,
    TPressEnum, TPressBoolean, TPressDate, TPressTime,
    TPressDateTime, TPressVariant, TPressMemo, TPressBinary,
    TPressPart, TPressReference, TPressParts, TPressReferences,

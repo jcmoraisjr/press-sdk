@@ -778,7 +778,7 @@ class function TPressMVPFloatInteractor.Apply(
   APresenter: TPressMVPPresenter): Boolean;
 begin
   Result := inherited Apply(APresenter) and
-   (APresenter.Model.SubjectMetadata.Supports(TPressFloat) or
+   (APresenter.Model.SubjectMetadata.Supports(TPressDouble) or
    APresenter.Model.SubjectMetadata.Supports(TPressCurrency));
 end;
 

@@ -58,7 +58,7 @@ begin
     ftLargeint:
       Result := oftInt64;
     ftFloat:
-      Result := oftFloat;
+      Result := oftDouble;
     ftCurrency, ftBCD:
       Result := oftCurrency;
     ftBoolean:
@@ -88,7 +88,7 @@ const
    ftSmallint,  //  oftInt16
    ftInteger,   //  oftInt32
    ftLargeint,  //  oftInt64
-   ftFloat,     //  oftFloat
+   ftFloat,     //  oftDouble
    ftCurrency,  //  oftCurrency
    ftBoolean,   //  oftBoolean
    ftDate,      //  oftDate
@@ -155,8 +155,8 @@ begin
 {$else}
           AParams.ParamByName(VParam.Name).AsInteger := VParam.AsInt64;
 {$endif}
-        oftFloat:
-          AParams.ParamByName(VParam.Name).AsFloat := VParam.AsFloat;
+        oftDouble:
+          AParams.ParamByName(VParam.Name).AsFloat := VParam.AsDouble;
         oftCurrency:
           AParams.ParamByName(VParam.Name).AsCurrency := VParam.AsCurrency;
         oftBoolean:

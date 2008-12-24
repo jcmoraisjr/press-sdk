@@ -206,7 +206,7 @@ begin
         Result := oftCurrency;
     SQL_FLOAT, SQL_DOUBLE, SQL_D_FLOAT:
       if AScale = 0 then
-        Result := oftFloat
+        Result := oftDouble
       else
         Result := oftCurrency;
     SQL_DATE, SQL_TYPE_DATE, SQL_TYPE_TIME:  // SQL_TIMESTAMP
@@ -307,8 +307,8 @@ begin
           VQuery.ParamByNameAsLong(VParam.Name, VParam.AsInt32);
         oftInt64:
           VQuery.ParamByNameAsInt64(VParam.Name, VParam.AsInt64);
-        oftFloat, oftCurrency:  // what about currency?
-          VQuery.ParamByNameAsDouble(VParam.Name, VParam.AsFloat);
+        oftDouble, oftCurrency:  // what about currency?
+          VQuery.ParamByNameAsDouble(VParam.Name, VParam.AsDouble);
         oftBoolean:
           VQuery.ParamByNameAsShort(VParam.Name, VParam.AsInt16);
         oftDate, oftTime, oftDateTime:
@@ -339,7 +339,7 @@ begin
 {$else}
          Query.FieldAsInt64(AIndex);
 {$endif}
-      oftFloat, oftCurrency:
+      oftDouble, oftCurrency:
         ADataRow[AIndex].Value := Query.FieldAsDouble(AIndex);
       oftDate, oftTime, oftDateTime:
         ADataRow[AIndex].Value := Query.FieldAsDateTime(AIndex);

@@ -27,7 +27,7 @@ type
   EPressOPFError = class(EPressError);
 
   TPressOPFFieldType = (oftUnknown, oftPlainString, oftAnsiString,
-   oftInt16, oftInt32, oftInt64, oftFloat, oftCurrency,
+   oftInt16, oftInt32, oftInt64, oftDouble, oftCurrency,
    oftBoolean, oftDate, oftTime, oftDateTime,
    oftMemo, oftBinary);
 
@@ -42,7 +42,7 @@ type
     function GetAsCurrency: Currency;
     function GetAsDate: TDateTime;
     function GetAsDateTime: TDateTime;
-    function GetAsFloat: Double;
+    function GetAsDouble: Double;
     function GetAsInt16: Smallint;
     function GetAsInt32: Integer;
     function GetAsInt64: Int64;
@@ -53,7 +53,7 @@ type
     procedure SetAsCurrency(AValue: Currency);
     procedure SetAsDate(AValue: TDateTime);
     procedure SetAsDateTime(AValue: TDateTime);
-    procedure SetAsFloat(AValue: Double);
+    procedure SetAsDouble(AValue: Double);
     procedure SetAsInt16(AValue: Smallint);
     procedure SetAsInt32(AValue: Integer);
     procedure SetAsInt64(AValue: Int64);
@@ -71,7 +71,7 @@ type
     property AsCurrency: Currency read GetAsCurrency write SetAsCurrency;
     property AsDate: TDateTime read GetAsDate write SetAsDate;
     property AsDateTime: TDateTime read GetAsDateTime write SetAsDateTime;
-    property AsFloat: Double read GetAsFloat write SetAsFloat;
+    property AsDouble: Double read GetAsDouble write SetAsDouble;
     property AsInt16: Smallint read GetAsInt16 write SetAsInt16;
     property AsInt32: Integer read GetAsInt32 write SetAsInt32;
     property AsInt64: Int64 read GetAsInt64 write SetAsInt64;
@@ -184,7 +184,7 @@ begin
     Result := 0;
 end;
 
-function TPressOPFParam.GetAsFloat: Double;
+function TPressOPFParam.GetAsDouble: Double;
 begin
   if not IsNull then
     Result := FValue
@@ -267,10 +267,10 @@ begin
   ValueAssigned;
 end;
 
-procedure TPressOPFParam.SetAsFloat(AValue: Double);
+procedure TPressOPFParam.SetAsDouble(AValue: Double);
 begin
   FValue := AValue;
-  FDataType := oftFloat;
+  FDataType := oftDouble;
   ValueAssigned;
 end;
 
@@ -324,7 +324,7 @@ begin
     varInteger:
       FDataType := oftInt32;
     varSingle, varDouble:
-      FDataType := oftFloat;
+      FDataType := oftDouble;
     varCurrency:
       FDataType := oftCurrency;
     varDate:
@@ -373,8 +373,8 @@ begin
       VParam.AsString := AParam.Value;
     attInteger:
       VParam.AsInt32 := AParam.Value;
-    attFloat:
-      VParam.AsFloat := AParam.Value;
+    attDouble:
+      VParam.AsDouble := AParam.Value;
     attCurrency:
       VParam.AsCurrency := AParam.Value;
     attEnum:

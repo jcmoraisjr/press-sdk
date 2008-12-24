@@ -269,7 +269,7 @@ procedure TPressDOADataset.PopulateDOAParams;
      otInteger,    // oftInt16
      otInteger,    // oftInt32
      otInteger,    // oftInt64
-     otFloat,      // oftFloat
+     otFloat,      // oftDouble
      otFloat,      // oftCurrency
      otInteger,    // oftBoolean
      otDate,       // oftDate

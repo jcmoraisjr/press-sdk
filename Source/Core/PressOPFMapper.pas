@@ -486,11 +486,11 @@ procedure TPressOPFAttributeMapper.AddAttributeParam(
             VParam.AsInt32 := TPressInteger(AValue).Diff
           else
             VParam.AsInt32 := AValue.AsInteger;
-        attFloat:
-          if (AValue as TPressFloat).IsRelativelyChanged then
-            VParam.AsFloat := TPressFloat(AValue).Diff
+        attDouble:
+          if (AValue as TPressDouble).IsRelativelyChanged then
+            VParam.AsDouble := TPressDouble(AValue).Diff
           else
-            VParam.AsFloat := AValue.AsFloat;
+            VParam.AsDouble := AValue.AsDouble;
         attCurrency:
           if (AValue as TPressCurrency).IsRelativelyChanged then
             VParam.AsCurrency := TPressCurrency(AValue).Diff
