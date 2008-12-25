@@ -46,12 +46,13 @@ type
   private
     FAliasName: string;
     FAttributeMetadata: TPressAttributeMetadata;
+    FInnerJoin: Boolean;
     FObjectMetadata: TPressObjectMetadata;
     FReferencedAliasName: string;
     FReferencedFieldName: string;
     function GetAsString: string;
   public
-    constructor Create(AObjectMetadata: TPressObjectMetadata; AAttributeMetadata: TPressAttributeMetadata; const ATableAliasPrefix, AReferencedAlias: string; AId: Integer);
+    constructor Create(AObjectMetadata: TPressObjectMetadata; AAttributeMetadata: TPressAttributeMetadata; const ATableAliasPrefix, AReferencedAlias: string; AInnerJoin: Boolean; AId: Integer);
     property AliasName: string read FAliasName;
     property AsString: string read GetAsString;
     property ObjectMetadata: TPressObjectMetadata read FObjectMetadata;
@@ -66,7 +67,7 @@ type
     function FindReference(AMetadata: TPressObjectMetadata): TPressOQLTableReference;
     function GetAsString: string;
     function GetList: TObjectList;
-    function NewAttribute(const AReferencedAlias: string; AObjectMetadata: TPressObjectMetadata; AAttributeMetadata: TPressAttributeMetadata): string;
+    function NewAttribute(const AReferencedAlias: string; AObjectMetadata: TPressObjectMetadata; AAttributeMetadata: TPressAttributeMetadata; AInnerJoin: Boolean): string;
   protected
     property List: TObjectList read GetList;
   public
@@ -360,7 +361,8 @@ end;
 constructor TPressOQLTableReference.Create(
   AObjectMetadata: TPressObjectMetadata;
   AAttributeMetadata: TPressAttributeMetadata;
-  const ATableAliasPrefix, AReferencedAlias: string; AId: Integer);
+  const ATableAliasPrefix, AReferencedAlias: string;
+  AInnerJoin: Boolean; AId: Integer);
 begin
   inherited Create;
   if AObjectMetadata = AAttributeMetadata.BaseMetadata.Owner then
@@ -376,13 +378,16 @@ begin
      AAttributeMetadata.Owner.ObjectClassName, AAttributeMetadata.Name]);
   FObjectMetadata := AObjectMetadata;
   FAttributeMetadata := AAttributeMetadata;
+  FInnerJoin := AInnerJoin;
   FAliasName := ATableAliasPrefix + IntToStr(AId);
   FReferencedAliasName := AReferencedAlias;
 end;
 
 function TPressOQLTableReference.GetAsString: string;
+const
+  CJoin: array[Boolean] of string = ('left outer', 'inner');
 begin
-  Result := Format('left outer join %s %s on %s.%s = %1:s.%4:s', [
+  Result := Format('%s join %s %s on %s.%s = %2:s.%5:s', [CJoin[FInnerJoin],
    FObjectMetadata.PersistentName, FAliasName, FReferencedAliasName,
    FReferencedFieldName, FObjectMetadata.IdMetadata.PersistentName]);
 end;
@@ -445,7 +450,7 @@ end;
 
 function TPressOQLTableReferences.NewAttribute(const AReferencedAlias: string;
   AObjectMetadata: TPressObjectMetadata;
-  AAttributeMetadata: TPressAttributeMetadata): string;
+  AAttributeMetadata: TPressAttributeMetadata; AInnerJoin: Boolean): string;
 var
   VReference: TPressOQLTableReference;
 begin
@@ -457,7 +462,7 @@ begin
     begin
       VReference := TPressOQLTableReference.Create(
        AObjectMetadata, AAttributeMetadata,
-       FTableAliasPrefix, AReferencedAlias, Succ(List.Count));
+       FTableAliasPrefix, AReferencedAlias, AInnerJoin, Succ(List.Count));
       List.Add(VReference);
     end;
     Result := VReference.AliasName;
@@ -472,7 +477,8 @@ begin
     raise EPressError.CreateFmt(SUnsupportedAttribute, [
      AAttributeMetadata.Owner.ObjectClassName, AAttributeMetadata.Name]);
   Result := NewAttribute(AReferencedAlias,
-   AAttributeMetadata.ObjectClassMetadata, AAttributeMetadata);
+   AAttributeMetadata.ObjectClassMetadata, AAttributeMetadata,
+   AAttributeMetadata.AttributeClass.AttributeBaseType in [attPart, attParts]);
 end;
 
 function TPressOQLTableReferences.NewValue(const AReferencedAlias: string;
@@ -482,7 +488,7 @@ begin
     raise EPressError.CreateFmt(SUnsupportedAttribute, [
      AAttributeMetadata.Owner.ObjectClassName, AAttributeMetadata.Name]);
   Result := NewAttribute(AReferencedAlias,
-   AAttributeMetadata.BaseMetadata.Owner, AAttributeMetadata);
+   AAttributeMetadata.BaseMetadata.Owner, AAttributeMetadata, True);
 end;
 
 { TPressOQLSelectStatement }
