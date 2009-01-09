@@ -1265,12 +1265,9 @@ begin
 end;
 
 procedure TPressMVPCleanupFormInteractor.Notify(AEvent: TPressEvent);
-var
-  VModel: TPressMVPObjectModel;
 begin
   inherited;
-  VModel := Owner.Model;
-  VModel.Subject := (VModel.Subject.OwnerAttribute as TPressItems).Add;
+  Owner.Model.CleanUp;
   Owner.FormView.ResetForm;
 end;
 

@@ -518,6 +518,7 @@ type
     class function Apply(ASubjectMetadata: TPressSubjectMetadata): Boolean; override;
     procedure AssignOwnerModel(AOwnerModel: TPressMVPStructureModel);
     function CanSaveObject: Boolean;
+    procedure CleanUp;
     procedure Refresh;
     procedure RevertChanges;
     procedure Store;
@@ -2135,6 +2136,22 @@ end;
 function TPressMVPObjectModel.CanSaveObject: Boolean;
 begin
   TPressMVPObjectModelCanSaveEvent.Create(Self, Result).Notify;
+end;
+
+procedure TPressMVPObjectModel.CleanUp;
+var
+  VOwnerAttribute: TPressStructure;
+  VObject: TPressObject;
+begin
+  VOwnerAttribute := Subject.OwnerAttribute;
+  if VOwnerAttribute is TPressItems then
+  begin
+    VObject := TPressItems(VOwnerAttribute).Add;
+    VObject.AddRef;
+  end else
+    VObject := SubjectMetadata.ObjectClass.Create;
+  Subject := VObject;
+  VObject.Release;
 end;
 
 constructor TPressMVPObjectModel.Create(
