@@ -187,11 +187,16 @@ end;
 procedure TPressOPFObjectMapper.CheckGenerators(AObject: TPressObject);
 
   procedure CheckAttr(AAttribute: TPressAttribute);
+  var
+    I: Integer;
   begin
     if (AAttribute.Metadata.GeneratorName <> '') and AAttribute.IsNull and
      (AAttribute is TPressValue) then
       AAttribute.AsInt64 :=
        GenerateId(AAttribute.Metadata.GeneratorName);
+    if AAttribute is TPressItems then
+      for I := 0 to Pred(TPressItems(AAttribute).Count) do
+        CheckGenerators(TPressItems(AAttribute)[I]);
   end;
 
 var
@@ -223,9 +228,19 @@ begin
 end;
 
 procedure TPressOPFObjectMapper.CheckOID(AObject: TPressObject);
+var
+  VAttribute: TPressAttribute;
+  I, J: Integer;
 begin
   if AObject.Id = '' then
     AObject.Id := Persistence.GenerateOID(AObject.Attributes[0]);
+  for I := 0 to Pred(AObject.AttributeCount) do
+  begin
+    VAttribute := AObject.Attributes[I];
+    if VAttribute is TPressItems then
+      for J := 0 to Pred(TPressItems(VAttribute).Count) do
+        CheckGenerators(TPressItems(VAttribute)[J]);
+  end;
 end;
 
 constructor TPressOPFObjectMapper.Create(APersistence: TPressPersistence;
