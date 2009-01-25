@@ -2278,12 +2278,15 @@ begin
 end;
 
 procedure TPressMVPObjectModel.RevertChanges;
+var
+  VSubject: TPressObject;
 begin
   if HasSubject then
   begin
-    if IsIncluding and Assigned(HookedSubject) then
-      HookedSubject.UnassignObject(Subject);
-    Subject.Memento.Restore(FSavePoint);
+    VSubject := Subject;
+    if Assigned(HookedSubject) and not Session.IsPersistent(VSubject) then
+      HookedSubject.UnassignObject(VSubject);
+    VSubject.Memento.Restore(FSavePoint);
   end;
 end;
 
