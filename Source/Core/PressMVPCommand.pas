@@ -224,19 +224,47 @@ type
     procedure InternalExecute; override;
   end;
 
-  TPressMVPSaveObjectCommand = class(TPressMVPObjectCommand)
+  TPressMVPCustomSaveObjectCommand = class(TPressMVPObjectCommand)
+  private
+    FCleanUpAfterSave: Boolean;
+    FCloseAfterSave: Boolean;
+    FConfirmSave: Boolean;
   protected
     function GetCaption: string; override;
     function GetShortCut: TShortCut; override;
+    procedure InitCommand; override;
+    function InternalCleanUpAfterSave: Boolean; virtual;
+    function InternalCloseAfterSave: Boolean; virtual;
     function InternalConfirm: Boolean; virtual;
+    function InternalConfirmSave: Boolean; virtual;
     procedure InternalExecute; override;
+    procedure InternalFinalizeSave; virtual;
     function InternalIsEnabled: Boolean; override;
     procedure InternalStoreObject; virtual;
+  public
+    property CleanUpAfterSave: Boolean read FCleanUpAfterSave write FCleanUpAfterSave;
+    property CloseAfterSave: Boolean read FCloseAfterSave write FCloseAfterSave;
+    property ConfirmSave: Boolean read FConfirmSave write FConfirmSave;
+  end;
+
+  TPressMVPSaveObjectCommand = class(TPressMVPCustomSaveObjectCommand)
+  protected
+    procedure Running; override;
+  end;
+
+  TPressMVPSaveContinueObjectCommand = class(TPressMVPCustomSaveObjectCommand)
+  protected
+    procedure InitCommand; override;
+  end;
+
+  TPressMVPSaveCleanUpObjectCommand = class(TPressMVPCustomSaveObjectCommand)
+  protected
+    procedure InitCommand; override;
   end;
 
   TPressMVPSaveConfirmObjectCommand = class(TPressMVPSaveObjectCommand)
   protected
-    function InternalConfirm: Boolean; override;
+    procedure InitCommand; override;
   end;
 
   TPressMVPFinishObjectCommand = class(TPressMVPObjectCommand)
@@ -246,15 +274,21 @@ type
   end;
 
   TPressMVPCancelObjectCommand = class(TPressMVPFinishObjectCommand)
+  private
+    FConfirmCancel: Boolean;
   protected
     function GetCaption: string; override;
+    procedure InitCommand; override;
     function InternalConfirm: Boolean; virtual;
+    function InternalConfirmCancel: Boolean; virtual;
     procedure InternalExecute; override;
+  public
+    property ConfirmCancel: Boolean read FConfirmCancel write FConfirmCancel;
   end;
 
   TPressMVPCancelConfirmObjectCommand = class(TPressMVPCancelObjectCommand)
   protected
-    function InternalConfirm: Boolean; override;
+    procedure InitCommand; override;
   end;
 
   TPressMVPCloseObjectCommand = class(TPressMVPFinishObjectCommand)
@@ -804,24 +838,47 @@ begin
   Model.Refresh;
 end;
 
-{ TPressMVPSaveObjectCommand }
+{ TPressMVPCustomSaveObjectCommand }
 
-function TPressMVPSaveObjectCommand.GetCaption: string;
+function TPressMVPCustomSaveObjectCommand.GetCaption: string;
 begin
   Result := SPressSaveFormCommand;
 end;
 
-function TPressMVPSaveObjectCommand.GetShortCut: TShortCut;
+function TPressMVPCustomSaveObjectCommand.GetShortCut: TShortCut;
 begin
   Result := SPressSaveCommandShortCut;
 end;
 
-function TPressMVPSaveObjectCommand.InternalConfirm: Boolean;
+procedure TPressMVPCustomSaveObjectCommand.InitCommand;
 begin
-  Result := True;
+  inherited;
+  FCleanUpAfterSave := True;
+  FCloseAfterSave := True;
+  FConfirmSave := False;
 end;
 
-procedure TPressMVPSaveObjectCommand.InternalExecute;
+function TPressMVPCustomSaveObjectCommand.InternalCleanUpAfterSave: Boolean;
+begin
+  Result := CleanUpAfterSave;
+end;
+
+function TPressMVPCustomSaveObjectCommand.InternalCloseAfterSave: Boolean;
+begin
+  Result := CloseAfterSave;
+end;
+
+function TPressMVPCustomSaveObjectCommand.InternalConfirm: Boolean;
+begin
+  Result := PressDialog.SaveChanges;
+end;
+
+function TPressMVPCustomSaveObjectCommand.InternalConfirmSave: Boolean;
+begin
+  Result := ConfirmSave;
+end;
+
+procedure TPressMVPCustomSaveObjectCommand.InternalExecute;
 var
   VModel: TPressMVPObjectModel;
 begin
@@ -831,34 +888,68 @@ begin
   begin
     if not VModel.Subject.IsUpdated then
     begin
-      if not InternalConfirm then
+      if InternalConfirmSave and not InternalConfirm then
         Exit;
       InternalStoreObject;
     end;
-    if VModel.IsIncluding and Assigned(VModel.Subject.OwnerAttribute) then
-      VModel.CleanUp
-    else
-      VModel.Close;
+    InternalFinalizeSave;
   end;
 end;
 
-function TPressMVPSaveObjectCommand.InternalIsEnabled: Boolean;
+procedure TPressMVPCustomSaveObjectCommand.InternalFinalizeSave;
+begin
+  if InternalCloseAfterSave then
+    Model.Close
+  else if InternalCleanUpAfterSave then
+    Model.CleanUp;
+end;
+
+function TPressMVPCustomSaveObjectCommand.InternalIsEnabled: Boolean;
 begin
   Result := inherited InternalIsEnabled and Model.Subject.IsValid;
 end;
 
-procedure TPressMVPSaveObjectCommand.InternalStoreObject;
+procedure TPressMVPCustomSaveObjectCommand.InternalStoreObject;
 begin
   if not Model.StoreObject then
     Exit;
   Model.Store;
 end;
 
+{ TPressMVPSaveObjectCommand }
+
+procedure TPressMVPSaveObjectCommand.Running;
+var
+  VModel: TPressMVPObjectModel;
+begin
+  inherited;
+  VModel := Model;
+  CloseAfterSave := not (VModel.IsIncluding and Assigned(VModel.Subject.OwnerAttribute));
+end;
+
+{ TPressMVPSaveContinueObjectCommand }
+
+procedure TPressMVPSaveContinueObjectCommand.InitCommand;
+begin
+  inherited;
+  CloseAfterSave := False;
+  CleanUpAfterSave := False;
+end;
+
+{ TPressMVPSaveCleanUpObjectCommand }
+
+procedure TPressMVPSaveCleanUpObjectCommand.InitCommand;
+begin
+  inherited;
+  CloseAfterSave := False;
+end;
+
 { TPressMVPSaveConfirmObjectCommand }
 
-function TPressMVPSaveConfirmObjectCommand.InternalConfirm: Boolean;
+procedure TPressMVPSaveConfirmObjectCommand.InitCommand;
 begin
-  Result := PressDialog.SaveChanges;
+  inherited;
+  ConfirmSave := True;
 end;
 
 { TPressMVPFinishObjectCommand }
@@ -881,24 +972,37 @@ begin
   Result := SPressCancelFormCommand;
 end;
 
+procedure TPressMVPCancelObjectCommand.InitCommand;
+begin
+  inherited;
+  FConfirmCancel := False;
+end;
+
 function TPressMVPCancelObjectCommand.InternalConfirm: Boolean;
 begin
-  Result := True;
+  Result := PressDialog.CancelChanges;
+end;
+
+function TPressMVPCancelObjectCommand.InternalConfirmCancel: Boolean;
+begin
+  Result := ConfirmCancel;
 end;
 
 procedure TPressMVPCancelObjectCommand.InternalExecute;
 begin
   inherited;
-  if Model.HasSubject and Model.IsChanged and not InternalConfirm then
+  if Model.HasSubject and Model.IsChanged and
+   InternalConfirmCancel and not InternalConfirm then
     Exit;
   CloseForm;
 end;
 
 { TPressMVPCancelConfirmObjectCommand }
 
-function TPressMVPCancelConfirmObjectCommand.InternalConfirm: Boolean;
+procedure TPressMVPCancelConfirmObjectCommand.InitCommand;
 begin
-  Result := PressDialog.CancelChanges;
+  inherited;
+  ConfirmCancel := True;
 end;
 
 { TPressMVPCloseObjectCommand }
