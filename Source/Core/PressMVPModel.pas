@@ -2156,9 +2156,11 @@ var
   VObject: TPressObject;
 begin
   VOwnerAttribute := Subject.OwnerAttribute;
+  if not Assigned(VOwnerAttribute) then
+    VOwnerAttribute := HookedSubject;
   if VOwnerAttribute is TPressItems then
   begin
-    VObject := TPressItems(VOwnerAttribute).Add;
+    VObject := TPressItems(VOwnerAttribute).Add(SubjectMetadata.ObjectClass);
     VObject.AddRef;
   end else
     VObject := SubjectMetadata.ObjectClass.Create;
