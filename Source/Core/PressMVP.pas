@@ -115,9 +115,11 @@ type
     procedure Changed;
     function GetCaption: string; virtual;
     function GetShortCut: TShortCut; virtual;
+    procedure InitCommand; virtual;
     procedure InitNotifier; virtual;
     procedure InternalExecute; virtual;
     function InternalIsEnabled: Boolean; virtual;
+    procedure Running; virtual;
     property ComponentList: TPressMVPCommandComponentList read GetComponentList;
     property Notifier: TPressNotifier read FNotifier;
   public
@@ -213,6 +215,7 @@ type
     function GetItem(AIndex: Integer): TPressMVPCommand;
     function GetItems: TPressMVPCommandList;
   protected
+    procedure Running;
     property Items: TPressMVPCommandList read GetItems;
   public
     destructor Destroy; override;
@@ -373,6 +376,7 @@ type
     procedure InternalModelChanged(AChangeType: TPressMVPChangeType); virtual;
     function InternalResourceId: Integer; virtual;
     procedure Notify(AEvent: TPressEvent); virtual;
+    procedure Running; virtual;
     procedure SubjectChanged(AOldSubject: TPressSubject); virtual;
     property Commands: TPressMVPCommands read GetCommands;
     property Notifier: TPressNotifier read GetNotifier;
@@ -584,6 +588,7 @@ begin
   FEnabledUpdatingMethod := umInternalMethod;
   FEnabled := VerifyEnabled;
   FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
+  InitCommand;
   InitNotifier;
 end;
 
@@ -625,6 +630,10 @@ end;
 function TPressMVPCommand.GetShortCut: TShortCut;
 begin
   Result := FShortCut;
+end;
+
+procedure TPressMVPCommand.InitCommand;
+begin
 end;
 
 procedure TPressMVPCommand.InitNotifier;
@@ -686,6 +695,10 @@ var
 begin
   for I := 0 to Pred(AObject.AttributeCount) do
     Notifier.RemoveNotificationItem(AObject.Attributes[I]);
+end;
+
+procedure TPressMVPCommand.Running;
+begin
 end;
 
 procedure TPressMVPCommand.SetAlwaysEnabled(Value: Boolean);
@@ -972,6 +985,19 @@ begin
     VCommand := FItems[I];
     if Assigned(VCommand) then
       VCommand.ReleaseObject(AObject);
+  end;
+end;
+
+procedure TPressMVPCommands.Running;
+var
+  VCommand: TPressMVPCommand;
+  I: Integer;
+begin
+  for I := 0 to Pred(Count) do
+  begin
+    VCommand := Items[I];
+    if Assigned(VCommand) then
+      VCommand.Running;  // friend class
   end;
 end;
 
@@ -1473,6 +1499,12 @@ end;
 class procedure TPressMVPModel.RegisterModel;
 begin
   PressDefaultMVPFactory.RegisterModel(Self);
+end;
+
+procedure TPressMVPModel.Running;
+begin
+  if Assigned(FCommands) then
+    FCommands.Running;  // friend class
 end;
 
 procedure TPressMVPModel.SetResourceId(Value: Integer);

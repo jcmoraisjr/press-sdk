@@ -497,6 +497,7 @@ begin
   if Model.HasCommands then
     CommandMenu := InternalCreateCommandMenu;
   FIsInitializing := False;
+  TPressMVPPresenterModelFriend(AModel).Running;
 end;
 
 procedure TPressMVPPresenter.DoInitInteractors;
