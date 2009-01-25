@@ -2325,8 +2325,12 @@ begin
 end;
 
 procedure TPressMVPObjectModel.Store;
+var
+  VSubject: TPressObject;
 begin
-  Session.Store(Subject);
+  VSubject := Subject;
+  Session.Store(VSubject);
+  FSavePoint := VSubject.Memento.SavePoint;
 end;
 
 procedure TPressMVPObjectModel.SubjectChanged(AOldSubject: TPressSubject);
