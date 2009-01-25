@@ -308,7 +308,7 @@ type
     property Owner: TPressMVPFormPresenter read GetOwner;
   end;
 
-  TPressMVPCleanupFormInteractor = class(TPressMVPFormInteractor)
+  TPressMVPResetFormInteractor = class(TPressMVPFormInteractor)
   protected
     procedure InitInteractor; override;
     procedure Notify(AEvent: TPressEvent); override;
@@ -1256,18 +1256,17 @@ begin
   Result := inherited Owner as TPressMVPFormPresenter;
 end;
 
-{ TPressMVPCleanupFormInteractor }
+{ TPressMVPResetFormInteractor }
 
-procedure TPressMVPCleanupFormInteractor.InitInteractor;
+procedure TPressMVPResetFormInteractor.InitInteractor;
 begin
   inherited;
-  Notifier.AddNotificationItem(Owner.Model, [TPressMVPModelCleanupFormEvent]);
+  Notifier.AddNotificationItem(Owner.Model, [TPressMVPModelResetFormEvent]);
 end;
 
-procedure TPressMVPCleanupFormInteractor.Notify(AEvent: TPressEvent);
+procedure TPressMVPResetFormInteractor.Notify(AEvent: TPressEvent);
 begin
   inherited;
-  Owner.Model.CleanUp;
   Owner.FormView.ResetForm;
 end;
 
@@ -1330,7 +1329,7 @@ initialization
   TPressMVPCreateIncludeFormInteractor.RegisterInteractor;
   TPressMVPCreatePresentFormInteractor.RegisterInteractor;
   TPressMVPCreateSearchFormInteractor.RegisterInteractor;
-  TPressMVPCleanupFormInteractor.RegisterInteractor;
+  TPressMVPResetFormInteractor.RegisterInteractor;
   TPressMVPCloseFormInteractor.RegisterInteractor;
   TPressMVPFreePresenterInteractor.RegisterInteractor;
 

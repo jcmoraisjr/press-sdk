@@ -77,7 +77,7 @@ type
     property CanSave: Boolean read GetCanSave write SetCanSave;
   end;
 
-  TPressMVPModelCleanupFormEvent = class(TPressMVPModelEvent)
+  TPressMVPModelResetFormEvent = class(TPressMVPModelEvent)
   end;
 
   TPressMVPModelCloseFormEvent = class(TPressMVPModelEvent)
@@ -522,6 +522,7 @@ type
     procedure AssignOwnerModel(AOwnerModel: TPressMVPStructureModel);
     function CanSaveObject: Boolean;
     procedure CleanUp;
+    procedure Close;
     procedure Refresh;
     procedure RevertChanges;
     procedure Store;
@@ -2163,6 +2164,12 @@ begin
     VObject := SubjectMetadata.ObjectClass.Create;
   Subject := VObject;
   VObject.Release;
+  TPressMVPModelResetFormEvent.Create(Self).Notify;
+end;
+
+procedure TPressMVPObjectModel.Close;
+begin
+  TPressMVPModelCloseFormEvent.Create(Self).Notify;
 end;
 
 constructor TPressMVPObjectModel.Create(

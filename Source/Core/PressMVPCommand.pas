@@ -836,9 +836,9 @@ begin
       InternalStoreObject;
     end;
     if VModel.IsIncluding and Assigned(VModel.Subject.OwnerAttribute) then
-      TPressMVPModelCleanupFormEvent.Create(VModel).Notify
+      VModel.CleanUp
     else
-      TPressMVPModelCloseFormEvent.Create(VModel).Notify;
+      VModel.Close;
   end;
 end;
 
