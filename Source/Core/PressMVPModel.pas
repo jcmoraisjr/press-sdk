@@ -2162,8 +2162,11 @@ begin
     VObject.AddRef;
   end else
     VObject := SubjectMetadata.ObjectClass.Create;
-  Subject := VObject;
-  VObject.Release;
+  try
+    Subject := VObject;
+  finally
+    VObject.Free;
+  end;
   TPressMVPModelResetFormEvent.Create(Self).Notify;
 end;
 
