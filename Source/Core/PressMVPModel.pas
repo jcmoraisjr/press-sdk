@@ -87,6 +87,7 @@ type
 
   TPressMVPAttributeModel = class(TPressMVPModel)
   private
+    FSubjectPath: string;
     function GetIsSelected: Boolean;
     function GetSubject: TPressAttribute;
     function GetSubjectMetadata: TPressAttributeMetadata;
@@ -95,10 +96,12 @@ type
     function GetAsString: string; virtual;
   public
     constructor Create(AParent: TPressMVPModel; ASubjectMetadata: TPressSubjectMetadata); override;
+    procedure AssignSubjectPath(const APath: string);
     property AsString: string read GetAsString;
     property IsSelected: Boolean read GetIsSelected;
     property Subject: TPressAttribute read GetSubject write SetSubject;
     property SubjectMetadata: TPressAttributeMetadata read GetSubjectMetadata;
+    property SubjectPath: string read FSubjectPath;
   end;
 
   TPressMVPNullModel = class(TPressMVPAttributeModel)
@@ -603,10 +606,18 @@ end;
 
 { TPressMVPAttributeModel }
 
+procedure TPressMVPAttributeModel.AssignSubjectPath(const APath: string);
+begin
+  { TODO : Check this entry or change the constructor in order to
+    receive the path instead of the metadata. }
+  FSubjectPath := APath;
+end;
+
 constructor TPressMVPAttributeModel.Create(AParent: TPressMVPModel;
   ASubjectMetadata: TPressSubjectMetadata);
 begin
   inherited Create(AParent, ASubjectMetadata);
+  FSubjectPath := (ASubjectMetadata as TPressAttributeMetadata).Name;
   if AParent is TPressMVPObjectModel then
     TPressMVPObjectModel(AParent).AddSubModel(Self);  // friend class
 end;
@@ -2319,7 +2330,7 @@ procedure TPressMVPObjectModel.SubjectChanged(AOldSubject: TPressSubject);
     begin
       VModel := FSubModelList[I] as TPressMVPAttributeModel;
       if Assigned(ASubject) then
-        VModel.Subject := ASubject.AttributeByName(VModel.SubjectMetadata.Name)
+        VModel.Subject := ASubject.AttributeByPath(VModel.SubjectPath)
       else
         VModel.Subject := nil;
     end;

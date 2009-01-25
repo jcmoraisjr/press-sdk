@@ -883,6 +883,8 @@ begin
        VAttributeMetadata.Owner.ObjectClassName,
        VAttributeMetadata.Name]);
     end;
+    if VModel is TPressMVPAttributeModel then
+      TPressMVPAttributeModel(VModel).AssignSubjectPath(AAttributeName);
     if Model.HasSubject then
       VModel.Subject := AttributeByName(AAttributeName);
   end else
