@@ -147,7 +147,7 @@ type
   private
     FCol: Integer;
   public
-    constructor Create(AOwner: TObject);
+    constructor Create(AOwner: TObject; ACol: Integer);
     property Col: Integer read FCol;
   end;
 
@@ -156,7 +156,7 @@ type
     FCol: Integer;
     FRow: Integer;
   public
-    constructor Create(AOwner: TObject);
+    constructor Create(AOwner: TObject; ACol, ARow: Integer);
     property Col: Integer read FCol;
     property Row: Integer read FRow;
   end;
@@ -419,9 +419,10 @@ begin
 end;
 *)
 
-constructor TPressMVPViewClickHeaderEvent.Create(AOwner: TObject);
+constructor TPressMVPViewClickHeaderEvent.Create(AOwner: TObject; ACol: Integer);
 begin
   inherited Create(AOwner);
+  FCol := ACol;
 end;
 
 { TPressMVPViewClickCellEvent }
@@ -438,9 +439,12 @@ begin
 end;
 *)
 
-constructor TPressMVPViewClickCellEvent.Create(AOwner: TObject);
+constructor TPressMVPViewClickCellEvent.Create(AOwner: TObject;
+  ACol, ARow: Integer);
 begin
   inherited Create(AOwner);
+  FCol := ACol;
+  FRow := ARow;
 end;
 
 { TPressMVPBaseView }

@@ -1919,9 +1919,9 @@ begin
   Dec(VCol);
   Dec(VRow);
   if VRow < 0 then
-    TPressMVPViewClickHeaderEvent.Create(Self{, Button, Shift, VCol}).Notify
+    TPressMVPViewClickHeaderEvent.Create(Self{, Button, Shift}, VCol).Notify
   else
-    TPressMVPViewClickCellEvent.Create(Self{, Button, Shift, VCol, VRow}).Notify;
+    TPressMVPViewClickCellEvent.Create(Self{, Button, Shift}, VCol, VRow).Notify;
 end;
 
 { TPressMVPCaptionView }
