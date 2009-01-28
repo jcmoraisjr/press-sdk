@@ -618,7 +618,8 @@ constructor TPressMVPAttributeModel.Create(AParent: TPressMVPModel;
   ASubjectMetadata: TPressSubjectMetadata);
 begin
   inherited Create(AParent, ASubjectMetadata);
-  FSubjectPath := (ASubjectMetadata as TPressAttributeMetadata).Name;
+  if Assigned(ASubjectMetadata) then
+    FSubjectPath := (ASubjectMetadata as TPressAttributeMetadata).Name;
   if AParent is TPressMVPObjectModel then
     TPressMVPObjectModel(AParent).AddSubModel(Self);  // friend class
 end;
