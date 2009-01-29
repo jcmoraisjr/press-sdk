@@ -1277,10 +1277,11 @@ end;
 procedure TPressMVPEditView.InternalUpdate;
 begin
   inherited;
-  if not Model.HasSubject or (AccessMode = amInvisible) then
-    TPressXCLCustomEditFriend(Control).Text := ''
-  else
-    TPressXCLCustomEditFriend(Control).Text := PressEncodeString(Model.AsString);
+  if Model.HasSubject then
+    if AccessMode = amInvisible then
+      TPressXCLCustomEditFriend(Control).Text := ''
+    else
+      TPressXCLCustomEditFriend(Control).Text := PressEncodeString(Model.AsString);
   Unchanged;
 end;
 
@@ -1353,11 +1354,12 @@ end;
 procedure TPressMVPDateTimeView.InternalUpdate;
 begin
   inherited;
-  if not Model.HasSubject or (AccessMode = amInvisible) then
-    TPressXCLCustomCalendarFriend(Control).DateTime := 0
-  else
-    TPressXCLCustomCalendarFriend(Control).DateTime :=
-     Model.Subject.AsDateTime;
+  if Model.HasSubject then
+    if AccessMode = amInvisible then
+      TPressXCLCustomCalendarFriend(Control).DateTime := 0
+    else
+      TPressXCLCustomCalendarFriend(Control).DateTime :=
+       Model.Subject.AsDateTime;
   Unchanged;
 end;
 
@@ -1421,8 +1423,7 @@ begin
       TPressXCLCustomCheckBoxFriend(Control).State := cbChecked
     else
       TPressXCLCustomCheckBoxFriend(Control).State := cbUnchecked;
-  end else
-    TPressXCLCustomCheckBoxFriend(Control).State := cbUnchecked;
+  end;
   Unchanged;
 end;
 
@@ -1554,10 +1555,11 @@ end;
 procedure TPressMVPComboBoxView.InternalUpdate;
 begin
   inherited;
-  if not Model.HasSubject or (AccessMode = amInvisible) then
-    TPressXCLCustomComboBoxFriend(Control).Text := ''
-  else
-    TPressXCLCustomComboBoxFriend(Control).Text := PressEncodeString(Model.AsString);
+  if Model.HasSubject then
+    if AccessMode = amInvisible then
+      TPressXCLCustomComboBoxFriend(Control).Text := ''
+    else
+      TPressXCLCustomComboBoxFriend(Control).Text := PressEncodeString(Model.AsString);
   Unchanged;
 end;
 
@@ -1934,10 +1936,11 @@ end;
 procedure TPressMVPCaptionView.InternalUpdate;
 begin
   inherited;
-  if not Model.HasSubject or (AccessMode = amInvisible) then
-    TPressXCLControlFriend(Control).Caption := ''
-  else
-    TPressXCLControlFriend(Control).Caption := PressEncodeString(Model.AsString);
+  if Model.HasSubject then
+    if AccessMode = amInvisible then
+      TPressXCLControlFriend(Control).Caption := ''
+    else
+      TPressXCLControlFriend(Control).Caption := PressEncodeString(Model.AsString);
 end;
 
 procedure TPressMVPCaptionView.SetText(const Value: string);
