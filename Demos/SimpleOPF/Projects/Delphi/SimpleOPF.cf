@@ -7,6 +7,8 @@ Connector.UserName := '';
 Connector.Password := '';
 
 [OPFBroker.UIB]
+Connector.Database.CharacterSet := csISO8859_1;
+Connector.Database.LibraryName := 'fbclient.dll';
 Connector.Database.DatabaseName := '';
 Connector.Database.UserName := '';
 Connector.Database.PassWord := '';
