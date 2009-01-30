@@ -224,6 +224,8 @@ type
     procedure InternalExecute; override;
   end;
 
+  TPressMVPCustomSaveObjectCommandClass = class of TPressMVPCustomSaveObjectCommand;
+
   TPressMVPCustomSaveObjectCommand = class(TPressMVPObjectCommand)
   private
     FCleanUpAfterSave: Boolean;
@@ -267,13 +269,15 @@ type
     procedure InitCommand; override;
   end;
 
-  TPressMVPFinishObjectCommand = class(TPressMVPObjectCommand)
+  TPressMVPCustomCancelObjectCommandClass = class of TPressMVPCustomCancelObjectCommand;
+
+  TPressMVPCustomCancelObjectCommand = class(TPressMVPObjectCommand)
   protected
     procedure CloseForm;
     function InternalIsEnabled: Boolean; override;
   end;
 
-  TPressMVPCancelObjectCommand = class(TPressMVPFinishObjectCommand)
+  TPressMVPCancelObjectCommand = class(TPressMVPCustomCancelObjectCommand)
   private
     FConfirmCancel: Boolean;
   protected
@@ -291,7 +295,7 @@ type
     procedure InitCommand; override;
   end;
 
-  TPressMVPCloseObjectCommand = class(TPressMVPFinishObjectCommand)
+  TPressMVPCloseObjectCommand = class(TPressMVPCustomCancelObjectCommand)
   protected
     function GetCaption: string; override;
     procedure InternalExecute; override;
@@ -952,15 +956,15 @@ begin
   ConfirmSave := True;
 end;
 
-{ TPressMVPFinishObjectCommand }
+{ TPressMVPCustomCancelObjectCommand }
 
-procedure TPressMVPFinishObjectCommand.CloseForm;
+procedure TPressMVPCustomCancelObjectCommand.CloseForm;
 begin
   Model.RevertChanges;
   TPressMVPModelCloseFormEvent.Create(Model).Notify;
 end;
 
-function TPressMVPFinishObjectCommand.InternalIsEnabled: Boolean;
+function TPressMVPCustomCancelObjectCommand.InternalIsEnabled: Boolean;
 begin
   Result := not Model.HasSubject or inherited InternalIsEnabled;
 end;
