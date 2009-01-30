@@ -22,11 +22,6 @@ type
     procedure SubjectChanged(AOldSubject: TPressSubject); override;
   end;
 
-  TMainGridModel = class(TPressMVPReferencesModel)
-  protected
-    procedure InternalCreateAddCommands; override;
-  end;
-
   TMainPresenter = class(TPressMVPMainFormPresenter)
   private
     FInternalCache: TPressObjectList;
@@ -90,14 +85,6 @@ begin
 {$ENDIF}
 end;
 
-{ TMainGridModel }
-
-procedure TMainGridModel.InternalCreateAddCommands;
-begin
-  inherited;
-  AddCommands([TMainAddPersonCommand, TMainAddCompanyCommand]);
-end;
-
 { TMainPresenter }
 
 procedure TMainPresenter.Finit;
@@ -107,10 +94,13 @@ begin
 end;
 
 procedure TMainPresenter.InitPresenter;
+var
+  VItems: TPressMVPPresenter;
 begin
   inherited;
-  CreateQueryItemsPresenter(
-   'ItemsStringGrid', 'Name(240);Address.City.Name(160)', TMainGridModel);
+  VItems := CreateQueryItemsPresenter(
+   'ItemsStringGrid', 'Name(240);Address.City.Name(160)');
+  VItems.Model.InsertCommands(0, [TMainAddPersonCommand, TMainAddCompanyCommand]);
   BindCommand(TPressMVPExecuteQueryCommand, 'QuerySpeedButton');
   BindCommand(TMainConnectorCommand, 'ConnectorMenuItem');
   BindCommand(TPressMVPCloseApplicationCommand, 'CloseMenuItem');
@@ -126,10 +116,6 @@ procedure TMainPresenter.Running;
 begin
   inherited;
   PressUserData.Logon;
-{$IFDEF DontUsePersistence}
-  FInternalCache := TPressObjectList.Create(True);
-  PopulatePhoneBook(FInternalCache);
-{$ENDIF}
 end;
 
 { TMainAddPersonCommand }
