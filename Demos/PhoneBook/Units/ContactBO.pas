@@ -17,7 +17,7 @@ type
   end;
 
   TContact = class(TCustomObject)
-    _Name: TPressString;
+    _Name: TPressAnsiString;
     _Address: TPressPart;
     _Phones: TPhoneParts;
   private
@@ -35,7 +35,7 @@ type
   end;
 
   TPerson = class(TContact)
-    _NickName: TPressString;
+    _NickName: TPressAnsiString;
   private
     function GetNickName: string;
     procedure SetNickName(const Value: string);
@@ -60,7 +60,7 @@ type
 
   TPhone = class(TCustomObject)
     _PhoneType: TPressEnum;
-    _Number: TPressString;
+    _Number: TPressAnsiString;
   private
     function GetNumber: string;
     function GetPhoneType: TPhoneType;
@@ -86,8 +86,8 @@ type
   TCity = class;
 
   TAddress = class(TCustomObject)
-    _Street: TPressString;
-    _Zip: TPressString;
+    _Street: TPressAnsiString;
+    _Zip: TPressAnsiString;
     _City: TPressReference;
   private
     function GetCity: TCity;
@@ -105,8 +105,8 @@ type
   end;
 
   TCity = class(TCustomObject)
-    _Name: TPressString;
-    _State: TPressString;
+    _Name: TPressAnsiString;
+    _State: TPressAnsiString;
   private
     function GetName: string;
     function GetState: string;
@@ -120,7 +120,7 @@ type
   end;
 
   TMainQuery = class(TPressQuery)
-    _Name: TPressString;
+    _Name: TPressAnsiString;
   private
     function GetName: string;
     procedure SetName(const Value: string);
@@ -150,7 +150,7 @@ end;
 class function TContact.InternalMetadataStr: string;
 begin
   Result := 'TContact IsPersistent (' +
-   'Name: String(40);' +
+   'Name: AnsiString(40) NotNull;' +
    'Address: Part(TAddress);' +
    'Phones: TPhoneParts;' +
    ')';
@@ -176,7 +176,7 @@ end;
 class function TPerson.InternalMetadataStr: string;
 begin
   Result := 'TPerson IsPersistent (' +
-   'NickName: String(20);' +
+   'NickName: AnsiString(20) NotNull;' +
    ')';
 end;
 
@@ -220,7 +220,7 @@ class function TPhone.InternalMetadataStr: string;
 begin
   Result := 'TPhone IsPersistent OwnerClass=TContact (' +
    'PhoneType: Enum(TPhoneType);' +
-   'Number: String(15) PersistentName="PhoneNumber";' +
+   'Number: AnsiString(15) PersistentName="PhoneNumber" NotNull;' +
    ')';
 end;
 
@@ -276,8 +276,8 @@ end;
 class function TAddress.InternalMetadataStr: string;
 begin
   Result := 'TAddress IsPersistent (' +
-   'Street: String(40);' +
-   'Zip: String(10);' +
+   'Street: AnsiString(40);' +
+   'Zip: AnsiString(10);' +
    'City: Reference(TCity);' +
    ')';
 end;
@@ -312,8 +312,8 @@ end;
 class function TCity.InternalMetadataStr: string;
 begin
   Result := 'TCity IsPersistent (' +
-   'Name: String(30);' +
-   'State: String(5);' +
+   'Name: AnsiString(30) NotNull;' +
+   'State: AnsiString(5) NotNull;' +
    ')';
 end;
 
@@ -337,7 +337,7 @@ end;
 class function TMainQuery.InternalMetadataStr: string;
 begin
   Result := 'TMainQuery(TContact) Any Order=Name (' +
-   'Name: String(40) MatchType=mtContains;' +
+   'Name: AnsiString(40) MatchType=mtContains;' +
    ')';
 end;
 
