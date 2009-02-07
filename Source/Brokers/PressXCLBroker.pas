@@ -465,6 +465,7 @@ type
     procedure InitView; override;
     procedure InternalResetForm; virtual;
     procedure InternalResetPageControls(AControl: TWinControl); virtual;
+    function InternalSelectableControl(AControl: TWinControl): Boolean; virtual;
     procedure ReleaseControl; override;
     procedure SetText(const Value: string); override;
     property Model: TPressMVPObjectModel read GetModel;
@@ -2069,7 +2070,7 @@ begin
   InternalResetPageControls(VControl);
   VControl.SelectNext(VControl, True, True);
   VFirstControl := VControl.ActiveControl;
-  while VControl.ActiveControl is TPageControl do
+  while not InternalSelectableControl(VControl.ActiveControl) do
   begin
     VControl.SelectNext(VControl.ActiveControl, True, True);
     if VControl.ActiveControl = VFirstControl then
@@ -2086,6 +2087,12 @@ begin
   for I := 0 to Pred(AControl.ControlCount) do
     if AControl.Controls[I] is TWinControl then
       InternalResetPageControls(TWinControl(AControl.Controls[I]));
+end;
+
+function TPressMVPFormView.InternalSelectableControl(
+  AControl: TWinControl): Boolean;
+begin
+  Result := not (AControl is TPageControl) and not (AControl is TButton);
 end;
 
 procedure TPressMVPFormView.ReleaseControl;
