@@ -19,9 +19,9 @@ unit PressXCLBroker;
 interface
 
 uses
-{$IFDEF MSWINDOWS}
+{$ifdef borland_cg}
   Windows,
-{$ENDIF}
+{$endif}
   Classes,
   Controls,
   StdCtrls,
@@ -483,7 +483,7 @@ implementation
 uses
   Math,
 {$ifdef fpc}
-  LCLProc,
+  LCLType,
 {$endif}
   Graphics,
   Dialogs,
@@ -2049,10 +2049,10 @@ begin
   begin
     FViewCloseEvent := OnClose;
     OnClose := {$IFDEF FPC}@{$ENDIF}ViewCloseEvent;
-{$IFDEF MSWINDOWS}
-    { TODO : Improve, create a routine at Compatibility/Utils unit }
+{$ifdef borland_cg}
+    { TODO : Implement for Lazarus for Windows }
     if not SystemParametersInfo(SPI_GETWORKAREA, 0, @VRect, 0) then
-{$ENDIF}
+{$endif}
       VRect := Rect(0, 0, Screen.Width, Screen.Height);
     if Top + Height > VRect.Bottom then
       Top := Max(VRect.Top, VRect.Bottom - Height);
