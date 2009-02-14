@@ -177,7 +177,7 @@ type
     function InternalCreateIterator(const ASearchString: string): TPressIterator; virtual; abstract;
     function InternalCurrentItem(AIterator: TPressIterator): string; virtual; abstract;
   public
-    function UpdateReferences(const ASearchString: string): Integer;
+    function UpdateReferences(const ASearchString: string; APopulateView: Boolean): Integer;
   end;
 
   TPressMVPEnumPresenter = class(TPressMVPPointerPresenter)
@@ -696,7 +696,7 @@ begin
 end;
 
 function TPressMVPPointerPresenter.UpdateReferences(
-  const ASearchString: string): Integer;
+  const ASearchString: string; APopulateView: Boolean): Integer;
 var
   VIterator: TPressIterator;
 begin
@@ -705,9 +705,12 @@ begin
   with VIterator do
   try
     Result := Count;
-    BeforeFirstItem;
-    while NextItem do
-      FItemView.AddReference(InternalCurrentItem(VIterator));
+    if APopulateView then
+    begin
+      BeforeFirstItem;
+      while NextItem do
+        FItemView.AddReference(InternalCurrentItem(VIterator));
+    end;
   finally
     Free;
   end;

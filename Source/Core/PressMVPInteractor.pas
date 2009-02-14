@@ -412,7 +412,7 @@ begin
     inherited
   else if FComboBoxView.IsChanged and (FComboBoxView.AsInteger = -1) then
   begin
-    case (Owner as TPressMVPPointerPresenter).UpdateReferences(FComboBoxView.AsString) of
+    case (Owner as TPressMVPPointerPresenter).UpdateReferences(FComboBoxView.AsString, True) of
       0: FComboBoxView.SelectAll;
       1: UpdateData;
       else FComboBoxView.ShowReferences;
@@ -456,7 +456,7 @@ begin
       VQueryString := FItemView.AsString
     else
       VQueryString := '';
-    (Owner as TPressMVPPointerPresenter).UpdateReferences(VQueryString);
+    (Owner as TPressMVPPointerPresenter).UpdateReferences(VQueryString, True);
   end;
 end;
 
@@ -603,7 +603,9 @@ begin
   else
   begin
     VIndex := FAttrView.AsInteger;
-    if (VIndex = -1) and (InternalReferenceCount = 1) then
+    if (FAttrView.IsChanged and (FAttrView.AsInteger = -1) and
+     ((Owner as TPressMVPPointerPresenter).UpdateReferences(FAttrView.AsString, False) = 1)) or
+     ((VIndex = -1) and (InternalReferenceCount = 1)) then
       VIndex := 0;
     if VIndex >= 0 then
       InternalAssignSubject(VIndex);
