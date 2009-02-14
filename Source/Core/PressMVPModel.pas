@@ -2285,7 +2285,7 @@ begin
   if HasSubject then
   begin
     VSubject := Subject;
-    if Assigned(HookedSubject) and not Session.IsPersistent(VSubject) then
+    if Assigned(HookedSubject) and IsIncluding then
       HookedSubject.UnassignObject(VSubject);
     VSubject.Memento.Restore(FSavePoint);
   end;
@@ -2335,6 +2335,7 @@ begin
   VSubject := Subject;
   Session.Store(VSubject);
   FSavePoint := VSubject.Memento.SavePoint;
+  IsIncluding := False;
 end;
 
 procedure TPressMVPObjectModel.SubjectChanged(AOldSubject: TPressSubject);
