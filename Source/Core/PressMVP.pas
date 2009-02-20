@@ -392,6 +392,7 @@ type
     function FindCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     function HasCommands: Boolean;
     procedure InsertCommand(AIndex: Integer; ACommandClass: TPressMVPCommandClass);
+    procedure InsertCommandInstance(AIndex: Integer; ACommand: TPressMVPCommand);
     procedure InsertCommands(AIndex: Integer; ACommandClasses: array of TPressMVPCommandClass);
     function RegisterCommand(ACommandClass: TPressMVPCommandClass): TPressMVPCommand;
     class procedure RegisterModel;
@@ -1291,7 +1292,8 @@ end;
 function TPressMVPModel.AddCommandInstance(
   ACommand: TPressMVPCommand): Integer;
 begin
-  Result := Commands.Add(ACommand);
+  Result := Commands.Count;
+  InsertCommandInstance(Result, ACommand);
 end;
 
 procedure TPressMVPModel.AddCommands(
@@ -1412,6 +1414,15 @@ procedure TPressMVPModel.InsertCommand(
 begin
   if Assigned(ACommandClass) then
     Commands.Insert(AIndex, ACommandClass.Create(Self))
+  else
+    Commands.Insert(AIndex, nil);
+end;
+
+procedure TPressMVPModel.InsertCommandInstance(AIndex: Integer;
+  ACommand: TPressMVPCommand);
+begin
+  if Assigned(ACommand) then
+    Commands.Insert(AIndex, ACommand)
   else
     Commands.Insert(AIndex, nil);
 end;
