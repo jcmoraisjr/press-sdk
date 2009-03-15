@@ -26,6 +26,8 @@
   SAttributeIsNotValue_rst = 'Attribut %s(''%s'') ist kein Wert';
   SAttributeNotFound_rst = 'Attribut %s(''%s'') nicht gefunden';
   SAttributeTypeNotFound_rst = 'Attribut ''%s'' nicht gefunden';
+{ TODO : Translate }
+  SCannotAssignOwnerPartsMetadata_rst = '''%s'' cannot own ''%s'' due to ambiguity between Parts attributes';
   SCannotRecursivelyCreateMetadatas_rst = 'Metadata kann nicht rekursiv erstellt werden';
   SClassNotFound_rst = 'Klasse ''%s'' nicht gefunden';
   SEnumMetadataNotFound_rst = 'Aufzählungs-Metadata ''%s'' nicht gefunden';

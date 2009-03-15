@@ -26,6 +26,7 @@
   SAttributeIsNotValue_rst = 'Attribute %s(''%s'') is not a Value';
   SAttributeNotFound_rst = 'Attribute %s(''%s'') not found';
   SAttributeTypeNotFound_rst = 'Attribute ''%s'' not found';
+  SCannotAssignOwnerPartsMetadata_rst = '''%s'' cannot own ''%s'' due to ambiguity between Parts attributes';
   SCannotRecursivelyCreateMetadatas_rst = 'Cannot recursively create metadatas';
   SClassNotFound_rst = 'Class ''%s'' not found';
   SEnumMetadataNotFound_rst = 'Enumeration metadata ''%s'' not found';

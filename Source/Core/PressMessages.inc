@@ -26,6 +26,7 @@
   SAttributeIsNotValue := SAttributeIsNotValue_rst;
   SAttributeNotFound := SAttributeNotFound_rst;
   SAttributeTypeNotFound := SAttributeTypeNotFound_rst;
+  SCannotAssignOwnerPartsMetadata := SCannotAssignOwnerPartsMetadata_rst;
   SCannotRecursivelyCreateMetadatas := SCannotRecursivelyCreateMetadatas_rst;
   SClassNotFound := SClassNotFound_rst;
   SEnumMetadataNotFound := SEnumMetadataNotFound_rst;

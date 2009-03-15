@@ -116,6 +116,7 @@ var
   SAttributeIsNotValue,
   SAttributeNotFound,
   SAttributeTypeNotFound,
+  SCannotAssignOwnerPartsMetadata,
   SCannotRecursivelyCreateMetadatas,
   SClassNotFound,
   SEnumMetadataNotFound,

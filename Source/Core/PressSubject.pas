@@ -332,6 +332,8 @@ type
     function GetSubjectName: string; override;
     function InternalAttributeMetadataClass: TPressAttributeMetadataClass; virtual;
     function InternalSupports(ASubjectClass: TPressSubjectClass): Boolean; override;
+    procedure SetOwnedMetadata(AMetadata: TPressObjectMetadata);
+    procedure SetOwnerPartsMetadata(AMetadata: TPressAttributeMetadata);
     property Model: TPressModel read FModel;
   public
     constructor Create(const AObjectClassName: string; AModel: TPressModel); virtual;
@@ -1537,6 +1539,7 @@ begin
   if Assigned(FOwner) then
   begin
     FOwner.AttributeMetadatas.Add(Self);
+    FreeAndNil(FOwner.FMap);  // friend class
     FModel := FOwner.Model;
   end else
     FModel := PressModel;
@@ -1721,13 +1724,13 @@ begin
        TPressStructureClass(FAttributeClass).ValidObjectClass.ClassName]);
     if Assigned(Owner) and Assigned(FObjectClassMetadata) and
      (FObjectClassMetadata.OwnerMetadata = Owner) then
-      FObjectClassMetadata.FOwnerPartsMetadata := nil;  // friend class
+      FObjectClassMetadata.SetOwnerPartsMetadata(nil);  // friend class
     FObjectClass := Value;
     if Assigned(FObjectClass) then
     begin
       FObjectClassMetadata := FObjectClass.ClassMetadata;
       if Assigned(Owner) and (FObjectClassMetadata.OwnerMetadata = Owner) then
-        FObjectClassMetadata.FOwnerPartsMetadata := Self;  // friend class
+        FObjectClassMetadata.SetOwnerPartsMetadata(Self);  // friend class
     end else
       FObjectClassMetadata := nil;
   end;
@@ -2108,9 +2111,40 @@ begin
     FPersistentName := FObjectClassName;
 end;
 
-procedure TPressObjectMetadata.SetOwnerClass(const Value: string);
+procedure TPressObjectMetadata.SetOwnedMetadata(
+  AMetadata: TPressObjectMetadata);
+var
+  VMetadata: TPressAttributeMetadata;
+  I: Integer;
 begin
-  FOwnerMetadata := Model.MetadataByName(Value);
+  for I := 0 to Pred(Map.Count) do
+  begin
+    VMetadata := Map[I];
+    if VMetadata.ObjectClassMetadata = AMetadata then
+      AMetadata.SetOwnerPartsMetadata(VMetadata);  // friend class
+  end;
+end;
+
+procedure TPressObjectMetadata.SetOwnerClass(const Value: string);
+var
+  VOwnerMetadata: TPressObjectMetadata;
+begin
+  VOwnerMetadata := Model.MetadataByName(Value);
+  if FOwnerMetadata <> VOwnerMetadata then
+  begin
+    VOwnerMetadata.SetOwnedMetadata(Self);  // friend class
+    FOwnerMetadata := VOwnerMetadata;
+  end;
+end;
+
+procedure TPressObjectMetadata.SetOwnerPartsMetadata(
+  AMetadata: TPressAttributeMetadata);
+begin
+  if Assigned(FOwnerPartsMetadata) and Assigned(AMetadata) and
+   (FOwnerPartsMetadata <> AMetadata) then
+    raise EPressError.CreateFmt(SCannotAssignOwnerPartsMetadata,
+     [AMetadata.Owner.ObjectClassName, ObjectClassName]);
+  FOwnerPartsMetadata := AMetadata;
 end;
 
 procedure TPressObjectMetadata.SetPersistentName(const Value: string);
