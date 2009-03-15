@@ -1718,7 +1718,7 @@ begin
   if (Value <> FObjectClass) and Assigned(FAttributeClass) and
    FAttributeClass.InheritsFrom(TPressStructure) then
   begin
-    if not Value.InheritsFrom(
+    if Assigned(Value) and not Value.InheritsFrom(
      TPressStructureClass(FAttributeClass).ValidObjectClass) then
       raise EPressError.CreateFmt(SInvalidClassInheritance, [Value.ClassName,
        TPressStructureClass(FAttributeClass).ValidObjectClass.ClassName]);
