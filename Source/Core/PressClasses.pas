@@ -289,6 +289,7 @@ type
     procedure ReadMatch(const AToken: string);
     procedure ReadMatchEof;
     procedure ReadMatchText(const AToken: string);
+    function ReadNextEol: string;
     function ReadNextToken: string;
     function ReadToken: string;
     procedure SkipSpaces;
@@ -748,6 +749,19 @@ begin
   Token := ReadToken;
   if not SameText(Token, AToken) then
     ErrorExpected(AToken, Token);
+end;
+
+function TPressTextReader.ReadNextEol: string;
+var
+  VOldPos, VNewPos: TPressTextPos;
+begin
+  VOldPos := Position;
+  repeat until ReadChar in [#10, #13];
+  VNewPos := Position;
+  Position := VOldPos;
+  { TODO : Verify if last line without #10 }
+  Result := ReadChars(VNewPos.Position - VOldPos.Position - 1);
+  SkipSpaces;
 end;
 
 function TPressTextReader.ReadNextToken: string;
