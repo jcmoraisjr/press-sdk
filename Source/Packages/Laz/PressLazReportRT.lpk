@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <Package Version="3">
+    <PathDelim Value="\"/>
+    <Name Value="PressLazReportRT"/>
+    <CompilerOptions>
+      <Version Value="8"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <OtherUnitFiles Value="..\..\Brokers\"/>
+        <UnitOutputDirectory Value="..\..\..\bin\laz\Brokers\$(TargetCPU)-$(TargetOS)"/>
+      </SearchPaths>
+      <Parsing>
+        <SyntaxOptions>
+          <UseAnsiStrings Value="True"/>
+        </SyntaxOptions>
+      </Parsing>
+      <Other>
+        <CompilerPath Value="$(CompPath)"/>
+      </Other>
+    </CompilerOptions>
+    <Version Minor="1" Release="1"/>
+    <Files Count="1">
+      <Item1>
+        <Filename Value="..\..\Brokers\PressFastReportBroker.pas"/>
+        <UnitName Value="PressFastReportBroker"/>
+      </Item1>
+    </Files>
+    <RequiredPkgs Count="3">
+      <Item1>
+        <PackageName Value="lazreport"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="PressLazBrokersRT"/>
+      </Item2>
+      <Item3>
+        <PackageName Value="FCL"/>
+        <MinVersion Major="1" Valid="True"/>
+      </Item3>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)\"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IgnoreBinaries Value="False"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>

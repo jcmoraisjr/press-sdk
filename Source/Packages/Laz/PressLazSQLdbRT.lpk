@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <Package Version="3">
+    <PathDelim Value="\"/>
+    <Name Value="PressLazSQLdbRT"/>
+    <AddToProjectUsesSection Value="False"/>
+    <CompilerOptions>
+      <Version Value="8"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <OtherUnitFiles Value="..\..\Brokers\"/>
+        <UnitOutputDirectory Value="..\..\..\bin\laz\Brokers\$(TargetCPU)-$(TargetOS)"/>
+      </SearchPaths>
+      <Parsing>
+        <SyntaxOptions>
+          <UseAnsiStrings Value="True"/>
+        </SyntaxOptions>
+      </Parsing>
+      <Other>
+        <CompilerPath Value="$(CompPath)"/>
+      </Other>
+    </CompilerOptions>
+    <Version Minor="1" Release="1"/>
+    <Files Count="1">
+      <Item1>
+        <Filename Value="..\..\Brokers\PressSQLdbBroker.pas"/>
+        <UnitName Value="PressSQLdbBroker"/>
+      </Item1>
+    </Files>
+    <RequiredPkgs Count="2">
+      <Item1>
+        <PackageName Value="PressLazBrokersRT"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="FCL"/>
+        <MinVersion Major="1" Valid="True"/>
+      </Item2>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)\"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IgnoreBinaries Value="False"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>

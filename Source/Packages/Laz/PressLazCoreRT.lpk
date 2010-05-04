@@ -1,0 +1,227 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <Package Version="3">
+    <PathDelim Value="\"/>
+    <Name Value="PressLazCoreRT"/>
+    <AddToProjectUsesSection Value="False"/>
+    <CompilerOptions>
+      <Version Value="8"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <OtherUnitFiles Value="..\..\Core\"/>
+        <UnitOutputDirectory Value="..\..\..\bin\laz\Core\$(TargetCPU)-$(TargetOS)\"/>
+      </SearchPaths>
+      <Parsing>
+        <SyntaxOptions>
+          <UseAnsiStrings Value="True"/>
+        </SyntaxOptions>
+      </Parsing>
+      <Other>
+        <CompilerPath Value="$(CompPath)"/>
+      </Other>
+    </CompilerOptions>
+    <Version Minor="1" Release="1"/>
+    <Files Count="46">
+      <Item1>
+        <Filename Value="..\..\Core\Press.inc"/>
+        <Type Value="Include"/>
+      </Item1>
+      <Item2>
+        <Filename Value="..\..\Core\PressApplication.pas"/>
+        <UnitName Value="PressApplication"/>
+      </Item2>
+      <Item3>
+        <Filename Value="..\..\Core\PressAttributes.pas"/>
+        <UnitName Value="PressAttributes"/>
+      </Item3>
+      <Item4>
+        <Filename Value="..\..\Core\PressClasses.pas"/>
+        <UnitName Value="PressClasses"/>
+      </Item4>
+      <Item5>
+        <Filename Value="..\..\Core\PressConfig.pas"/>
+        <UnitName Value="PressConfig"/>
+      </Item5>
+      <Item6>
+        <Filename Value="..\..\Core\PressConsts.pas"/>
+        <UnitName Value="PressConsts"/>
+      </Item6>
+      <Item7>
+        <Filename Value="..\..\Core\PressDialogs.pas"/>
+        <UnitName Value="PressDialogs"/>
+      </Item7>
+      <Item8>
+        <Filename Value="..\..\Core\PressExpression.pas"/>
+        <UnitName Value="PressExpression"/>
+      </Item8>
+      <Item9>
+        <Filename Value="..\..\Core\PressExpressionLib.pas"/>
+        <UnitName Value="PressExpressionLib"/>
+      </Item9>
+      <Item10>
+        <Filename Value="..\..\Core\PressLog.pas"/>
+        <UnitName Value="PressLog"/>
+      </Item10>
+      <Item11>
+        <Filename Value="..\..\Core\PressMessages.inc"/>
+        <Type Value="Include"/>
+      </Item11>
+      <Item12>
+        <Filename Value="..\..\Core\PressMessages.pas"/>
+        <UnitName Value="PressMessages"/>
+      </Item12>
+      <Item13>
+        <Filename Value="..\..\Core\PressMessages_de.inc"/>
+        <Type Value="Include"/>
+      </Item13>
+      <Item14>
+        <Filename Value="..\..\Core\PressMessages_de.pas"/>
+        <UnitName Value="PressMessages_de"/>
+      </Item14>
+      <Item15>
+        <Filename Value="..\..\Core\PressMessages_en.inc"/>
+        <Type Value="Include"/>
+      </Item15>
+      <Item16>
+        <Filename Value="..\..\Core\PressMessages_en.pas"/>
+        <UnitName Value="PressMessages_en"/>
+      </Item16>
+      <Item17>
+        <Filename Value="..\..\Core\PressMessages_ptbr.inc"/>
+        <Type Value="Include"/>
+      </Item17>
+      <Item18>
+        <Filename Value="..\..\Core\PressMessages_ptbr.pas"/>
+        <UnitName Value="PressMessages_ptbr"/>
+      </Item18>
+      <Item19>
+        <Filename Value="..\..\Core\PressMetadata.pas"/>
+        <UnitName Value="PressMetadata"/>
+      </Item19>
+      <Item20>
+        <Filename Value="..\..\Core\PressMVP.pas"/>
+        <UnitName Value="PressMVP"/>
+      </Item20>
+      <Item21>
+        <Filename Value="..\..\Core\PressMVPCommand.pas"/>
+        <UnitName Value="PressMVPCommand"/>
+      </Item21>
+      <Item22>
+        <Filename Value="..\..\Core\PressMVPFactory.pas"/>
+        <UnitName Value="PressMVPFactory"/>
+      </Item22>
+      <Item23>
+        <Filename Value="..\..\Core\PressMVPInteractor.pas"/>
+        <UnitName Value="PressMVPInteractor"/>
+      </Item23>
+      <Item24>
+        <Filename Value="..\..\Core\PressMVPModel.pas"/>
+        <UnitName Value="PressMVPModel"/>
+      </Item24>
+      <Item25>
+        <Filename Value="..\..\Core\PressMVPPresenter.pas"/>
+        <UnitName Value="PressMVPPresenter"/>
+      </Item25>
+      <Item26>
+        <Filename Value="..\..\Core\PressMVPView.pas"/>
+        <UnitName Value="PressMVPView"/>
+      </Item26>
+      <Item27>
+        <Filename Value="..\..\Core\PressMVPWidget.pas"/>
+        <UnitName Value="PressMVPWidget"/>
+      </Item27>
+      <Item28>
+        <Filename Value="..\..\Core\PressNotifier.pas"/>
+        <UnitName Value="PressNotifier"/>
+      </Item28>
+      <Item29>
+        <Filename Value="..\..\Core\PressOPF.pas"/>
+        <UnitName Value="PressOPF"/>
+      </Item29>
+      <Item30>
+        <Filename Value="..\..\Core\PressOPFBulk.pas"/>
+        <UnitName Value="PressOPFBulk"/>
+      </Item30>
+      <Item31>
+        <Filename Value="..\..\Core\PressOPFClasses.pas"/>
+        <UnitName Value="PressOPFClasses"/>
+      </Item31>
+      <Item32>
+        <Filename Value="..\..\Core\PressOPFConnector.pas"/>
+        <UnitName Value="PressOPFConnector"/>
+      </Item32>
+      <Item33>
+        <Filename Value="..\..\Core\PressOPFMapper.pas"/>
+        <UnitName Value="PressOPFMapper"/>
+      </Item33>
+      <Item34>
+        <Filename Value="..\..\Core\PressOPFSQLBuilder.pas"/>
+        <UnitName Value="PressOPFSQLBuilder"/>
+      </Item34>
+      <Item35>
+        <Filename Value="..\..\Core\PressOPFStorage.pas"/>
+        <UnitName Value="PressOPFStorage"/>
+      </Item35>
+      <Item36>
+        <Filename Value="..\..\Core\PressOQL.pas"/>
+        <UnitName Value="PressOQL"/>
+      </Item36>
+      <Item37>
+        <Filename Value="..\..\Core\PressParser.pas"/>
+        <UnitName Value="PressParser"/>
+      </Item37>
+      <Item38>
+        <Filename Value="..\..\Core\PressPicture.pas"/>
+        <UnitName Value="PressPicture"/>
+      </Item38>
+      <Item39>
+        <Filename Value="..\..\Core\PressReport.pas"/>
+        <UnitName Value="PressReport"/>
+      </Item39>
+      <Item40>
+        <Filename Value="..\..\Core\PressReportManager.pas"/>
+        <UnitName Value="PressReportManager"/>
+      </Item40>
+      <Item41>
+        <Filename Value="..\..\Core\PressReportModel.pas"/>
+        <UnitName Value="PressReportModel"/>
+      </Item41>
+      <Item42>
+        <Filename Value="..\..\Core\PressSession.pas"/>
+        <UnitName Value="PressSession"/>
+      </Item42>
+      <Item43>
+        <Filename Value="..\..\Core\PressSubject.pas"/>
+        <UnitName Value="PressSubject"/>
+      </Item43>
+      <Item44>
+        <Filename Value="..\..\Core\PressUser.pas"/>
+        <UnitName Value="PressUser"/>
+      </Item44>
+      <Item45>
+        <Filename Value="..\..\Core\PressUserModel.pas"/>
+        <UnitName Value="PressUserModel"/>
+      </Item45>
+      <Item46>
+        <Filename Value="..\..\Core\PressUtils.pas"/>
+        <UnitName Value="PressUtils"/>
+      </Item46>
+    </Files>
+    <RequiredPkgs Count="2">
+      <Item1>
+        <PackageName Value="LCL"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="FCL"/>
+        <MinVersion Major="1" Valid="True"/>
+      </Item2>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)\"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IgnoreBinaries Value="False"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>
