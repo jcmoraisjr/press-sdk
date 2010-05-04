@@ -1284,7 +1284,7 @@ end;
 
 function TPressCustomString.InternalTypeKinds: TTypeKinds;
 begin
-  Result := [tkString, tkLString, tkWString];
+  Result := [tkString, tkLString, tkWString{$ifdef FPC}, tkAString{$endif}];
 end;
 
 procedure TPressCustomString.SetAsBoolean(AValue: Boolean);
