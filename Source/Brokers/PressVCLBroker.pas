@@ -14,6 +14,8 @@
 
 unit PressVCLBroker;
 
+// Deprecated, use PressXCLForm instead
+
 {$I Press.inc}
 
 interface
@@ -35,8 +37,5 @@ procedure PressVCLForm(
 begin
   PressXCLForm(APresenter, AForm);
 end;
-
-initialization
-  PressRegisterWidgetManager(TPressMVPWidgetManager.Create);
 
 end.

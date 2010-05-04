@@ -2159,4 +2159,6 @@ initialization
   TPressMVPPictureView.RegisterView;
   TPressMVPFormView.RegisterView;
 
+  PressRegisterWidgetManager(TPressMVPWidgetManager.Create);
+
 end.
