@@ -5,7 +5,6 @@ unit MainFrm;
 interface
 
 uses
-  {$ifdef fpc}LResources,{$endif}
   Forms, StdCtrls, Controls, Classes;
 
 type
@@ -45,9 +44,7 @@ uses
 {$ENDIF}
   PersonBO;
 
-{$IFNDEF FPC}
-{$R *.DFM}
-{$ENDIF}
+{$ifdef fpc}{$R *.lfm}{$else}{$R *.DFM}{$endif}
 
 procedure TMainForm.GenerateDBMetaButtonClick(Sender: TObject);
 begin
@@ -128,10 +125,5 @@ procedure TMainForm.CloseButtonClick(Sender: TObject);
 begin
   Close;
 end;
-
-{$IFDEF FPC}
-initialization
-  {$i MainFrm.lrs}
-{$ENDIF}
 
 end.

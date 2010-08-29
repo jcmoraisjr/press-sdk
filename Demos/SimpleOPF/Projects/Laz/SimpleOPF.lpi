@@ -2,19 +2,20 @@
 <CONFIG>
   <ProjectOptions>
     <PathDelim Value="\"/>
-    <Version Value="6"/>
+    <Version Value="7"/>
     <General>
       <Flags>
         <SaveOnlyProjectUnits Value="True"/>
         <AlwaysBuild Value="False"/>
+        <LRSInOutputDirectory Value="False"/>
       </Flags>
       <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
-      <IconPath Value="./"/>
       <TargetFileExt Value=".exe"/>
+      <ResourceType Value="res"/>
     </General>
     <VersionInfo>
-      <ProjectVersion Value=""/>
+      <StringTable Comments="" CompanyName="" FileDescription="" FileVersion="0.0.0.0" InternalName="" LegalCopyright="" LegalTrademarks="" OriginalFilename="" ProductName="" ProductVersion=""/>
     </VersionInfo>
     <PublishOptions>
       <Version Value="2"/>
@@ -28,10 +29,13 @@
         <LaunchingApplication PathPlusParams="/usr/X11R6/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
-    <RequiredPackages Count="1">
+    <RequiredPackages Count="2">
       <Item1>
-        <PackageName Value="LCL"/>
+        <PackageName Value="PressLazSQLdbRT"/>
       </Item1>
+      <Item2>
+        <PackageName Value="LCL"/>
+      </Item2>
     </RequiredPackages>
     <Units Count="3">
       <Unit0>
@@ -41,9 +45,9 @@
       </Unit0>
       <Unit1>
         <Filename Value="..\..\Units\MainFrm.pas"/>
-        <ComponentName Value="MainForm"/>
         <IsPartOfProject Value="True"/>
-        <ResourceFilename Value="..\..\Units\MainFrm.lrs"/>
+        <ComponentName Value="MainForm"/>
+        <ResourceBaseClass Value="Form"/>
         <UnitName Value="MainFrm"/>
       </Unit1>
       <Unit2>
@@ -54,15 +58,15 @@
     </Units>
   </ProjectOptions>
   <CompilerOptions>
-    <Version Value="5"/>
+    <Version Value="8"/>
     <PathDelim Value="\"/>
+    <Target>
+      <Filename Value="SimpleOPF"/>
+    </Target>
     <SearchPaths>
-      <IncludeFiles Value="..\..\..\..\Source\Core\"/>
-      <OtherUnitFiles Value="..\..\..\..\Source\Core\;..\..\..\..\Source\Brokers\;..\..\Units\"/>
+      <OtherUnitFiles Value="..\..\Units\"/>
+      <UnitOutputDirectory Value="..\..\..\..\bin\Laz\Demos\SimpleOPF\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
-    <CodeGeneration>
-      <Generate Value="Faster"/>
-    </CodeGeneration>
     <Linking>
       <Options>
         <Win32>
@@ -71,6 +75,9 @@
       </Options>
     </Linking>
     <Other>
+      <CompilerMessages>
+        <UseMsgFile Value="True"/>
+      </CompilerMessages>
       <CompilerPath Value="$(CompPath)"/>
     </Other>
   </CompilerOptions>

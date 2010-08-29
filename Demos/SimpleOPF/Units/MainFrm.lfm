@@ -1,18 +1,18 @@
 object MainForm: TMainForm
   Left = 228
-  Height = 337
+  Height = 338
   Top = 119
-  Width = 633
+  Width = 636
   HorzScrollBar.Page = 632
   VertScrollBar.Page = 336
-  ActiveControl = GenerateDBMetaButton
   BorderStyle = bsDialog
   Caption = 'SimpleOPF'
-  ClientHeight = 337
-  ClientWidth = 633
+  ClientHeight = 338
+  ClientWidth = 636
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Position = poScreenCenter
+  LCLVersion = '0.9.29'
   object NameLabel: TLabel
     Left = 8
     Height = 14
@@ -26,7 +26,7 @@ object MainForm: TMainForm
     Left = 8
     Height = 14
     Top = 184
-    Width = 16
+    Width = 15
     Caption = 'ID:'
     ParentColor = False
   end
@@ -34,7 +34,7 @@ object MainForm: TMainForm
     Left = 8
     Height = 14
     Top = 112
-    Width = 37
+    Width = 36
     Caption = 'Where:'
     FocusControl = WhereEdit
     ParentColor = False
