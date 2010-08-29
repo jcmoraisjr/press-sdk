@@ -22,7 +22,8 @@ uses
   PhoneEditFrm,
   ReportMVP,
   ReportGroupEditFrm,
-  ReportItemEditFrm;
+  ReportItemEditFrm,
+  PressLazReportRT;
 
 begin
   Application.Initialize;

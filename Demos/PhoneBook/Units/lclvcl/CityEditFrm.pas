@@ -1,11 +1,9 @@
 unit CityEditFrm;
 
-{$mode objfpc}{$H+}
-
 interface
 
 uses
-  LResources, CustomEditFrm, Classes, Controls, StdCtrls, ExtCtrls;
+  CustomEditFrm, Classes, Controls, StdCtrls, ExtCtrls;
 
 type
   TCityEditForm = class(TCustomEditForm)
@@ -18,10 +16,11 @@ type
 implementation
 
 uses
-  PressLCLBroker, ContactMVP;
+  PressXCLBroker, ContactMVP;
+
+{$ifdef fpc}{$R *.lfm}{$else}{$R *.DFM}{$endif}
 
 initialization
-  {$i CityEditFrm.lrs}
-  PressLCLForm(TCityEditPresenter, TCityEditForm);
+  PressXCLForm(TCityEditPresenter, TCityEditForm);
 
 end.

@@ -14,11 +14,11 @@ type
 implementation
 
 uses
-  PressVCLBroker, ContactMVP;
+  PressXCLBroker, ContactMVP;
 
-{$R *.DFM}
+{$ifdef fpc}{$R *.lfm}{$else}{$R *.DFM}{$endif}
 
 initialization
-  PressVCLForm(TCompanyEditPresenter, TCompanyEditForm);
+  PressXCLForm(TCompanyEditPresenter, TCompanyEditForm);
 
 end.

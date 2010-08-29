@@ -1,0 +1,79 @@
+inherited CompanyEditForm: TCompanyEditForm
+  Caption = 'Company'
+  inherited ClientPanel: TPanel
+    Height = 155
+    Width = 297
+    ClientHeight = 155
+    ClientWidth = 297
+    inherited LinePanel: TPanel
+      Top = 153
+      Width = 297
+    end
+    inherited NameLabel: TLabel
+      Height = 14
+      Width = 32
+    end
+    inherited StreetLabel: TLabel
+      Height = 14
+      Top = 88
+      Width = 32
+    end
+    inherited ZipLabel: TLabel
+      Height = 14
+      Top = 128
+      Width = 19
+    end
+    inherited CityLabel: TLabel
+      Height = 14
+      Top = 128
+      Width = 21
+    end
+    inherited StreetEdit: TEdit
+      Top = 104
+      TabOrder = 3
+    end
+    inherited ZipEdit: TEdit
+      Top = 144
+      TabOrder = 4
+    end
+    inherited CityComboBox: TComboBox
+      Top = 144
+      TabOrder = 5
+    end
+    inherited PhonesGroupBox: TGroupBox
+      ClientHeight = 207
+      ClientWidth = 181
+      TabOrder = 6
+      inherited NumberLabel: TLabel
+        Height = 14
+        Width = 41
+      end
+      inherited PhoneTypeLabel: TLabel
+        Height = 14
+        Width = 59
+      end
+    end
+    object ContactLabel: TLabel[10]
+      Left = 16
+      Height = 14
+      Top = 48
+      Width = 41
+      Caption = 'Contact:'
+      FocusControl = ContactComboBox
+      ParentColor = False
+    end
+    object ContactComboBox: TComboBox[11]
+      Left = 16
+      Height = 21
+      Top = 64
+      Width = 217
+      ItemHeight = 13
+      TabOrder = 2
+    end
+  end
+  inherited BottomPanel: TPanel
+    Top = 155
+    Width = 297
+    ClientWidth = 297
+  end
+end

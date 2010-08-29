@@ -1,11 +1,9 @@
 unit PhoneEditFrm;
 
-{$mode objfpc}{$H+}
-
 interface
 
 uses
-  LResources, CustomEditFrm, Classes, Controls, StdCtrls, ExtCtrls;
+  CustomEditFrm, Classes, Controls, StdCtrls, ExtCtrls;
 
 type
   TPhoneEditForm = class(TCustomEditForm)
@@ -18,10 +16,11 @@ type
 implementation
 
 uses
-  PressLCLBroker, ContactMVP;
+  PressXCLBroker, ContactMVP;
+
+{$ifdef fpc}{$R *.lfm}{$else}{$R *.DFM}{$endif}
 
 initialization
-  {$i PhoneEditFrm.lrs}
-  PressLCLForm(TPhoneEditPresenter, TPhoneEditForm);
+  PressXCLForm(TPhoneEditPresenter, TPhoneEditForm);
 
 end.

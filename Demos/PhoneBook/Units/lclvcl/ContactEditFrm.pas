@@ -25,6 +25,6 @@ type
 
 implementation
 
-{$R *.DFM}
+{$ifdef fpc}{$R *.lfm}{$else}{$R *.DFM}{$endif}
 
 end.

@@ -1,106 +1,100 @@
 object MainForm: TMainForm
   Left = 265
-  Height = 314
   Top = 133
   Width = 376
-  HorzScrollBar.Page = 375
-  VertScrollBar.Page = 294
-  ActiveControl = NameQueryEdit
+  Height = 333
   Caption = 'PhoneBook'
-  ClientHeight = 295
-  ClientWidth = 376
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
+  Font.Style = []
   Menu = MainMenu
-  LCLVersion = '0.9.25'
+  OldCreateOrder = False
+  PixelsPerInch = 96
+  TextHeight = 13
   object QueryPanel: TPanel
+    Left = 0
+    Top = 0
+    Width = 368
     Height = 73
-    Width = 376
     Align = alTop
     BevelOuter = bvNone
-    ClientHeight = 73
-    ClientWidth = 376
     TabOrder = 0
     object NameQueryLabel: TLabel
       Left = 16
-      Height = 14
       Top = 16
-      Width = 32
+      Width = 31
+      Height = 13
       Caption = 'Name:'
       FocusControl = NameQueryEdit
-      ParentColor = False
     end
     object NameQueryEdit: TEdit
       Left = 16
-      Height = 21
       Top = 32
       Width = 217
+      Height = 21
       TabOrder = 0
     end
     object QuerySpeedButtonPanel: TPanel
-      Left = 296
-      Height = 69
+      Left = 288
       Top = 2
       Width = 80
+      Height = 69
       Align = alRight
       BevelOuter = bvNone
-      ClientHeight = 69
-      ClientWidth = 80
       TabOrder = 1
       object QuerySpeedButton: TSpeedButton
         Left = 8
-        Height = 22
         Top = 8
         Width = 65
+        Height = 22
         Caption = 'Query'
-        Color = clBtnFace
-        NumGlyphs = 0
       end
     end
     object BottomLinePanel: TPanel
-      Height = 2
+      Left = 0
       Top = 71
-      Width = 376
+      Width = 368
+      Height = 2
       Align = alBottom
       BevelOuter = bvLowered
       TabOrder = 2
     end
     object TopLinePanel: TPanel
+      Left = 0
+      Top = 0
+      Width = 368
       Height = 2
-      Width = 376
       Align = alTop
       BevelOuter = bvLowered
       TabOrder = 3
     end
   end
   object ItemsPanel: TPanel
-    Height = 222
+    Left = 0
     Top = 73
-    Width = 376
+    Width = 368
+    Height = 214
     Align = alClient
     BevelOuter = bvNone
     BorderWidth = 8
-    ClientHeight = 222
-    ClientWidth = 376
     TabOrder = 1
     object ItemsStringGrid: TStringGrid
       Left = 8
-      Height = 206
       Top = 8
-      Width = 360
+      Width = 352
+      Height = 198
       Align = alClient
-      ColCount = 5
       DefaultColWidth = 32
       DefaultRowHeight = 16
-      FixedColor = clBtnFace
-      Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goSmoothScroll]
-      RowCount = 5
       TabOrder = 0
     end
   end
   object MainMenu: TMainMenu
-    left = 256
-    top = 16
+    Left = 256
+    Top = 16
     object FileMenuGroup: TMenuItem
       Caption = '&File'
       object ConnectorMenuItem: TMenuItem

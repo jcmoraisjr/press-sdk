@@ -1,0 +1,55 @@
+inherited PhoneEditForm: TPhoneEditForm
+  Height = 156
+  Width = 209
+  Caption = 'Phone'
+  ClientHeight = 156
+  ClientWidth = 209
+  inherited ClientPanel: TPanel
+    Height = 115
+    Width = 209
+    ClientHeight = 115
+    ClientWidth = 209
+    inherited LinePanel: TPanel
+      Top = 113
+      Width = 209
+    end
+    object NumberLabel: TLabel[1]
+      Left = 16
+      Height = 14
+      Top = 56
+      Width = 41
+      Caption = 'Number:'
+      FocusControl = NumberEdit
+      ParentColor = False
+    end
+    object PhoneTypeLabel: TLabel[2]
+      Left = 16
+      Height = 14
+      Top = 8
+      Width = 59
+      Caption = 'PhoneType:'
+      FocusControl = PhoneTypeComboBox
+      ParentColor = False
+    end
+    object NumberEdit: TEdit[3]
+      Left = 16
+      Height = 21
+      Top = 72
+      Width = 121
+      TabOrder = 2
+    end
+    object PhoneTypeComboBox: TComboBox[4]
+      Left = 16
+      Height = 21
+      Top = 24
+      Width = 121
+      ItemHeight = 13
+      TabOrder = 1
+    end
+  end
+  inherited BottomPanel: TPanel
+    Top = 115
+    Width = 209
+    ClientWidth = 209
+  end
+end

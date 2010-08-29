@@ -1,11 +1,9 @@
 unit CustomEditFrm;
 
-{$mode objfpc}{$H+}
-
 interface
 
 uses
-  LResources, Forms, Classes, Controls, StdCtrls, ExtCtrls, Buttons;
+  Forms, Classes, Controls, StdCtrls, ExtCtrls, Buttons;
 
 type
   TCustomEditForm = class(TForm)
@@ -18,7 +16,6 @@ type
 
 implementation
 
-initialization
-  {$i CustomEditFrm.lrs}
+{$ifdef fpc}{$R *.lfm}{$else}{$R *.DFM}{$endif}
 
 end.

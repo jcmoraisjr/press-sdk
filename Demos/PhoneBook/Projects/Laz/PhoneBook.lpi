@@ -2,19 +2,20 @@
 <CONFIG>
   <ProjectOptions>
     <PathDelim Value="\"/>
-    <Version Value="6"/>
+    <Version Value="7"/>
     <General>
       <Flags>
         <SaveOnlyProjectUnits Value="True"/>
         <AlwaysBuild Value="False"/>
+        <LRSInOutputDirectory Value="False"/>
       </Flags>
       <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
-      <IconPath Value="./"/>
       <TargetFileExt Value=".exe"/>
+      <ResourceType Value="res"/>
     </General>
     <VersionInfo>
-      <ProjectVersion Value=""/>
+      <StringTable Comments="" CompanyName="" FileDescription="" FileVersion="0.0.0.0" InternalName="" LegalCopyright="" LegalTrademarks="" OriginalFilename="" ProductName="" ProductVersion=""/>
     </VersionInfo>
     <PublishOptions>
       <Version Value="2"/>
@@ -27,10 +28,16 @@
         <LaunchingApplication PathPlusParams="/usr/X11R6/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
-    <RequiredPackages Count="1">
+    <RequiredPackages Count="3">
       <Item1>
-        <PackageName Value="LCL"/>
+        <PackageName Value="PressLazReportRT"/>
       </Item1>
+      <Item2>
+        <PackageName Value="PressLazSQLdbRT"/>
+      </Item2>
+      <Item3>
+        <PackageName Value="LCL"/>
+      </Item3>
     </RequiredPackages>
     <Units Count="16">
       <Unit0>
@@ -39,75 +46,73 @@
         <UnitName Value="PhoneBook"/>
       </Unit0>
       <Unit1>
-        <Filename Value="..\..\Units\lcl\MainFrm.pas"/>
-        <ComponentName Value="MainForm"/>
+        <Filename Value="..\..\Units\lclvcl\MainFrm.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="MainForm"/>
         <ResourceBaseClass Value="Form"/>
-        <ResourceFilename Value="..\..\Units\lcl\MainFrm.lrs"/>
         <UnitName Value="MainFrm"/>
       </Unit1>
       <Unit2>
-        <Filename Value="..\..\Units\lcl\CustomEditFrm.pas"/>
+        <Filename Value="..\..\Units\lclvcl\CustomEditFrm.pas"/>
+        <IsPartOfProject Value="True"/>
         <ComponentName Value="CustomEditForm"/>
         <HasResources Value="True"/>
-        <IsPartOfProject Value="True"/>
-        <ResourceFilename Value="..\..\Units\lcl\CustomEditFrm.lrs"/>
+        <ResourceBaseClass Value="Form"/>
         <UnitName Value="CustomEditFrm"/>
       </Unit2>
       <Unit3>
-        <Filename Value="..\..\Units\lcl\ContactEditFrm.pas"/>
+        <Filename Value="..\..\Units\lclvcl\ContactEditFrm.pas"/>
+        <IsPartOfProject Value="True"/>
         <ComponentName Value="ContactEditForm"/>
         <HasResources Value="True"/>
-        <IsPartOfProject Value="True"/>
-        <ResourceFilename Value="..\..\Units\lcl\ContactEditFrm.lrs"/>
+        <ResourceBaseClass Value="Form"/>
         <UnitName Value="ContactEditFrm"/>
       </Unit3>
       <Unit4>
-        <Filename Value="..\..\Units\lcl\CompanyEditFrm.pas"/>
+        <Filename Value="..\..\Units\lclvcl\CompanyEditFrm.pas"/>
+        <IsPartOfProject Value="True"/>
         <ComponentName Value="CompanyEditForm"/>
         <HasResources Value="True"/>
-        <IsPartOfProject Value="True"/>
-        <ResourceFilename Value="..\..\Units\lcl\CompanyEditFrm.lrs"/>
+        <ResourceBaseClass Value="Form"/>
         <UnitName Value="CompanyEditFrm"/>
       </Unit4>
       <Unit5>
-        <Filename Value="..\..\Units\lcl\PersonEditFrm.pas"/>
+        <Filename Value="..\..\Units\lclvcl\PersonEditFrm.pas"/>
+        <IsPartOfProject Value="True"/>
         <ComponentName Value="PersonEditForm"/>
         <HasResources Value="True"/>
-        <IsPartOfProject Value="True"/>
-        <ResourceFilename Value="..\..\Units\lcl\PersonEditFrm.lrs"/>
+        <ResourceBaseClass Value="Form"/>
         <UnitName Value="PersonEditFrm"/>
       </Unit5>
       <Unit6>
-        <Filename Value="..\..\Units\lcl\CityEditFrm.pas"/>
+        <Filename Value="..\..\Units\lclvcl\CityEditFrm.pas"/>
+        <IsPartOfProject Value="True"/>
         <ComponentName Value="CityEditForm"/>
         <HasResources Value="True"/>
-        <IsPartOfProject Value="True"/>
-        <ResourceFilename Value="..\..\Units\lcl\CityEditFrm.lrs"/>
         <UnitName Value="CityEditFrm"/>
       </Unit6>
       <Unit7>
-        <Filename Value="..\..\Units\lcl\PhoneEditFrm.pas"/>
+        <Filename Value="..\..\Units\lclvcl\PhoneEditFrm.pas"/>
+        <IsPartOfProject Value="True"/>
         <ComponentName Value="PhoneEditForm"/>
         <HasResources Value="True"/>
-        <IsPartOfProject Value="True"/>
-        <ResourceFilename Value="..\..\Units\lcl\PhoneEditFrm.lrs"/>
+        <ResourceBaseClass Value="Form"/>
         <UnitName Value="PhoneEditFrm"/>
       </Unit7>
       <Unit8>
-        <Filename Value="..\..\Units\lcl\ReportItemEditFrm.pas"/>
+        <Filename Value="..\..\Units\lclvcl\ReportItemEditFrm.pas"/>
+        <IsPartOfProject Value="True"/>
         <ComponentName Value="ReportItemEditForm"/>
         <HasResources Value="True"/>
-        <IsPartOfProject Value="True"/>
-        <ResourceFilename Value="..\..\Units\lcl\ReportItemEditFrm.lrs"/>
+        <ResourceBaseClass Value="Form"/>
         <UnitName Value="ReportItemEditFrm"/>
       </Unit8>
       <Unit9>
-        <Filename Value="..\..\Units\lcl\ReportGroupEditFrm.pas"/>
+        <Filename Value="..\..\Units\lclvcl\ReportGroupEditFrm.pas"/>
+        <IsPartOfProject Value="True"/>
         <ComponentName Value="ReportGroupEditForm"/>
         <HasResources Value="True"/>
-        <IsPartOfProject Value="True"/>
-        <ResourceFilename Value="..\..\Units\lcl\ReportGroupEditFrm.lrs"/>
+        <ResourceBaseClass Value="Form"/>
         <UnitName Value="ReportGroupEditFrm"/>
       </Unit9>
       <Unit10>
@@ -143,21 +148,24 @@
     </Units>
   </ProjectOptions>
   <CompilerOptions>
-    <Version Value="5"/>
+    <Version Value="8"/>
     <PathDelim Value="\"/>
+    <Target>
+      <Filename Value="PhoneBook"/>
+    </Target>
     <SearchPaths>
-      <IncludeFiles Value="..\..\..\..\Source\Core\"/>
-      <OtherUnitFiles Value="..\..\..\..\Source\Core\;..\..\..\..\Source\Brokers\;..\..\Units\;..\..\Units\lcl\"/>
+      <OtherUnitFiles Value="..\..\Units\;..\..\Units\lclvcl\"/>
+      <UnitOutputDirectory Value="..\..\..\..\bin\Laz\Demos\PhoneBook\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
-    <CodeGeneration>
-      <Generate Value="Faster"/>
-    </CodeGeneration>
     <Linking>
       <Debugging>
         <UseHeaptrc Value="True"/>
       </Debugging>
     </Linking>
     <Other>
+      <CompilerMessages>
+        <UseMsgFile Value="True"/>
+      </CompilerMessages>
       <CompilerPath Value="$(CompPath)"/>
     </Other>
   </CompilerOptions>

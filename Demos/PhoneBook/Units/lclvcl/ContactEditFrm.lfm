@@ -1,18 +1,21 @@
 inherited ContactEditForm: TContactEditForm
   Left = 241
-  Height = 317
+  Height = 307
   Top = 175
-  Width = 448
-  ActiveControl = NameEdit
+  Width = 452
   Caption = 'ContactEditForm'
-  ClientHeight = 317
-  ClientWidth = 448
+  ClientHeight = 307
+  ClientWidth = 452
   inherited ClientPanel: TPanel
-    Height = 276
-    Width = 448
-    ClientHeight = 276
-    ClientWidth = 448
-    object NameLabel: TLabel[0]
+    Height = 266
+    Width = 452
+    ClientHeight = 266
+    ClientWidth = 452
+    inherited LinePanel: TPanel
+      Top = 264
+      Width = 452
+    end
+    object NameLabel: TLabel[1]
       Left = 16
       Height = 14
       Top = 8
@@ -21,7 +24,7 @@ inherited ContactEditForm: TContactEditForm
       FocusControl = NameEdit
       ParentColor = False
     end
-    object StreetLabel: TLabel[1]
+    object StreetLabel: TLabel[2]
       Left = 16
       Height = 14
       Top = 48
@@ -30,7 +33,7 @@ inherited ContactEditForm: TContactEditForm
       FocusControl = StreetEdit
       ParentColor = False
     end
-    object ZipLabel: TLabel[2]
+    object ZipLabel: TLabel[3]
       Left = 16
       Height = 14
       Top = 88
@@ -39,7 +42,7 @@ inherited ContactEditForm: TContactEditForm
       FocusControl = ZipEdit
       ParentColor = False
     end
-    object CityLabel: TLabel[3]
+    object CityLabel: TLabel[4]
       Left = 88
       Height = 14
       Top = 88
@@ -47,10 +50,6 @@ inherited ContactEditForm: TContactEditForm
       Caption = 'City:'
       FocusControl = CityComboBox
       ParentColor = False
-    end
-    inherited LinePanel: TPanel[4]
-      Top = 274
-      Width = 448
     end
     object NameEdit: TEdit[5]
       Left = 16
@@ -83,13 +82,22 @@ inherited ContactEditForm: TContactEditForm
     end
     object PhonesGroupBox: TGroupBox[9]
       Left = 248
-      Height = 241
+      Height = 225
       Top = 16
       Width = 185
       Caption = 'Phones'
-      ClientHeight = 223
+      ClientHeight = 207
       ClientWidth = 181
       TabOrder = 5
+      object NumberLabel: TLabel
+        Left = 16
+        Height = 14
+        Top = 160
+        Width = 41
+        Caption = 'Number:'
+        FocusControl = NumberEdit
+        ParentColor = False
+      end
       object PhoneTypeLabel: TLabel
         Left = 16
         Height = 14
@@ -99,56 +107,37 @@ inherited ContactEditForm: TContactEditForm
         FocusControl = PhoneTypeComboBox
         ParentColor = False
       end
-      object NumberLabel: TLabel
-        Left = 16
-        Height = 14
-        Top = 168
-        Width = 41
-        Caption = 'Number:'
-        FocusControl = NumberEdit
-        ParentColor = False
-      end
       object PhonesStringGrid: TStringGrid
-        Left = 14
+        Left = 16
         Height = 105
         Top = 8
         Width = 153
         DefaultColWidth = 32
         DefaultRowHeight = 16
-        ExtendedSelect = True
-        FixedColor = clBtnFace
-        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goSmoothScroll]
-        ParentColor = False
-        RowCount = 5
         TabOrder = 0
         TitleFont.Height = -11
         TitleFont.Name = 'MS Sans Serif'
+      end
+      object NumberEdit: TEdit
+        Left = 16
+        Height = 21
+        Top = 176
+        Width = 121
+        TabOrder = 1
       end
       object PhoneTypeComboBox: TComboBox
         Left = 16
         Height = 21
         Top = 136
-        Width = 145
+        Width = 121
         ItemHeight = 13
-        MaxLength = -1
-        TabOrder = 1
-      end
-      object NumberEdit: TEdit
-        Left = 16
-        Height = 21
-        Top = 184
-        Width = 145
         TabOrder = 2
       end
     end
   end
   inherited BottomPanel: TPanel
-    Top = 276
-    Width = 448
-    ClientWidth = 448
-    inherited OkButton: TButton
-    end
-    inherited CancelButton: TButton
-    end
+    Top = 266
+    Width = 452
+    ClientWidth = 452
   end
 end

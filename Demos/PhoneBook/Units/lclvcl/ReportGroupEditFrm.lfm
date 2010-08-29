@@ -1,0 +1,43 @@
+inherited ReportGroupEditForm: TReportGroupEditForm
+  Height = 314
+  Width = 323
+  Caption = 'ReportGroupEditForm'
+  ClientHeight = 314
+  ClientWidth = 323
+  inherited ClientPanel: TPanel
+    Height = 273
+    Width = 323
+    ClientHeight = 273
+    ClientWidth = 323
+    inherited LinePanel: TPanel
+      Top = 271
+      Width = 323
+    end
+  end
+  inherited BottomPanel: TPanel
+    Top = 273
+    Width = 323
+    ClientWidth = 323
+  end
+  object ReportsGroupBox: TGroupBox[2]
+    Left = 16
+    Height = 233
+    Top = 16
+    Width = 281
+    Caption = 'Reports:'
+    ClientHeight = 215
+    ClientWidth = 277
+    TabOrder = 2
+    object ReportsStringGrid: TStringGrid
+      Left = 16
+      Height = 193
+      Top = 8
+      Width = 249
+      DefaultColWidth = 32
+      DefaultRowHeight = 16
+      TabOrder = 0
+      TitleFont.Height = -11
+      TitleFont.Name = 'MS Sans Serif'
+    end
+  end
+end

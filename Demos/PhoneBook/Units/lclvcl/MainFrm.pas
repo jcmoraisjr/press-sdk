@@ -1,11 +1,9 @@
 unit MainFrm;
 
-{$mode objfpc}{$H+}
-
 interface
 
 uses
-  LResources, Forms, Classes, Controls, StdCtrls, ExtCtrls, Menus, Buttons, Grids;
+  Forms, Classes, Controls, StdCtrls, ExtCtrls, Menus, Buttons, Grids;
 
 type
   TMainForm = class(TForm)
@@ -30,7 +28,6 @@ var
 
 implementation
 
-initialization
-  {$i MainFrm.lrs}
+{$ifdef fpc}{$R *.lfm}{$else}{$R *.DFM}{$endif}
 
 end.
