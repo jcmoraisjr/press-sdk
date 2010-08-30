@@ -23,7 +23,8 @@ procedure PressAssignDefaultMessages;
 implementation
 
 uses
-  PressConsts;
+  PressConsts,
+  PressUtils;
 
 resourcestring
   {$I PressMessages_en.inc}

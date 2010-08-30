@@ -30,7 +30,8 @@ type
 implementation
 
 uses
-  PressConsts;
+  PressConsts,
+  PressUtils;
 
 resourcestring
   {$I PressMessages_de.inc}
