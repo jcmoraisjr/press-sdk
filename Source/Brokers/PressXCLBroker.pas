@@ -102,13 +102,13 @@ type
   TPressXCLMenuItem = class(TMenuItem)
   private
     FNotifier: TPressNotifier;
-    FCommand: TPressMVPCommand;
+    FMVPCommand: TPressMVPCommand;
     procedure Notify(AEvent: TPressEvent);
   public
     constructor Create(AOwner: TComponent; ACommand: TPressMVPCommand); reintroduce; virtual;
     destructor Destroy; override;
     procedure Click; override;
-    property Command: TPressMVPCommand read FCommand write FCommand;
+    property MVPCommand: TPressMVPCommand read FMVPCommand write FMVPCommand;
   end;
 
   TPressXCLCommandMenu = class(TPressMVPCommandMenu)
@@ -746,12 +746,12 @@ begin
   if Assigned(ACommand) then
   begin
     FNotifier := TPressNotifier.Create({$IFDEF FPC}@{$ENDIF}Notify);
-    FCommand := ACommand;
-    Caption := PressEncodeString(FCommand.Caption);
-    Enabled := FCommand.Enabled;
-    Visible := FCommand.Visible;
-    ShortCut := FCommand.ShortCut;
-    FNotifier.AddNotificationItem(FCommand, [TPressMVPCommandChangedEvent]);
+    FMVPCommand := ACommand;
+    Caption := PressEncodeString(FMVPCommand.Caption);
+    Enabled := FMVPCommand.Enabled;
+    Visible := FMVPCommand.Visible;
+    ShortCut := FMVPCommand.ShortCut;
+    FNotifier.AddNotificationItem(FMVPCommand, [TPressMVPCommandChangedEvent]);
   end else
     Caption := '-';
 end;
@@ -759,8 +759,8 @@ end;
 procedure TPressXCLMenuItem.Click;
 begin
   inherited;
-  if Assigned(FCommand) then
-    FCommand.Execute;
+  if Assigned(FMVPCommand) then
+    FMVPCommand.Execute;
 end;
 
 destructor TPressXCLMenuItem.Destroy;
@@ -771,8 +771,8 @@ end;
 
 procedure TPressXCLMenuItem.Notify(AEvent: TPressEvent);
 begin
-  if Assigned(FCommand) then
-    Enabled := FCommand.Enabled;
+  if Assigned(FMVPCommand) then
+    Enabled := FMVPCommand.Enabled;
 end;
 
 { TPressXCLCommandMenu }
