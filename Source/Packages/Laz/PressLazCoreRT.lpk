@@ -9,7 +9,7 @@
       <PathDelim Value="\"/>
       <SearchPaths>
         <OtherUnitFiles Value="..\..\Core\"/>
-        <UnitOutputDirectory Value="..\..\..\bin\laz\Core\$(TargetCPU)-$(TargetOS)\"/>
+        <UnitOutputDirectory Value="..\..\..\bin\Laz\Core\$(TargetCPU)-$(TargetOS)\"/>
       </SearchPaths>
       <Parsing>
         <SyntaxOptions>
