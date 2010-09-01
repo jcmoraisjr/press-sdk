@@ -816,7 +816,7 @@ begin
     else {alCenter}
       VLeft := (ARect.Left + ARect.Right - PressWidget.TextWidth(ACanvasHandle, AText)) div 2;
   end;
-  PressWidget.TextRect(ACanvasHandle, ARect, VLeft, VTop, PressEncodeString(AText));
+  PressWidget.TextRect(ACanvasHandle, ARect, VLeft, VTop, AText);
 end;
 
 { TPressMVPDrawItemInteractor }

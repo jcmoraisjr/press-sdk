@@ -307,20 +307,19 @@ uses
   Windows,
 {$ENDIF}
   Math,
-  PressConsts,
-  PressUtils;
+  PressConsts;
 
 { EPressError }
 
 constructor EPressError.Create(const AMsg: string);
 begin
-  inherited Create(PressEncodeString(AMsg));
+  inherited Create(AMsg);
 end;
 
 constructor EPressError.CreateFmt(const AMsg: string;
   const AArgs: array of const);
 begin
-  inherited CreateFmt(PressEncodeString(AMsg), AArgs);
+  inherited CreateFmt(AMsg, AArgs);
 end;
 
 { EPressParseError }

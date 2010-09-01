@@ -34,7 +34,6 @@ function PressSupports(const AInstance: IPressInterface; const AIntf: TGUID): Bo
 function PressSetPropertyValue(AObject: TPersistent; const APathName, AValue: string; AError: Boolean = False): Boolean;
 procedure PressDebug(const AStr: string);
 function PressUnquotedStr(const AStr: string): string;
-function PressDecodeString(const AStr: string): string;
 function PressEncodeString(const AStr: string): string;
 {$ifdef d5down}
 function PressD5VariantToInt64(AVariant: Variant): Int64;
@@ -266,16 +265,6 @@ begin
     Result := AnsiExtractQuotedStr(PStr, AStr[1]);
   end else
     Result := AStr;
-end;
-
-function PressDecodeString(const AStr: string): string;
-begin
-{$ifdef lcl}
-  if SystemCharSetIsUTF8 then
-    Result := Utf8Decode(AStr)
-  else
-{$endif}
-  Result := AStr;
 end;
 
 function PressEncodeString(const AStr: string): string;

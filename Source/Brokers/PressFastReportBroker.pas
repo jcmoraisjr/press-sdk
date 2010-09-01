@@ -59,11 +59,9 @@ type
 implementation
 
 uses
-  {$ifndef d5}Variants,{$endif}
   SysUtils,
   Forms,
-  PressConsts,
-  PressUtils;
+  PressConsts;
 
 { TPressFRReport }
 
@@ -151,8 +149,6 @@ begin
       VFieldName := ParName;
     end;
     OnNeedValue(VDataSetName, VFieldName, ParValue, False);
-    if VarType(ParValue) = varString then
-      ParValue := PressEncodeString(ParValue);
   end;
 end;
 
