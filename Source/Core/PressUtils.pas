@@ -27,6 +27,7 @@ uses
   PressClasses;
 
 function PressFormatMaskText(const EditMask: string; const Value: string): string;
+function PressLength(AStr: string): {$ifdef fpc}PtrInt; inline;{$else}Integer;{$endif}
 function PressVarFormat(const AFormat: string; const AArgs: array of Variant): string;
 procedure PressGenerateGUID(out AGUID: TGUID);
 procedure PressAsIntf(const AInstance: IInterface; const AIntf: TGUID; out AInst);
@@ -57,6 +58,7 @@ uses
 {$ENDIF}
 {$ifdef lcl}
   Translations,
+  LCLProc,
 {$endif}
   PressConsts;
 
@@ -66,6 +68,11 @@ begin
   Result :=
    {$IFDEF FPC}Value{$ELSE}{$IFDEF D6Up}MaskUtils{$ELSE}Mask{$ENDIF}
    .FormatMaskText(EditMask, Value){$ENDIF};
+end;
+
+function PressLength(AStr: string): {$ifdef fpc}PtrInt; inline;{$else}Integer;{$endif}
+begin
+  Result := {$ifdef lcl}UTF8Length(AStr){$else}Length(AStr){$endif};
 end;
 
 function PressVarFormat(const AFormat: string; const AArgs: array of Variant): string;

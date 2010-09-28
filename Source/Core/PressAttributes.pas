@@ -1366,7 +1366,7 @@ begin
       VMaxSize := Metadata.Size
     else
       VMaxSize := 0;
-    if (VMaxSize > 0) and (Length(AValue) > VMaxSize) then
+    if (VMaxSize > 0) and (PressLength(AValue) > VMaxSize) then
     begin
       if Assigned(Owner) then
         VOwnerName := Owner.ClassName
