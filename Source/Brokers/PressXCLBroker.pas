@@ -145,18 +145,18 @@ type
     FViewMouseDownEvent: TMouseEvent;
     FViewMouseUpEvent: TMouseEvent;
     FVisible: Boolean;
+    function GetModel: TPressMVPModel;
+    procedure SetEnabled(Value: Boolean);
+  protected
     function AccessError(const ADataType: string): EPressMVPError;
     function GetAccessMode: TPressAccessMode;
     function GetEnabled: Boolean;
     function GetIsChanged: Boolean;
-    function GetModel: TPressMVPModel;
     function GetReadOnly: Boolean;
     function GetVisible: Boolean;
     procedure SetAccessMode(Value: TPressAccessMode);
-    procedure SetEnabled(Value: Boolean);
     procedure SetReadOnly(Value: Boolean);
     procedure SetVisible(Value: Boolean);
-  protected
     procedure ViewClickEvent(Sender: TObject); virtual;
     procedure ViewDblClickEvent(Sender: TObject); virtual;
     procedure ViewMouseDownEvent(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer); virtual;
