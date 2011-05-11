@@ -79,7 +79,7 @@ type
     FRefCount: Integer;
   protected
     procedure Finit; virtual;
-    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function QueryInterface({$ifdef fpc_has_constref}constref{$else}const{$endif} IID: TGUID; out Obj): HResult; stdcall;
     function SupportsIntf(const IID: TGUID): Boolean;
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
@@ -389,7 +389,7 @@ begin
 end;
 
 function TPressManagedObject.QueryInterface(
-  const IID: TGUID; out Obj): HResult; stdcall;
+  {$ifdef fpc_has_constref}constref{$else}const{$endif} IID: TGUID; out Obj): HResult; stdcall;
 begin
   if GetInterface(IID, Obj) then
     Result := 0
