@@ -16,6 +16,8 @@ unit PressZeosBroker;
 
 {$I Press.inc}
 
+{.$define zeos7up}  // define if you are using Zeos 7+
+
 interface
 
 uses
@@ -33,6 +35,10 @@ uses
   ZDataset;
 
 type
+{$ifndef zeos7up}
+  TLoginEvent = TZLoginEvent;
+{$endif}
+
   TPressZeosConnector = class;
 
   TPressZeosBroker = class(TPressOPFBroker)
@@ -96,7 +102,7 @@ type
     function GetDatabase: string;
     function GetHostName: string;
     function GetLoginPrompt: Boolean;
-    function GetOnLogin: TLoginEvent;
+    function GetOnLogin: TZLoginEvent;
     function GetPassword: string;
     function GetPort: Integer;
     function GetProperties: TStrings;
@@ -111,7 +117,7 @@ type
     procedure SetDatabase(const AValue: string);
     procedure SetHostName(const AValue: string);
     procedure SetLoginPrompt(AValue: Boolean);
-    procedure SetOnLogin(AValue: TLoginEvent);
+    procedure SetOnLogin(AValue: TZLoginEvent);
     procedure SetPassword(const AValue: string);
     procedure SetPort(AValue: Integer);
     procedure SetProperties(AValue: TStrings);
@@ -137,7 +143,7 @@ type
     property AfterConnect: TNotifyEvent read GetAfterConnect write SetAfterConnect;
     property BeforeDisconnect: TNotifyEvent read GetBeforeDisconnect write SetBeforeDisconnect;
     property AfterDisconnect: TNotifyEvent read GetAfterDisconnect write SetAfterDisconnect;
-    property OnLogin: TLoginEvent read GetOnLogin write SetOnLogin;
+    property OnLogin: TZLoginEvent read GetOnLogin write SetOnLogin;
   end;
 
 implementation
@@ -211,7 +217,7 @@ end;
 function TPressZeosConnector.InternalDBMSName: string;
 begin
   if Connection.Connected then
-    Result := Connection.DbcConnection.GetMetadata.GetDatabaseProductName
+    Result := Connection.DbcConnection.GetMetadata.{$ifdef zeos7up}GetDatabaseInfo.{$endif}GetDatabaseProductName
   else
     Result := Connection.Protocol;
 end;
@@ -342,7 +348,7 @@ begin
   Result := Connection.LoginPrompt;
 end;
 
-function TPressZeosConnection.GetOnLogin: TLoginEvent;
+function TPressZeosConnection.GetOnLogin: TZLoginEvent;
 begin
   Result := Connection.OnLogin;
 end;
@@ -422,7 +428,7 @@ begin
   Connection.LoginPrompt := AValue;
 end;
 
-procedure TPressZeosConnection.SetOnLogin(AValue: TLoginEvent);
+procedure TPressZeosConnection.SetOnLogin(AValue: TZLoginEvent);
 begin
   Connection.OnLogin := AValue;
 end;
