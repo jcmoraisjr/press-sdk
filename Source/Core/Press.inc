@@ -39,11 +39,6 @@
   {$DEFINE SUPPORTS_DYNAMICARRAYS}
   {$DEFINE SUPPORTS_DEFAULTPARAMS}
   {$DEFINE SUPPORTS_OVERLOAD}
-  {$IFNDEF WINDOWS}
-    {$IF (FPC_VERSION >= 2) AND (FPC_RELEASE > 4)}
-      {$DEFINE PressIIntfUsesCDecl}
-    {$ENDIF}
-  {$ENDIF}
 {$ELSE}
   {$DEFINE VCL}
 {$ENDIF}
@@ -112,7 +107,11 @@
   {$UNDEF PressLogDAOPersistence}
 {$ENDIF}
 
-{$IFNDEF FPC}              // Only FPC and Delphi >= 5 are supported
+{$IFDEF FPC}              // Only FPC and Delphi >= 5 are supported
+  {$IFNDEF VER1}{$IFNDEF VER2_0}{$IFNDEF VER2_1}{$IFNDEF VER2_2}{$IFNDEF VER2_3}{$IFNDEF VER2_4}
+    {$DEFINE FPC251UP}
+  {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ELSE}
   {$DEFINE BORLAND_CG}
   {$IFDEF VER130}          // D5
     {$DEFINE MSWINDOWS}
@@ -134,5 +133,11 @@
         {$DEFINE D2006Up}
       {$IFEND}
     {$ENDIF}
+  {$ENDIF}
+{$ENDIF}
+
+{$IFDEF FPC251UP}
+  {$IFNDEF WINDOWS}
+    {$DEFINE PressIIntfUsesCDecl}
   {$ENDIF}
 {$ENDIF}
