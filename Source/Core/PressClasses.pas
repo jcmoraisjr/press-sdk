@@ -79,10 +79,10 @@ type
     FRefCount: Integer;
   protected
     procedure Finit; virtual;
-    function QueryInterface({$ifdef fpc_has_constref}constref{$else}const{$endif} IID: TGUID; out Obj): HResult; stdcall;
+    function QueryInterface({$ifdef fpc_has_constref}constref{$else}const{$endif} IID: TGUID; out Obj): HResult; {$ifdef PressIIntfUsesCDecl}cdecl{$else}stdcall{$endif};
     function SupportsIntf(const IID: TGUID): Boolean;
-    function _AddRef: Integer; stdcall;
-    function _Release: Integer; stdcall;
+    function _AddRef: Integer; {$ifdef PressIIntfUsesCDecl}cdecl{$else}stdcall{$endif};
+    function _Release: Integer; {$ifdef PressIIntfUsesCDecl}cdecl{$else}stdcall{$endif};
   public
     destructor Destroy; reintroduce;
     function AddRef: Integer; virtual;
@@ -389,7 +389,7 @@ begin
 end;
 
 function TPressManagedObject.QueryInterface(
-  {$ifdef fpc_has_constref}constref{$else}const{$endif} IID: TGUID; out Obj): HResult; stdcall;
+  {$ifdef fpc_has_constref}constref{$else}const{$endif} IID: TGUID; out Obj): HResult; {$ifdef PressIIntfUsesCDecl}cdecl{$else}stdcall{$endif};
 begin
   if GetInterface(IID, Obj) then
     Result := 0
@@ -416,12 +416,12 @@ begin
 {$endif}
 end;
 
-function TPressManagedObject._AddRef: Integer; stdcall;
+function TPressManagedObject._AddRef: Integer; {$ifdef PressIIntfUsesCDecl}cdecl{$else}stdcall{$endif};
 begin
   Result := AddRef;
 end;
 
-function TPressManagedObject._Release: Integer; stdcall;
+function TPressManagedObject._Release: Integer; {$ifdef PressIIntfUsesCDecl}cdecl{$else}stdcall{$endif};
 begin
   Result := Release;
   if Result = 0 then
