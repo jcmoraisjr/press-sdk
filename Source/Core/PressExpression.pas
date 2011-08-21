@@ -48,6 +48,7 @@ type
   TPressExpression = class(TPressExpressionObject)
   private
     FCalc: TObjectList;
+    FOwnedReader: TPressExpressionReader;
     FRes: PPressExpressionValue;
     FVars: TPressExpressionVarList;
     function GetCalc: TObjectList;
@@ -62,8 +63,10 @@ type
     function InternalParseOperation(Reader: TPressParserReader): TPressExpressionOperation; virtual;
     procedure InternalRead(Reader: TPressParserReader); override;
   public
+    constructor Create;
+    constructor Create(AExpression: string);
     destructor Destroy; override;
-    function ParseExpression(Reader: TPressParserReader): PPressExpressionValue;
+    function ParseExpression(Reader: TPressExpressionReader): PPressExpressionValue;
     property Calc: TObjectList read GetCalc;
     property Res: PPressExpressionValue read FRes;
     property Vars: TPressExpressionVarList read GetVars;
@@ -205,6 +208,7 @@ destructor TPressExpression.Destroy;
 begin
   FVars.Free;
   FCalc.Free;
+  FOwnedReader.Free;
   inherited;
 end;
 
@@ -226,6 +230,8 @@ function TPressExpression.GetVarValue: Variant;
 var
   I: Integer;
 begin
+  if not Assigned(FRes) and Assigned(FOwnedReader) then
+    ParseExpression(FOwnedReader);
   if Assigned(FRes) then
   begin
     if Assigned(FCalc) then
@@ -265,12 +271,23 @@ end;
 procedure TPressExpression.InternalRead(Reader: TPressParserReader);
 begin
   inherited;
-  ParseExpression(Reader);
+  ParseExpression(Reader as TPressExpressionReader);
   Reader.ReadMatchEof;
 end;
 
+constructor TPressExpression.Create;
+begin
+  inherited Create(nil);
+end;
+
+constructor TPressExpression.Create(AExpression: string);
+begin
+  inherited Create(nil);
+  FOwnedReader := TPressExpressionReader.Create(AExpression);
+end;
+
 function TPressExpression.ParseExpression(
-  Reader: TPressParserReader): PPressExpressionValue;
+  Reader: TPressExpressionReader): PPressExpressionValue;
 var
   VItem: TPressExpressionItem;
 begin
@@ -452,7 +469,7 @@ procedure TPressExpressionBracketItem.InternalRead(
 begin
   inherited;
   Reader.ReadMatch('(');
-  Res := (Owner as TPressExpression).ParseExpression(Reader);
+  Res := (Owner as TPressExpression).ParseExpression(Reader as TPressExpressionReader);
   Reader.ReadMatch(')');
 end;
 
@@ -516,7 +533,8 @@ begin
       Reader.ReadMatch(',');
     if Length(VParams) = I then
       SetLength(VParams, I + CDelta);
-    VParams[I] := (Owner as TPressExpression).ParseExpression(Reader);
+    VParams[I] := (Owner as TPressExpression).ParseExpression(
+     Reader as TPressExpressionReader);
     Inc(I);
   end;
   Reader.ReadMatch(')');

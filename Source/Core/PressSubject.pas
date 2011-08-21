@@ -3685,7 +3685,7 @@ end;
 
 constructor TPressSubjectExpression.Create(AInstance: TPressObject);
 begin
-  inherited Create(nil);
+  inherited Create;
   FInstance := AInstance;
 end;
 
