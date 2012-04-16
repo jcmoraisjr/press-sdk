@@ -35,6 +35,8 @@ type
 
   EPressConversionError = class(EPressError);
 
+  EPressWebException = class(EPressError);
+
   TPressTextPos = record
     Line, Column: Integer;
     Position: Integer;

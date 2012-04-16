@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <Package Version="4">
+    <PathDelim Value="\"/>
+    <Name Value="PressLazWebRT"/>
+    <AddToProjectUsesSection Value="True"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <OtherUnitFiles Value="..\..\Brokers;\home\jcmoraisjr\devel\press\Source\Core\"/>
+        <UnitOutputDirectory Value="..\..\..\bin\Laz\Brokers\$(TargetCPU)-$(TargetOS)"/>
+      </SearchPaths>
+      <Other>
+        <CompilerPath Value="$(CompPath)"/>
+      </Other>
+    </CompilerOptions>
+    <Version Minor="1" Release="1"/>
+    <Files Count="2">
+      <Item1>
+        <Filename Value="..\..\Core\PressWebHandler.pas"/>
+        <UnitName Value="PressWebHandler"/>
+      </Item1>
+      <Item2>
+        <Filename Value="..\..\Brokers\PressWebFCLCGIBroker.pas"/>
+        <UnitName Value="PressWebFCLCGIBroker"/>
+      </Item2>
+    </Files>
+    <RequiredPkgs Count="2">
+      <Item1>
+        <PackageName Value="PressLazCoreRT"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="FCL"/>
+        <MinVersion Major="1" Valid="True"/>
+      </Item2>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)\"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IgnoreBinaries Value="False"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>

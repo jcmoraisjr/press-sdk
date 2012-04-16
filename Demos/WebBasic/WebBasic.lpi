@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <ProjectOptions>
+    <Version Value="9"/>
+    <General>
+      <Flags>
+        <MainUnitHasCreateFormStatements Value="False"/>
+      </Flags>
+      <SessionStorage Value="InProjectDir"/>
+      <MainUnit Value="0"/>
+      <Title Value="WebBasic"/>
+      <UseAppBundle Value="False"/>
+      <ResourceType Value="res"/>
+    </General>
+    <i18n>
+      <EnableI18N LFM="False"/>
+    </i18n>
+    <VersionInfo>
+      <StringTable ProductVersion=""/>
+    </VersionInfo>
+    <BuildModes Count="1">
+      <Item1 Name="Default" Default="True"/>
+    </BuildModes>
+    <PublishOptions>
+      <Version Value="2"/>
+      <DestinationDirectory Value="/var/www/cgi-bin/webbasic"/>
+      <IgnoreBinaries Value="False"/>
+      <IncludeFileFilter Value="*"/>
+      <UseExcludeFileFilter Value="True"/>
+      <ExcludeFileFilter Value="*.(bak|ppu|o|so);*~;backup"/>
+    </PublishOptions>
+    <RunParams>
+      <local>
+        <FormatVersion Value="1"/>
+        <LaunchingApplication PathPlusParams="/usr/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
+      </local>
+    </RunParams>
+    <RequiredPackages Count="4">
+      <Item1>
+        <PackageName Value="PressLazWebRT"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="PressLazCoreRT"/>
+      </Item2>
+      <Item3>
+        <PackageName Value="WebLaz"/>
+      </Item3>
+      <Item4>
+        <PackageName Value="FCL"/>
+      </Item4>
+    </RequiredPackages>
+    <Units Count="5">
+      <Unit0>
+        <Filename Value="WebBasic.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="WebBasic"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="WebHelloWorld.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="WebHelloWorld"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="WebBrokers.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="WebBrokers"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="WebInfo.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="WebInfo"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="WebHome.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="WebHome"/>
+      </Unit4>
+    </Units>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="11"/>
+    <Target>
+      <Filename Value="WebBasic"/>
+    </Target>
+    <SearchPaths>
+      <IncludeFiles Value="$(ProjOutDir)"/>
+      <UnitOutputDirectory Value="../../bin/Laz/Demos/WebBasic"/>
+    </SearchPaths>
+    <Other>
+      <CompilerMessages>
+        <MsgFileName Value=""/>
+      </CompilerMessages>
+      <CompilerPath Value="$(CompPath)"/>
+    </Other>
+  </CompilerOptions>
+  <Debugging>
+    <Exceptions Count="3">
+      <Item1>
+        <Name Value="EAbort"/>
+      </Item1>
+      <Item2>
+        <Name Value="ECodetoolError"/>
+      </Item2>
+      <Item3>
+        <Name Value="EFOpenError"/>
+      </Item3>
+    </Exceptions>
+  </Debugging>
+</CONFIG>
