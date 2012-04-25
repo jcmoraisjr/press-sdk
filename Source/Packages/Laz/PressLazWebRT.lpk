@@ -3,12 +3,11 @@
   <Package Version="4">
     <PathDelim Value="\"/>
     <Name Value="PressLazWebRT"/>
-    <AddToProjectUsesSection Value="True"/>
     <CompilerOptions>
       <Version Value="11"/>
       <PathDelim Value="\"/>
       <SearchPaths>
-        <OtherUnitFiles Value="..\..\Brokers;\home\jcmoraisjr\devel\press\Source\Core\"/>
+        <OtherUnitFiles Value="..\..\Brokers;..\..\Core"/>
         <UnitOutputDirectory Value="..\..\..\bin\Laz\Brokers\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
       <Other>
