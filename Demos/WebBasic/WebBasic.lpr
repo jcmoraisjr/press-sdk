@@ -4,7 +4,7 @@ uses
   heaptrc,
   PressApplication, PressLazWebRT,
   WebBrokers,
-  WebHelloWorld, WebInfo, WebHome;
+  WebHelloWorld, WebInfo, WebHome, PersonBO, WebPerson;
 
 begin
   PressApp.Run;

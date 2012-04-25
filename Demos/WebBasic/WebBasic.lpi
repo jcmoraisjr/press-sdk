@@ -35,21 +35,24 @@
         <LaunchingApplication PathPlusParams="/usr/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
-    <RequiredPackages Count="4">
+    <RequiredPackages Count="5">
       <Item1>
-        <PackageName Value="PressLazWebRT"/>
+        <PackageName Value="PressLazSQLdbRT"/>
       </Item1>
       <Item2>
-        <PackageName Value="PressLazCoreRT"/>
+        <PackageName Value="PressLazWebRT"/>
       </Item2>
       <Item3>
-        <PackageName Value="WebLaz"/>
+        <PackageName Value="PressLazCoreRT"/>
       </Item3>
       <Item4>
-        <PackageName Value="FCL"/>
+        <PackageName Value="WebLaz"/>
       </Item4>
+      <Item5>
+        <PackageName Value="FCL"/>
+      </Item5>
     </RequiredPackages>
-    <Units Count="5">
+    <Units Count="7">
       <Unit0>
         <Filename Value="WebBasic.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -75,6 +78,16 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="WebHome"/>
       </Unit4>
+      <Unit5>
+        <Filename Value="PersonBO.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="PersonBO"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="WebPerson.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="WebPerson"/>
+      </Unit6>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

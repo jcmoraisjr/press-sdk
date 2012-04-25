@@ -1,0 +1,9 @@
+[OPFBroker]
+DefaultServiceName := 'SQLdb';
+
+[OPFBroker.SQLdb]
+Connector.Database.ConnectorType := 'postgresql';
+Connector.Database.Hostname := 'localhost';
+Connector.Database.DatabaseName := 'webbasic';
+Connector.Database.UserName := 'webbasic';
+Connector.Database.Password := 'abc';

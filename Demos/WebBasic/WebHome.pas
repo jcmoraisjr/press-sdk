@@ -31,7 +31,7 @@ implementation
 procedure TWebIndexRequestHandler.HandleRequest(ARequest: TRequest;
   AResponse: TResponse);
 begin
-  AResponse.Contents.Add('<a href="WebBasic/">Go Home</a><br/>');
+  AResponse.Contents.Add('<a href="' + ARequest.ScriptName + '/">Home</a><br/>');
 end;
 
 { TWebHomeRequestHandler }
@@ -40,7 +40,8 @@ procedure TWebHomeRequestHandler.HandleRequest(ARequest: TRequest;
   AResponse: TResponse);
 begin
   AResponse.Contents.Add('<a href="hello">Hello</a><br/>');
-  AResponse.Contents.Add('<a href="info">Info</a><br/>');
+  AResponse.Contents.Add('<a href="info">Info</a> (http content)<br/>');
+  AResponse.Contents.Add('<a href="person/">Person</a> (Persistence)<br/>');
 end;
 
 initialization
