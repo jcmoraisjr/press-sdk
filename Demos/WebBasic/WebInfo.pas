@@ -31,7 +31,7 @@ const
 var
   I: Integer;
 begin
-  AResponse.Contents.Add('<h2>hello</h2>');
+  AResponse.Contents.Add('<h2>Info</h2>');
   AResponse.Contents.Add('<form method="post" enctype="multipart/form-data" action="' + ARequest.ScriptName + ARequest.PathInfo + '">');
   AResponse.Contents.Add('<input type="file" name="f">');
   AResponse.Contents.Add('<input type="text" name="a" value="b">');
@@ -78,7 +78,7 @@ begin
      ARequest.Files.Files[I].LocalFileName + ' - ' + ARequest.Files.Files[I].ContentType);
   AResponse.Contents.Add('Fields:');
   for I := 0 to Pred(ARequest.FieldCount) do
-    AResponse.Contents.Add(IntToStr(I) + ': ' + ARequest.Fields[I] + ' - ' + ARequest.FieldNames[I] + ' - ' + ARequest.FieldValues[I]);
+    AResponse.Contents.Add(IntToStr(I) + ': ' + ARequest.FieldNames[I] + ': ' + ARequest.FieldValues[I]);
   AResponse.Contents.Add('CookieFields:');
   for I := 0 to Pred(ARequest.CookieFields.Count) do
     AResponse.Contents.Add(IntToStr(I) + ': ' + ARequest.CookieFields[I]);
