@@ -21,31 +21,35 @@
       </Other>
     </CompilerOptions>
     <Version Minor="1" Release="1"/>
-    <Files Count="6">
+    <Files Count="7">
       <Item1>
-        <Filename Value="..\..\Brokers\PressXCLBroker.pas"/>
-        <UnitName Value="PressXCLBroker"/>
-      </Item1>
-      <Item2>
         <Filename Value="..\..\Brokers\Press.inc"/>
         <Type Value="Include"/>
-      </Item2>
-      <Item3>
+      </Item1>
+      <Item2>
         <Filename Value="..\..\Brokers\PressDataSetBroker.pas"/>
         <UnitName Value="PressDataSetBroker"/>
-      </Item3>
-      <Item4>
+      </Item2>
+      <Item3>
         <Filename Value="..\..\Brokers\PressIBFbBroker.pas"/>
         <UnitName Value="PressIBFbBroker"/>
-      </Item4>
-      <Item5>
+      </Item3>
+      <Item4>
         <Filename Value="..\..\Brokers\PressOracleBroker.pas"/>
         <UnitName Value="PressOracleBroker"/>
-      </Item5>
-      <Item6>
+      </Item4>
+      <Item5>
         <Filename Value="..\..\Brokers\PressPgSQLBroker.pas"/>
         <UnitName Value="PressPgSQLBroker"/>
+      </Item5>
+      <Item6>
+        <Filename Value="..\..\Brokers\PressWebFCLFCGIBroker.pas"/>
+        <UnitName Value="PressWebFCLFCGIBroker"/>
       </Item6>
+      <Item7>
+        <Filename Value="..\..\Brokers\PressXCLBroker.pas"/>
+        <UnitName Value="PressXCLBroker"/>
+      </Item7>
     </Files>
     <RequiredPkgs Count="2">
       <Item1>
