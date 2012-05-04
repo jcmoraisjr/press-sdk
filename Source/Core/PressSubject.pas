@@ -156,11 +156,13 @@ type
     FPersLinkPosName: string;
     FShortName: string;
     FSize: Integer;
+    FUnique: Boolean;
     FWeakReference: Boolean;
     function BuildPersLinkChildName: string;
     function BuildPersLinkName: string;
     function BuildPersLinkParentName: string;
     function DefaultLazyLoadState: Boolean;
+    function GetIndex: Boolean;
     function GetPersLinkChildName: string;
     function GetPersLinkName: string;
     function GetPersLinkParentName: string;
@@ -209,7 +211,7 @@ type
     property DefaultValue: string read FDefaultValue write FDefaultValue;
     property EditMask: string read FEditMask write FEditMask;
     property GeneratorName: string read FGeneratorName write FGeneratorName;
-    property Index: Boolean read FIndex write FIndex;
+    property Index: Boolean read GetIndex write FIndex;
     property IsPersistent: Boolean read FIsPersistent write FIsPersistent default True;
     property LazyLoad: Boolean read FLazyLoad write FLazyLoad stored StoreLazyLoad;
     property NotNull: Boolean read FNotNull write FNotNull;
@@ -220,6 +222,7 @@ type
     property PersLinkParentName: string read GetPersLinkParentName write FPersLinkParentName stored StorePersLinkParentName;
     property PersLinkPosName: string read FPersLinkPosName write FPersLinkPosName stored StorePersLinkPosName;
     property ShortName: string read GetShortName write FShortName stored StoreShortName;
+    property Unique: Boolean read FUnique write FUnique default False;
     property WeakReference: Boolean read FWeakReference write FWeakReference default False;
   end;
 
@@ -1560,6 +1563,11 @@ function TPressAttributeMetadata.DefaultLazyLoadState: Boolean;
 begin
   Result := Assigned(FAttributeClass) and
    FAttributeClass.InheritsFrom(TPressItems);
+end;
+
+function TPressAttributeMetadata.GetIndex: Boolean;
+begin
+  Result := FIndex or Unique;
 end;
 
 procedure TPressAttributeMetadata.Finit;

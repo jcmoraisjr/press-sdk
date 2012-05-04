@@ -714,16 +714,20 @@ procedure TPressOPFTableMetadatas.AddAttributeValueMetadata(
 var
   VField: TPressOPFFieldMetadata;
   VFieldOptions: TPressOPFFieldOptions;
+  VIndexOptions: TPressOPFIndexOptions;
 begin
   VFieldOptions := [];
   if AAttributeMetadata.NotNull then
     VFieldOptions := VFieldOptions + [foNotNull];
   if AAttributeMetadata.Index then
     VFieldOptions := VFieldOptions + [foIndexed];
+  VIndexOptions := [];
+  if AAttributeMetadata.Unique then
+    VIndexOptions := VIndexOptions + [ioUnique];
   VField := AddField(
    AAttributeMetadata.PersistentName, AAttributeMetadata.ShortName,
    AAttributeMetadata.AttributeClass.AttributeBaseType,
-   AAttributeMetadata.Size, VFieldOptions, [], ATableMetadata);
+   AAttributeMetadata.Size, VFieldOptions, VIndexOptions, ATableMetadata);
   if AStorageMap.Metadata.IdMetadata = AAttributeMetadata then
   begin
     ATableMetadata.PrimaryKey := TPressOPFIndexMetadata.Create(
