@@ -15,7 +15,7 @@
       </Other>
     </CompilerOptions>
     <Version Minor="1" Release="1"/>
-    <Files Count="2">
+    <Files Count="3">
       <Item1>
         <Filename Value="..\..\Core\PressWebHandler.pas"/>
         <UnitName Value="PressWebHandler"/>
@@ -24,6 +24,10 @@
         <Filename Value="..\..\Brokers\PressWebFCLCGIBroker.pas"/>
         <UnitName Value="PressWebFCLCGIBroker"/>
       </Item2>
+      <Item3>
+        <Filename Value="..\..\Brokers\PressWebFCLFCGIBroker.pas"/>
+        <UnitName Value="PressWebFCLFCGIBroker"/>
+      </Item3>
     </Files>
     <RequiredPkgs Count="2">
       <Item1>

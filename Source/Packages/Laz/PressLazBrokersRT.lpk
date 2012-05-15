@@ -1,27 +1,21 @@
 <?xml version="1.0"?>
 <CONFIG>
-  <Package Version="3">
+  <Package Version="4">
     <PathDelim Value="\"/>
     <Name Value="PressLazBrokersRT"/>
-    <AddToProjectUsesSection Value="False"/>
     <CompilerOptions>
-      <Version Value="8"/>
+      <Version Value="11"/>
       <PathDelim Value="\"/>
       <SearchPaths>
-        <OtherUnitFiles Value="..\..\Brokers\"/>
+        <OtherUnitFiles Value="..\..\Brokers"/>
         <UnitOutputDirectory Value="..\..\..\bin\Laz\Brokers\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
-      <Parsing>
-        <SyntaxOptions>
-          <UseAnsiStrings Value="True"/>
-        </SyntaxOptions>
-      </Parsing>
       <Other>
         <CompilerPath Value="$(CompPath)"/>
       </Other>
     </CompilerOptions>
     <Version Minor="1" Release="1"/>
-    <Files Count="7">
+    <Files Count="6">
       <Item1>
         <Filename Value="..\..\Brokers\Press.inc"/>
         <Type Value="Include"/>
@@ -43,13 +37,9 @@
         <UnitName Value="PressPgSQLBroker"/>
       </Item5>
       <Item6>
-        <Filename Value="..\..\Brokers\PressWebFCLFCGIBroker.pas"/>
-        <UnitName Value="PressWebFCLFCGIBroker"/>
-      </Item6>
-      <Item7>
         <Filename Value="..\..\Brokers\PressXCLBroker.pas"/>
         <UnitName Value="PressXCLBroker"/>
-      </Item7>
+      </Item6>
     </Files>
     <RequiredPkgs Count="2">
       <Item1>
