@@ -3891,7 +3891,7 @@ procedure TPressPart.BeforeChangeInstance(
   ChangeType: TPressProxyChangeType);
 begin
   inherited;
-  if Assigned(Instance) and Instance.IsOwned then
+  if Assigned(Instance) and Instance.IsOwned and (ChangeType = pctAssigning) then
     raise EPressError.CreateFmt(SInstanceAlreadyOwned,
      [Instance.ClassType, Instance.Id]);
 end;
