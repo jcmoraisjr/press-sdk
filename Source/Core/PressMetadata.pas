@@ -496,7 +496,11 @@ begin
       if IsValidIdent(Reader.NextChar) then
         VValue := Reader.ReadPath
       else
+      begin
         VValue := Reader.ReadToken;
+        if (VValue <> '') and (VValue[1] in ['-', '+']) then
+          VValue := VValue + Reader.ReadNumber;
+      end;
       Token := Reader.ReadToken;
     end else
       VValue := SPressTrueString;
