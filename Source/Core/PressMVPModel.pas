@@ -2351,7 +2351,7 @@ procedure TPressMVPObjectModel.SubjectChanged(AOldSubject: TPressSubject);
     begin
       VModel := FSubModelList[I] as TPressMVPAttributeModel;
       if Assigned(ASubject) then
-        VModel.Subject := ASubject.AttributeByPath(VModel.SubjectPath)
+        VModel.Subject := ASubject.FindPathAttribute(VModel.SubjectPath, False)
       else
         VModel.Subject := nil;
     end;
