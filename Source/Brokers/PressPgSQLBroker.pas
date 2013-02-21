@@ -56,7 +56,7 @@ const
    'integer',           //  oftInt32
    'bigint',            //  oftInt64
    'double precision',  //  oftDouble
-   'decimal(14,4)',     //  oftCurrency
+   'money',             //  oftCurrency
    'boolean',           //  oftBoolean
    'date',              //  oftDate
    'time',              //  oftTime
